@@ -1,0 +1,70 @@
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import * as matchService from '../services/matchService.js';
+import { requireAuth } from '../middleware/auth.js';
+import { sendSuccess, Errors } from '../utils/response.js';
+
+export const matchRouter = Router();
+matchRouter.use(requireAuth);
+
+const BoardPositionSchema = z.object({ x: z.number().int().min(0).max(7), y: z.number().int().min(0).max(7) });
+const MoveActionSchema = z.object({ type: z.literal('MOVE'), unitInstanceId: z.string().uuid(), destination: BoardPositionSchema });
+const UseAbilityActionSchema = z.object({ type: z.literal('USE_ABILITY'), unitInstanceId: z.string().uuid(), abilitySlug: z.string().min(1), target: BoardPositionSchema });
+const EndTurnActionSchema = z.object({ type: z.literal('END_TURN') });
+const TurnActionSchema = z.discriminatedUnion('type', [MoveActionSchema, UseAbilityActionSchema, EndTurnActionSchema]);
+const SubmitTurnSchema = z.object({ actions: z.array(TurnActionSchema).min(1).max(10) });
+
+matchRouter.get('/', async (req: Request, res: Response): Promise<void> => {
+  const matches = await matchService.getUserMatches(req.user!.id);
+  const summary = matches.map((m) => ({ id: m.id, playerOneId: m.player_one_id, playerTwoId: m.player_two_id, status: m.status, activePlayerId: m.active_player_id, turnNumber: m.turn_number, turnDeadline: m.turn_deadline, winnerId: m.winner_id, eloDeltaP1: m.elo_delta_p1, eloDeltaP2: m.elo_delta_p2, createdAt: m.created_at, completedAt: m.completed_at, isMyTurn: m.active_player_id === req.user!.id && m.status === 'active' }));
+  sendSuccess(res, { matches: summary });
+});
+
+matchRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const match = await matchService.getMatch(req.params.id, req.user!.id);
+    sendSuccess(res, { id: match.id, playerOneId: match.player_one_id, playerTwoId: match.player_two_id, status: match.status, activePlayerId: match.active_player_id, turnNumber: match.turn_number, turnDeadline: match.turn_deadline, winnerId: match.winner_id, matchState: match.match_state, eloDeltaP1: match.elo_delta_p1, eloDeltaP2: match.elo_delta_p2, createdAt: match.created_at, completedAt: match.completed_at, isMyTurn: match.active_player_id === req.user!.id && match.status === 'active' });
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    throw err;
+  }
+});
+
+matchRouter.post('/:id/turn', async (req: Request, res: Response): Promise<void> => {
+  const parsed = SubmitTurnSchema.safeParse(req.body);
+  if (!parsed.success) { Errors.validation(res, 'Invalid turn data', parsed.error.flatten()); return; }
+  try {
+    const { result, match } = await matchService.submitTurn(req.params.id, req.user!.id, parsed.data.actions);
+    sendSuccess(res, { events: result.events, matchOver: result.matchOver, winnerId: result.winnerId, updatedState: result.updatedState, match: { id: match.id, status: match.status, activePlayerId: match.active_player_id, turnNumber: match.turn_number, turnDeadline: match.turn_deadline, winnerId: match.winner_id } });
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    if (err instanceof matchService.MatchNotActiveError) { Errors.conflict(res, 'This match is no longer active'); return; }
+    if (err instanceof matchService.TurnValidationError) { Errors.validation(res, err.message); return; }
+    throw err;
+  }
+});
+
+matchRouter.get('/:id/history', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const history = await matchService.getTurnHistory(req.params.id, req.user!.id);
+    sendSuccess(res, { history });
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    throw err;
+  }
+});
+
+matchRouter.post('/:id/forfeit', async (req: Request, res: Response): Promise<void> => {
+  try {
+    await matchService.forfeitMatch(req.params.id, req.user!.id);
+    sendSuccess(res, { message: 'Match forfeited' });
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    if (err instanceof matchService.MatchNotActiveError) { Errors.conflict(res, 'This match is no longer active'); return; }
+    throw err;
+  }
+});
