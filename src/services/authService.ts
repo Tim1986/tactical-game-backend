@@ -13,13 +13,13 @@ const BCRYPT_ROUNDS = 12;
 export function issueTokenPair(user: Pick<User, 'id' | 'username'> & { tokenVersion: number }): TokenPair {
   const accessToken = jwt.sign(
     { sub: user.id, username: user.username },
-    config.jwt.accessSecret,
+    config.jwt.accessSecret as string,
     { expiresIn: config.jwt.accessExpiry }
   );
 
   const refreshToken = jwt.sign(
     { sub: user.id, tokenVersion: user.tokenVersion },
-    config.jwt.refreshSecret,
+    config.jwt.refreshSecret as string,
     { expiresIn: config.jwt.refreshExpiry }
   );
 
