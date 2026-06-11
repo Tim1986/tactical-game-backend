@@ -161,12 +161,6 @@ async function validateTeamInput(input: {
     throw new TeamValidationError(`A team must have exactly ${TEAM_SIZE} units`);
   }
 
-  // No duplicate units
-  const uniqueIds = new Set(unitIds);
-  if (uniqueIds.size !== TEAM_SIZE) {
-    throw new TeamValidationError('A team cannot contain duplicate units');
-  }
-
   // Check unit access
   const { valid, invalidIds } = await validateUnitAccess(unitIds, accountLevel);
   if (!valid) {
