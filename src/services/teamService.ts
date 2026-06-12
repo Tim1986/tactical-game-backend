@@ -82,15 +82,15 @@ export interface CreateTeamInput {
 }
 
 export async function createTeam(input: CreateTeamInput): Promise<Team> {
-  const { name, unitIds, userId, accountLevel } = input;
+  const { name, unitIds, userId, accountLevel, placement } = input;
 
   await validateTeamInput({ name, unitIds, userId, accountLevel });
 
   const result = await query<TeamRow>(
-    `INSERT INTO teams (user_id, name, unit_ids)
-     VALUES ($1, $2, $3)
+    `INSERT INTO teams (user_id, name, unit_ids, placement)
+     VALUES ($1, $2, $3, $4)
      RETURNING id, user_id, name, unit_ids, is_active, created_at`,
-    [userId, name.trim(), JSON.stringify(unitIds)]
+    [userId, name.trim(), JSON.stringify(unitIds), JSON.stringify(placement || [{x:1,y:1},{x:1,y:3},{x:1,y:5},{x:1,y:7}])]
   );
 
   return rowToTeam(result.rows[0]);
