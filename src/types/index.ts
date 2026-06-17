@@ -38,6 +38,7 @@ export interface PushToken {
   userId: UUID;
   token: string;
   platform: Platform;
+  placement: Array<{ x: number; y: number }>;
   isActive: boolean;
   updatedAt: ISOTimestamp;
 }
@@ -155,6 +156,7 @@ export interface UnitDefinition {
   passives: string[];  // array of passive slugs
   unlockLevel: number;
   assetKey: string;
+  placement: Array<{ x: number; y: number }>;
   isActive: boolean;
 }
 
@@ -165,6 +167,7 @@ export interface Team {
   userId: UUID;
   name: string;
   unitIds: [UUID, UUID, UUID, UUID]; // exactly 4
+  placement: Array<{ x: number; y: number }>;
   isActive: boolean;
   createdAt: ISOTimestamp;
 }
