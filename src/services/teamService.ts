@@ -10,6 +10,7 @@ interface TeamRow {
   user_id: string;
   name: string;
   unit_ids: UUID[];
+  placement: Array<{ x: number; y: number }>;
   is_active: boolean;
   created_at: string;
 }
@@ -20,6 +21,7 @@ function rowToTeam(row: TeamRow): Team {
     userId: row.user_id,
     name: row.name,
     unitIds: row.unit_ids as [UUID, UUID, UUID, UUID],
+    placement: row.placement ?? [{x:1,y:1},{x:1,y:3},{x:1,y:5},{x:1,y:7}],
     isActive: row.is_active,
     createdAt: row.created_at,
   };
@@ -48,7 +50,7 @@ export class TeamNotFoundError extends Error {
 // ---------------------------------------------------------------
 export async function getUserTeams(userId: string): Promise<Team[]> {
   const result = await query<TeamRow>(
-    `SELECT id, user_id, name, unit_ids, is_active, created_at
+    `SELECT id, user_id, name, unit_ids, placement, is_active, created_at
      FROM teams
      WHERE user_id = $1 AND is_active = TRUE
      ORDER BY created_at DESC`,
@@ -62,7 +64,7 @@ export async function getUserTeams(userId: string): Promise<Team[]> {
 // ---------------------------------------------------------------
 export async function getTeam(teamId: string, userId: string): Promise<Team | null> {
   const result = await query<TeamRow>(
-    `SELECT id, user_id, name, unit_ids, is_active, created_at
+    `SELECT id, user_id, name, unit_ids, placement, is_active, created_at
      FROM teams
      WHERE id = $1 AND user_id = $2 AND is_active = TRUE`,
     [teamId, userId]
@@ -79,6 +81,7 @@ export interface CreateTeamInput {
   unitIds: string[];
   userId: string;
   accountLevel: number;
+  placement?: Array<{ x: number; y: number }>;
 }
 
 export async function createTeam(input: CreateTeamInput): Promise<Team> {
@@ -89,7 +92,7 @@ export async function createTeam(input: CreateTeamInput): Promise<Team> {
   const result = await query<TeamRow>(
     `INSERT INTO teams (user_id, name, unit_ids, placement)
      VALUES ($1, $2, $3, $4)
-     RETURNING id, user_id, name, unit_ids, is_active, created_at`,
+     RETURNING id, user_id, name, unit_ids, placement, is_active, created_at`,
     [userId, name.trim(), JSON.stringify(unitIds), JSON.stringify(placement || [{x:1,y:1},{x:1,y:3},{x:1,y:5},{x:1,y:7}])]
   );
 
@@ -105,25 +108,27 @@ export interface UpdateTeamInput {
   accountLevel: number;
   name?: string;
   unitIds?: string[];
+  placement?: Array<{ x: number; y: number }>;
 }
 
 export async function updateTeam(input: UpdateTeamInput): Promise<Team> {
-  const { teamId, userId, accountLevel, name, unitIds } = input;
+  const { teamId, userId, accountLevel, name, unitIds, placement } = input;
 
   const existing = await getTeam(teamId, userId);
   if (!existing) throw new TeamNotFoundError();
 
   const newName = name?.trim() ?? existing.name;
   const newUnitIds = unitIds ?? existing.unitIds;
+  const newPlacement = placement ?? existing.placement ?? [{x:1,y:1},{x:1,y:3},{x:1,y:5},{x:1,y:7}];
 
   await validateTeamInput({ name: newName, unitIds: newUnitIds, userId, accountLevel });
 
   const result = await query<TeamRow>(
     `UPDATE teams
-     SET name = $1, unit_ids = $2
-     WHERE id = $3 AND user_id = $4
-     RETURNING id, user_id, name, unit_ids, is_active, created_at`,
-    [newName, JSON.stringify(newUnitIds), teamId, userId]
+     SET name = $1, unit_ids = $2, placement = $3
+     WHERE id = $4 AND user_id = $5
+     RETURNING id, user_id, name, unit_ids, placement, is_active, created_at`,
+    [newName, JSON.stringify(newUnitIds), JSON.stringify(newPlacement), teamId, userId]
   );
 
   return rowToTeam(result.rows[0]);

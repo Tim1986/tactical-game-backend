@@ -9,6 +9,7 @@ import { unitRouter } from './routes/units.js';
 import { teamRouter } from './routes/teams.js';
 import { matchRouter } from './routes/matches.js';
 import { matchmakingRouter } from './routes/matchmaking.js';
+import { challengeRouter } from './routes/challenges.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { sendSuccess } from './utils/response.js';
 
@@ -26,6 +27,7 @@ export function createApp(): express.Application {
   app.use('/teams', apiLimiter, teamRouter);
   app.use('/matches', apiLimiter, matchRouter);
   app.use('/matchmaking', apiLimiter, matchmakingRouter);
+  app.use('/challenges', apiLimiter, challengeRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

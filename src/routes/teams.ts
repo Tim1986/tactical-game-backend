@@ -13,14 +13,18 @@ teamRouter.use(requireAuth);
 // Input schemas
 // ---------------------------------------------------------------
 
+const PlacementSchema = z.array(z.object({ x: z.number().int().min(0).max(3), y: z.number().int().min(0).max(7) })).length(4).optional();
+
 const CreateTeamSchema = z.object({
   name: z.string().min(1).max(40),
   unitIds: z.array(z.string().uuid()).length(4, 'Team must have exactly 4 units'),
+  placement: PlacementSchema,
 });
 
 const UpdateTeamSchema = z.object({
   name: z.string().min(1).max(40).optional(),
   unitIds: z.array(z.string().uuid()).length(4).optional(),
+  placement: PlacementSchema,
 });
 
 // Helper to get account level for the current user

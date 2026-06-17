@@ -5,6 +5,7 @@ import { AbilityDefinition, UnitDefinition } from '../types/index.js';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
 import { logger } from '../utils/logger.js';
+import { notifyUser } from './notificationService.js';
 
 export class MatchNotFoundError extends Error { constructor() { super('Match not found'); this.name = 'MatchNotFoundError'; } }
 export class MatchAccessError extends Error { constructor() { super('You are not a participant in this match'); this.name = 'MatchAccessError'; } }
@@ -93,6 +94,10 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
         'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4 WHERE id = $5',
         [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), matchId]
       );
+      // Notify the opponent it's their turn
+      setImmediate(() => {
+        void notifyUser(result.updatedState.activePlayerId, 'YOUR_TURN', { matchId });
+      });
     }
     const updatedResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]);
     return { result, match: updatedResult.rows[0] };
