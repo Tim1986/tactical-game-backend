@@ -8,4 +8,4 @@ RUN echo "Cache bust: $CACHE_BUST"
 RUN npm run build
 RUN cp -r src/db/migrations dist/db/migrations
 EXPOSE 3000
-CMD ["node", "--trace-uncaught", "dist/index.js"]
+CMD ["node", "dist/index.js"]

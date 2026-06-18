@@ -1,20 +1,18 @@
-import { createApp } from './app.js';
-import { config } from './config/index.js';
-import { checkDatabaseConnection } from './db/pool.js';
-import { startBackgroundJobs } from './jobs/backgroundJobs.js';
-import { logger } from './utils/logger.js';
+import http from 'http';
 
-async function main(): Promise<void> {
-  await checkDatabaseConnection();
-  const app = createApp();
-  app.listen(config.port, () => {
-    logger.info({ port: config.port, env: config.nodeEnv }, 'Server started');
-    startBackgroundJobs();
-  });
-}
+const PORT = process.env.PORT || 3000;
 
-main().catch((err) => {
-  logger.error({ err }, 'Failed to start server');
+const server = http.createServer((req, res) => {
+  console.log('Request received:', req.url);
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+});
+
+server.listen(PORT, () => {
+  console.log(`Minimal server listening on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  console.error('Server error:', err);
   process.exit(1);
 });
-// trigger redeploy
