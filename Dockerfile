@@ -6,4 +6,4 @@ COPY . .
 RUN npm run build
 RUN cp -r src/db/migrations dist/db/migrations
 EXPOSE 3000
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
+CMD ["node", "dist/index.js"]
