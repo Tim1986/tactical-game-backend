@@ -15,8 +15,9 @@ import { sendSuccess } from './utils/response.js';
 
 export function createApp(): express.Application {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(helmet());
-  app.use(cors({ origin: config.isDevelopment ? '*' : (process.env['ALLOWED_ORIGINS'] ?? '').split(','), methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+  app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
   app.use(express.json({ limit: '100kb' }));
   const authLimiter = rateLimit({ windowMs: config.rateLimit.auth.windowMs, max: config.rateLimit.auth.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
   const apiLimiter = rateLimit({ windowMs: config.rateLimit.api.windowMs, max: config.rateLimit.api.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
