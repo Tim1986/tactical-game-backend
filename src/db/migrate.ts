@@ -14,13 +14,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { pool, checkDatabaseConnection } from './pool.js';
 import { logger } from '../utils/logger.js';
-
-// FIX: __dirname doesn't exist in ES modules — derive it from import.meta.url
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function runMigrations(): Promise<void> {
   await checkDatabaseConnection();
@@ -43,6 +38,7 @@ async function runMigrations(): Promise<void> {
     const appliedSet = new Set(applied.map((r) => r.filename));
 
     // Load all migration files
+    // __dirname works fine in CommonJS (which this project compiles to)
     const migrationsDir = path.join(__dirname, 'migrations');
     const files = fs
       .readdirSync(migrationsDir)

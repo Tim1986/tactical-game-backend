@@ -38,7 +38,6 @@ export interface PushToken {
   userId: UUID;
   token: string;
   platform: Platform;
-  placement: Array<{ x: number; y: number }>;
   isActive: boolean;
   updatedAt: ISOTimestamp;
 }
@@ -99,7 +98,7 @@ export interface PullEffect {
 export interface ModifyCooldownEffect {
   type: 'modify_cooldown';
   abilitySlug: string;
-  delta: number; // negative = reduce cooldown
+  delta: number;
 }
 
 export type AbilityEffect =
@@ -141,9 +140,6 @@ export interface PassiveDefinition {
   slug: string;
   name: string;
   description: string;
-  // Passives are intentionally left simple for MVP;
-  // they describe behaviour documented in unit lore.
-  // Active passive logic will be added in Phase 2 ability executor.
 }
 
 export interface UnitDefinition {
@@ -152,11 +148,10 @@ export interface UnitDefinition {
   name: string;
   maxHealth: number;
   movementRange: number;
-  abilities: string[]; // array of ability slugs
-  passives: string[];  // array of passive slugs
+  abilities: string[];
+  passives: string[];
   unlockLevel: number;
   assetKey: string;
-  placement: Array<{ x: number; y: number }>;
   isActive: boolean;
 }
 
@@ -166,7 +161,7 @@ export interface Team {
   id: UUID;
   userId: UUID;
   name: string;
-  unitIds: [UUID, UUID, UUID, UUID]; // exactly 4
+  unitIds: [UUID, UUID, UUID, UUID];
   placement: Array<{ x: number; y: number }>;
   isActive: boolean;
   createdAt: ISOTimestamp;
@@ -180,7 +175,7 @@ export interface TokenPair {
 }
 
 export interface AccessTokenPayload {
-  sub: UUID;   // user id
+  sub: UUID;
   username: string;
   iat: number;
   exp: number;

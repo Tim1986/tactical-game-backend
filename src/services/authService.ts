@@ -13,14 +13,14 @@ const BCRYPT_ROUNDS = 12;
 export function issueTokenPair(user: Pick<User, 'id' | 'username'> & { tokenVersion: number }): TokenPair {
   const accessToken = jwt.sign(
     { sub: user.id, username: user.username },
-    config.jwt.accessSecret as string,
-    { expiresIn: config.jwt.accessExpiry }
+    config.jwt.accessSecret,
+    { expiresIn: config.jwt.accessExpiry } as jwt.SignOptions
   );
 
   const refreshToken = jwt.sign(
     { sub: user.id, tokenVersion: user.tokenVersion },
-    config.jwt.refreshSecret as string,
-    { expiresIn: config.jwt.refreshExpiry }
+    config.jwt.refreshSecret,
+    { expiresIn: config.jwt.refreshExpiry } as jwt.SignOptions
   );
 
   return { accessToken, refreshToken };
@@ -122,8 +122,6 @@ export async function login(input: LoginInput): Promise<RegisterResult> {
 
   const row = result.rows[0];
 
-  // Deliberate: same error for wrong username or wrong password
-  // so we don't leak which one exists.
   if (!row) {
     throw new AuthError('Invalid credentials');
   }
@@ -133,7 +131,6 @@ export async function login(input: LoginInput): Promise<RegisterResult> {
     throw new AuthError('Invalid credentials');
   }
 
-  // Update last_active_at
   await query('UPDATE users SET last_active_at = NOW() WHERE id = $1', [row.id]);
 
   const tokens = issueTokenPair({ id: row.id, username: row.username, tokenVersion: row.token_version });
@@ -177,7 +174,6 @@ export async function refresh(token: string): Promise<TokenPair> {
     throw new AuthError('User not found');
   }
 
-  // token_version mismatch means user logged out all sessions
   if (user.token_version !== payload.tokenVersion) {
     throw new AuthError('Token has been revoked');
   }
@@ -196,15 +192,9 @@ export async function logoutAll(userId: string): Promise<void> {
   );
 }
 
-// ---------------------------------------------------------------
-// Logout single device (client just discards tokens — no server action needed
-// for access tokens since they expire quickly; this is a no-op server-side
-// unless we add a token denylist, which is optional at MVP scale).
-// ---------------------------------------------------------------
 export async function logout(_userId: string): Promise<void> {
   // Access tokens are short-lived (15m) so no server-side action needed.
   // The client must discard both tokens on logout.
-  // If you need immediate revocation, implement a Redis token denylist.
 }
 
 // ---------------------------------------------------------------
@@ -217,7 +207,6 @@ export async function savePushToken(
   platform: 'ios' | 'android'
 ): Promise<void> {
   await withTransaction(async (client) => {
-    // Deactivate any existing entry for this exact token
     await client.query(
       `INSERT INTO push_tokens (user_id, token, platform, is_active, updated_at)
        VALUES ($1, $2, $3, TRUE, NOW())
@@ -232,7 +221,7 @@ export async function savePushToken(
 }
 
 // ---------------------------------------------------------------
-// Custom error classes (caught in routes to return correct status)
+// Custom error classes
 // ---------------------------------------------------------------
 
 export class AuthError extends Error {
