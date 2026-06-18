@@ -1,10 +1,10 @@
 # Railway deployment configuration.
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install"
+buildCommand = "npm ci && npm run build"
 
 [deploy]
-startCommand = "npx tsx src/index.ts"
+startCommand = "node dist/db/migrate.js && node dist/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
