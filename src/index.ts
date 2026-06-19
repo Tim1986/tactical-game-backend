@@ -1,18 +1,19 @@
-import http from 'http';
+import { createApp } from './app.js';
+import { config } from './config/index.js';
+import { checkDatabaseConnection } from './db/pool.js';
+import { startBackgroundJobs } from './jobs/backgroundJobs.js';
+import { logger } from './utils/logger.js';
 
-const PORT = process.env.PORT || 3000;
+async function main(): Promise<void> {
+  await checkDatabaseConnection();
+  const app = createApp();
+  app.listen(config.port, () => {
+    logger.info({ port: config.port, env: config.nodeEnv }, 'Server started');
+    startBackgroundJobs();
+  });
+}
 
-const server = http.createServer((req, res) => {
-  console.log('Request received:', req.url);
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
-});
-
-server.listen(PORT, () => {
-  console.log(`Minimal server listening on port ${PORT}`);
-});
-
-server.on('error', (err) => {
-  console.error('Server error:', err);
+main().catch((err) => {
+  logger.error({ err }, 'Failed to start server');
   process.exit(1);
 });
