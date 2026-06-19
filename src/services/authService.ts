@@ -2,9 +2,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { query, withTransaction } from '../db/pool.js';
 import { config } from '../config/index.js';
-import { TokenPair, User } from '../types/index.js';
+import { TokenPair, User, Team } from '../types/index.js';
+import { getUnitBySlug } from './unitService.js';
 
 const BCRYPT_ROUNDS = 12;
+const DEFAULT_TEAM_UNIT_SLUGS = ['fighter', 'barbarian', 'ranger', 'rogue'] as const;
 
 // ---------------------------------------------------------------
 // Token helpers
@@ -47,6 +49,7 @@ export interface RegisterInput {
 export interface RegisterResult {
   user: Pick<User, 'id' | 'username' | 'email' | 'elo' | 'accountLevel'>;
   tokens: TokenPair;
+  team: Team;
 }
 
 export async function register(input: RegisterInput): Promise<RegisterResult> {
@@ -63,32 +66,80 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-  const result = await query<{
-    id: string;
-    username: string;
-    email: string;
-    elo: number;
-    account_level: number;
-    token_version: number;
-  }>(
-    `INSERT INTO users (username, email, password_hash)
-     VALUES ($1, $2, $3)
-     RETURNING id, username, email, elo, account_level, token_version`,
-    [username, email, passwordHash]
+  // Resolve default team unit slugs to IDs before opening the transaction
+  // (pure read against a static table, doesn't need to be transactional)
+  const defaultUnits = await Promise.all(
+    DEFAULT_TEAM_UNIT_SLUGS.map((slug) => getUnitBySlug(slug))
   );
+  const missingIndex = defaultUnits.findIndex((u) => !u);
+  if (missingIndex !== -1) {
+    throw new Error(
+      `Default team unit slug not found in unit_definitions: ${DEFAULT_TEAM_UNIT_SLUGS[missingIndex]}`
+    );
+  }
+  const defaultUnitIds = defaultUnits.map((u) => u!.id);
 
-  const row = result.rows[0];
-  const tokens = issueTokenPair({ id: row.id, username: row.username, tokenVersion: row.token_version });
+  const { userRow, teamRow } = await withTransaction(async (client) => {
+    const userResult = await client.query<{
+      id: string;
+      username: string;
+      email: string;
+      elo: number;
+      account_level: number;
+      token_version: number;
+    }>(
+      `INSERT INTO users (username, email, password_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id, username, email, elo, account_level, token_version`,
+      [username, email, passwordHash]
+    );
+
+    const insertedUser = userResult.rows[0];
+
+    const teamResult = await client.query<{
+      id: string;
+      user_id: string;
+      name: string;
+      unit_ids: string[];
+      placement: Array<{ x: number; y: number }>;
+      is_active: boolean;
+      created_at: string;
+    }>(
+      `INSERT INTO teams (user_id, name, unit_ids)
+       VALUES ($1, $2, $3)
+       RETURNING id, user_id, name, unit_ids, placement, is_active, created_at`,
+      [insertedUser.id, 'Default Team', JSON.stringify(defaultUnitIds)]
+    );
+
+    return { userRow: insertedUser, teamRow: teamResult.rows[0] };
+  });
+
+  const tokens = issueTokenPair({
+    id: userRow.id,
+    username: userRow.username,
+    tokenVersion: userRow.token_version,
+  });
+
+  const team: Team = {
+    id: teamRow.id,
+    userId: teamRow.user_id,
+    name: teamRow.name,
+    unitIds: teamRow.unit_ids as [string, string, string, string],
+    placement: teamRow.placement,
+    isActive: teamRow.is_active,
+    createdAt: teamRow.created_at,
+  };
 
   return {
     user: {
-      id: row.id,
-      username: row.username,
-      email: row.email,
-      elo: row.elo,
-      accountLevel: row.account_level,
+      id: userRow.id,
+      username: userRow.username,
+      email: userRow.email,
+      elo: userRow.elo,
+      accountLevel: userRow.account_level,
     },
     tokens,
+    team,
   };
 }
 
@@ -101,7 +152,12 @@ export interface LoginInput {
   password: string;
 }
 
-export async function login(input: LoginInput): Promise<RegisterResult> {
+export interface LoginResult {
+  user: Pick<User, 'id' | 'username' | 'email' | 'elo' | 'accountLevel'>;
+  tokens: TokenPair;
+}
+
+export async function login(input: LoginInput): Promise<LoginResult> {
   const { usernameOrEmail, password } = input;
 
   const result = await query<{
