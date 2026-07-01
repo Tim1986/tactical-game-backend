@@ -37,9 +37,9 @@ export async function createMatch(playerOneId: string, playerTwoId: string, play
 }
 
 function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[]): MatchState {
-  // 10×8 board: P1 zone x=0-3, neutral x=4-5, P2 zone x=6-9
+  // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
   const p1StartPositions: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-  const p2StartPositions: BoardPosition[] = [{ x: 8, y: 0 }, { x: 8, y: 2 }, { x: 8, y: 4 }, { x: 8, y: 6 }];
+  const p2StartPositions: BoardPosition[] = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
   const units: UnitInstance[] = [
     ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1StartPositions[i])),
     ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2StartPositions[i])),
