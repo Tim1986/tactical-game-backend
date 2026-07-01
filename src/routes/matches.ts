@@ -7,7 +7,7 @@ import { sendSuccess, Errors } from '../utils/response.js';
 export const matchRouter = Router();
 matchRouter.use(requireAuth);
 
-const BoardPositionSchema = z.object({ x: z.number().int().min(0).max(9), y: z.number().int().min(0).max(7) });
+const BoardPositionSchema = z.object({ x: z.number().int().min(0).max(7), y: z.number().int().min(0).max(7) });
 const MoveActionSchema = z.object({ type: z.literal('MOVE'), unitInstanceId: z.string().uuid(), destination: BoardPositionSchema });
 const UseAbilityActionSchema = z.object({ type: z.literal('USE_ABILITY'), unitInstanceId: z.string().uuid(), abilitySlug: z.string().min(1), target: BoardPositionSchema });
 const EndTurnActionSchema = z.object({ type: z.literal('END_TURN') });
@@ -23,7 +23,7 @@ matchRouter.get('/', async (req: Request, res: Response): Promise<void> => {
 matchRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const match = await matchService.getMatch(req.params.id, req.user!.id);
-    sendSuccess(res, { id: match.id, playerOneId: match.player_one_id, playerTwoId: match.player_two_id, status: match.status, activePlayerId: match.active_player_id, turnNumber: match.turn_number, turnDeadline: match.turn_deadline, winnerId: match.winner_id, matchState: match.match_state, eloDeltaP1: match.elo_delta_p1, eloDeltaP2: match.elo_delta_p2, createdAt: match.created_at, completedAt: match.completed_at, isMyTurn: match.active_player_id === req.user!.id && match.status === 'active' });
+    sendSuccess(res, { id: match.id, playerOneId: match.player_one_id, playerTwoId: match.player_two_id, status: match.status, activePlayerId: match.active_player_id, turnNumber: match.turn_number, turnDeadline: match.turn_deadline, winnerId: match.winner_id, matchState: match.match_state, lastTurnEvents: match.last_turn_events ?? [], eloDeltaP1: match.elo_delta_p1, eloDeltaP2: match.elo_delta_p2, createdAt: match.created_at, completedAt: match.completed_at, isMyTurn: match.active_player_id === req.user!.id && match.status === 'active' });
   } catch (err) {
     if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
     if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }

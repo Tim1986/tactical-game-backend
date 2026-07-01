@@ -17,7 +17,7 @@ interface MatchRow {
   id: string; player_one_id: string; player_two_id: string;
   player_one_team: string; player_two_team: string; status: string;
   active_player_id: string; turn_number: number; turn_deadline: string | null;
-  winner_id: string | null; match_state: MatchState;
+  winner_id: string | null; match_state: MatchState; last_turn_events: unknown[];
   elo_delta_p1: number | null; elo_delta_p2: number | null;
   created_at: string; completed_at: string | null;
 }
@@ -92,8 +92,8 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
       const newDeadline = new Date();
       newDeadline.setHours(newDeadline.getHours() + 72);
       await client.query(
-        'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4 WHERE id = $5',
-        [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), matchId]
+        'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4, last_turn_events = $5 WHERE id = $6',
+        [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify(result.events), matchId]
       );
       // Notify the opponent it's their turn
       setImmediate(() => {
