@@ -90,8 +90,16 @@ export async function getMatchWithPlayers(matchId: string, requestingUserId: str
   return { match: row, playerOneUsername: row.p1_username, playerTwoUsername: row.p2_username };
 }
 
-export async function getUserMatches(userId: string): Promise<MatchRow[]> {
-  const result = await query<MatchRow>('SELECT * FROM matches WHERE (player_one_id = $1 OR player_two_id = $1) ORDER BY created_at DESC LIMIT 20', [userId]);
+export async function getUserMatches(userId: string): Promise<(MatchRow & { player_one_username: string; player_two_username: string })[]> {
+  const result = await query<MatchRow & { player_one_username: string; player_two_username: string }>(
+    `SELECT m.*, u1.username AS player_one_username, u2.username AS player_two_username
+     FROM matches m
+     JOIN users u1 ON u1.id = m.player_one_id
+     JOIN users u2 ON u2.id = m.player_two_id
+     WHERE m.player_one_id = $1 OR m.player_two_id = $1
+     ORDER BY m.created_at DESC LIMIT 20`,
+    [userId],
+  );
   return result.rows;
 }
 
@@ -164,8 +172,9 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
   await client.query('UPDATE matches SET status = ' + "'completed'" + ', winner_id = $1, elo_delta_p1 = $2, elo_delta_p2 = $3, completed_at = NOW() WHERE id = $4', [winnerId, eloDeltaP1, eloDeltaP2, match.id]);
   logger.info({ matchId: match.id, winnerId }, 'Match completed');
 
-  // Write analytics row
+  // Write analytics row — use a savepoint so a failure here doesn't abort the outer transaction
   try {
+    await client.query('SAVEPOINT analytics');
     const compResult = await client.query<{ team_id: string; slugs: string[] }>(
       `SELECT t.id AS team_id, array_agg(u.slug ORDER BY u.slug) AS slugs
        FROM (VALUES ($1::uuid), ($2::uuid)) AS v(team_id)
@@ -189,7 +198,9 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
       [match.id, winnerId, loserId, match.player_one_id, match.player_two_id,
        p1Comp, p2Comp, winnerComp, loserComp, match.turn_number, durationSeconds]
     );
+    await client.query('RELEASE SAVEPOINT analytics');
   } catch (err) {
+    await client.query('ROLLBACK TO SAVEPOINT analytics').catch(() => {});
     logger.warn({ matchId: match.id, err }, 'Failed to write match analytics');
   }
 

@@ -16,7 +16,7 @@ const SubmitTurnSchema = z.object({ actions: z.array(TurnActionSchema).min(1).ma
 
 matchRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   const matches = await matchService.getUserMatches(req.user!.id);
-  const summary = matches.map((m) => ({ id: m.id, playerOneId: m.player_one_id, playerTwoId: m.player_two_id, status: m.status, activePlayerId: m.active_player_id, turnNumber: m.turn_number, turnDeadline: m.turn_deadline, winnerId: m.winner_id, eloDeltaP1: m.elo_delta_p1, eloDeltaP2: m.elo_delta_p2, createdAt: m.created_at, completedAt: m.completed_at, isMyTurn: m.active_player_id === req.user!.id && m.status === 'active' }));
+  const summary = matches.map((m) => ({ id: m.id, playerOneId: m.player_one_id, playerTwoId: m.player_two_id, playerOneUsername: m.player_one_username, playerTwoUsername: m.player_two_username, status: m.status, activePlayerId: m.active_player_id, turnNumber: m.turn_number, turnDeadline: m.turn_deadline, winnerId: m.winner_id, eloDeltaP1: m.elo_delta_p1, eloDeltaP2: m.elo_delta_p2, createdAt: m.created_at, completedAt: m.completed_at, isMyTurn: m.active_player_id === req.user!.id && m.status === 'active' }));
   sendSuccess(res, { matches: summary });
 });
 

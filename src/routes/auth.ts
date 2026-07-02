@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/authService.js';
 import { requireAuth } from '../middleware/auth.js';
-import { sendSuccess, Errors } from '../utils/response.js';
+import { sendSuccess, sendError, Errors } from '../utils/response.js';
 
 export const authRouter = Router();
 
@@ -74,7 +74,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
     sendSuccess(res, result);
   } catch (err) {
     if (err instanceof authService.AuthError) {
-      Errors.unauthorized(res);
+      sendError(res, 401, 'INVALID_CREDENTIALS', err.message);
       return;
     }
     throw err;
