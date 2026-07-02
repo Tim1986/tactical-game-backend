@@ -36,12 +36,26 @@ export interface UnitInstance {
 
 export type MatchPhase = 'action';
 
+export interface InitiativeState {
+  /** instanceIds in commitment order; grows 0→8 during round 1, then fixed */
+  order: UUID[];
+  /** 0-7 current slot index (only meaningful in round 2+) */
+  slot: number;
+  /** randomly chosen player who commits first in round 1 */
+  round1FirstPlayerId: UUID;
+  /** which unit must act this turn (null in round 1 — player's choice) */
+  activeUnitId: UUID | null;
+  /** true while order.length < 8 */
+  isRound1: boolean;
+}
+
 export interface MatchState {
   board: { width: number; height: number; };
   units: UnitInstance[];
   turnNumber: number;
   activePlayerId: UUID;
   phase: MatchPhase;
+  initiative: InitiativeState;
 }
 
 export interface MoveAction {
@@ -75,7 +89,7 @@ export type GameEventType =
   | 'UNIT_MOVED' | 'ABILITY_USED' | 'DAMAGE_DEALT' | 'HEALING_DONE'
   | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED'
   | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'SHIELD_ABSORBED' | 'ATTACK_MISSED'
-  | 'TURN_ENDED' | 'MATCH_OVER';
+  | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER';
 
 export interface GameEvent {
   type: GameEventType;

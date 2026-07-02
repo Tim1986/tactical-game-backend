@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { query, withTransaction } from '../db/pool.js';
-import { MatchState, TurnAction, UnitInstance, BoardPosition, BOARD_WIDTH, BOARD_HEIGHT } from '../types/matchState.js';
+import { MatchState, TurnAction, UnitInstance, BoardPosition, BOARD_WIDTH, BOARD_HEIGHT, InitiativeState } from '../types/matchState.js';
 import { AbilityDefinition, UnitDefinition } from '../types/index.js';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
@@ -23,28 +23,35 @@ interface MatchRow {
 }
 
 export async function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number): Promise<{ matchId: string; state: MatchState }> {
-  const [p1Units, p2Units] = await Promise.all([loadTeamUnits(playerOneTeamId), loadTeamUnits(playerTwoTeamId)]);
-  const initialState = buildInitialState(playerOneId, playerTwoId, p1Units, p2Units);
+  const [p1Result, p2Result] = await Promise.all([loadTeamUnitsWithPlacement(playerOneTeamId), loadTeamUnitsWithPlacement(playerTwoTeamId)]);
+  const initialState = buildInitialState(playerOneId, playerTwoId, p1Result.units, p2Result.units, p1Result.placement, p2Result.placement);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + turnDeadlineHours);
   const result = await query<{ id: string }>(
-    'INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state) VALUES ($1, $2, $3, $4, ' + "'active'" + ', $1, 1, $5, $6) RETURNING id',
-    [playerOneId, playerTwoId, playerOneTeamId, playerTwoTeamId, deadline.toISOString(), JSON.stringify(initialState)]
+    'INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state) VALUES ($1, $2, $3, $4, ' + "'active'" + ', $5, 1, $6, $7) RETURNING id',
+    [playerOneId, playerTwoId, playerOneTeamId, playerTwoTeamId, initialState.activePlayerId, deadline.toISOString(), JSON.stringify(initialState)]
   );
   const matchId = result.rows[0].id;
   logger.info({ matchId, playerOneId, playerTwoId }, 'Match created');
   return { matchId, state: initialState };
 }
 
-function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[]): MatchState {
+function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[]): MatchState {
   // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
-  const p1StartPositions: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-  const p2StartPositions: BoardPosition[] = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
+  const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
+  // Mirror P2 placement: team is saved as if they were P1 (left side), so flip x: newX = 7 - x
+  const p2Fallback: BoardPosition[] = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
+  const p1Positions = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
+  const p2Raw = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
+  // Mirror P2's saved positions to the right side of the board
+  const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
   const units: UnitInstance[] = [
-    ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1StartPositions[i])),
-    ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2StartPositions[i])),
+    ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i])),
+    ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2Positions[i])),
   ];
-  return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, activePlayerId: playerOneId, phase: 'action' };
+  const round1FirstPlayerId = Math.random() < 0.5 ? playerOneId : playerTwoId;
+  const initiative: InitiativeState = { order: [], slot: 0, round1FirstPlayerId, activeUnitId: null, isRound1: true };
+  return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, activePlayerId: round1FirstPlayerId, phase: 'action', initiative };
 }
 
 function buildUnitInstance(def: UnitDefinition, ownerId: string, position: BoardPosition): UnitInstance {
@@ -66,6 +73,21 @@ export async function getMatch(matchId: string, requestingUserId: string): Promi
   if (!match) throw new MatchNotFoundError();
   if (match.player_one_id !== requestingUserId && match.player_two_id !== requestingUserId) throw new MatchAccessError();
   return match;
+}
+
+export async function getMatchWithPlayers(matchId: string, requestingUserId: string): Promise<{ match: MatchRow; playerOneUsername: string; playerTwoUsername: string }> {
+  const result = await query<MatchRow & { p1_username: string; p2_username: string }>(
+    `SELECT m.*, u1.username AS p1_username, u2.username AS p2_username
+     FROM matches m
+     JOIN users u1 ON u1.id = m.player_one_id
+     JOIN users u2 ON u2.id = m.player_two_id
+     WHERE m.id = $1`,
+    [matchId]
+  );
+  const row = result.rows[0];
+  if (!row) throw new MatchNotFoundError();
+  if (row.player_one_id !== requestingUserId && row.player_two_id !== requestingUserId) throw new MatchAccessError();
+  return { match: row, playerOneUsername: row.p1_username, playerTwoUsername: row.p2_username };
 }
 
 export async function getUserMatches(userId: string): Promise<MatchRow[]> {
@@ -142,6 +164,35 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
   await client.query('UPDATE matches SET status = ' + "'completed'" + ', winner_id = $1, elo_delta_p1 = $2, elo_delta_p2 = $3, completed_at = NOW() WHERE id = $4', [winnerId, eloDeltaP1, eloDeltaP2, match.id]);
   logger.info({ matchId: match.id, winnerId }, 'Match completed');
 
+  // Write analytics row
+  try {
+    const compResult = await client.query<{ team_id: string; slugs: string[] }>(
+      `SELECT t.id AS team_id, array_agg(u.slug ORDER BY u.slug) AS slugs
+       FROM (VALUES ($1::uuid), ($2::uuid)) AS v(team_id)
+       JOIN teams t ON t.id = v.team_id
+       JOIN unit_definitions u ON u.id = ANY(t.unit_ids)
+       GROUP BY t.id`,
+      [match.player_one_team, match.player_two_team]
+    );
+    const compMap = new Map(compResult.rows.map((r) => [r.team_id, r.slugs]));
+    const p1Comp = compMap.get(match.player_one_team) ?? [];
+    const p2Comp = compMap.get(match.player_two_team) ?? [];
+    const winnerComp = winnerId === match.player_one_id ? p1Comp : winnerId === match.player_two_id ? p2Comp : null;
+    const loserComp  = winnerId === match.player_one_id ? p2Comp : winnerId === match.player_two_id ? p1Comp : null;
+    const durationSeconds = match.created_at
+      ? Math.round((Date.now() - new Date(match.created_at).getTime()) / 1000)
+      : null;
+    await client.query(
+      `INSERT INTO match_analytics
+         (match_id, winner_id, loser_id, p1_id, p2_id, p1_comp, p2_comp, winner_comp, loser_comp, turn_count, duration_seconds)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [match.id, winnerId, loserId, match.player_one_id, match.player_two_id,
+       p1Comp, p2Comp, winnerComp, loserComp, match.turn_number, durationSeconds]
+    );
+  } catch (err) {
+    logger.warn({ matchId: match.id, err }, 'Failed to write match analytics');
+  }
+
   // Evaluate achievements for both players after the transaction commits
   setImmediate(() => {
     void evaluateAchievements(match.player_one_id);
@@ -155,8 +206,8 @@ export async function getTurnHistory(matchId: string, requestingUserId: string):
   return result.rows;
 }
 
-async function loadTeamUnits(teamId: string): Promise<UnitDefinition[]> {
-  const teamResult = await query<{ unit_ids: string[] }>('SELECT unit_ids FROM teams WHERE id = $1', [teamId]);
+async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: UnitDefinition[]; placement: BoardPosition[] }> {
+  const teamResult = await query<{ unit_ids: string[]; placement: BoardPosition[] }>('SELECT unit_ids, placement FROM teams WHERE id = $1', [teamId]);
   const team = teamResult.rows[0];
   if (!team) throw new Error('Team not found: ' + teamId);
   const unitResult = await query<{ id: string; slug: string; name: string; max_health: number; armor_class: number; movement_range: number; abilities: string[]; passives: string[]; unlock_level: number; asset_key: string; is_active: boolean; }>(
@@ -164,10 +215,11 @@ async function loadTeamUnits(teamId: string): Promise<UnitDefinition[]> {
     [team.unit_ids]
   );
   const unitMap = new Map(unitResult.rows.map((r) => [r.id, r]));
-  return team.unit_ids.map((id) => {
+  const units = team.unit_ids.map((id) => {
     const row = unitMap.get(id)!;
     return { id: row.id, slug: row.slug, name: row.name, maxHealth: row.max_health, armorClass: row.armor_class, movementRange: row.movement_range, abilities: row.abilities, passives: row.passives, unlockLevel: row.unlock_level, assetKey: row.asset_key, isActive: row.is_active };
   });
+  return { units, placement: team.placement ?? [] };
 }
 
 async function loadAbilityMap(client: import('pg').PoolClient): Promise<Map<string, AbilityDefinition>> {

@@ -1,62 +1,256 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   MatchState, TurnAction, MoveAction, UseAbilityAction,
-  GameEvent, TurnResult, UnitInstance,
+  GameEvent, TurnResult, UnitInstance, InitiativeState,
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
-import { executeAbility, tickStatusEffects, tickCooldowns, resetTurnFlags } from './abilityExecutor.js';
+import { tickUnitStatusEffects, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
+import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 
 export class TurnValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'TurnValidationError'; }
 }
 
-export function processTurn(
-  state: MatchState, submittedActions: TurnAction[], submittingPlayerId: string,
-  playerOneId: string, playerTwoId: string, abilityMap: Map<string, AbilityDefinition>
-): TurnResult {
-  const workingState: MatchState = JSON.parse(JSON.stringify(state)) as MatchState;
-  const events: GameEvent[] = [];
-  if (workingState.activePlayerId !== submittingPlayerId) throw new TurnValidationError('It is not your turn');
-  validateActionSequence(submittedActions);
-  tickStatusEffects(workingState, submittingPlayerId, events);
-  const tickWin = checkWinCondition(workingState, playerOneId, playerTwoId);
-  if (tickWin.isOver) {
-    events.push({ type: 'MATCH_OVER', winnerId: tickWin.winnerId ?? undefined });
-    return { success: true, updatedState: workingState, events, matchOver: true, winnerId: tickWin.winnerId };
+// ─── Initiative helpers ───────────────────────────────────────────────────────
+
+/**
+ * After round 1 commitment is complete, build the canonical 8-slot interleaved order.
+ * P1 (round1FirstPlayer) fills even indices 0,2,4,6; P2 fills odd indices 1,3,5,7.
+ * Dead uncommitted units are appended at the end of their team's section.
+ */
+function buildFinalOrder(
+  committed: string[],
+  units: UnitInstance[],
+  round1FirstPlayerId: string,
+  playerOneId: string,
+  playerTwoId: string,
+): string[] {
+  const p2Id = round1FirstPlayerId === playerOneId ? playerTwoId : playerOneId;
+
+  const byOwner = (pid: string) => (id: string) => {
+    const u = units.find((u) => u.instanceId === id);
+    return u?.ownerPlayerId === pid;
+  };
+
+  const p1Committed = committed.filter(byOwner(round1FirstPlayerId));
+  const p2Committed = committed.filter(byOwner(p2Id));
+
+  const p1Dead = units
+    .filter((u) => u.ownerPlayerId === round1FirstPlayerId && !u.isAlive && !committed.includes(u.instanceId))
+    .map((u) => u.instanceId);
+  const p2Dead = units
+    .filter((u) => u.ownerPlayerId === p2Id && !u.isAlive && !committed.includes(u.instanceId))
+    .map((u) => u.instanceId);
+
+  const p1Full = [...p1Committed, ...p1Dead];
+  const p2Full = [...p2Committed, ...p2Dead];
+
+  const order: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    if (p1Full[i]) order.push(p1Full[i]);
+    if (p2Full[i]) order.push(p2Full[i]);
   }
-  resetTurnFlags(workingState, submittingPlayerId);
+  return order;
+}
+
+/**
+ * Advance the initiative slot, skipping dead and frozen units.
+ * Ticks frozen units' effects as their slot is skipped.
+ * Returns the new slot index, the activeUnitId at that slot, and whether a new round began.
+ */
+function advanceSlot(
+  initiative: InitiativeState,
+  units: UnitInstance[],
+  events: GameEvent[],
+): { slot: number; activeUnitId: string; newRoundStarted: boolean } {
+  const orderLen = initiative.order.length; // should be 8 here
+  let slot = (initiative.slot + 1) % orderLen;
+  let newRoundStarted = slot === 0;
+
+  for (let attempts = 0; attempts < orderLen; attempts++) {
+    const uid = initiative.order[slot];
+    const unit = units.find((u) => u.instanceId === uid);
+
+    if (!unit || !unit.isAlive) {
+      slot = (slot + 1) % orderLen;
+      if (slot === 0) newRoundStarted = true;
+      continue;
+    }
+
+    if (unit.statusEffects.some((se) => se.slug === 'frozen')) {
+      // Tick effects for the frozen unit and skip their slot
+      tickUnitStatusEffects(unit, events);
+      events.push({
+        type: 'TURN_SKIPPED',
+        sourceUnitInstanceId: uid,
+        message: `${unit.definitionSlug} is frozen — turn skipped`,
+      });
+      slot = (slot + 1) % orderLen;
+      if (slot === 0) newRoundStarted = true;
+      continue;
+    }
+
+    return { slot, activeUnitId: uid, newRoundStarted };
+  }
+
+  // All dead/frozen — fallback (game should already be over)
+  return { slot: 0, activeUnitId: initiative.order[0], newRoundStarted: false };
+}
+
+// ─── Main processor ───────────────────────────────────────────────────────────
+
+export function processTurn(
+  state: MatchState,
+  submittedActions: TurnAction[],
+  submittingPlayerId: string,
+  playerOneId: string,
+  playerTwoId: string,
+  abilityMap: Map<string, AbilityDefinition>,
+): TurnResult {
+  const ws: MatchState = JSON.parse(JSON.stringify(state)) as MatchState;
+  const events: GameEvent[] = [];
+
+  if (ws.activePlayerId !== submittingPlayerId) throw new TurnValidationError('It is not your turn');
+
+  validateActionSequence(submittedActions);
+
+  // Backward-compat: old matches created before the initiative system use legacy processing
+  if (!ws.initiative) {
+    return processLegacyTurn(ws, submittedActions, submittingPlayerId, playerOneId, playerTwoId, abilityMap, events);
+  }
+
+  const initiative = ws.initiative;
+  const isRound1 = initiative.isRound1;
+  const gameActions = submittedActions.filter((a) => a.type !== 'END_TURN') as (MoveAction | UseAbilityAction)[];
+
+  // ── Determine acting unit ────────────────────────────────────────────────
+  let actingUnit: UnitInstance | null = null;
+
+  if (isRound1) {
+    if (gameActions.length === 0) {
+      throw new TurnValidationError('Must commit a unit in round 1 — move or use an ability');
+    }
+    const unitIds = new Set(gameActions.map((a) => a.unitInstanceId));
+    if (unitIds.size !== 1) throw new TurnValidationError('All actions must reference the same unit');
+    const actingUnitId = [...unitIds][0];
+    actingUnit = ws.units.find((u) => u.instanceId === actingUnitId) ?? null;
+    if (!actingUnit) throw new TurnValidationError('Unit not found');
+    if (!actingUnit.isAlive) throw new TurnValidationError('Unit is dead');
+    if (actingUnit.ownerPlayerId !== submittingPlayerId) throw new TurnValidationError('Unit does not belong to you');
+    if (initiative.order.includes(actingUnitId)) throw new TurnValidationError('Unit already in initiative order');
+    if (actingUnit.statusEffects.some((se) => se.slug === 'frozen')) {
+      throw new TurnValidationError('A frozen unit cannot join the initiative — choose another unit');
+    }
+  } else {
+    // Round 2+: active unit is predetermined
+    const activeUnitId = initiative.activeUnitId;
+    if (!activeUnitId) throw new TurnValidationError('No active unit');
+    actingUnit = ws.units.find((u) => u.instanceId === activeUnitId) ?? null;
+    if (!actingUnit) throw new TurnValidationError('Active unit not found');
+    if (gameActions.length > 0) {
+      for (const a of gameActions) {
+        if (a.unitInstanceId !== activeUnitId) {
+          throw new TurnValidationError('Must act with the current initiative unit');
+        }
+      }
+    }
+  }
+
+  // ── Tick effects + reset flags for active unit ───────────────────────────
+  tickUnitStatusEffects(actingUnit, events);
+  resetUnitTurnFlags(actingUnit);
+
+  // Check if unit died from a status tick
+  const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
+  if (afterTickWin.isOver) {
+    events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
+    return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
+  }
+
+  // ── Process actions ──────────────────────────────────────────────────────
   let matchOver = false;
   let winnerId: string | null = null;
+
   for (const action of submittedActions) {
     if (action.type === 'END_TURN') {
-      tickCooldowns(workingState, submittingPlayerId);
-      const opponentId = submittingPlayerId === playerOneId ? playerTwoId : playerOneId;
-      workingState.activePlayerId = opponentId;
-      workingState.turnNumber++;
+      tickUnitCooldowns(actingUnit);
+
+      if (isRound1) {
+        // Commit acting unit
+        initiative.order.push(actingUnit.instanceId);
+
+        // Check if both teams have committed all alive units
+        const otherPlayerId = submittingPlayerId === playerOneId ? playerTwoId : playerOneId;
+        const myAliveLeft = ws.units.filter(
+          (u) => u.ownerPlayerId === submittingPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+        ).length;
+        const theirAliveLeft = ws.units.filter(
+          (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+        ).length;
+
+        if (myAliveLeft === 0 && theirAliveLeft === 0) {
+          // Transition to round 2
+          initiative.order = buildFinalOrder(initiative.order, ws.units, initiative.round1FirstPlayerId, playerOneId, playerTwoId);
+          initiative.isRound1 = false;
+          initiative.slot = -1; // will be set by advanceSlot below (start at -1 so advance gives 0)
+          // Temporarily set slot to -1 and advance
+          const firstSlot = advanceSlot({ ...initiative, slot: -1 }, ws.units, events);
+          initiative.slot = firstSlot.slot;
+          initiative.activeUnitId = firstSlot.activeUnitId;
+          // Reset all turn flags at round boundary
+          for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
+          const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
+          ws.activePlayerId = firstUnit?.ownerPlayerId ?? otherPlayerId;
+        } else {
+          // Stay in round 1: next player is whoever has uncommitted alive units
+          const otherHasAlive = ws.units.some(
+            (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+          );
+          ws.activePlayerId = otherHasAlive ? otherPlayerId : submittingPlayerId;
+          initiative.activeUnitId = null;
+        }
+      } else {
+        // Round 2+: advance slot
+        const next = advanceSlot(initiative, ws.units, events);
+        if (next.newRoundStarted) {
+          for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
+        }
+        initiative.slot = next.slot;
+        initiative.activeUnitId = next.activeUnitId;
+        const nextUnit = ws.units.find((u) => u.instanceId === next.activeUnitId);
+        ws.activePlayerId = nextUnit?.ownerPlayerId ?? ws.activePlayerId;
+      }
+
+      ws.turnNumber++;
       events.push({ type: 'TURN_ENDED' });
       break;
     }
-    if (action.type === 'MOVE') processMove(workingState, action, submittingPlayerId, events);
-    if (action.type === 'USE_ABILITY') processUseAbility(workingState, action, submittingPlayerId, events, abilityMap);
-    const winCheck = checkWinCondition(workingState, playerOneId, playerTwoId);
+
+    if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
+    if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
+
+    const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
     if (winCheck.isOver) {
       matchOver = true; winnerId = winCheck.winnerId;
       events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined });
       break;
     }
   }
-  return { success: true, updatedState: workingState, events, matchOver, winnerId };
+
+  return { success: true, updatedState: ws, events, matchOver, winnerId };
 }
+
+// ─── Action processors (unchanged from before) ────────────────────────────────
 
 function validateActionSequence(actions: TurnAction[]): void {
   if (!Array.isArray(actions) || actions.length === 0) throw new TurnValidationError('Turn must contain at least one action');
-  if (actions.length > 10) throw new TurnValidationError('Turn cannot contain more than 10 actions');
-  const endTurnIndex = actions.findIndex((a) => a.type === 'END_TURN');
-  if (endTurnIndex === -1) throw new TurnValidationError('Turn must end with an END_TURN action');
-  if (endTurnIndex !== actions.length - 1) throw new TurnValidationError('END_TURN must be the last action');
-  if (actions.filter((a) => a.type === 'END_TURN').length > 1) throw new TurnValidationError('Turn cannot contain multiple END_TURN actions');
+  if (actions.length > 4) throw new TurnValidationError('Too many actions in one turn');
+  const endIdx = actions.findIndex((a) => a.type === 'END_TURN');
+  if (endIdx === -1) throw new TurnValidationError('Turn must end with an END_TURN action');
+  if (endIdx !== actions.length - 1) throw new TurnValidationError('END_TURN must be the last action');
+  if (actions.filter((a) => a.type === 'END_TURN').length > 1) throw new TurnValidationError('Multiple END_TURN actions');
 }
 
 function processMove(state: MatchState, action: MoveAction, playerId: string, events: GameEvent[]): void {
@@ -66,9 +260,8 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
   if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
   if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
-  const unitMovementRange = getUnitMovementRange(unit);
   const distance = manhattanDistance(unit.position, action.destination);
-  if (distance > unitMovementRange) throw new TurnValidationError('Destination is out of movement range (max: ' + unitMovementRange + ', attempted: ' + distance + ')');
+  if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Destination out of movement range');
   unit.position = action.destination;
   unit.hasMovedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination });
@@ -78,16 +271,16 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   const unit = findAndValidateUnit(state, action.unitInstanceId, playerId);
   if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
   if (unit.hasActedThisTurn) throw new TurnValidationError('Unit has already used an ability this turn');
-  const unitAbilities = getUnitAbilities(unit);
+  const unitAbilities = unit.abilities ?? [];
   if (!unitAbilities.includes(action.abilitySlug)) throw new TurnValidationError('Unit does not have ability: ' + action.abilitySlug);
   const ability = abilityMap.get(action.abilitySlug);
   if (!ability) throw new TurnValidationError('Unknown ability: ' + action.abilitySlug);
   const cooldown = unit.cooldowns[action.abilitySlug] ?? 0;
-  if (cooldown > 0) throw new TurnValidationError('Ability ' + action.abilitySlug + ' is on cooldown (' + cooldown + ' turns remaining)');
+  if (cooldown > 0) throw new TurnValidationError('Ability on cooldown (' + cooldown + ' turns remaining)');
   if (!isInBounds(action.target)) throw new TurnValidationError('Target position is out of bounds');
   if (ability.targetingType !== 'self') {
     const rangeDistance = chebyshevDistance(unit.position, action.target);
-    if (rangeDistance > ability.range) throw new TurnValidationError('Target is out of range (max: ' + ability.range + ', attempted: ' + rangeDistance + ')');
+    if (rangeDistance > ability.range) throw new TurnValidationError('Target out of range');
   }
   if (ability.targetingType === 'single') {
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
@@ -96,7 +289,7 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   executeAbility({ state, caster: unit, targetPosition: action.target, ability, events });
   if (ability.cooldownTurns > 0) unit.cooldowns[action.abilitySlug] = ability.cooldownTurns;
   unit.hasActedThisTurn = true;
-  events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: 'Used ' + ability.name });
+  events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}` });
 }
 
 function findAndValidateUnit(state: MatchState, unitInstanceId: string, playerId: string): UnitInstance {
@@ -107,12 +300,38 @@ function findAndValidateUnit(state: MatchState, unitInstanceId: string, playerId
   return unit;
 }
 
-function getUnitMovementRange(unit: UnitInstance): number {
-  return unit.movementRange ?? 3;
-}
-
-function getUnitAbilities(unit: UnitInstance): string[] {
-  return unit.abilities ?? [];
-}
-
 export function generateInstanceId(): string { return uuidv4(); }
+
+// Legacy processor for matches created before the initiative system
+function processLegacyTurn(
+  ws: MatchState,
+  submittedActions: TurnAction[],
+  submittingPlayerId: string,
+  playerOneId: string,
+  playerTwoId: string,
+  abilityMap: Map<string, AbilityDefinition>,
+  events: GameEvent[],
+): TurnResult {
+  validateActionSequence(submittedActions);
+  let matchOver = false;
+  let winnerId: string | null = null;
+
+  for (const action of submittedActions) {
+    if (action.type === 'END_TURN') {
+      const otherPlayerId = submittingPlayerId === playerOneId ? playerTwoId : playerOneId;
+      ws.activePlayerId = otherPlayerId;
+      ws.turnNumber++;
+      events.push({ type: 'TURN_ENDED' });
+      break;
+    }
+    if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
+    if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
+    const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
+    if (winCheck.isOver) {
+      matchOver = true; winnerId = winCheck.winnerId;
+      events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined });
+      break;
+    }
+  }
+  return { success: true, updatedState: ws, events, matchOver, winnerId };
+}

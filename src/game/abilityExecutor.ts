@@ -97,7 +97,8 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
   if (casterWeakened) damage = Math.floor(damage * 0.75);
   if (damage <= 0) return;
   target.currentHealth = Math.max(0, target.currentHealth - damage);
-  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: damage + ' ' + effect.damageType + ' damage' });
+  const dmgLabel = effect.damageType === 'true' ? 'shadow' : effect.damageType;
+  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: damage + ' ' + dmgLabel + ' damage' });
   if (target.currentHealth <= 0) {
     target.isAlive = false;
     ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
@@ -181,50 +182,62 @@ function hasPassive(unit: UnitInstance, passiveSlug: string): boolean {
   return (unit.passives ?? []).includes(passiveSlug);
 }
 
+/** Tick status effects for a single unit (called at the start of that unit's initiative turn). */
+export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): void {
+  if (!unit.isAlive) return;
+  const expiredEffects: string[] = [];
+  for (const effect of unit.statusEffects) {
+    if (effect.slug === 'burning') {
+      const damage = 8 * effect.stacks;
+      unit.currentHealth = Math.max(0, unit.currentHealth - damage);
+      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'burning', value: damage, message: `${unit.definitionSlug} burns for ${damage}` });
+      if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId, message: `${unit.definitionSlug} died` }); }
+    }
+    if (effect.slug === 'poisoned') {
+      const damage = 5 * effect.stacks;
+      unit.currentHealth = Math.max(0, unit.currentHealth - damage);
+      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'poisoned', value: damage, message: `${unit.definitionSlug} takes ${damage} poison damage` });
+      if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId, message: `${unit.definitionSlug} died` }); }
+    }
+    if (effect.slug === 'regenerating') {
+      const heal = 10;
+      unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + heal);
+      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'regenerating', value: heal, message: `${unit.definitionSlug} regenerates ${heal} HP` });
+    }
+    if (effect.turnsRemaining > 0) {
+      effect.turnsRemaining--;
+      if (effect.turnsRemaining === 0) expiredEffects.push(effect.slug);
+    }
+  }
+  unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
+}
+
+/** Tick ability cooldowns for a single unit (called at the end of that unit's initiative turn). */
+export function tickUnitCooldowns(unit: UnitInstance): void {
+  for (const slug of Object.keys(unit.cooldowns)) {
+    if (unit.cooldowns[slug] > 0) unit.cooldowns[slug]--;
+  }
+}
+
+/** Reset move/act flags for a single unit (called at the start of that unit's initiative turn). */
+export function resetUnitTurnFlags(unit: UnitInstance): void {
+  unit.hasMovedThisTurn = false;
+  unit.hasActedThisTurn = false;
+}
+
+// Legacy per-player helpers (kept for any non-initiative code paths)
 export function tickStatusEffects(state: MatchState, playerId: string, events: GameEvent[]): void {
-  const playerUnits = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-  for (const unit of playerUnits) {
-    const expiredEffects: string[] = [];
-    for (const effect of unit.statusEffects) {
-      if (effect.slug === 'burning') {
-        const damage = 8 * effect.stacks;
-        unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-        events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'burning', value: damage });
-        if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId }); }
-      }
-      if (effect.slug === 'poisoned') {
-        const damage = 5 * effect.stacks;
-        unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-        events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'poisoned', value: damage });
-        if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId }); }
-      }
-      if (effect.slug === 'regenerating') {
-        const heal = 10;
-        unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + heal);
-        events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'regenerating', value: heal });
-      }
-      if (effect.turnsRemaining > 0) {
-        effect.turnsRemaining--;
-        if (effect.turnsRemaining === 0) expiredEffects.push(effect.slug);
-      }
-    }
-    unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
+  for (const unit of state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId)) {
+    tickUnitStatusEffects(unit, events);
   }
 }
-
 export function tickCooldowns(state: MatchState, playerId: string): void {
-  const playerUnits = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-  for (const unit of playerUnits) {
-    for (const slug of Object.keys(unit.cooldowns)) {
-      if (unit.cooldowns[slug] > 0) unit.cooldowns[slug]--;
-    }
+  for (const unit of state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId)) {
+    tickUnitCooldowns(unit);
   }
 }
-
 export function resetTurnFlags(state: MatchState, playerId: string): void {
-  const playerUnits = state.units.filter((u) => u.ownerPlayerId === playerId);
-  for (const unit of playerUnits) {
-    unit.hasMovedThisTurn = false;
-    unit.hasActedThisTurn = false;
+  for (const unit of state.units.filter((u) => u.ownerPlayerId === playerId)) {
+    resetUnitTurnFlags(unit);
   }
 }
