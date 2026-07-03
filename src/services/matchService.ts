@@ -27,11 +27,6 @@ interface MatchRow {
 
 const fableBrain = new OptimalBrain();
 
-/** Placement for Fable's team — stored as left-side coords, mirrored to right side on init. */
-const FABLE_PLACEMENT: BoardPosition[] = [
-  { x: 1, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 },
-];
-
 export async function createPveMatch(
   humanPlayerId: string,
   humanTeamId: string,
@@ -42,7 +37,7 @@ export async function createPveMatch(
     loadTeamUnitsWithPlacement(fableTeamId),
   ]);
   // Human always goes first in PvE — simpler UX, no auto-process needed at creation
-  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, FABLE_PLACEMENT, humanPlayerId);
+  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + 72);
   const result = await query<{ id: string }>(
