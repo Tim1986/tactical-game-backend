@@ -5,6 +5,7 @@ import {
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
+import { reachableFrom } from '../ai/geometry.js';
 import { tickUnitStatusEffects, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
@@ -266,6 +267,8 @@ function processCharge(state: MatchState, action: ChargeAction, playerId: string
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
   const distance = manhattanDistance(unit.position, action.destination);
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Charge destination out of movement range');
+  const chargeReachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
+  if (!chargeReachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Charge destination is not reachable (path blocked by enemy)');
   unit.position = action.destination;
   unit.hasActedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination, message: `${unit.definitionSlug} charged` });
@@ -280,6 +283,8 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
   if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
   const distance = manhattanDistance(unit.position, action.destination);
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Destination out of movement range');
+  const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
+  if (!reachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Destination is not reachable (path blocked by enemy)');
   unit.position = action.destination;
   unit.hasMovedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination });
