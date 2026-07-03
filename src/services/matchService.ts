@@ -7,6 +7,9 @@ import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
 import { logger } from '../utils/logger.js';
 import { notifyUser } from './notificationService.js';
 import { evaluateAchievements } from './achievementService.js';
+import { OptimalBrain } from '../ai/aiBrain.js';
+
+export const FABLE_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
 
 export class MatchNotFoundError extends Error { constructor() { super('Match not found'); this.name = 'MatchNotFoundError'; } }
 export class MatchAccessError extends Error { constructor() { super('You are not a participant in this match'); this.name = 'MatchAccessError'; } }
@@ -19,7 +22,37 @@ interface MatchRow {
   active_player_id: string; turn_number: number; turn_deadline: string | null;
   winner_id: string | null; match_state: MatchState; last_turn_events: unknown[];
   elo_delta_p1: number | null; elo_delta_p2: number | null;
-  created_at: string; completed_at: string | null;
+  created_at: string; completed_at: string | null; is_pve: boolean;
+}
+
+const fableBrain = new OptimalBrain();
+
+/** Placement for Fable's team — stored as left-side coords, mirrored to right side on init. */
+const FABLE_PLACEMENT: BoardPosition[] = [
+  { x: 1, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 },
+];
+
+export async function createPveMatch(
+  humanPlayerId: string,
+  humanTeamId: string,
+  fableTeamId: string,
+): Promise<{ matchId: string; state: MatchState }> {
+  const [humanResult, fableResult] = await Promise.all([
+    loadTeamUnitsWithPlacement(humanTeamId),
+    loadTeamUnitsWithPlacement(fableTeamId),
+  ]);
+  // Human always goes first in PvE — simpler UX, no auto-process needed at creation
+  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, FABLE_PLACEMENT, humanPlayerId);
+  const deadline = new Date();
+  deadline.setHours(deadline.getHours() + 72);
+  const result = await query<{ id: string }>(
+    `INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state, is_pve)
+     VALUES ($1, $2, $3, $4, 'active', $5, 1, $6, $7, TRUE) RETURNING id`,
+    [humanPlayerId, FABLE_PLAYER_ID, humanTeamId, fableTeamId, humanPlayerId, deadline.toISOString(), JSON.stringify(initialState)]
+  );
+  const matchId = result.rows[0].id;
+  logger.info({ matchId, humanPlayerId }, 'PvE match created');
+  return { matchId, state: initialState };
 }
 
 export async function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number): Promise<{ matchId: string; state: MatchState }> {
@@ -36,7 +69,7 @@ export async function createMatch(playerOneId: string, playerTwoId: string, play
   return { matchId, state: initialState };
 }
 
-function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[]): MatchState {
+function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string): MatchState {
   // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
   const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
   // Mirror P2 placement: team is saved as if they were P1 (left side), so flip x: newX = 7 - x
@@ -49,9 +82,9 @@ function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: Un
     ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i])),
     ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2Positions[i])),
   ];
-  const round1FirstPlayerId = Math.random() < 0.5 ? playerOneId : playerTwoId;
+  const round1FirstPlayerId = forceFirstPlayerId ?? (Math.random() < 0.5 ? playerOneId : playerTwoId);
   const initiative: InitiativeState = { order: [], slot: 0, round1FirstPlayerId, activeUnitId: null, isRound1: true };
-  return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, activePlayerId: round1FirstPlayerId, phase: 'action', initiative };
+  return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, roundNumber: 1, activePlayerId: round1FirstPlayerId, phase: 'action', initiative };
 }
 
 function buildUnitInstance(def: UnitDefinition, ownerId: string, position: BoardPosition): UnitInstance {
@@ -111,11 +144,22 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
     if (match.player_one_id !== submittingPlayerId && match.player_two_id !== submittingPlayerId) throw new MatchAccessError();
     if (match.status !== 'active') throw new MatchNotActiveError();
     const abilityMap = await loadAbilityMap(client);
-    const result = processTurn(match.match_state, actions, submittingPlayerId, match.player_one_id, match.player_two_id, abilityMap);
+    const humanResult = processTurn(match.match_state, actions, submittingPlayerId, match.player_one_id, match.player_two_id, abilityMap);
     await client.query(
       'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
-      [matchId, submittingPlayerId, match.turn_number, JSON.stringify(actions), JSON.stringify(result.updatedState)]
+      [matchId, submittingPlayerId, match.turn_number, JSON.stringify(actions), JSON.stringify(humanResult.updatedState)]
     );
+
+    // For PvE: auto-process Fable's turns within the same transaction
+    let result = humanResult;
+    let allEvents: unknown[] = [...(humanResult.events as unknown[])];
+    if (!humanResult.matchOver && match.is_pve && humanResult.updatedState.activePlayerId === FABLE_PLAYER_ID) {
+      const fablePlayerId = match.player_one_id === submittingPlayerId ? match.player_two_id : match.player_one_id;
+      const fableResult = await runFableTurns(matchId, humanResult.updatedState, submittingPlayerId, fablePlayerId, abilityMap, client);
+      allEvents = [...allEvents, ...fableResult.events];
+      result = { ...result, updatedState: fableResult.state, matchOver: fableResult.matchOver, winnerId: fableResult.winnerId, events: allEvents as ReturnType<typeof processTurn>['events'] };
+    }
+
     if (result.matchOver) {
       await finalizeMatch(client, match, result.winnerId);
     } else {
@@ -123,12 +167,14 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
       newDeadline.setHours(newDeadline.getHours() + 72);
       await client.query(
         'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4, last_turn_events = $5 WHERE id = $6',
-        [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify(result.events), matchId]
+        [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify(allEvents), matchId]
       );
-      // Notify the opponent it's their turn
-      setImmediate(() => {
-        void notifyUser(result.updatedState.activePlayerId, 'YOUR_TURN', { matchId });
-      });
+      // Notify the next player (skip notification for Fable in PvE)
+      if (!match.is_pve) {
+        setImmediate(() => {
+          void notifyUser(result.updatedState.activePlayerId, 'YOUR_TURN', { matchId });
+        });
+      }
     }
     const updatedResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]);
     return { result, match: updatedResult.rows[0] };
@@ -150,7 +196,7 @@ export async function forfeitMatch(matchId: string, forfeitingPlayerId: string):
 async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, winnerId: string | null): Promise<void> {
   const loserId = winnerId === match.player_one_id ? match.player_two_id : match.player_one_id;
   let eloDeltaP1 = 0; let eloDeltaP2 = 0;
-  if (winnerId) {
+  if (winnerId && !match.is_pve) {
     const eloResult = await client.query<{ id: string; elo: number }>('SELECT id, elo FROM users WHERE id = ANY($1)', [[match.player_one_id, match.player_two_id]]);
     const eloMap = new Map(eloResult.rows.map((r) => [r.id, r.elo]));
     const p1Elo = eloMap.get(match.player_one_id) ?? 1200;
@@ -170,7 +216,7 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
     await client.query('UPDATE users SET account_xp = account_xp + $1, account_level = $2 WHERE id = $3', [loserXp, calculateLevel(loserCurrentXp + loserXp), loserId]);
   }
   await client.query('UPDATE matches SET status = ' + "'completed'" + ', winner_id = $1, elo_delta_p1 = $2, elo_delta_p2 = $3, completed_at = NOW() WHERE id = $4', [winnerId, eloDeltaP1, eloDeltaP2, match.id]);
-  logger.info({ matchId: match.id, winnerId }, 'Match completed');
+  logger.info({ matchId: match.id, winnerId, isPve: match.is_pve }, 'Match completed');
 
   // Write analytics row — use a savepoint so a failure here doesn't abort the outer transaction
   try {
@@ -204,10 +250,10 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
     logger.warn({ matchId: match.id, err }, 'Failed to write match analytics');
   }
 
-  // Evaluate achievements for both players after the transaction commits
+  // Evaluate achievements for human players only (not Fable)
   setImmediate(() => {
-    void evaluateAchievements(match.player_one_id);
-    void evaluateAchievements(match.player_two_id);
+    if (match.player_one_id !== FABLE_PLAYER_ID) void evaluateAchievements(match.player_one_id);
+    if (match.player_two_id !== FABLE_PLAYER_ID) void evaluateAchievements(match.player_two_id);
   });
 }
 
@@ -231,6 +277,47 @@ async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: Unit
     return { id: row.id, slug: row.slug, name: row.name, maxHealth: row.max_health, armorClass: row.armor_class, movementRange: row.movement_range, abilities: row.abilities, passives: row.passives, unlockLevel: row.unlock_level, assetKey: row.asset_key, isActive: row.is_active };
   });
   return { units, placement: team.placement ?? [] };
+}
+
+async function loadAbilityMapDirect(): Promise<Map<string, AbilityDefinition>> {
+  const result = await query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; effects: unknown[]; }>(
+    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, effects FROM ability_definitions'
+  );
+  const map = new Map<string, AbilityDefinition>();
+  for (const row of result.rows) {
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, effects: row.effects as AbilityDefinition['effects'] });
+  }
+  return map;
+}
+
+async function runFableTurns(
+  matchId: string,
+  state: MatchState,
+  humanPlayerId: string,
+  fablePlayerId: string,
+  abilityMap: Map<string, AbilityDefinition>,
+  client: import('pg').PoolClient | null,
+): Promise<{ state: MatchState; events: unknown[]; matchOver: boolean; winnerId: string | null }> {
+  const allEvents: unknown[] = [];
+  let currentState = state;
+  let iterations = 0;
+  while (currentState.activePlayerId === fablePlayerId && iterations < 20) {
+    iterations++;
+    const fableActions = fableBrain.selectActions(currentState, fablePlayerId, abilityMap);
+    const turnResult = processTurn(currentState, fableActions, fablePlayerId, humanPlayerId, fablePlayerId, abilityMap);
+    if (client) {
+      await client.query(
+        'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
+        [matchId, fablePlayerId, currentState.turnNumber, JSON.stringify(fableActions), JSON.stringify(turnResult.updatedState)]
+      );
+    }
+    allEvents.push(...(turnResult.events as unknown[]));
+    currentState = turnResult.updatedState;
+    if (turnResult.matchOver) {
+      return { state: currentState, events: allEvents, matchOver: true, winnerId: turnResult.winnerId };
+    }
+  }
+  return { state: currentState, events: allEvents, matchOver: false, winnerId: null };
 }
 
 async function loadAbilityMap(client: import('pg').PoolClient): Promise<Map<string, AbilityDefinition>> {

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
-  MatchState, TurnAction, MoveAction, UseAbilityAction,
+  MatchState, TurnAction, MoveAction, UseAbilityAction, ChargeAction,
   GameEvent, TurnResult, UnitInstance, InitiativeState,
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
@@ -215,6 +215,7 @@ export function processTurn(
         // Round 2+: advance slot
         const next = advanceSlot(initiative, ws.units, events);
         if (next.newRoundStarted) {
+          ws.roundNumber = (ws.roundNumber ?? 1) + 1;
           for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
         }
         initiative.slot = next.slot;
@@ -229,6 +230,7 @@ export function processTurn(
     }
 
     if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
+    if (action.type === 'CHARGE') processCharge(ws, action, submittingPlayerId, events);
     if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
 
     const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
@@ -251,6 +253,22 @@ function validateActionSequence(actions: TurnAction[]): void {
   if (endIdx === -1) throw new TurnValidationError('Turn must end with an END_TURN action');
   if (endIdx !== actions.length - 1) throw new TurnValidationError('END_TURN must be the last action');
   if (actions.filter((a) => a.type === 'END_TURN').length > 1) throw new TurnValidationError('Multiple END_TURN actions');
+  if (actions.filter((a) => a.type === 'CHARGE').length > 1) throw new TurnValidationError('Cannot charge more than once per turn');
+}
+
+function processCharge(state: MatchState, action: ChargeAction, playerId: string, events: GameEvent[]): void {
+  const unit = findAndValidateUnit(state, action.unitInstanceId, playerId);
+  if ((state.roundNumber ?? 1) > 10) throw new TurnValidationError('Charge is only available in the first 10 rounds');
+  if (unit.hasActedThisTurn) throw new TurnValidationError('Unit has already used its action this turn');
+  if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
+  if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
+  if (!isInBounds(action.destination)) throw new TurnValidationError('Destination is out of bounds');
+  if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
+  const distance = manhattanDistance(unit.position, action.destination);
+  if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Charge destination out of movement range');
+  unit.position = action.destination;
+  unit.hasActedThisTurn = true;
+  events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination, message: `${unit.definitionSlug} charged` });
 }
 
 function processMove(state: MatchState, action: MoveAction, playerId: string, events: GameEvent[]): void {
@@ -279,7 +297,11 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   if (cooldown > 0) throw new TurnValidationError('Ability on cooldown (' + cooldown + ' turns remaining)');
   if (!isInBounds(action.target)) throw new TurnValidationError('Target position is out of bounds');
   if (ability.targetingType !== 'self') {
-    const rangeDistance = chebyshevDistance(unit.position, action.target);
+    // Line abilities: target is a direction indicator, range measured in steps (Chebyshev)
+    // All others: Manhattan distance
+    const rangeDistance = ability.targetingType === 'line'
+      ? chebyshevDistance(unit.position, action.target)
+      : manhattanDistance(unit.position, action.target);
     if (rangeDistance > ability.range) throw new TurnValidationError('Target out of range');
   }
   if (ability.targetingType === 'single') {
@@ -325,6 +347,7 @@ function processLegacyTurn(
       break;
     }
     if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
+    if (action.type === 'CHARGE') processCharge(ws, action, submittingPlayerId, events);
     if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
     const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
     if (winCheck.isOver) {

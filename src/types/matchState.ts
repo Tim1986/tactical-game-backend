@@ -13,7 +13,6 @@ export interface ActiveStatusEffect {
   turnsRemaining: number;
   stacks: number;
   sourceUnitInstanceId: UUID;
-  shieldValue?: number;
 }
 
 export interface UnitInstance {
@@ -53,6 +52,8 @@ export interface MatchState {
   board: { width: number; height: number; };
   units: UnitInstance[];
   turnNumber: number;
+  /** Full initiative cycles completed (increments each time the order wraps). Charge is unavailable after round 10. */
+  roundNumber: number;
   activePlayerId: UUID;
   phase: MatchPhase;
   initiative: InitiativeState;
@@ -71,11 +72,17 @@ export interface UseAbilityAction {
   target: BoardPosition;
 }
 
+export interface ChargeAction {
+  type: 'CHARGE';
+  unitInstanceId: UUID;
+  destination: BoardPosition;
+}
+
 export interface EndTurnAction {
   type: 'END_TURN';
 }
 
-export type TurnAction = MoveAction | UseAbilityAction | EndTurnAction;
+export type TurnAction = MoveAction | UseAbilityAction | ChargeAction | EndTurnAction;
 
 export interface TurnResult {
   success: boolean;
@@ -88,7 +95,7 @@ export interface TurnResult {
 export type GameEventType =
   | 'UNIT_MOVED' | 'ABILITY_USED' | 'DAMAGE_DEALT' | 'HEALING_DONE'
   | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED'
-  | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'SHIELD_ABSORBED' | 'ATTACK_MISSED'
+  | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'ATTACK_MISSED'
   | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER';
 
 export interface GameEvent {
