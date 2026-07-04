@@ -32,7 +32,7 @@ export async function issueChallenge(
 
   // Look up opponent by username
   const opponentResult = await query<{ id: string; username: string }>(
-    'SELECT id, username FROM users WHERE username = $1',
+    'SELECT id, username FROM users WHERE LOWER(username) = LOWER($1)',
     [opponentUsername.trim()]
   );
   const opponent = opponentResult.rows[0];

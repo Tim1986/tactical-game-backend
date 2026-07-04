@@ -73,9 +73,9 @@ export async function getUnlockedUnits(
     `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives,
             unlock_level, asset_key, is_active
      FROM unit_definitions
-     WHERE is_active = TRUE AND unlock_level <= $1
+     WHERE is_active = TRUE
      ORDER BY unlock_level ASC, name ASC`,
-    [accountLevel]
+    []
   );
 
   const units = unitResult.rows.map((row: UnitRow) => rowToUnit(row));
@@ -153,15 +153,8 @@ export async function validateUnitAccess(
   const foundIds = new Set(foundUnits.map((u: UnitDefinition) => u.id));
   const invalidIds = unitIds.filter((id: string) => !foundIds.has(id));
 
-  // Check unlock levels
-  const lockedUnits = foundUnits.filter((u: UnitDefinition) => u.unlockLevel > accountLevel);
-
-  if (invalidIds.length > 0 || lockedUnits.length > 0) {
-    return {
-      valid: false,
-      units: foundUnits,
-      invalidIds: [...invalidIds, ...lockedUnits.map((u: UnitDefinition) => u.id)],
-    };
+  if (invalidIds.length > 0) {
+    return { valid: false, units: foundUnits, invalidIds };
   }
 
   return { valid: true, units: foundUnits, invalidIds: [] };

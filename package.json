@@ -1,12 +1,12 @@
 {
   "name": "tactical-game-backend",
-  "version": "0.1.0",
+  "version": "1.0.04",
   "description": "Authoritative backend for async tactical strategy game",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/db/migrate.js && node dist/index.js",
+    "start": "node dist/db/migrate.js && node dist/db/seed.js && node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "migrate": "tsx src/db/migrate.ts",
@@ -47,5 +47,5 @@
     "typescript": "^5.5.3",
     "vitest": "^2.0.3"
   },
-  "_cacheBust": 1781754942791
+  "_cacheBust": 1782934835108
 }

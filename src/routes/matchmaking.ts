@@ -18,7 +18,6 @@ matchmakingRouter.post('/queue', async (req: Request, res: Response): Promise<vo
     sendSuccess(res, { message: 'Entered matchmaking queue', position: result.position }, 201);
   } catch (err) {
     if (err instanceof matchmakingService.AlreadyInQueueError) { Errors.conflict(res, err.message); return; }
-    if (err instanceof matchmakingService.ActiveMatchExistsError) { Errors.conflict(res, err.message); return; }
     if (err instanceof matchmakingService.TeamNotFoundError) { Errors.notFound(res, 'Team'); return; }
     throw err;
   }

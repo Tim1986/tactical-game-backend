@@ -107,4 +107,5 @@ export interface GameEvent {
   statusSlug?: string;
   winnerId?: UUID;
   message?: string;
+  abilitySlug?: string;
 }

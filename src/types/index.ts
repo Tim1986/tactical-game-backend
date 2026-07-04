@@ -45,7 +45,6 @@ export interface PushToken {
 // --- Ability Definitions ---
 
 export type TargetingType = 'single' | 'aoe' | 'self' | 'line' | 'cone';
-export type DamageType = 'physical' | 'magical' | 'true';
 export type EffectTrigger = 'on_turn_start' | 'on_turn_end' | 'on_hit' | 'on_death';
 
 export type AbilityEffectType =
@@ -62,7 +61,6 @@ export interface DamageEffect {
   type: 'damage';
   formula: 'flat';
   value: number;
-  damageType: DamageType;
   healthThreshold?: number; // Kill Shot: fails if target.currentHealth > threshold
 }
 

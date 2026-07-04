@@ -73,7 +73,7 @@ const FREEZE: AbilityDefinition = {
   id: 'ab-freeze', slug: 'freeze', name: 'Freeze', description: '',
   targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 2,
   isUnblockable: true,
-  effects: [{ type: 'apply_status', statusSlug: 'stunned', stacks: 1, durationTurns: 2 }],
+  effects: [{ type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 2 }],
 };
 
 afterEach(() => { vi.restoreAllMocks(); });
@@ -145,9 +145,9 @@ describe('unblockable', () => {
     const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, FREEZE, makeState([caster, target]));
     executeAbility(ctx);
-    expect(ctx.events.some((e) => e.type === 'STATUS_APPLIED' && e.statusSlug === 'stunned')).toBe(true);
-    expect(target.statusEffects.some((se) => se.slug === 'stunned')).toBe(true);
-    expect(target.statusEffects.find((se) => se.slug === 'stunned')?.turnsRemaining).toBe(2);
+    expect(ctx.events.some((e) => e.type === 'STATUS_APPLIED' && e.statusSlug === 'frozen')).toBe(true);
+    expect(target.statusEffects.some((se) => se.slug === 'frozen')).toBe(true);
+    expect(target.statusEffects.find((se) => se.slug === 'frozen')?.turnsRemaining).toBe(2);
   });
 });
 
@@ -267,31 +267,3 @@ describe('Heal', () => {
   });
 });
 
-// ─── Shield absorption ────────────────────────────────────────────────────────
-
-describe('shield absorption', () => {
-  it('physical damage is absorbed by shield before hitting HP', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.999); // always hit
-    const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, {
-      armorClass: 10,
-      statusEffects: [{ slug: 'shielded', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u1', shieldValue: 10 }],
-    });
-    const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
-    executeAbility(ctx);
-    // Strike deals 15: 10 absorbed by shield, 5 to HP
-    expect(target.currentHealth).toBe(35);
-    expect(ctx.events.some((e) => e.type === 'SHIELD_ABSORBED')).toBe(true);
-  });
-
-  it('true damage bypasses shield entirely', () => {
-    const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, {
-      statusEffects: [{ slug: 'shielded', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u1', shieldValue: 999 }],
-    });
-    const ctx = makeCtx(caster, { x: 1, y: 0 }, DEMON_BLAST, makeState([caster, target]));
-    executeAbility(ctx);
-    expect(target.currentHealth).toBe(28); // 40 - 12, shield not consumed
-    expect(ctx.events.some((e) => e.type === 'SHIELD_ABSORBED')).toBe(false);
-  });
-});

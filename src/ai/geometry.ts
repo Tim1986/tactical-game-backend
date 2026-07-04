@@ -1,9 +1,16 @@
 /**
- * geometry.ts — Board geometry helpers for the DungeonCombat AI and sim harness.
- * Adapted from Fable's standalone geometry.ts to use backend types.
+ * geometry.ts — Board geometry helpers for DungeonCombat.
+ *
+ * Rules implemented here (from FABLE_AI_CONTEXT.md):
+ * - 8x8 board, four corner tiles removed → 60-tile cross.
+ * - Movement + single/aoe ability RANGE checks use Manhattan distance.
+ * - Line abilities use step count along one of the 8 rays (diagonal step = 1).
+ * - LOS only applies on the 8 true lines; non-aligned tiles are never blocked.
+ * - Movement is pathfound (BFS): allies can be moved through but not landed
+ *   on; enemies block movement entirely.
  */
 
-import { BoardPosition, UnitInstance } from '../types/matchState.js';
+import { BoardPosition, UnitInstance } from './types';
 
 export const BOARD_SIZE = 8;
 
@@ -26,8 +33,10 @@ export function isCorner(x: number, y: number): boolean {
 
 export function isInBounds(pos: BoardPosition): boolean {
   return (
-    pos.x >= 0 && pos.x < BOARD_SIZE &&
-    pos.y >= 0 && pos.y < BOARD_SIZE &&
+    pos.x >= 0 &&
+    pos.x < BOARD_SIZE &&
+    pos.y >= 0 &&
+    pos.y < BOARD_SIZE &&
     !isCorner(pos.x, pos.y)
   );
 }
@@ -41,20 +50,20 @@ export function isAligned(a: BoardPosition, b: BoardPosition): boolean {
 }
 
 /**
- * Step count along a ray (line-ability range).
- * Each tile along the ray costs 1 including diagonals.
- * Returns Infinity if not on a true line.
+ * Step count along a ray (line-ability range). Each tile along the ray costs 1,
+ * including diagonals. Returns Infinity if the points are not on a true line.
  */
 export function stepCount(a: BoardPosition, b: BoardPosition): number {
   if (!isAligned(a, b)) return Infinity;
   return chebyshevDistance(a, b);
 }
 
+/** Unit step direction from a toward b (sign vector). */
 export function rayStep(a: BoardPosition, b: BoardPosition): BoardPosition {
   return { x: Math.sign(b.x - a.x), y: Math.sign(b.y - a.y) };
 }
 
-/** Tiles strictly between a and b along a true line. */
+/** Tiles strictly between a and b along a true line (empty array if not aligned). */
 export function tilesBetween(a: BoardPosition, b: BoardPosition): BoardPosition[] {
   if (!isAligned(a, b)) return [];
   const step = rayStep(a, b);
@@ -67,13 +76,19 @@ export function tilesBetween(a: BoardPosition, b: BoardPosition): BoardPosition[
   return out;
 }
 
-export function aliveUnitAt(pos: BoardPosition, units: UnitInstance[]): UnitInstance | undefined {
+export function aliveUnitAt(
+  pos: BoardPosition,
+  units: UnitInstance[],
+): UnitInstance | undefined {
   return units.find((u) => u.isAlive && samePos(u.position, pos));
 }
 
 /**
- * LOS for single-target abilities on true lines.
- * A living unit on any intervening tile blocks.
+ * Line of sight for single-target abilities.
+ * Only aligned (true-line) pairs can ever be blocked; a living unit on any
+ * intervening tile blocks. `ignoreIds` should include the caster and target
+ * (and lets the caller model a hypothetical caster position — the caster's
+ * stale recorded tile then can't block its own shot).
  */
 export function hasLineOfSight(
   casterPos: BoardPosition,
@@ -84,7 +99,10 @@ export function hasLineOfSight(
   if (!isAligned(casterPos, targetPos)) return true;
   for (const tile of tilesBetween(casterPos, targetPos)) {
     const blocker = allUnits.find(
-      (u) => u.isAlive && !ignoreIds.includes(u.instanceId) && samePos(u.position, tile),
+      (u) =>
+        u.isAlive &&
+        !ignoreIds.includes(u.instanceId) &&
+        samePos(u.position, tile),
     );
     if (blocker) return false;
   }
@@ -92,16 +110,25 @@ export function hasLineOfSight(
 }
 
 const MOVE_DIRECTIONS: ReadonlyArray<readonly [number, number]> = [
-  [1, 0], [-1, 0], [0, 1], [0, -1],
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
 ];
 
 /**
- * Tiles reachable from fromPos within `range` movement, via BFS flood-fill.
+ * Tiles reachable from an arbitrary origin within `range` movement, via
+ * BFS flood-fill (one orthogonal step = 1 movement; diagonal = 2, which the
+ * BFS produces naturally).
  *
  * Movement rules:
- *  - ALLY-occupied tiles can be passed through but not landed on.
- *  - ENEMY-occupied tiles block movement entirely (no pass-through, no landing).
+ *  - ALLY-occupied tiles can be PASSED THROUGH but not landed on.
+ *  - ENEMY-occupied tiles BLOCK movement entirely (no pass-through, no landing).
  *  - Out-of-bounds tiles and the four removed corners block.
+ *
+ * The `unit` parameter identifies the mover: its own recorded tile counts as
+ * free, which also lets planners evaluate movement from a hypothetical
+ * position (e.g., Charge planning).
  */
 export function reachableFrom(
   fromPos: BoardPosition,
@@ -125,7 +152,10 @@ export function reachableFrom(
         visited.add(k);
 
         const occupant = allUnits.find(
-          (u) => u.isAlive && u.instanceId !== unit.instanceId && samePos(u.position, n),
+          (u) =>
+            u.isAlive &&
+            u.instanceId !== unit.instanceId &&
+            samePos(u.position, n),
         );
         // Enemy tile: hard block — cannot pass through or land.
         if (occupant && occupant.ownerPlayerId !== unit.ownerPlayerId) continue;
@@ -141,13 +171,19 @@ export function reachableFrom(
   return out;
 }
 
-export function reachableTiles(unit: UnitInstance, allUnits: UnitInstance[], range: number): BoardPosition[] {
+/** Reachable tiles from the unit's current position. */
+export function reachableTiles(
+  unit: UnitInstance,
+  allUnits: UnitInstance[],
+  range: number,
+): BoardPosition[] {
   return reachableFrom(unit.position, unit, allUnits, range);
 }
 
 /**
- * Push destination: target slides away from caster, stopping at board edge,
- * removed corner, or occupied tile.
+ * Resolve a push (e.g., Fear): target slides tile-by-tile directly away from
+ * the caster (sign-vector direction), stopping early at the board edge, a
+ * removed corner, or an occupied tile. Returns the final position.
  */
 export function pushDestination(
   casterPos: BoardPosition,
@@ -161,7 +197,13 @@ export function pushDestination(
   for (let i = 0; i < distance; i++) {
     const next = { x: cur.x + step.x, y: cur.y + step.y };
     if (!isInBounds(next)) break;
-    if (allUnits.find((u) => u.isAlive && u.instanceId !== movingUnitId && samePos(u.position, next))) break;
+    const occupant = allUnits.find(
+      (u) =>
+        u.isAlive &&
+        u.instanceId !== movingUnitId &&
+        samePos(u.position, next),
+    );
+    if (occupant) break;
     cur = next;
   }
   return cur;

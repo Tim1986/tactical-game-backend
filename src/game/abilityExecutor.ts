@@ -1,5 +1,5 @@
 import {
-  MatchState, UnitInstance, GameEvent, BoardPosition, ActiveStatusEffect,
+  MatchState, UnitInstance, GameEvent, BoardPosition, BOARD_WIDTH, BOARD_HEIGHT,
 } from '../types/matchState.js';
 import {
   AbilityDefinition, AbilityEffect, DamageEffect, HealEffect,
@@ -79,26 +79,9 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;
   }
-  let damage = effect.value;
-  if (effect.damageType !== 'true') {
-    const shield = target.statusEffects.find((se) => se.slug === 'shielded');
-    if (shield && shield.shieldValue && shield.shieldValue > 0) {
-      const absorbed = Math.min(shield.shieldValue, damage);
-      shield.shieldValue -= absorbed;
-      damage -= absorbed;
-      ctx.events.push({ type: 'SHIELD_ABSORBED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: absorbed });
-      if (shield.shieldValue <= 0) {
-        target.statusEffects = target.statusEffects.filter((se) => se.slug !== 'shielded');
-        ctx.events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: target.instanceId, statusSlug: 'shielded' });
-      }
-    }
-  }
-  const casterWeakened = ctx.caster.statusEffects.find((se) => se.slug === 'weakened');
-  if (casterWeakened) damage = Math.floor(damage * 0.75);
-  if (damage <= 0) return;
+  const damage = effect.value;
   target.currentHealth = Math.max(0, target.currentHealth - damage);
-  const dmgLabel = effect.damageType === 'true' ? 'shadow' : effect.damageType;
-  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: damage + ' ' + dmgLabel + ' damage' });
+  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
   if (target.currentHealth <= 0) {
     target.isAlive = false;
     ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
@@ -120,12 +103,10 @@ function applyStatus(ctx: ExecutionContext, target: UnitInstance, effect: ApplyS
     existing.turnsRemaining = Math.max(existing.turnsRemaining, effect.durationTurns);
     existing.stacks = Math.min(existing.stacks + effect.stacks, 3);
   } else {
-    const newEffect: ActiveStatusEffect = {
+    target.statusEffects.push({
       slug: effect.statusSlug, turnsRemaining: effect.durationTurns,
       stacks: effect.stacks, sourceUnitInstanceId: ctx.caster.instanceId,
-      ...(effect.statusSlug === 'shielded' && { shieldValue: 30 }),
-    };
-    target.statusEffects.push(newEffect);
+    });
   }
   ctx.events.push({ type: 'STATUS_APPLIED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, statusSlug: effect.statusSlug });
 }
@@ -171,6 +152,7 @@ function findLastFreePosition(start: BoardPosition, end: BoardPosition, units: U
   let lastFree = start;
   for (let i = 1; i <= steps; i++) {
     const pos = { x: start.x + Math.round(normX * i), y: start.y + Math.round(normY * i) };
+    if (pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= BOARD_HEIGHT) break;
     const occupant = units.find((u) => u.isAlive && u.instanceId !== movingUnitId && u.position.x === pos.x && u.position.y === pos.y);
     if (occupant) break;
     lastFree = pos;
@@ -187,29 +169,17 @@ export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): 
   if (!unit.isAlive) return;
   const expiredEffects: string[] = [];
   for (const effect of unit.statusEffects) {
-    if (effect.slug === 'burning') {
-      const damage = 8 * effect.stacks;
-      unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'burning', value: damage, message: `${unit.definitionSlug} burns for ${damage}` });
-      if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId, message: `${unit.definitionSlug} died` }); }
-    }
-    if (effect.slug === 'poisoned') {
-      const damage = 5 * effect.stacks;
-      unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'poisoned', value: damage, message: `${unit.definitionSlug} takes ${damage} poison damage` });
-      if (unit.currentHealth <= 0) { unit.isAlive = false; events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId, message: `${unit.definitionSlug} died` }); }
-    }
-    if (effect.slug === 'regenerating') {
-      const heal = 10;
-      unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + heal);
-      events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'regenerating', value: heal, message: `${unit.definitionSlug} regenerates ${heal} HP` });
-    }
     if (effect.turnsRemaining > 0) {
       effect.turnsRemaining--;
       if (effect.turnsRemaining === 0) expiredEffects.push(effect.slug);
     }
   }
   unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
+  if (expiredEffects.length > 0) {
+    for (const slug of expiredEffects) {
+      events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: unit.instanceId, statusSlug: slug });
+    }
+  }
 }
 
 /** Tick ability cooldowns for a single unit (called at the end of that unit's initiative turn). */

@@ -105,11 +105,11 @@ describe('turn swap', () => {
     expect(result.updatedState.activePlayerId).toBe(P2);
     expect(result.updatedState.turnNumber).toBe(2);
   });
-  it('stunned unit cannot move', () => {
+  it('frozen unit cannot move', () => {
     const state = makeState(P1, P2, [
-      makeUnit('u1', P1, 1, 1, { statusEffects: [{ slug: 'stunned', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u2' }] }),
+      makeUnit('u1', P1, 1, 1, { statusEffects: [{ slug: 'frozen', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u2' }] }),
       makeUnit('u2', P2, 6, 6),
     ]);
-    expect(() => processTurn(state, [{ type: 'MOVE', unitInstanceId: 'u1', destination: { x: 2, y: 1 } }, { type: 'END_TURN' }], P1, P1, P2, abilityMap)).toThrow('stunned');
+    expect(() => processTurn(state, [{ type: 'MOVE', unitInstanceId: 'u1', destination: { x: 2, y: 1 } }, { type: 'END_TURN' }], P1, P1, P2, abilityMap)).toThrow('frozen');
   });
 });

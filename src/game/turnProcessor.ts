@@ -65,16 +65,23 @@ function advanceSlot(
   initiative: InitiativeState,
   units: UnitInstance[],
   events: GameEvent[],
-): { slot: number; activeUnitId: string; newRoundStarted: boolean } {
+): { slot: number; activeUnitId: string; newRoundStarted: boolean; skippedSlots: number } {
   const orderLen = initiative.order.length; // should be 8 here
   let slot = (initiative.slot + 1) % orderLen;
   let newRoundStarted = slot === 0;
+  let skippedSlots = 0;
 
   for (let attempts = 0; attempts < orderLen; attempts++) {
     const uid = initiative.order[slot];
     const unit = units.find((u) => u.instanceId === uid);
 
     if (!unit || !unit.isAlive) {
+      events.push({
+        type: 'TURN_SKIPPED',
+        sourceUnitInstanceId: uid,
+        message: `${unit?.definitionSlug ?? uid} — defeated, turn skipped`,
+      });
+      skippedSlots++;
       slot = (slot + 1) % orderLen;
       if (slot === 0) newRoundStarted = true;
       continue;
@@ -88,16 +95,17 @@ function advanceSlot(
         sourceUnitInstanceId: uid,
         message: `${unit.definitionSlug} is frozen — turn skipped`,
       });
+      skippedSlots++;
       slot = (slot + 1) % orderLen;
       if (slot === 0) newRoundStarted = true;
       continue;
     }
 
-    return { slot, activeUnitId: uid, newRoundStarted };
+    return { slot, activeUnitId: uid, newRoundStarted, skippedSlots };
   }
 
   // All dead/frozen — fallback (game should already be over)
-  return { slot: 0, activeUnitId: initiative.order[0], newRoundStarted: false };
+  return { slot: 0, activeUnitId: initiative.order[0], newRoundStarted: false, skippedSlots };
 }
 
 // ─── Main processor ───────────────────────────────────────────────────────────
@@ -200,6 +208,7 @@ export function processTurn(
           const firstSlot = advanceSlot({ ...initiative, slot: -1 }, ws.units, events);
           initiative.slot = firstSlot.slot;
           initiative.activeUnitId = firstSlot.activeUnitId;
+          ws.turnNumber += firstSlot.skippedSlots;
           // Reset all turn flags at round boundary
           for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
           const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
@@ -223,6 +232,8 @@ export function processTurn(
         initiative.activeUnitId = next.activeUnitId;
         const nextUnit = ws.units.find((u) => u.instanceId === next.activeUnitId);
         ws.activePlayerId = nextUnit?.ownerPlayerId ?? ws.activePlayerId;
+        // Each skipped slot (dead or frozen) counts as a turn in the initiative cycle
+        ws.turnNumber += next.skippedSlots;
       }
 
       ws.turnNumber++;
@@ -261,7 +272,7 @@ function processCharge(state: MatchState, action: ChargeAction, playerId: string
   const unit = findAndValidateUnit(state, action.unitInstanceId, playerId);
   if ((state.roundNumber ?? 1) > 10) throw new TurnValidationError('Charge is only available in the first 10 rounds');
   if (unit.hasActedThisTurn) throw new TurnValidationError('Unit has already used its action this turn');
-  if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
+  if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
   if (!isInBounds(action.destination)) throw new TurnValidationError('Destination is out of bounds');
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
@@ -280,7 +291,7 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
   if (!isInBounds(action.destination)) throw new TurnValidationError('Destination is out of bounds');
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
   if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
-  if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
+  if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   const distance = manhattanDistance(unit.position, action.destination);
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Destination out of movement range');
   const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
@@ -292,7 +303,7 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
 
 function processUseAbility(state: MatchState, action: UseAbilityAction, playerId: string, events: GameEvent[], abilityMap: Map<string, AbilityDefinition>): void {
   const unit = findAndValidateUnit(state, action.unitInstanceId, playerId);
-  if (unit.statusEffects.some((se) => se.slug === 'stunned')) throw new TurnValidationError('Unit is stunned and cannot act');
+  if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   if (unit.hasActedThisTurn) throw new TurnValidationError('Unit has already used an ability this turn');
   const unitAbilities = unit.abilities ?? [];
   if (!unitAbilities.includes(action.abilitySlug)) throw new TurnValidationError('Unit does not have ability: ' + action.abilitySlug);
@@ -313,10 +324,10 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
     if (!targetUnit) throw new TurnValidationError('No unit at target position');
   }
+  events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}`, abilitySlug: ability.slug });
   executeAbility({ state, caster: unit, targetPosition: action.target, ability, events });
   if (ability.cooldownTurns > 0) unit.cooldowns[action.abilitySlug] = ability.cooldownTurns;
   unit.hasActedThisTurn = true;
-  events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}` });
 }
 
 function findAndValidateUnit(state: MatchState, unitInstanceId: string, playerId: string): UnitInstance {
