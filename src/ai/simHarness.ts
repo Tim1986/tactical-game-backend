@@ -9,6 +9,15 @@
  *   npx tsx src/ai/simHarness.ts fighter,barbarian,ranger,rogue vs wizard,cleric,sorcerer,warlock --games 200
  *   ... --verbose          log every validation error with the offending action payload
  *
+ * v3 changes:
+ *   - ROUND 1 PRE-FLIGHT (per V3 feedback, Bug A): when every uncommitted
+ *     unit for the active player is frozen or dead, the harness commits one
+ *     directly to initiative.order WITHOUT calling the engine — the engine
+ *     rejects every per-unit action for such units, so this path must not
+ *     count as a validation error.
+ *   - Balance analytics: Wilson 95% CI on win rate, per-slug special-usage
+ *     and death-turn stats, first-blood turn, first-mover win rate.
+ *
  * v2 changes:
  *   - Validation errors are COUNTED and SAMPLED, not silently swallowed —
  *     they indicate brain/engine disagreements and hide regressions if unseen.
@@ -27,7 +36,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
-import { OptimalBrain, AIBrain } from './aiBrain.js';
+import { OptimalBrain, AIBrain, normalizeAbilityMap } from './aiBrain.js';
 import { buildAbilityMap, UNIT_DEFS } from './defaultData.js';
 import {
   MatchState,
@@ -85,6 +94,7 @@ function buildUnitInstance(
     hasActedThisTurn: false,
     cooldowns,
     statusEffects: [],
+    fortuneMeter: 0,
   };
 }
 
@@ -137,6 +147,14 @@ export interface MatchResult {
   abortedByErrorLoop: boolean;
   /** Draw where one side was down to a single surviving unit (kiting signature). */
   loneSurvivorDraw: boolean;
+  /** Which player took the first Round 1 turn. */
+  firstPlayerId: string;
+  /** Turn number of the first kill (null if nobody died). */
+  firstBloodTurn: number | null;
+  /** Every death: which unit slug died on which turn. */
+  deaths: { slug: string; turn: number }[];
+  /** Slugs of units whose once-per-game special was spent (see caveat in code). */
+  specialsSpent: string[];
 }
 
 export interface SimResult {
@@ -158,6 +176,78 @@ export interface SimResult {
   abortedGames: number;
   /** First few distinct validation error messages, for diagnosis. */
   sampleErrors: string[];
+  /** Wilson 95% confidence interval on p1WinRate — trust deltas, not points. */
+  p1WinRateCI: [number, number];
+  /** Fraction of games won by whichever side took the first turn. */
+  firstMoverWinRate: number;
+  /** slug → fraction of appearances that spent their special before game end. */
+  specialUsageRates: Record<string, number>;
+  /** slug → average turn of death, among appearances that died. */
+  avgDeathTurn: Record<string, number>;
+  /** Average turn of the first kill (games with at least one kill). */
+  avgFirstBloodTurn: number | null;
+}
+
+
+/**
+ * After a unit is force-committed into initiative.order during Round 1
+ * (harness pre-flight or error recovery), either hand the turn to the other
+ * player or — if all alive units on both sides are now committed — perform
+ * the Round 1 → Round 2 transition (interleave, advance to first alive unit,
+ * reset turn flags). Mutates the passed state.
+ */
+function advanceAfterRound1Commit(
+  state: MatchState,
+  p1Id: string,
+  p2Id: string,
+  activeId: string,
+): void {
+  const allCommitted = new Set(state.initiative.order);
+  const isDone = (pid: string) =>
+    state.units.every(
+      (u) =>
+        u.ownerPlayerId !== pid || !u.isAlive || allCommitted.has(u.instanceId),
+    );
+
+  if (isDone(p1Id) && isDone(p2Id)) {
+    const firstPlayer = state.initiative.round1FirstPlayerId;
+    const secondPlayer = firstPlayer === p1Id ? p2Id : p1Id;
+    const byOwner = (pid: string) =>
+      state.initiative.order.filter(
+        (id) =>
+          state.units.find((u) => u.instanceId === id)?.ownerPlayerId === pid,
+      );
+    const firstIds = byOwner(firstPlayer);
+    const secondIds = byOwner(secondPlayer);
+    const order: string[] = [];
+    const maxLen = Math.max(firstIds.length, secondIds.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (firstIds[i]) order.push(firstIds[i]);
+      if (secondIds[i]) order.push(secondIds[i]);
+    }
+    state.initiative.order = order;
+    state.initiative.isRound1 = false;
+    let firstSlot = 0;
+    for (let i = 0; i < order.length; i++) {
+      const u = state.units.find((x) => x.instanceId === order[i]);
+      if (u && u.isAlive) {
+        firstSlot = i;
+        break;
+      }
+    }
+    state.initiative.slot = firstSlot;
+    state.initiative.activeUnitId = order[firstSlot] ?? null;
+    const firstUnit = state.units.find(
+      (u) => u.instanceId === order[firstSlot],
+    );
+    state.activePlayerId = firstUnit?.ownerPlayerId ?? activeId;
+    for (const u of state.units) {
+      u.hasMovedThisTurn = false;
+      u.hasActedThisTurn = false;
+    }
+  } else {
+    state.activePlayerId = activeId === p1Id ? p2Id : p1Id;
+  }
 }
 
 // ─── Single match ─────────────────────────────────────────────────────────────
@@ -180,6 +270,7 @@ export function runMatch(
 ): MatchResult {
   const p1Id = options.p1Id ?? 'p1';
   const p2Id = options.p2Id ?? 'p2';
+  abilityMap = normalizeAbilityMap(abilityMap);
   let state = buildMatchState(
     p1Id,
     p2Id,
@@ -189,16 +280,41 @@ export function runMatch(
     DEFAULT_P2_PLACEMENT,
     options.forceFirstPlayerId,
   );
+  const firstPlayerId = state.initiative.round1FirstPlayerId;
   let turns = 0;
   let validationErrors = 0;
   let consecutiveErrors = 0;
   let abortedByErrorLoop = false;
+  const deaths: { slug: string; turn: number }[] = [];
+  const recordedDead = new Set<string>();
+  const recordDeaths = () => {
+    for (const u of state.units) {
+      if (!u.isAlive && !recordedDead.has(u.instanceId)) {
+        recordedDead.add(u.instanceId);
+        deaths.push({ slug: u.definitionSlug, turn: turns });
+      }
+    }
+  };
 
   const finish = (winnerId: string | null): MatchResult => {
     const survivors = state.units.filter((u) => u.isAlive);
     const p1Surv = survivors.filter((u) => u.ownerPlayerId === p1Id);
     const p2Surv = survivors.filter((u) => u.ownerPlayerId === p2Id);
     const isDraw = winnerId === null;
+    // Special-usage detection: the special's cooldown starts at 99 when spent
+    // and ticks down once per END_TURN, so cooldown > 0 at game end means it
+    // was used. CAVEAT: in a 99+ turn game a special spent on turn 1 could
+    // tick back to 0 — rare (most games end well before), accept the noise.
+    const specialsSpent: string[] = [];
+    for (const u of state.units) {
+      for (const slug of u.abilities) {
+        if (!abilityMap.get(slug)?.isSpecial) continue;
+        if ((u.cooldowns[slug] ?? 0) > 0) {
+          specialsSpent.push(u.definitionSlug);
+          break;
+        }
+      }
+    }
     return {
       winnerId,
       winnerSide: winnerId === p1Id ? 'p1' : winnerId === p2Id ? 'p2' : 'draw',
@@ -216,68 +332,64 @@ export function runMatch(
       abortedByErrorLoop,
       loneSurvivorDraw:
         isDraw && (p1Surv.length === 1 || p2Surv.length === 1),
+      firstPlayerId,
+      firstBloodTurn: deaths.length > 0 ? deaths[0].turn : null,
+      deaths,
+      specialsSpent,
     };
   };
 
   while (turns < MAX_TURNS) {
     const activeId = state.activePlayerId;
 
-    // Round 1 pre-flight: if all uncommitted units for the active player are
-    // frozen or dead, force-commit the best candidate directly without calling
-    // processTurn. This avoids a guaranteed validation error (the engine
-    // rejects END_TURN in Round 1 as "must commit a unit") and keeps the
-    // error counter clean for real brain/engine disagreements.
+    // ── ROUND 1 PRE-FLIGHT (V3 feedback, Bug A) ──
+    // If every uncommitted unit for the active player is frozen or dead, no
+    // engine action can commit one (MOVE/USE_ABILITY are rejected; bare
+    // END_TURN throws "Must commit a unit"). Commit one directly — frozen
+    // preferred over dead — and advance without touching the engine so
+    // validationErrors stays a clean signal for real brain/engine bugs.
     if (state.initiative.isRound1) {
       const committed = new Set(state.initiative.order);
       const uncommitted = state.units.filter(
         (u) => u.ownerPlayerId === activeId && !committed.has(u.instanceId),
       );
-      const hasUsable = uncommitted.some(
-        (u) => u.isAlive && !u.statusEffects.some((e) => e.slug === 'frozen'),
-      );
-      if (!hasUsable && uncommitted.length > 0) {
-        // Force-commit: prefer frozen-alive over dead (mirrors brain ordering).
-        const pick =
-          uncommitted.find((u) => u.isAlive) ?? uncommitted[0];
-        const stateCopy: MatchState = JSON.parse(JSON.stringify(state));
-        stateCopy.initiative.order.push(pick.instanceId);
-        const otherPlayerId = activeId === p1Id ? p2Id : p1Id;
-        const allCommitted = new Set(stateCopy.initiative.order);
-        const isDone = (pid: string) =>
-          stateCopy.units.every(
-            (u) => u.ownerPlayerId !== pid || !u.isAlive || allCommitted.has(u.instanceId),
+      const remaining = (u: UnitInstance, slug: string) =>
+        u.statusEffects.reduce(
+          (m, e) => (e.slug === slug && e.turnsRemaining > m ? e.turnsRemaining : m),
+          0,
+        );
+      const canLegallyCommit = (u: UnitInstance): boolean => {
+        if (!u.isAlive) return false;
+        // Engine ticks the acting unit's statuses BEFORE validating, so a
+        // status at 1 remaining expires and cannot block the commit.
+        if (remaining(u, 'frozen') >= 2) return false;
+        if (remaining(u, 'rooted') >= 2) {
+          // Rooted (still active after the tick): cannot move — can only
+          // commit via an ability, which needs a target in range.
+          const maxRange = u.abilities.reduce((m, s) => {
+            const d = abilityMap.get(s);
+            const ready = (u.cooldowns[s] ?? 0) <= 0;
+            return d && ready && d.range > m ? d.range : m;
+          }, 0);
+          const hasTarget = state.units.some(
+            (t) =>
+              t.isAlive &&
+              t.instanceId !== u.instanceId &&
+              Math.abs(t.position.x - u.position.x) +
+                Math.abs(t.position.y - u.position.y) <=
+                maxRange,
           );
-        if (isDone(p1Id) && isDone(p2Id)) {
-          const firstPlayer = stateCopy.initiative.round1FirstPlayerId;
-          const secondPlayer = firstPlayer === p1Id ? p2Id : p1Id;
-          const byOwner = (pid: string) =>
-            stateCopy.initiative.order.filter(
-              (id) => stateCopy.units.find((u) => u.instanceId === id)?.ownerPlayerId === pid,
-            );
-          const firstIds = byOwner(firstPlayer);
-          const secondIds = byOwner(secondPlayer);
-          const order: string[] = [];
-          const maxLen = Math.max(firstIds.length, secondIds.length);
-          for (let i = 0; i < maxLen; i++) {
-            if (firstIds[i]) order.push(firstIds[i]);
-            if (secondIds[i]) order.push(secondIds[i]);
-          }
-          stateCopy.initiative.order = order;
-          stateCopy.initiative.isRound1 = false;
-          let firstSlot = 0;
-          for (let i = 0; i < order.length; i++) {
-            const u = stateCopy.units.find((x) => x.instanceId === order[i]);
-            if (u && u.isAlive) { firstSlot = i; break; }
-          }
-          stateCopy.initiative.slot = firstSlot;
-          stateCopy.initiative.activeUnitId = order[firstSlot] ?? null;
-          const firstUnit = stateCopy.units.find((u) => u.instanceId === order[firstSlot]);
-          stateCopy.activePlayerId = firstUnit?.ownerPlayerId ?? activeId;
-          for (const u of stateCopy.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
-        } else {
-          stateCopy.activePlayerId = otherPlayerId;
-          stateCopy.initiative.activeUnitId = null;
+          if (!hasTarget) return false;
         }
+        return true;
+      };
+      const usable = uncommitted.filter(canLegallyCommit);
+      if (uncommitted.length > 0 && usable.length === 0) {
+        const stateCopy: MatchState = JSON.parse(JSON.stringify(state));
+        const frozen = uncommitted.filter((u) => u.isAlive);
+        const pick = frozen.length > 0 ? frozen[0] : uncommitted[0];
+        stateCopy.initiative.order.push(pick.instanceId);
+        advanceAfterRound1Commit(stateCopy, p1Id, p2Id, activeId);
         state = stateCopy;
         turns++;
         continue;
@@ -304,8 +416,7 @@ export function runMatch(
       }
 
       if (state.initiative.isRound1) {
-        // ── Round 1 recovery: force-commit the stuck unit and, if that
-        //    completes commitments, perform the Round 1 → 2 transition.
+        // ── Round 1 recovery: force-commit the stuck unit and advance.
         const stateCopy: MatchState = JSON.parse(JSON.stringify(state));
         const committed = new Set(stateCopy.initiative.order);
         // Prefer committing a FROZEN unit over any other stuck unit —
@@ -318,66 +429,10 @@ export function runMatch(
         );
         const stuckUnit =
           stuckCandidates.find((u) =>
-            u.statusEffects.some(
-              (e) => e.slug === 'frozen' && e.turnsRemaining > 0,
-            ),
+            u.statusEffects.some((e) => e.slug === 'frozen'),
           ) ?? stuckCandidates[0];
         if (stuckUnit) stateCopy.initiative.order.push(stuckUnit.instanceId);
-
-        // Check if all alive units from both sides are now committed
-        const allCommitted = new Set(stateCopy.initiative.order);
-        const isDone = (pid: string) =>
-          stateCopy.units.every(
-            (u) =>
-              u.ownerPlayerId !== pid ||
-              !u.isAlive ||
-              allCommitted.has(u.instanceId),
-          );
-
-        if (isDone(p1Id) && isDone(p2Id)) {
-          // All units committed — manually perform the Round 1 → 2 transition
-          const firstPlayer = stateCopy.initiative.round1FirstPlayerId;
-          const secondPlayer = firstPlayer === p1Id ? p2Id : p1Id;
-          const byOwner = (pid: string) =>
-            stateCopy.initiative.order.filter(
-              (id) =>
-                stateCopy.units.find((u) => u.instanceId === id)
-                  ?.ownerPlayerId === pid,
-            );
-          const firstIds = byOwner(firstPlayer);
-          const secondIds = byOwner(secondPlayer);
-          const order: string[] = [];
-          const maxLen = Math.max(firstIds.length, secondIds.length);
-          for (let i = 0; i < maxLen; i++) {
-            if (firstIds[i]) order.push(firstIds[i]);
-            if (secondIds[i]) order.push(secondIds[i]);
-          }
-          stateCopy.initiative.order = order;
-          stateCopy.initiative.isRound1 = false;
-          // Advance to first alive unit
-          let firstSlot = 0;
-          for (let i = 0; i < order.length; i++) {
-            const u = stateCopy.units.find((x) => x.instanceId === order[i]);
-            if (u && u.isAlive) {
-              firstSlot = i;
-              break;
-            }
-          }
-          stateCopy.initiative.slot = firstSlot;
-          stateCopy.initiative.activeUnitId = order[firstSlot] ?? null;
-          const firstUnit = stateCopy.units.find(
-            (u) => u.instanceId === order[firstSlot],
-          );
-          stateCopy.activePlayerId = firstUnit?.ownerPlayerId ?? activeId;
-          // Reset turn flags at round boundary
-          for (const u of stateCopy.units) {
-            u.hasMovedThisTurn = false;
-            u.hasActedThisTurn = false;
-          }
-        } else {
-          stateCopy.activePlayerId = activeId === p1Id ? p2Id : p1Id;
-        }
-
+        advanceAfterRound1Commit(stateCopy, p1Id, p2Id, activeId);
         state = stateCopy;
         turns++;
         continue;
@@ -415,6 +470,7 @@ export function runMatch(
     }
     turns++;
     state = result.updatedState;
+    recordDeaths();
     if (result.matchOver) {
       return finish(result.winnerId);
     }
@@ -422,6 +478,18 @@ export function runMatch(
 
   // Turn limit hit — draw
   return finish(null);
+}
+
+/** Wilson score 95% confidence interval for a binomial proportion. */
+function wilsonCI(successes: number, n: number): [number, number] {
+  if (n === 0) return [0, 1];
+  const z = 1.96;
+  const p = successes / n;
+  const denom = 1 + (z * z) / n;
+  const center = (p + (z * z) / (2 * n)) / denom;
+  const half =
+    (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / denom;
+  return [Math.max(0, center - half), Math.min(1, center + half)];
 }
 
 // ─── Simulation run ───────────────────────────────────────────────────────────
@@ -461,6 +529,18 @@ export function runSim(
   const sampleErrors: string[] = [];
   const seenErrors = new Set<string>();
 
+  let firstMoverWins = 0;
+  let decidedGames = 0;
+  const firstBloodTurns: number[] = [];
+  // slug → { appearances, survivals, specialsSpent, deathTurnSum, deathCount }
+  const perSlug: Record<
+    string,
+    { app: number; surv: number; spec: number; deathSum: number; deathN: number }
+  > = {};
+  const slugEntry = (s: string) => {
+    perSlug[s] = perSlug[s] ?? { app: 0, surv: 0, spec: 0, deathSum: 0, deathN: 0 };
+    return perSlug[s];
+  };
   // slug → [appearances, survivals]
   const slugStats: Record<string, [number, number]> = {};
   const countAppearances = (slugs: string[]) => {
@@ -506,11 +586,30 @@ export function runSim(
     countAppearances(p2Slugs);
     countSurvivals(r.survivingSlugs.p1);
     countSurvivals(r.survivingSlugs.p2);
+    if (r.winnerId !== null) {
+      decidedGames++;
+      if (r.winnerId === r.firstPlayerId) firstMoverWins++;
+    }
+    if (r.firstBloodTurn !== null) firstBloodTurns.push(r.firstBloodTurn);
+    for (const s of [...p1Slugs, ...p2Slugs]) slugEntry(s).app++;
+    for (const s of r.specialsSpent) slugEntry(s).spec++;
+    for (const d of r.deaths) {
+      const e = slugEntry(d.slug);
+      e.deathSum += d.turn;
+      e.deathN++;
+    }
   }
 
   const unitSurvivalRates: Record<string, number> = {};
   for (const [slug, [appearances, survivals]] of Object.entries(slugStats)) {
     unitSurvivalRates[slug] = appearances > 0 ? survivals / appearances : 0;
+  }
+
+  const specialUsageRates: Record<string, number> = {};
+  const avgDeathTurn: Record<string, number> = {};
+  for (const [slug, e] of Object.entries(perSlug)) {
+    specialUsageRates[slug] = e.app > 0 ? e.spec / e.app : 0;
+    if (e.deathN > 0) avgDeathTurn[slug] = e.deathSum / e.deathN;
   }
 
   return {
@@ -528,6 +627,14 @@ export function runSim(
     totalValidationErrors,
     abortedGames,
     sampleErrors,
+    p1WinRateCI: wilsonCI(p1Wins, games),
+    firstMoverWinRate: decidedGames > 0 ? firstMoverWins / decidedGames : 0,
+    specialUsageRates,
+    avgDeathTurn,
+    avgFirstBloodTurn:
+      firstBloodTurns.length > 0
+        ? firstBloodTurns.reduce((a, b) => a + b, 0) / firstBloodTurns.length
+        : null,
   };
 }
 
@@ -544,11 +651,33 @@ function printResult(r: SimResult) {
   console.log(
     `Avg survivors — P1: ${r.avgSurvivors.p1.toFixed(2)}  P2: ${r.avgSurvivors.p2.toFixed(2)}`,
   );
+  console.log(
+    `P1 win rate 95% CI: [${pct(r.p1WinRateCI[0])}, ${pct(r.p1WinRateCI[1])}] — only trust deltas that clear this interval`,
+  );
+  console.log(
+    `First-mover win rate: ${pct(r.firstMoverWinRate)} of decided games` +
+      (r.firstMoverWinRate > 0.55 || r.firstMoverWinRate < 0.45
+        ? '  ⚠ possible turn-order imbalance'
+        : ''),
+  );
+  if (r.avgFirstBloodTurn !== null) {
+    console.log(`Avg first-blood turn: ${r.avgFirstBloodTurn.toFixed(1)}`);
+  }
   const survival = Object.entries(r.unitSurvivalRates)
     .sort((a, b) => b[1] - a[1])
     .map(([slug, rate]) => `${slug} ${pct(rate)}`)
     .join('  ');
   console.log(`Survival by unit: ${survival}`);
+  const specials = Object.entries(r.specialUsageRates)
+    .sort((a, b) => b[1] - a[1])
+    .map(([slug, rate]) => `${slug} ${pct(rate)}`)
+    .join('  ');
+  console.log(`Special spent by unit: ${specials}`);
+  const deathTurns = Object.entries(r.avgDeathTurn)
+    .sort((a, b) => a[1] - b[1])
+    .map(([slug, t]) => `${slug} t${t.toFixed(0)}`)
+    .join('  ');
+  if (deathTurns) console.log(`Avg death turn (earliest first): ${deathTurns}`);
   if (r.totalValidationErrors > 0) {
     console.warn(
       `⚠ Recovered validation errors: ${r.totalValidationErrors} across ${r.games} games` +

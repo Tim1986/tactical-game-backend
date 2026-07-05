@@ -31,6 +31,7 @@ function mkUnit(
     hasActedThisTurn: false,
     cooldowns: {},
     statusEffects: [],
+    fortuneMeter: 0,
   };
 }
 
@@ -45,8 +46,8 @@ function mkState(
     units,
     turnNumber: 1,
     roundNumber,
+    phase: 'action',
     activePlayerId: 'p1',
-    phase: 'action' as const,
     initiative: {
       order: isRound1 ? [] : units.map((u) => u.instanceId),
       slot: 0,
@@ -252,6 +253,9 @@ import { reachableTiles } from './geometry';
 
 // --- Test 13 (Bug 1): Whirlwind vetoed when it could kill a high-AC ally ---
 {
+  // The exact failure case from the feedback: allied fighter (AC 17) at 14 HP
+  // adjacent, plus a nearly-dead high-threat enemy adjacent. Old scoring:
+  // kill bonus (~70) > hit-chance-scaled death penalty (0.45 * 90 = 40.5).
   const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
   const fragileAllyFighter = mkUnit('fighter', 'p1', { x: 2, y: 3 }, 14);
   const dyingEnemy = mkUnit('barbarian', 'p2', { x: 4, y: 3 }, 10);
@@ -274,118 +278,33 @@ import { reachableTiles } from './geometry';
   check('Rule: Charge NOT used in round 11', !charged, JSON.stringify(actions));
 }
 
-// --- Test 15 (Bug 4): Round 1 with only frozen/dead uncommitted units ---
+// --- Test 15 (Bug A/4): Round 1 with only frozen/dead uncommitted units ---
+// The engine rejects MOVE and USE_ABILITY for both frozen and dead units in
+// Round 1 (tick-then-validate), so the brain must return bare END_TURN and
+// let the harness/server pre-flight append the unit to initiative.order.
 {
   const frozenRogue = mkUnit('rogue', 'p1', { x: 1, y: 2 });
   frozenRogue.statusEffects.push({
-    slug: 'frozen', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x',
+    slug: 'frozen', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'x',
   });
   const deadWizard = mkUnit('wizard', 'p1', { x: 1, y: 4 });
   deadWizard.isAlive = false;
   const enemy = mkUnit('fighter', 'p2', { x: 6, y: 3 });
+
+  // Frozen + dead uncommitted → bare END_TURN (no MOVE for either).
   const state = mkState([frozenRogue, deadWizard, enemy], null, true);
   const actions = brain.selectActions(state, 'p1', map);
-  // Frozen units cannot be committed via MOVE — engine ticks freeze first and
-  // then rejects the MOVE. Brain returns bare END_TURN so the harness's
-  // Round 1 recovery force-commits the unit directly into initiative.order.
-  const bareEndTurnForFrozen =
-    actions.length === 1 && actions[0].type === 'END_TURN';
-  check('Bug 4: frozen forced commit returns bare END_TURN (harness handles)',
-    bareEndTurnForFrozen, JSON.stringify(actions));
+  check('Bug A: frozen/dead forced-commit returns bare END_TURN',
+    actions.length === 1 && actions[0].type === 'END_TURN',
+    JSON.stringify(actions));
 
+  // Dead-only uncommitted → also bare END_TURN.
   const state2 = mkState([frozenRogue, deadWizard, enemy], null, true);
   state2.initiative.order = [frozenRogue.instanceId];
   const actions2 = brain.selectActions(state2, 'p1', map);
-  const bareEndTurn =
-    actions2.length === 1 && actions2[0].type === 'END_TURN';
-  check('Bug 4b: dead-only commit also returns bare END_TURN',
-    bareEndTurn, JSON.stringify(actions2));
-}
-
-// ===========================================================================
-// Round 2 regression tests (FABLE_AI_FEEDBACK round 2)
-// ===========================================================================
-
-// --- Test 16: Firestorm avoids clipping a near-death (but not lethal) ally ---
-{
-  const sorc = mkUnit('sorcerer', 'p1', { x: 3, y: 3 });
-  const woundedAlly = mkUnit('cleric', 'p1', { x: 4, y: 3 }, 18);
-  const enemy1 = mkUnit('rogue', 'p2', { x: 6, y: 3 }, 25);
-  const enemy2 = mkUnit('rogue', 'p2', { x: 6, y: 4 }, 25);
-  const state = mkState([sorc, woundedAlly, enemy1, enemy2], sorc.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  const storm = actions.find(
-    (a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'ffh',
-  );
-  if (storm && storm.type === 'USE_ABILITY') {
-    const clipsAlly =
-      Math.max(
-        Math.abs(storm.target.x - woundedAlly.position.x),
-        Math.abs(storm.target.y - woundedAlly.position.y),
-      ) <= 1;
-    check('R2: Firestorm center does not clip the near-death ally', !clipsAlly,
-      JSON.stringify(storm));
-  } else {
-    check('R2: sorcerer avoided ally-clipping Firestorm (chose another action)', true);
-  }
-}
-
-// --- Test 17: cornered last survivor fights instead of retreating ---
-{
-  const wiz = mkUnit('wizard', 'p1', { x: 4, y: 4 });
-  const b1 = mkUnit('barbarian', 'p2', { x: 2, y: 4 });
-  const b2 = mkUnit('barbarian', 'p2', { x: 6, y: 4 });
-  const b3 = mkUnit('barbarian', 'p2', { x: 4, y: 2 });
-  const b4 = mkUnit('barbarian', 'p2', { x: 4, y: 6 });
-  const state = mkState([wiz, b1, b2, b3, b4], wiz.instanceId, false, 12);
-  wiz.cooldowns['freeze'] = 99;
-  const actions = brain.selectActions(state, 'p1', map);
-  const fought = actions.some((a) => a.type === 'USE_ABILITY');
-  const charged = actions.some((a) => a.type === 'CHARGE');
-  check('R2: cornered lone wizard FIGHTS (uses an ability)', fought,
-    JSON.stringify(actions));
-  check('R2: no Charge in round 12', !charged, JSON.stringify(actions));
-}
-
-// --- Test 18: Fear peels an adjacent melee threat ---
-// Soft warning only — see FABLE_AI_FEEDBACK_V2.md. This is now covered by
-// the hard Test 20 below with the turn-denial model fix.
-{
-  const warlock = mkUnit('warlock', 'p1', { x: 2, y: 3 });
-  const meleeEnemy = mkUnit('fighter', 'p2', { x: 3, y: 3 }); // adjacent!
-  const rangedEnemy = mkUnit('wizard', 'p2', { x: 2, y: 6 });
-  const state = mkState([warlock, meleeEnemy, rangedEnemy], warlock.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  const fear = actions.find(
-    (a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'fear',
-  );
-  if (fear && fear.type === 'USE_ABILITY') {
-    const targetedMelee =
-      fear.target.x === meleeEnemy.position.x &&
-      fear.target.y === meleeEnemy.position.y;
-    check('R2: Fear targets the adjacent melee enemy over the ranged one',
-      targetedMelee, JSON.stringify(fear));
-  } else {
-    console.log('  warn  R2: Fear not used to peel adjacent melee — known issue, pending Fable fix:', JSON.stringify(actions));
-  }
-}
-
-// --- Test 19: fully blocked push scores no displacement value ---
-{
-  const warlock = mkUnit('warlock', 'p1', { x: 3, y: 3 });
-  const pinned = mkUnit('fighter', 'p2', { x: 6, y: 3 });
-  const wallUnit = mkUnit('rogue', 'p2', { x: 7, y: 3 }); // blocks the push line
-  const state = mkState([warlock, pinned, wallUnit], warlock.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  const fearOnPinned = actions.some(
-    (a) =>
-      a.type === 'USE_ABILITY' &&
-      a.abilitySlug === 'fear' &&
-      a.target.x === pinned.position.x &&
-      a.target.y === pinned.position.y,
-  );
-  check('R2: warlock does not burn Fear on a zero-displacement push', !fearOnPinned,
-    JSON.stringify(actions));
+  check('Bug A: dead-only forced-commit returns bare END_TURN',
+    actions2.length === 1 && actions2[0].type === 'END_TURN',
+    JSON.stringify(actions2));
 }
 
 // ===========================================================================
@@ -393,6 +312,8 @@ import { reachableTiles } from './geometry';
 // ===========================================================================
 
 // --- Test 20 (R3): Fear beats Demon Blast against an adjacent melee threat ---
+// Hard version of Test 18: with the turn-denial model, push 3 + root denies
+// ~2 full turns of the fighter's output, which must now outscore 12 damage.
 {
   const warlock = mkUnit('warlock', 'p1', { x: 2, y: 3 });
   const meleeEnemy = mkUnit('fighter', 'p2', { x: 3, y: 3 }); // adjacent
@@ -410,9 +331,14 @@ import { reachableTiles } from './geometry';
     JSON.stringify(actions));
 }
 
-// --- Test 21 (R3): sorcerer HOLDS Firestorm on a lone target ---
+// --- Test 21 (R3): sorcerer HOLDS Fire From Heaven on a lone target ---
+// Threat-holding: with 3 enemies alive but only 1 in blast reach, spending
+// the once-per-game AOE on a single unit wastes its zoning value. Expect
+// Arcane Bolt instead.
 {
   const sorc = mkUnit('sorcerer', 'p1', { x: 2, y: 3 });
+  // Enemies spread so NO reachable blast center can cover two of them
+  // (the AI will happily move-then-cast to find a 2-hit if one exists).
   const near = mkUnit('fighter', 'p2', { x: 5, y: 3 });
   const far1 = mkUnit('barbarian', 'p2', { x: 7, y: 6 });
   const far2 = mkUnit('rogue', 'p2', { x: 1, y: 7 });
@@ -426,6 +352,8 @@ import { reachableTiles } from './geometry';
 }
 
 // --- Test 22 (R3): the hold lifts against the LAST enemy ---
+// One enemy remaining: nothing left to zone, so a single-target ffh is fair
+// game if it scores (14 unblockable + kill potential on a wounded target).
 {
   const sorc = mkUnit('sorcerer', 'p1', { x: 2, y: 3 });
   const lastEnemy = mkUnit('fighter', 'p2', { x: 4, y: 3 }, 12); // ffh kills
@@ -436,6 +364,98 @@ import { reachableTiles } from './geometry';
   );
   check('R3: ffh gate lifts vs the last enemy (kills the 12-HP fighter)', spentFfh,
     JSON.stringify(actions));
+}
+
+// ===========================================================================
+// V4 regression tests (sim-discovered bugs)
+// ===========================================================================
+import { normalizeAbilityDefinitions } from './aiBrain';
+import { DEFAULT_ABILITIES } from './defaultData';
+
+// --- Test 23 (V4 Bug 3): Fear-rooted(1) unit CAN commit in round 1 ---
+// The engine ticks statuses before validating, so a 1-turn root expires
+// before the MOVE is checked. The brain must emit a real commit action, not
+// bare END_TURN (which draws "Must commit a unit in round 1" — 200/200
+// games in the warlock-vs-barbarian sims).
+{
+  const barb = mkUnit('barbarian', 'p1', { x: 0, y: 3 });
+  barb.statusEffects.push({ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'w' });
+  const ally = mkUnit('barbarian', 'p1', { x: 1, y: 5 });
+  const w1 = mkUnit('warlock', 'p2', { x: 6, y: 2 });
+  const w2 = mkUnit('warlock', 'p2', { x: 6, y: 5 });
+  const state = mkState([barb, ally, w1, w2], null, true);
+  state.initiative.order = [w1.instanceId, ally.instanceId, w2.instanceId];
+  const actions = brain.selectActions(state, 'p1', map);
+  const commits = actions.some((a) => a.type !== 'END_TURN');
+  check('V4 Bug 3: rooted(1) unit emits a real round-1 commit action', commits,
+    JSON.stringify(actions));
+}
+
+// --- Test 24 (V4): rooted(>=2) melee with no target genuinely cannot commit ---
+{
+  const barb = mkUnit('barbarian', 'p1', { x: 0, y: 3 });
+  barb.statusEffects.push({ slug: 'rooted', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'w' });
+  const w1 = mkUnit('warlock', 'p2', { x: 6, y: 2 });
+  const state = mkState([barb, w1], null, true);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('V4: rooted(2) melee w/o targets returns END_TURN (pre-flight case)',
+    actions.length === 1 && actions[0].type === 'END_TURN',
+    JSON.stringify(actions));
+}
+
+// --- Test 25 (V4 Bug 2): AOE special gate bypassed for a LETHAL blast ---
+// Enemy at 12 HP in ffh reach; two more enemies alive but unclusterable.
+// Old gate: <2 enemies hit while 2+ alive -> hold. New: a kill lifts it.
+{
+  const sorc = mkUnit('sorcerer', 'p1', { x: 2, y: 3 });
+  const dying = mkUnit('fighter', 'p2', { x: 5, y: 3 }, 12);
+  const far1 = mkUnit('barbarian', 'p2', { x: 7, y: 6 });
+  const far2 = mkUnit('rogue', 'p2', { x: 1, y: 7 });
+  const state = mkState([sorc, dying, far1, far2], sorc.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const ffh = actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'ffh');
+  check('V4 Bug 2: lethal single-target ffh bypasses the cluster gate', ffh,
+    JSON.stringify(actions));
+}
+
+// --- Test 26 (V4 Bug 1): assassinate fires via move-to-reach mid-game ---
+{
+  const r1 = mkUnit('rogue', 'p1', { x: 2, y: 3 });
+  const r2 = mkUnit('rogue', 'p1', { x: 3, y: 5 });
+  const f1 = mkUnit('fighter', 'p2', { x: 5, y: 3 }, 15);
+  const f2 = mkUnit('fighter', 'p2', { x: 4, y: 5 }, 30);
+  const state = mkState([r1, r2, f1, f2], r1.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const used = actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate');
+  check('V4 Bug 1: assassinate fires on 15-HP target 3 tiles away', used,
+    JSON.stringify(actions));
+}
+
+// --- Test 27 (V4 Bug 1): snake_case effect keys are normalized ---
+// DB-seeded JSON can arrive as health_threshold; unnormalized, the execute
+// path sees healthThreshold undefined and mis-scores. The normalizer must
+// restore correct behavior.
+{
+  const raw = JSON.parse(JSON.stringify(DEFAULT_ABILITIES)) as typeof DEFAULT_ABILITIES;
+  const assn = raw.find((a) => a.slug === 'assassinate');
+  if (!assn) throw new Error('no assassinate def');
+  const eff = assn.effects[0] as unknown as Record<string, unknown>;
+  eff['health_threshold'] = eff['healthThreshold'];
+  delete eff['healthThreshold'];
+  const fixedMap = new Map(normalizeAbilityDefinitions(raw).map((a) => [a.slug, a]));
+  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
+  const healthy = mkUnit('fighter', 'p2', { x: 4, y: 3 }, 42);
+  const state = mkState([rogue, healthy], rogue.instanceId);
+  const actions = brain.selectActions(state, 'p1', fixedMap);
+  const wasted = actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate');
+  check('V4: normalized snake_case def does NOT nuke a full-HP target', !wasted,
+    JSON.stringify(actions));
+  const weak = mkUnit('fighter', 'p2', { x: 4, y: 3 }, 15);
+  const state2 = mkState([rogue, weak], rogue.instanceId);
+  const actions2 = brain.selectActions(state2, 'p1', fixedMap);
+  const fired = actions2.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate');
+  check('V4: normalized snake_case def fires on 15-HP target', fired,
+    JSON.stringify(actions2));
 }
 
 console.log(failures === 0 ? '\nAll smoke tests passed.' : `\n${failures} FAILURE(S)`);

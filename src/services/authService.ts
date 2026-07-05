@@ -102,6 +102,7 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
       name: string;
       unit_ids: string[];
       placement: Array<{ x: number; y: number }>;
+      unit_customizations: import('../types/index.js').UnitCustomization[];
       is_active: boolean;
       created_at: string;
     }>(
@@ -126,6 +127,7 @@ export async function register(input: RegisterInput): Promise<RegisterResult> {
     name: teamRow.name,
     unitIds: teamRow.unit_ids as [string, string, string, string],
     placement: teamRow.placement,
+    unitCustomizations: teamRow.unit_customizations ?? [],
     isActive: teamRow.is_active,
     createdAt: teamRow.created_at,
   };
