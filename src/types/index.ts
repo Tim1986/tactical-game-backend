@@ -144,6 +144,14 @@ export interface PassiveDefinition {
   description: string;
 }
 
+export interface PassiveOption {
+  slug: string;
+  name: string;
+  description: string;
+  stat: 'maxHealth' | 'armorClass' | 'movementRange';
+  value: number;
+}
+
 export interface UnitDefinition {
   id: UUID;
   slug: string;
@@ -153,6 +161,8 @@ export interface UnitDefinition {
   movementRange: number;
   abilities: string[];
   passives: string[];
+  specialOptions: string[];
+  passiveOptions: PassiveOption[];
   unlockLevel: number;
   assetKey: string;
   isActive: boolean;
@@ -160,12 +170,18 @@ export interface UnitDefinition {
 
 // --- Teams ---
 
+export interface UnitCustomization {
+  specialSlug: string;
+  passiveSlug: string | null;
+}
+
 export interface Team {
   id: UUID;
   userId: UUID;
   name: string;
   unitIds: [UUID, UUID, UUID, UUID];
   placement: Array<{ x: number; y: number }>;
+  unitCustomizations: UnitCustomization[];
   isActive: boolean;
   createdAt: ISOTimestamp;
 }

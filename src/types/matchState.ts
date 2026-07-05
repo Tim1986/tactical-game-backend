@@ -31,6 +31,7 @@ export interface UnitInstance {
   hasActedThisTurn: boolean;
   cooldowns: Record<string, number>;
   statusEffects: ActiveStatusEffect[];
+  fortuneMeter: number;
 }
 
 export type MatchPhase = 'action';
@@ -70,6 +71,7 @@ export interface UseAbilityAction {
   unitInstanceId: UUID;
   abilitySlug: string;
   target: BoardPosition;
+  pushDestination?: BoardPosition;
 }
 
 export interface ChargeAction {

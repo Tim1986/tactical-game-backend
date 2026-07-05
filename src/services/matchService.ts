@@ -22,7 +22,7 @@ interface MatchRow {
   active_player_id: string; turn_number: number; turn_deadline: string | null;
   winner_id: string | null; match_state: MatchState; last_turn_events: unknown[];
   elo_delta_p1: number | null; elo_delta_p2: number | null;
-  created_at: string; completed_at: string | null; is_pve: boolean;
+  created_at: string; updated_at: string; completed_at: string | null; is_pve: boolean;
 }
 
 const fableBrain = new OptimalBrain();
@@ -37,7 +37,7 @@ export async function createPveMatch(
     loadTeamUnitsWithPlacement(fableTeamId),
   ]);
   // Human always goes first in PvE — simpler UX, no auto-process needed at creation
-  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId);
+  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId, humanResult.customizations, fableResult.customizations);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + 72);
   const result = await query<{ id: string }>(
@@ -52,7 +52,7 @@ export async function createPveMatch(
 
 export async function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number): Promise<{ matchId: string; state: MatchState }> {
   const [p1Result, p2Result] = await Promise.all([loadTeamUnitsWithPlacement(playerOneTeamId), loadTeamUnitsWithPlacement(playerTwoTeamId)]);
-  const initialState = buildInitialState(playerOneId, playerTwoId, p1Result.units, p2Result.units, p1Result.placement, p2Result.placement);
+  const initialState = buildInitialState(playerOneId, playerTwoId, p1Result.units, p2Result.units, p1Result.placement, p2Result.placement, undefined, p1Result.customizations, p2Result.customizations);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + turnDeadlineHours);
   const result = await query<{ id: string }>(
@@ -64,7 +64,7 @@ export async function createMatch(playerOneId: string, playerTwoId: string, play
   return { matchId, state: initialState };
 }
 
-function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string): MatchState {
+function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string, p1Customizations?: import('../types/index.js').UnitCustomization[], p2Customizations?: import('../types/index.js').UnitCustomization[]): MatchState {
   // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
   const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
   // Mirror P2 placement: team is saved as if they were P1 (left side), so flip x: newX = 7 - x
@@ -74,24 +74,38 @@ function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: Un
   // Mirror P2's saved positions to the right side of the board
   const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
   const units: UnitInstance[] = [
-    ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i])),
-    ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2Positions[i])),
+    ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),
+    ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i])),
   ];
   const round1FirstPlayerId = forceFirstPlayerId ?? (Math.random() < 0.5 ? playerOneId : playerTwoId);
   const initiative: InitiativeState = { order: [], slot: 0, round1FirstPlayerId, activeUnitId: null, isRound1: true };
   return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, roundNumber: 1, activePlayerId: round1FirstPlayerId, phase: 'action', initiative };
 }
 
-function buildUnitInstance(def: UnitDefinition, ownerId: string, position: BoardPosition): UnitInstance {
+function buildUnitInstance(def: UnitDefinition, ownerId: string, position: BoardPosition, customization?: import('../types/index.js').UnitCustomization): UnitInstance {
+  // Apply chosen special: replace the default special slot with the player's pick.
+  const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
+  const specialSlug = customization?.specialSlug ?? def.specialOptions[0] ?? def.abilities[1];
+  const abilities = basicSlug && specialSlug ? [basicSlug, specialSlug] : def.abilities;
+
+  // Apply chosen passive: stat boost selected at team-build time.
+  const passive = customization?.passiveSlug
+    ? def.passiveOptions.find((p) => p.slug === customization.passiveSlug)
+    : undefined;
+  const maxHealth = def.maxHealth + (passive?.stat === 'maxHealth' ? passive.value : 0);
+  const armorClass = (def.armorClass ?? 10) + (passive?.stat === 'armorClass' ? passive.value : 0);
+  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? passive.value : 0);
+
   const cooldowns: Record<string, number> = {};
-  for (const slug of def.abilities) cooldowns[slug] = 0;
+  for (const slug of abilities) cooldowns[slug] = 0;
+
   return {
     instanceId: uuidv4(), definitionSlug: def.slug, ownerPlayerId: ownerId,
-    position, currentHealth: def.maxHealth, maxHealth: def.maxHealth,
-    armorClass: def.armorClass ?? 10, movementRange: def.movementRange,
-    abilities: def.abilities, passives: def.passives,
+    position, currentHealth: maxHealth, maxHealth,
+    armorClass, movementRange,
+    abilities, passives: def.passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    cooldowns, statusEffects: [],
+    cooldowns, statusEffects: [], fortuneMeter: 0,
   };
 }
 
@@ -258,20 +272,22 @@ export async function getTurnHistory(matchId: string, requestingUserId: string):
   return result.rows;
 }
 
-async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: UnitDefinition[]; placement: BoardPosition[] }> {
-  const teamResult = await query<{ unit_ids: string[]; placement: BoardPosition[] }>('SELECT unit_ids, placement FROM teams WHERE id = $1', [teamId]);
+async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: UnitDefinition[]; placement: BoardPosition[]; customizations: import('../types/index.js').UnitCustomization[] }> {
+  const teamResult = await query<{ unit_ids: string[]; placement: BoardPosition[]; unit_customizations: import('../types/index.js').UnitCustomization[] }>(
+    'SELECT unit_ids, placement, unit_customizations FROM teams WHERE id = $1', [teamId]
+  );
   const team = teamResult.rows[0];
   if (!team) throw new Error('Team not found: ' + teamId);
-  const unitResult = await query<{ id: string; slug: string; name: string; max_health: number; armor_class: number; movement_range: number; abilities: string[]; passives: string[]; unlock_level: number; asset_key: string; is_active: boolean; }>(
-    'SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, unlock_level, asset_key, is_active FROM unit_definitions WHERE id = ANY($1)',
+  const unitResult = await query<{ id: string; slug: string; name: string; max_health: number; armor_class: number; movement_range: number; abilities: string[]; passives: string[]; special_options: string[]; passive_options: import('../types/index.js').PassiveOption[]; unlock_level: number; asset_key: string; is_active: boolean; }>(
+    'SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, special_options, passive_options, unlock_level, asset_key, is_active FROM unit_definitions WHERE id = ANY($1)',
     [team.unit_ids]
   );
   const unitMap = new Map(unitResult.rows.map((r) => [r.id, r]));
   const units = team.unit_ids.map((id) => {
     const row = unitMap.get(id)!;
-    return { id: row.id, slug: row.slug, name: row.name, maxHealth: row.max_health, armorClass: row.armor_class, movementRange: row.movement_range, abilities: row.abilities, passives: row.passives, unlockLevel: row.unlock_level, assetKey: row.asset_key, isActive: row.is_active };
+    return { id: row.id, slug: row.slug, name: row.name, maxHealth: row.max_health, armorClass: row.armor_class, movementRange: row.movement_range, abilities: row.abilities, passives: row.passives, specialOptions: row.special_options ?? [], passiveOptions: row.passive_options ?? [], unlockLevel: row.unlock_level, assetKey: row.asset_key, isActive: row.is_active };
   });
-  return { units, placement: team.placement ?? [] };
+  return { units, placement: team.placement ?? [], customizations: team.unit_customizations ?? [] };
 }
 
 async function loadAbilityMapDirect(): Promise<Map<string, AbilityDefinition>> {

@@ -119,20 +119,23 @@ async function seed(): Promise<void> {
       await client.query(
         `INSERT INTO unit_definitions
            (slug, name, max_health, armor_class, movement_range, abilities, passives,
-            unlock_level, asset_key, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            special_options, passive_options, unlock_level, asset_key, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (slug) DO UPDATE SET
-           name           = EXCLUDED.name,
-           max_health     = EXCLUDED.max_health,
-           armor_class    = EXCLUDED.armor_class,
-           movement_range = EXCLUDED.movement_range,
-           abilities      = EXCLUDED.abilities,
-           passives       = EXCLUDED.passives,
-           unlock_level   = EXCLUDED.unlock_level,
-           asset_key      = EXCLUDED.asset_key,
-           is_active      = EXCLUDED.is_active`,
+           name            = EXCLUDED.name,
+           max_health      = EXCLUDED.max_health,
+           armor_class     = EXCLUDED.armor_class,
+           movement_range  = EXCLUDED.movement_range,
+           abilities       = EXCLUDED.abilities,
+           passives        = EXCLUDED.passives,
+           special_options = EXCLUDED.special_options,
+           passive_options = EXCLUDED.passive_options,
+           unlock_level    = EXCLUDED.unlock_level,
+           asset_key       = EXCLUDED.asset_key,
+           is_active       = EXCLUDED.is_active`,
         [unit.slug, unit.name, unit.max_health, unit.armor_class, unit.movement_range,
          JSON.stringify(unit.abilities), JSON.stringify(unit.passives),
+         JSON.stringify(unit.special_options), JSON.stringify(unit.passive_options),
          unit.unlock_level, unit.asset_key, unit.is_active]
       );
     }

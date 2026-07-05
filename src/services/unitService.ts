@@ -10,6 +10,8 @@ interface UnitRow {
   movement_range: number;
   abilities: string[];
   passives: string[];
+  special_options: string[];
+  passive_options: import('../types/index.js').PassiveOption[];
   unlock_level: number;
   asset_key: string;
   is_active: boolean;
@@ -39,6 +41,8 @@ function rowToUnit(row: UnitRow): UnitDefinition {
     movementRange: row.movement_range,
     abilities: row.abilities,
     passives: row.passives,
+    specialOptions: row.special_options ?? [],
+    passiveOptions: row.passive_options ?? [],
     unlockLevel: row.unlock_level,
     assetKey: row.asset_key,
     isActive: row.is_active,
@@ -70,7 +74,7 @@ export async function getUnlockedUnits(
   accountLevel: number
 ): Promise<{ units: UnitDefinition[]; abilities: AbilityDefinition[] }> {
   const unitResult = await query<UnitRow>(
-    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives,
+    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, special_options, passive_options,
             unlock_level, asset_key, is_active
      FROM unit_definitions
      WHERE is_active = TRUE
@@ -106,7 +110,7 @@ export async function getUnlockedUnits(
 // ---------------------------------------------------------------
 export async function getUnitBySlug(slug: string): Promise<UnitDefinition | null> {
   const result = await query<UnitRow>(
-    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives,
+    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, special_options, passive_options,
             unlock_level, asset_key, is_active
      FROM unit_definitions
      WHERE slug = $1 AND is_active = TRUE`,
@@ -122,7 +126,7 @@ export async function getUnitBySlug(slug: string): Promise<UnitDefinition | null
 // ---------------------------------------------------------------
 export async function getUnitById(id: string): Promise<UnitDefinition | null> {
   const result = await query<UnitRow>(
-    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives,
+    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, special_options, passive_options,
             unlock_level, asset_key, is_active
      FROM unit_definitions
      WHERE id = $1 AND is_active = TRUE`,
@@ -142,7 +146,7 @@ export async function validateUnitAccess(
   accountLevel: number
 ): Promise<{ valid: boolean; units: UnitDefinition[]; invalidIds: string[] }> {
   const result = await query<UnitRow>(
-    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives,
+    `SELECT id, slug, name, max_health, armor_class, movement_range, abilities, passives, special_options, passive_options,
             unlock_level, asset_key, is_active
      FROM unit_definitions
      WHERE id = ANY($1) AND is_active = TRUE`,

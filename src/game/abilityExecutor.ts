@@ -16,9 +16,8 @@ export interface ExecutionContext {
   targetPosition: BoardPosition;
   ability: AbilityDefinition;
   events: GameEvent[];
+  pushDestination?: BoardPosition;
 }
-
-const HIT_BONUS = 5;
 
 export function executeAbility(ctx: ExecutionContext): void {
   const targets = resolveTargets(ctx);
@@ -28,8 +27,14 @@ export function executeAbility(ctx: ExecutionContext): void {
 
   for (const target of targets) {
     if (needsHitRoll) {
-      const roll = Math.floor(Math.random() * 20) + 1;
-      if (roll + HIT_BONUS < target.armorClass) {
+      // Pseudo-random distribution (Bresenham accumulator): each attack adds the
+      // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
+      // misses and the meter resets by 1. Outcomes converge exactly to the
+      // intended dodge rate with no streaks.
+      const missChance = Math.max(0, target.armorClass - 6) / 20;
+      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
+      if (target.fortuneMeter >= 1) {
+        target.fortuneMeter -= 1;
         ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
         continue;
       }
@@ -51,7 +56,8 @@ function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
     case 'self': return [caster];
     case 'aoe': {
       const center = ability.range === 0 ? caster.position : targetPosition;
-      return getUnitsInRadius(center, ability.areaRadius, aliveUnits);
+      const hits = getUnitsInRadius(center, ability.areaRadius, aliveUnits);
+      return ability.range === 0 ? hits.filter((u) => u.instanceId !== caster.instanceId) : hits;
     }
     case 'line': {
       const tiles = getLineTiles(caster.position, targetPosition, ability.range);
@@ -122,8 +128,9 @@ function removeStatus(ctx: ExecutionContext, target: UnitInstance, effect: Remov
 function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffect): void {
   if (!target.isAlive) return;
   if (hasPassive(target, 'immovable')) return;
-  const destination = calculatePushDestination(target.position, ctx.caster.position, effect.distance);
-  const finalPos = findLastFreePosition(target.position, destination, ctx.state.units, target.instanceId);
+  const idealDestination = ctx.pushDestination
+    ?? calculatePushDestination(target.position, ctx.caster.position, effect.distance);
+  const finalPos = findLastFreePosition(target.position, idealDestination, ctx.state.units, target.instanceId);
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PUSHED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
 }

@@ -110,14 +110,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'assassinate',
     name: 'Kill Shot',
-    description: 'Kills an adjacent enemy at 20 HP or below. Unblockable. Fails silently if target is above threshold.',
+    description: 'Kills an adjacent enemy at 18 HP or below. Unblockable. Fails silently if target is above threshold.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 9999, healthThreshold: 20 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 9999, healthThreshold: 18 }],
   },
 
   // ── Ranger ────────────────────────────────────────────────────────────────
@@ -176,14 +176,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'eldritch',
     name: 'Demon Blast',
-    description: 'Deals 12 unblockable damage from up to 4 tiles away.',
+    description: 'Deals 10 unblockable damage from up to 4 tiles away.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 12 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 10 }],
   },
   {
     slug: 'fear',
@@ -232,13 +232,24 @@ export const ABILITY_DEFS = [
 // Unit definitions
 // ---------------------------------------------------------------------------
 
+// PassiveOption: a stat boost the player selects at team-build time.
+// stat: which field on UnitInstance it modifies.
+// value: added directly (e.g. +5 maxHealth, +1 armorClass, +1 movementRange).
+export interface PassiveOption {
+  slug: string;
+  name: string;
+  description: string;
+  stat: 'maxHealth' | 'armorClass' | 'movementRange';
+  value: number;
+}
+
 export const UNIT_DEFS = [
-  { slug: 'fighter',   name: 'Fighter',   max_health: 42, armor_class: 17, movement_range: 3, abilities: ['sword',     'second_wind'], passives: [], unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
-  { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',    'whirlwind'],   passives: [], unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
-  { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',     'piercing'],    passives: [], unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
-  { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 15, movement_range: 4, abilities: ['twin',      'assassinate'], passives: [], unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
-  { slug: 'cleric',    name: 'Cleric',    max_health: 40, armor_class: 16, movement_range: 3, abilities: ['mace',      'heal'],        passives: [], unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
-  { slug: 'wizard',    name: 'Wizard',    max_health: 30, armor_class: 14, movement_range: 3, abilities: ['missile',   'freeze'],      passives: [], unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
-  { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 30, armor_class: 14, movement_range: 3, abilities: ['bolt',      'ffh'],         passives: [], unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
-  { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch',  'fear'],        passives: [], unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
-] as const;
+  { slug: 'fighter',   name: 'Fighter',   max_health: 42, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind'], passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
+  { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind'],   passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
+  { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing'],    passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
+  { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate'], passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
+  { slug: 'cleric',    name: 'Cleric',    max_health: 40, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal'],        passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
+  { slug: 'wizard',    name: 'Wizard',    max_health: 30, armor_class: 16, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze'],      passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
+  { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 30, armor_class: 14, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh'],         passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
+  { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear'],        passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
+];
