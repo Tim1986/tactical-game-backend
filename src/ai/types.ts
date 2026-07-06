@@ -3,6 +3,8 @@
 export type {
   AbilityDefinition,
   AbilityEffect,
+  PassiveOption,
+  UnitCustomization,
 } from '../types/index.js';
 
 export type {
@@ -27,4 +29,8 @@ export interface UnitDefinition {
   movementRange: number;
   abilities: string[];
   passives: string[];
+  /** All special abilities available at team-build time (default first). */
+  specialOptions: string[];
+  /** All passive options available at team-build time. */
+  passiveOptions: import('../types/index.js').PassiveOption[];
 }

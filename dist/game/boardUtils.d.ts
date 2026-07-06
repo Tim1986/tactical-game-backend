@@ -1,4 +1,12 @@
 import { BoardPosition, UnitInstance } from '../types/matchState.js';
+/**
+ * The four extreme corner tiles are removed from the board (60-tile cross).
+ * Must stay in lockstep with backend/src/ai/geometry.ts's isCorner — that
+ * module is the canonical definition; this one is duplicated here only
+ * because game/ code can't import from ai/ without an awkward dependency
+ * direction. If you change one, change both.
+ */
+export declare function isCorner(x: number, y: number): boolean;
 export declare function isInBounds(pos: BoardPosition): boolean;
 export declare function chebyshevDistance(a: BoardPosition, b: BoardPosition): number;
 export declare function manhattanDistance(a: BoardPosition, b: BoardPosition): number;

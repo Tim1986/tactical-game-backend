@@ -5,7 +5,13 @@ export interface BoardPosition {
   y: number;
 }
 
-export const BOARD_WIDTH = 10;
+// The board is an 8x8 grid with the four extreme corners removed (a 60-tile
+// cross), so it fits better on a phone screen at the diagonal perspective.
+// BOARD_WIDTH was incorrectly 10 for a long time (a leftover from an
+// abandoned wider-board idea) — this must stay 8 and stay in lockstep with
+// backend/src/ai/geometry.ts's BOARD_SIZE, which is the canonical source
+// for corner exclusion.
+export const BOARD_WIDTH = 8;
 export const BOARD_HEIGHT = 8;
 
 export interface ActiveStatusEffect {
@@ -97,7 +103,7 @@ export interface TurnResult {
 export type GameEventType =
   | 'UNIT_MOVED' | 'ABILITY_USED' | 'DAMAGE_DEALT' | 'HEALING_DONE'
   | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED'
-  | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'ATTACK_MISSED'
+  | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'ATTACK_MISSED' | 'SHIELD_ABSORBED'
   | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER';
 
 export interface GameEvent {

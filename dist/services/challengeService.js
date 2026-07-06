@@ -28,7 +28,7 @@ async function issueChallenge(challengerId, challengerTeamId, opponentUsername) 
     if (!opponentUsername?.trim())
         throw new ChallengeError('Opponent username is required');
     // Look up opponent by username
-    const opponentResult = await (0, pool_js_1.query)('SELECT id, username FROM users WHERE username = $1', [opponentUsername.trim()]);
+    const opponentResult = await (0, pool_js_1.query)('SELECT id, username FROM users WHERE LOWER(username) = LOWER($1)', [opponentUsername.trim()]);
     const opponent = opponentResult.rows[0];
     if (!opponent)
         throw new ChallengeError('Player "' + opponentUsername + '" not found');

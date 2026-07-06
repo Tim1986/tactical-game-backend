@@ -45,8 +45,10 @@ describe('MOVE', () => {
     expect(result.updatedState.units.find((u) => u.instanceId === 'u1')?.position).toEqual({ x: 3, y: 1 });
   });
   it('throws if out of range', () => {
-    const state = makeState(P1, P2, [makeUnit('u1', P1, 0, 0), makeUnit('u2', P2, 6, 6)]);
-    expect(() => processTurn(state, [{ type: 'MOVE', unitInstanceId: 'u1', destination: { x: 7, y: 7 } }, { type: 'END_TURN' }], P1, P1, P2, abilityMap)).toThrow('movement range');
+    // Destination must be in-bounds (not a removed corner) but beyond
+    // movement range, so the range check — not the bounds check — fires.
+    const state = makeState(P1, P2, [makeUnit('u1', P1, 1, 1), makeUnit('u2', P2, 6, 6)]);
+    expect(() => processTurn(state, [{ type: 'MOVE', unitInstanceId: 'u1', destination: { x: 7, y: 1 } }, { type: 'END_TURN' }], P1, P1, P2, abilityMap)).toThrow('movement range');
   });
   it('rejects diagonal as 2 moves (manhattan)', () => {
     // Range 3 unit at (0,0): tile (2,2) is distance 4 via Manhattan — out of range

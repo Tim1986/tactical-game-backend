@@ -11,13 +11,19 @@ describe('chebyshevDistance', () => {
 });
 
 describe('isInBounds', () => {
-  it('accepts valid positions', () => { expect(isInBounds({ x: 0, y: 0 })).toBe(true); expect(isInBounds({ x: 9, y: 7 })).toBe(true); });
-  it('rejects out of bounds', () => { expect(isInBounds({ x: -1, y: 0 })).toBe(false); expect(isInBounds({ x: 10, y: 0 })).toBe(false); });
+  it('accepts valid non-corner positions', () => { expect(isInBounds({ x: 0, y: 3 })).toBe(true); expect(isInBounds({ x: 7, y: 3 })).toBe(true); });
+  it('rejects out of bounds', () => { expect(isInBounds({ x: -1, y: 0 })).toBe(false); expect(isInBounds({ x: 8, y: 0 })).toBe(false); });
+  it('rejects the four removed corners', () => {
+    expect(isInBounds({ x: 0, y: 0 })).toBe(false);
+    expect(isInBounds({ x: 7, y: 0 })).toBe(false);
+    expect(isInBounds({ x: 0, y: 7 })).toBe(false);
+    expect(isInBounds({ x: 7, y: 7 })).toBe(false);
+  });
 });
 
 describe('calculatePushDestination', () => {
   it('pushes unit away from caster', () => { const result = calculatePushDestination({ x: 4, y: 2 }, { x: 2, y: 2 }, 2); expect(result.x).toBe(6); expect(result.y).toBe(2); });
-  it('clamps to board edge', () => { const result = calculatePushDestination({ x: 8, y: 0 }, { x: 0, y: 0 }, 5); expect(result.x).toBe(9); });
+  it('clamps to board edge', () => { const result = calculatePushDestination({ x: 6, y: 3 }, { x: 0, y: 3 }, 5); expect(result.x).toBe(7); });
 });
 
 describe('calculatePullDestination', () => {

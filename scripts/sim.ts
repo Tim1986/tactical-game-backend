@@ -18,16 +18,16 @@ const ABILITY_MAP = new Map<string, AbilityDefinition>([
   ['sword',      { id: 'a1',  slug: 'sword',      name: 'Strike',         description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 10, damageType: 'physical' }] }],
   ['second_wind',{ id: 'a2',  slug: 'second_wind',name: 'First Aid',      description: '', targetingType: 'self',   range: 0, areaRadius: 0, cooldownTurns: 99, isUnblockable: false, effects: [{ type: 'heal',   formula: 'flat', value: 20 }] }],
   ['strike',     { id: 'a3',  slug: 'strike',     name: 'Strike',         description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 15, damageType: 'physical' }] }],
-  ['whirlwind',  { id: 'a4',  slug: 'whirlwind',  name: 'Whirlwind',      description: '', targetingType: 'aoe',    range: 0, areaRadius: 1, cooldownTurns: 99, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 20, damageType: 'physical' }] }],
-  ['mace',       { id: 'a5',  slug: 'mace',       name: 'Mace',           description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 7,  damageType: 'physical' }] }],
-  ['heal',       { id: 'a6',  slug: 'heal',       name: 'Heal',           description: '', targetingType: 'single', range: 2, areaRadius: 0, cooldownTurns: 99, isUnblockable: false, canTargetAlly: true, effects: [{ type: 'heal', formula: 'flat', value: 30 }] }],
-  ['twin',       { id: 'a7',  slug: 'twin',       name: 'Twin Strike',    description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 24, damageType: 'physical' }] }],
+  ['whirlwind',  { id: 'a4',  slug: 'whirlwind',  name: 'Whirlwind',      description: '', targetingType: 'aoe',    range: 0, areaRadius: 1, cooldownTurns: 99, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 15, damageType: 'physical' }] }],
+  ['mace',       { id: 'a5',  slug: 'mace',       name: 'Mace',           description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 8,  damageType: 'physical' }] }],
+  ['heal',       { id: 'a6',  slug: 'heal',       name: 'Heal',           description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 99, isUnblockable: false, canTargetAlly: true, effects: [{ type: 'heal', formula: 'flat', value: 30 }] }],
+  ['twin',       { id: 'a7',  slug: 'twin',       name: 'Twin Strike',    description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 20, damageType: 'physical' }] }],
   ['assassinate',{ id: 'a8',  slug: 'assassinate',name: 'Kill Shot',      description: '', targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 99, isUnblockable: true,  effects: [{ type: 'damage', formula: 'flat', value: 9999, damageType: 'true', healthThreshold: 20 }] }],
-  ['arrow',      { id: 'a9',  slug: 'arrow',      name: 'Arrow',          description: '', targetingType: 'single', range: 6, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 10, damageType: 'physical' }] }],
-  ['piercing',   { id: 'a10', slug: 'piercing',   name: 'Piercing Shot',  description: '', targetingType: 'line',   range: 6, areaRadius: 0, cooldownTurns: 99, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 15, damageType: 'true' }] }],
-  ['bolt',       { id: 'a11', slug: 'bolt',       name: 'Arcane Bolt',    description: '', targetingType: 'single', range: 5, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 10, damageType: 'magical' }] }],
-  ['ffh',        { id: 'a12', slug: 'ffh',        name: 'Fire from Heaven',description:'', targetingType: 'aoe',    range: 3, areaRadius: 1, cooldownTurns: 99, isUnblockable: true,  effects: [{ type: 'damage', formula: 'flat', value: 20, damageType: 'magical' }] }],
-  ['eldritch',   { id: 'a13', slug: 'eldritch',   name: 'Demon Blast',    description: '', targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 0, isUnblockable: true,  effects: [{ type: 'damage', formula: 'flat', value: 9,  damageType: 'true' }] }],
+  ['arrow',      { id: 'a9',  slug: 'arrow',      name: 'Arrow',          description: '', targetingType: 'single', range: 6, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 12, damageType: 'physical' }] }],
+  ['piercing',   { id: 'a10', slug: 'piercing',   name: 'Piercing Shot',  description: '', targetingType: 'line',   range: 6, areaRadius: 0, cooldownTurns: 99, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 12, damageType: 'physical' }] }],
+  ['bolt',       { id: 'a11', slug: 'bolt',       name: 'Arcane Bolt',    description: '', targetingType: 'single', range: 5, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 8,  damageType: 'magical' }] }],
+  ['ffh',        { id: 'a12', slug: 'ffh',        name: 'Firestorm',       description:'', targetingType: 'aoe',    range: 3, areaRadius: 1, cooldownTurns: 99, isUnblockable: true,  effects: [{ type: 'damage', formula: 'flat', value: 14, damageType: 'magical' }] }],
+  ['eldritch',   { id: 'a13', slug: 'eldritch',   name: 'Demon Blast',    description: '', targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 0, isUnblockable: true,  effects: [{ type: 'damage', formula: 'flat', value: 12, damageType: 'true' }] }],
   ['fear',       { id: 'a14', slug: 'fear',       name: 'Fear',           description: '', targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 99, isUnblockable: true,  effects: [{ type: 'push', direction: 'away_from_caster', distance: 3 }, { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 }] }],
   ['missile',    { id: 'a15', slug: 'missile',    name: 'Ice Blast',      description: '', targetingType: 'single', range: 5, areaRadius: 0, cooldownTurns: 0, isUnblockable: false, effects: [{ type: 'damage', formula: 'flat', value: 8,  damageType: 'magical' }] }],
   ['freeze',     { id: 'a16', slug: 'freeze',     name: 'Freeze',         description: '', targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 99, isUnblockable: true,  effects: [{ type: 'apply_status', statusSlug: 'stunned', stacks: 1, durationTurns: 2 }] }],
@@ -36,11 +36,11 @@ const ABILITY_MAP = new Map<string, AbilityDefinition>([
 interface UnitTemplate { slug: string; name: string; maxHealth: number; armorClass: number; movementRange: number; abilities: string[]; }
 
 const UNIT_TEMPLATES: Record<string, UnitTemplate> = {
-  fighter:   { slug: 'fighter',   name: 'Fighter',   maxHealth: 42, armorClass: 16, movementRange: 3, abilities: ['sword',    'second_wind'] },
-  barbarian: { slug: 'barbarian', name: 'Barbarian', maxHealth: 50, armorClass: 15, movementRange: 4, abilities: ['strike',   'whirlwind']   },
+  fighter:   { slug: 'fighter',   name: 'Fighter',   maxHealth: 42, armorClass: 17, movementRange: 3, abilities: ['sword',    'second_wind'] },
+  barbarian: { slug: 'barbarian', name: 'Barbarian', maxHealth: 45, armorClass: 15, movementRange: 3, abilities: ['strike',   'whirlwind']   },
   ranger:    { slug: 'ranger',    name: 'Ranger',    maxHealth: 38, armorClass: 16, movementRange: 3, abilities: ['arrow',    'piercing']    },
   rogue:     { slug: 'rogue',     name: 'Rogue',     maxHealth: 35, armorClass: 15, movementRange: 4, abilities: ['twin',     'assassinate'] },
-  cleric:    { slug: 'cleric',    name: 'Cleric',    maxHealth: 40, armorClass: 18, movementRange: 3, abilities: ['mace',     'heal']        },
+  cleric:    { slug: 'cleric',    name: 'Cleric',    maxHealth: 40, armorClass: 16, movementRange: 3, abilities: ['mace',     'heal']        },
   wizard:    { slug: 'wizard',    name: 'Wizard',    maxHealth: 30, armorClass: 14, movementRange: 3, abilities: ['missile',  'freeze']      },
   sorcerer:  { slug: 'sorcerer',  name: 'Sorcerer',  maxHealth: 30, armorClass: 14, movementRange: 3, abilities: ['bolt',     'ffh']         },
   warlock:   { slug: 'warlock',   name: 'Warlock',   maxHealth: 32, armorClass: 15, movementRange: 3, abilities: ['eldritch', 'fear']        },
@@ -48,9 +48,9 @@ const UNIT_TEMPLATES: Record<string, UnitTemplate> = {
 
 // ─── Starting positions ───────────────────────────────────────────────────────
 
-// 10×8 board — mirrors matchService.ts starting positions
+// 8×8 board (corners excluded) — mirrors matchService.ts starting positions
 const P1_START_POSITIONS = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-const P2_START_POSITIONS = [{ x: 8, y: 0 }, { x: 8, y: 2 }, { x: 8, y: 4 }, { x: 8, y: 6 }];
+const P2_START_POSITIONS = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
 
 let instanceCounter = 0;
 function makeInstance(template: UnitTemplate, owner: string, pos: { x: number; y: number }): UnitInstance {
@@ -88,55 +88,191 @@ function isOccupied(units: UnitInstance[], pos: { x: number; y: number }, exclud
   return units.some((u) => u.isAlive && u.instanceId !== excludeId && u.position.x === pos.x && u.position.y === pos.y);
 }
 
-/**
- * Greedy bot: tries to move toward the nearest enemy, then uses the most
- * damaging ability it can. Falls back to random legal moves.
- */
-function botActions(state: MatchState, playerId: string): TurnAction[] {
-  const actions: TurnAction[] = [];
-  const myUnits = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-  const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== playerId);
-  const allies  = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-
-  for (const unit of myUnits) {
-    if (unit.statusEffects.some((se) => se.slug === 'stunned')) continue;
-
-    // ── Move toward nearest enemy ──
-    if (!unit.hasMovedThisTurn && enemies.length > 0) {
-      const target = enemies.reduce((a, b) => manhattan(unit.position, a.position) < manhattan(unit.position, b.position) ? a : b);
-      const best = findMoveToward(state, unit, target.position);
-      if (best) {
-        actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: best });
-        unit.position = best;
-        unit.hasMovedThisTurn = true;
-      }
-    }
-
-    // ── Use ability ──
-    if (!unit.hasActedThisTurn) {
-      const action = chooseBotAbility(unit, state, enemies, allies);
-      if (action) {
-        actions.push(action);
-        unit.hasActedThisTurn = true;
-      }
+function reachableSquares(unit: UnitInstance, state: MatchState): { x: number; y: number }[] {
+  const squares: { x: number; y: number }[] = [unit.position];
+  const range = unit.movementRange;
+  for (let dx = -range; dx <= range; dx++) {
+    for (let dy = -range; dy <= range; dy++) {
+      if (dx === 0 && dy === 0) continue;
+      if (Math.abs(dx) + Math.abs(dy) > range) continue;
+      const pos = { x: unit.position.x + dx, y: unit.position.y + dy };
+      if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) continue;
+      if (isOccupied(state.units, pos, unit.instanceId)) continue;
+      squares.push(pos);
     }
   }
+  return squares;
+}
 
-  actions.push({ type: 'END_TURN' });
-  return actions;
+function getSpecial(unit: UnitInstance): { slug: string; ab: AbilityDefinition } | null {
+  for (const slug of unit.abilities) {
+    const ab = ABILITY_MAP.get(slug);
+    if (ab && ab.cooldownTurns > 0 && (unit.cooldowns[slug] ?? 0) === 0) return { slug, ab };
+  }
+  return null;
+}
+
+function getBasic(unit: UnitInstance): { slug: string; ab: AbilityDefinition } | null {
+  for (const slug of unit.abilities) {
+    const ab = ABILITY_MAP.get(slug);
+    if (ab && ab.cooldownTurns === 0) return { slug, ab };
+  }
+  return null;
+}
+
+function isMeleeUnit(unit: UnitInstance): boolean {
+  const b = getBasic(unit);
+  return b ? b.ab.range <= 1 : false;
+}
+
+// Returns the best position + target for a unit's special, or null if no efficient play exists from any reachable square.
+function evalSpecial(
+  unit: UnitInstance,
+  state: MatchState,
+  enemies: UnitInstance[],
+  allies: UnitInstance[],
+): { movePos: { x: number; y: number }; targetPos: { x: number; y: number } } | null {
+  const sp = getSpecial(unit);
+  if (!sp) return null;
+
+  const slug = unit.definitionSlug;
+  const squares = reachableSquares(unit, state);
+
+  for (const from of squares) {
+    let targetPos: { x: number; y: number } | null = null;
+
+    if (slug === 'barbarian') {
+      // Whirlwind: 15 dmg to all adjacent, blockable. Efficient if hits 2+ enemies without hitting allies.
+      const adjEnemies = enemies.filter(e => chebyshev(from, e.position) <= 1);
+      const adjAllies  = allies.filter(a => a.instanceId !== unit.instanceId && chebyshev(from, a.position) <= 1);
+      if (adjAllies.length > 0) continue;
+      if (adjEnemies.length >= 2) targetPos = from;
+
+    } else if (slug === 'cleric') {
+      // Heal: efficient if an ally is missing ≥ 25 HP within range 1.
+      const target = allies
+        .filter(a => a.instanceId !== unit.instanceId && chebyshev(from, a.position) <= sp.ab.range && (a.maxHealth - a.currentHealth) >= 25)
+        .sort((a, b) => a.currentHealth - b.currentHealth)[0];
+      if (target) targetPos = target.position;
+
+    } else if (slug === 'fighter') {
+      // First Aid: efficient if self is missing ≥ 18 HP.
+      if ((unit.maxHealth - unit.currentHealth) >= 18) targetPos = from;
+
+    } else if (slug === 'ranger') {
+      // Piercing Shot: line, 10 dmg, blockable. Efficient if hits 2+ enemies without hitting allies.
+      const DIRS = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
+      let bestCount = 0;
+      let bestEnd: { x: number; y: number } | null = null;
+      for (const { dx, dy } of DIRS) {
+        let hitEnemies = 0;
+        let allyHit = false;
+        for (let i = 1; i <= sp.ab.range; i++) {
+          const pos = { x: from.x + dx * i, y: from.y + dy * i };
+          const enemy = enemies.find(e => e.position.x === pos.x && e.position.y === pos.y);
+          const ally  = allies.find(a => a.instanceId !== unit.instanceId && a.position.x === pos.x && a.position.y === pos.y);
+          if (ally) { allyHit = true; break; }
+          if (enemy) hitEnemies++;
+        }
+        if (allyHit) continue;
+        if (hitEnemies >= 2 && hitEnemies > bestCount) {
+          bestCount = hitEnemies;
+          bestEnd = { x: from.x + dx * sp.ab.range, y: from.y + dy * sp.ab.range };
+        }
+      }
+      if (bestEnd) targetPos = bestEnd;
+
+    } else if (slug === 'rogue') {
+      // Kill Shot: kills any adjacent enemy at ≤ 20 HP.
+      const target = enemies.find(e => chebyshev(from, e.position) <= sp.ab.range && e.currentHealth <= 20);
+      if (target) targetPos = target.position;
+
+    } else if (slug === 'sorcerer') {
+      // Firestorm: 3x3 AoE, range 3. Efficient if hits 3+ enemies without hitting allies.
+      let bestCount = 0;
+      let bestCenter: { x: number; y: number } | null = null;
+      for (const enemy of enemies) {
+        if (chebyshev(from, enemy.position) > sp.ab.range) continue;
+        const center = enemy.position;
+        const hitEnemies = enemies.filter(e => chebyshev(center, e.position) <= sp.ab.areaRadius).length;
+        const hitAllies  = allies.filter(a => a.instanceId !== unit.instanceId && chebyshev(center, a.position) <= sp.ab.areaRadius).length;
+        if (hitAllies === 0 && hitEnemies >= 2 && hitEnemies > bestCount) { bestCount = hitEnemies; bestCenter = center; }
+      }
+      if (bestCenter) targetPos = bestCenter;
+
+    } else if (slug === 'warlock') {
+      // Fear: push a melee enemy 3 tiles + root 1 turn. Efficient if a melee enemy is in range 4.
+      const target = enemies.find(e => chebyshev(from, e.position) <= sp.ab.range && isMeleeUnit(e));
+      if (target) targetPos = target.position;
+
+    } else if (slug === 'wizard') {
+      // Freeze: efficient if no other friendly unit has their special available, and there's a target in range.
+      const otherAllyHasSpecial = allies.some(a => a.instanceId !== unit.instanceId && getSpecial(a) !== null);
+      if (!otherAllyHasSpecial) {
+        const target = enemies
+          .filter(e => chebyshev(from, e.position) <= sp.ab.range)
+          .sort((a, b) => a.currentHealth - b.currentHealth)[0];
+        if (target) targetPos = target.position;
+      }
+    }
+
+    if (targetPos) {
+      // For ranged units, prefer squares farthest from enemies while still valid.
+      // We'll keep the first valid square found and let the farthest-move logic handle positioning.
+      return { movePos: from, targetPos };
+    }
+  }
+  return null;
+}
+
+// Find optimal basic attack: target lowest-HP reachable enemy, move optimally.
+function evalBasic(
+  unit: UnitInstance,
+  state: MatchState,
+  enemies: UnitInstance[],
+): { movePos: { x: number; y: number }; targetPos: { x: number; y: number } } | null {
+  const basic = getBasic(unit);
+  if (!basic) return null;
+
+  const squares = reachableSquares(unit, state);
+  const isRanged = basic.ab.range > 1;
+
+  // Find all reachable targets (lowest HP first)
+  const reachableTargets = enemies
+    .filter(e => squares.some(sq => chebyshev(sq, e.position) <= basic.ab.range))
+    .sort((a, b) => a.currentHealth - b.currentHealth);
+
+  if (reachableTargets.length === 0) return null;
+
+  const target = reachableTargets[0];
+  const validSquares = squares.filter(sq => chebyshev(sq, target.position) <= basic.ab.range);
+
+  let movePos: { x: number; y: number };
+  if (isRanged) {
+    // Stay as far from target as possible while still in range.
+    movePos = validSquares.reduce((best, sq) =>
+      chebyshev(sq, target.position) >= chebyshev(best, target.position) ? sq : best
+    , validSquares[0]);
+  } else {
+    // Melee: any adjacent square works; pick closest to minimise distance walked.
+    movePos = validSquares.reduce((best, sq) =>
+      manhattan(sq, unit.position) <= manhattan(best, unit.position) ? sq : best
+    , validSquares[0]);
+  }
+
+  return { movePos, targetPos: target.position };
 }
 
 function findMoveToward(state: MatchState, unit: UnitInstance, targetPos: { x: number; y: number }): { x: number; y: number } | null {
   const range = unit.movementRange;
   let best: { x: number; y: number } | null = null;
   let bestDist = manhattan(unit.position, targetPos);
-
   for (let dx = -range; dx <= range; dx++) {
     for (let dy = -range; dy <= range; dy++) {
       if (Math.abs(dx) + Math.abs(dy) > range) continue;
       if (dx === 0 && dy === 0) continue;
       const pos = { x: unit.position.x + dx, y: unit.position.y + dy };
-      if (pos.x < 0 || pos.x > 9 || pos.y < 0 || pos.y > 7) continue;
+      if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) continue;
       if (isOccupied(state.units, pos, unit.instanceId)) continue;
       const d = manhattan(pos, targetPos);
       if (d < bestDist) { bestDist = d; best = pos; }
@@ -145,109 +281,66 @@ function findMoveToward(state: MatchState, unit: UnitInstance, targetPos: { x: n
   return best;
 }
 
-function chooseBotAbility(unit: UnitInstance, state: MatchState, enemies: UnitInstance[], allies: UnitInstance[]): TurnAction | null {
-  // Prioritize: kill shot if available, then special (higher damage), then basic
-  const orderedAbilities = [...unit.abilities].sort((a, b) => {
-    const pa = a === 'assassinate' ? 2 : ABILITY_MAP.get(a)?.cooldownTurns ?? 0 > 0 ? 1 : 0;
-    const pb = b === 'assassinate' ? 2 : ABILITY_MAP.get(b)?.cooldownTurns ?? 0 > 0 ? 1 : 0;
-    return pb - pa;
-  });
+function botActions(state: MatchState, playerId: string): TurnAction[] {
+  const actions: TurnAction[] = [];
+  const myUnits = state.units.filter(u => u.isAlive && u.ownerPlayerId === playerId);
+  const enemies = () => state.units.filter(u => u.isAlive && u.ownerPlayerId !== playerId);
+  const allies  = () => state.units.filter(u => u.isAlive && u.ownerPlayerId === playerId);
 
-  for (const slug of orderedAbilities) {
-    const ability = ABILITY_MAP.get(slug);
-    if (!ability) continue;
-    const cd = unit.cooldowns[slug] ?? 0;
-    if (cd > 0) continue;
+  // Priority: units with efficient specials first, then units that can basic attack, then rest.
+  const withSpecial  = myUnits.filter(u => !u.statusEffects.some(se => se.slug === 'stunned') && evalSpecial(u, state, enemies(), allies()) !== null);
+  const withBasic    = myUnits.filter(u => !u.statusEffects.some(se => se.slug === 'stunned') && !withSpecial.includes(u) && evalBasic(u, state, enemies()) !== null);
+  const passive      = myUnits.filter(u => !withSpecial.includes(u) && !withBasic.includes(u));
+  const orderedUnits = [...withSpecial, ...withBasic, ...passive];
 
-    if (ability.targetingType === 'self') {
-      // Use heal only if below 50% HP
-      if (unit.currentHealth < unit.maxHealth * 0.5) {
-        return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: unit.position };
+  for (const unit of orderedUnits) {
+    if (unit.statusEffects.some(se => se.slug === 'stunned')) continue;
+
+    const curEnemies = enemies();
+    const curAllies  = allies();
+
+    // Try special first.
+    const spPlay = evalSpecial(unit, state, curEnemies, curAllies);
+    if (spPlay) {
+      const sp = getSpecial(unit)!;
+      if (spPlay.movePos.x !== unit.position.x || spPlay.movePos.y !== unit.position.y) {
+        actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: spPlay.movePos });
+        unit.position = spPlay.movePos;
+        unit.hasMovedThisTurn = true;
       }
+      actions.push({ type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: sp.slug, target: spPlay.targetPos });
+      unit.hasActedThisTurn = true;
       continue;
     }
 
-    if (ability.canTargetAlly) {
-      // Find most wounded ally in range
-      const woundedAlly = allies
-        .filter((a) => a.instanceId !== unit.instanceId && chebyshev(unit.position, a.position) <= ability.range && a.currentHealth < a.maxHealth)
-        .sort((a, b) => a.currentHealth - b.currentHealth)[0];
-      if (woundedAlly) {
-        return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: woundedAlly.position };
+    // Basic attack on optimal target.
+    const basicPlay = evalBasic(unit, state, curEnemies);
+    if (basicPlay) {
+      const basic = getBasic(unit)!;
+      if (basicPlay.movePos.x !== unit.position.x || basicPlay.movePos.y !== unit.position.y) {
+        actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: basicPlay.movePos });
+        unit.position = basicPlay.movePos;
+        unit.hasMovedThisTurn = true;
       }
+      actions.push({ type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: basic.slug, target: basicPlay.targetPos });
+      unit.hasActedThisTurn = true;
       continue;
     }
 
-    // Kill Shot: only if an enemy is at ≤20 HP and in range
-    if (slug === 'assassinate') {
-      const killTarget = enemies.find((e) => e.currentHealth <= 20 && chebyshev(unit.position, e.position) <= ability.range);
-      if (killTarget) {
-        return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: killTarget.position };
+    // No attack reachable — move toward nearest enemy.
+    if (!unit.hasMovedThisTurn && curEnemies.length > 0) {
+      const nearest = curEnemies.reduce((a, b) => manhattan(unit.position, a.position) <= manhattan(unit.position, b.position) ? a : b);
+      const best = findMoveToward(state, unit, nearest.position);
+      if (best) {
+        actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: best });
+        unit.position = best;
+        unit.hasMovedThisTurn = true;
       }
-      continue;
-    }
-
-    // AOE: pick target position with most enemies in radius
-    if (ability.targetingType === 'aoe') {
-      const aoeTarget = findAoeTarget(unit.position, ability.range, ability.areaRadius, enemies);
-      if (aoeTarget) {
-        return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: aoeTarget };
-      }
-      continue;
-    }
-
-    // Line: pick direction with most enemies
-    if (ability.targetingType === 'line') {
-      const lineTarget = findLineTarget(unit.position, ability.range, enemies);
-      if (lineTarget) {
-        return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: lineTarget };
-      }
-      continue;
-    }
-
-    // Single: nearest enemy in range
-    const inRange = enemies.filter((e) => chebyshev(unit.position, e.position) <= ability.range);
-    if (inRange.length > 0) {
-      const picked = inRange.reduce((a, b) => a.currentHealth < b.currentHealth ? a : b); // focus lowest HP
-      return { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: picked.position };
     }
   }
-  return null;
-}
 
-function findAoeTarget(casterPos: { x: number; y: number }, range: number, radius: number, enemies: UnitInstance[]): { x: number; y: number } | null {
-  // caster-centered AOE: just need enemies within radius of caster
-  if (range === 0) {
-    const hit = enemies.filter((e) => chebyshev(casterPos, e.position) <= radius);
-    return hit.length > 0 ? casterPos : null;
-  }
-  // Targeted AOE
-  let best: { x: number; y: number } | null = null;
-  let bestCount = 0;
-  for (const candidate of enemies) {
-    if (chebyshev(casterPos, candidate.position) > range) continue;
-    const count = enemies.filter((e) => chebyshev(candidate.position, e.position) <= radius).length;
-    if (count > bestCount) { bestCount = count; best = candidate.position; }
-  }
-  return best;
-}
-
-function findLineTarget(casterPos: { x: number; y: number }, range: number, enemies: UnitInstance[]): { x: number; y: number } | null {
-  const directions = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
-  let best: { x: number; y: number } | null = null;
-  let bestCount = 0;
-  for (const { dx, dy } of directions) {
-    let count = 0;
-    for (let i = 1; i <= range; i++) {
-      const pos = { x: casterPos.x + dx * i, y: casterPos.y + dy * i };
-      if (enemies.some((e) => e.position.x === pos.x && e.position.y === pos.y)) count++;
-    }
-    if (count > bestCount) {
-      bestCount = count;
-      best = { x: casterPos.x + dx * range, y: casterPos.y + dy * range };
-    }
-  }
-  return bestCount > 0 ? best : null;
+  actions.push({ type: 'END_TURN' });
+  return actions;
 }
 
 // ─── Match runner ─────────────────────────────────────────────────────────────
@@ -264,7 +357,7 @@ function runMatch(team1Slugs: string[], team2Slugs: string[]): { winner: 1 | 2 |
   ];
 
   let state: MatchState = {
-    board: { width: 10, height: 8 },
+    board: { width: 8, height: 8 },
     units,
     turnNumber: 1,
     activePlayerId: P1,

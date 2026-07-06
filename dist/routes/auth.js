@@ -102,7 +102,7 @@ exports.authRouter.post('/login', async (req, res) => {
     }
     catch (err) {
         if (err instanceof authService.AuthError) {
-            response_js_1.Errors.unauthorized(res);
+            (0, response_js_1.sendError)(res, 401, 'INVALID_CREDENTIALS', err.message);
             return;
         }
         throw err;

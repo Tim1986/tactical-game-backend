@@ -24,6 +24,42 @@ const STATUS_EFFECTS = [
     is_stackable: false,
     max_stacks: 1,
   },
+  {
+    slug: 'burning',
+    name: 'Burning',
+    description: 'Takes 5 damage per stack at the start of each of your turns.',
+    trigger: 'on_turn_start',
+    effect: { type: 'damage', formula: 'flat', value: 5 },
+    is_stackable: false,
+    max_stacks: 1,
+  },
+  {
+    slug: 'weakened',
+    name: 'Weakened',
+    description: 'Outgoing damage is reduced by 4 (minimum 0).',
+    trigger: 'on_hit',
+    effect: { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 0 },
+    is_stackable: false,
+    max_stacks: 1,
+  },
+  {
+    slug: 'exposed',
+    name: 'Exposed',
+    description: 'Attacks against this unit always hit, bypassing the fortune meter.',
+    trigger: 'on_hit',
+    effect: { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 0 },
+    is_stackable: false,
+    max_stacks: 1,
+  },
+  {
+    slug: 'shielded',
+    name: 'Shielded',
+    description: 'Fully negates the next hit against this unit, including unblockable attacks, then expires.',
+    trigger: 'on_hit',
+    effect: { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 0 },
+    is_stackable: false,
+    max_stacks: 1,
+  },
 ];
 
 // Abilities and units — edit values in src/config/gameData.ts, not here.
@@ -93,8 +129,8 @@ async function seed(): Promise<void> {
     for (const ab of ABILITIES) {
       await client.query(
         `INSERT INTO ability_definitions
-           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, effects)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          ON CONFLICT (slug) DO UPDATE SET
            name           = EXCLUDED.name,
            description    = EXCLUDED.description,
@@ -104,10 +140,12 @@ async function seed(): Promise<void> {
            cooldown_turns = EXCLUDED.cooldown_turns,
            is_special     = EXCLUDED.is_special,
            is_unblockable = EXCLUDED.is_unblockable,
+           exclude_allies = EXCLUDED.exclude_allies,
            effects        = EXCLUDED.effects`,
         [ab.slug, ab.name, ab.description, ab.targeting_type,
          ab.range, ab.area_radius, ab.cooldown_turns, ab.is_special,
          (ab as typeof ab & { is_unblockable?: boolean }).is_unblockable ?? false,
+         (ab as typeof ab & { exclude_allies?: boolean }).exclude_allies ?? false,
          JSON.stringify(ab.effects)]
       );
     }

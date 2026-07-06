@@ -58,10 +58,6 @@ exports.matchmakingRouter.post('/queue', async (req, res) => {
             response_js_1.Errors.conflict(res, err.message);
             return;
         }
-        if (err instanceof matchmakingService.ActiveMatchExistsError) {
-            response_js_1.Errors.conflict(res, err.message);
-            return;
-        }
         if (err instanceof matchmakingService.TeamNotFoundError) {
             response_js_1.Errors.notFound(res, 'Team');
             return;

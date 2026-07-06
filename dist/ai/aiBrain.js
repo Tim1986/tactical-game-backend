@@ -1,0 +1,1546 @@
+"use strict";
+/**
+ * aiBrain.ts (v7) — AI decision-making for DungeonCombat, updated for:
+ *  - FORTUNE METER (V5): deterministic hit prediction via willHit();
+ *    per-(ability,target) gating (twin's two hits land or miss together);
+ *    dodge-burn scoring for basics; specials NEVER fire into a known miss;
+ *    deterministic next-attack danger model.
+ *  - 8x8 CROSS BOARD: all board loops use BOARD_SIZE (see geometry.ts —
+ *    BOARD_WIDTH=10 was a pre-existing engine bug, now fixed; this brain
+ *    always used the correct 8x8 board and never needed BOARD_WIDTH/HEIGHT).
+ *  - CUSTOMIZATION: chosen stat passives are baked into instance stats by
+ *    matchService (transparent here); 'immovable' behavioral passive zeroes
+ *    push/pull value; specials resolved by isSpecial (order-agnostic).
+ *  - NEW EFFECTS/STATUSES: pull + remove_status scoring; burning / weakened
+ *    / exposed / shielded scoring (active only when those slugs appear —
+ *    forward-compatible with the new special roster).
+ *  - ENGINE ALIGNMENT: round-1 commitment rejects frozen units PRE-tick
+ *    (presence-based again, per current turnProcessor); LOS matches the
+ *    engine (currently NOT enforced — see geometry.LOS_ENFORCED).
+ *
+ * PERFECT-INFORMATION NOTE: this brain reads actual enemy ability slugs from
+ * state (fine for sims — symmetric — and for PvE). Hidden-special inference
+ * for a "fair" opponent model is future work.
+ *
+ *
+ * Exports:
+ *   - AIBrain          (interface — matches the sim harness spec)
+ *   - OptimalBrain     (full heuristic AI targeting optimal play)
+ *   - BaselineBrain    (dumb "walk up and hit things" AI for sim baselines)
+ *   - planBestTurn     (exposed so the sim/PvE layer can reuse or inspect plans)
+ *   - WEIGHTS          (all tuning constants in one place)
+ *
+ * Design principles:
+ *   - Everything is derived from the passed-in MatchState + AbilityDefinition
+ *     map at runtime. No stats are hardcoded — balance changes flow through
+ *     automatically (Kill Shot threshold, freeze duration, damage values, AC).
+ *   - The brain works in expected values (hit chance = P(roll+5 >= AC)); the
+ *     engine still does the actual dice rolls when it applies the actions.
+ *   - One full turn is planned per selectActions() call and returned as an
+ *     ordered TurnAction[] ending in END_TURN.
+ *
+ * Turn plans considered (exhaustive over move tiles, targets, AOE centers,
+ * line directions):
+ *   1. Do nothing (END_TURN)
+ *   2. Move only
+ *   3. Act from current tile, then optionally retreat (hit-and-run)
+ *   4. Move, then act
+ *   5. Move + Charge (double move) when no ability use is worth it
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BaselineBrain = exports.OptimalBrain = exports.CHARGE_MAX_ROUND = exports.WEIGHTS = void 0;
+exports.hitChance = hitChance;
+exports.missChanceOf = missChanceOf;
+exports.abilityUsesFortune = abilityUsesFortune;
+exports.willHit = willHit;
+exports.wouldDodgeNext = wouldDodgeNext;
+exports.isFrozen = isFrozen;
+exports.isRooted = isRooted;
+exports.willBlockOwnAction = willBlockOwnAction;
+exports.planBestTurn = planBestTurn;
+exports.normalizeAbilityDefinitions = normalizeAbilityDefinitions;
+exports.normalizeAbilityMap = normalizeAbilityMap;
+exports.explainTurn = explainTurn;
+const geometry_1 = require("./geometry");
+// ---------------------------------------------------------------------------
+// Tuning weights — every heuristic constant lives here so balance passes can
+// tweak AI temperament without touching logic.
+// ---------------------------------------------------------------------------
+exports.WEIGHTS = {
+    /** Value per point of expected damage dealt to an enemy. */
+    damage: 1.0,
+    /** Penalty multiplier per point of expected damage dealt to an ally (friendly fire). */
+    allyDamage: 1.4,
+    /** Penalty multiplier per point of expected self-damage. */
+    selfDamage: 1.7,
+    /** Value per point of effective healing on an ally. */
+    heal: 0.9,
+    /** Extra heal value multiplier when the ally is below 40% HP. */
+    healUrgency: 0.5,
+    /** Base value of killing an enemy unit outright. */
+    killBase: 55,
+    /** Additional kill value per point of the target's expected damage per turn. */
+    killThreatFactor: 2.5,
+    /** Penalty for an ability that would kill one of our own units. */
+    allyDeathPenalty: 90,
+    /** Fraction of max HP below which an ally counts as dangerously wounded. */
+    allyNearDeathThreshold: 0.3,
+    /** Fraction of allyDeathPenalty applied when a hit would leave an ally near death. */
+    allyNearDeathFactor: 0.5,
+    /** Flat value of landing a stun (movement + action denial baseline). */
+    stunFlat: 6,
+    /** Stun value per (duration x target's expected damage per turn). */
+    stunThreatFactor: 1.1,
+    /** Bonus for stunning a unit that acts within the next 2 initiative slots. */
+    initiativeSoonBonus: 4,
+    /** Root value factor vs melee targets (denies their whole turn if nobody is adjacent). */
+    /**
+     * Root turn-denial: value per (denied turn x target's expected damage per
+     * turn). Denied turns = root duration where the target can't reach any of
+     * our units from its post-push position, PLUS the travel turns it needs to
+     * re-close the pushed gap afterward. This is what makes Fear correctly
+     * beat a basic attack against an adjacent melee threat: push 3 + root
+     * denies ~2 full turns of that unit's damage output.
+     */
+    rootTurnDenialFactor: 1.0,
+    /** Flat root value per turn vs ranged targets (mobility denial only). */
+    rootRangedFlat: 4,
+    /** Push value per tile displaced, vs a melee target. */
+    pushMeleePerTile: 5,
+    /** Push value per tile displaced, vs a ranged target. */
+    pushRangedPerTile: 1.5,
+    /** Penalty for landing a hostile status effect on an ally. */
+    statusOnAllyPenalty: 20,
+    /** Value multiplier for re-applying a status the target already has (duration extension only). */
+    redundantStatusFactor: 0.1,
+    /**
+     * Weight on danger from enemies beyond the single most dangerous one.
+     * Only one unit acts per initiative slot, so real per-turn risk is one
+     * attacker's damage — but standing in reach of many enemies is still worse
+     * than one, since consecutive slots can pile on. 0 = pure per-turn model.
+     */
+    dangerSecondary: 0.25,
+    /**
+     * Cornered-unit fallback threshold: if our last living unit can't reduce
+     * expected incoming danger by at least this much anywhere it can move,
+     * there is no meaningful escape — ignore danger and fight on action value.
+     */
+    corneredDangerSpread: 4,
+    /**
+     * Root exploitation: bonus fraction of the best qualifying melee ally's
+     * per-turn threat, when that ally can reach the rooted target. Rooting a
+     * unit our fighter can pounce on is worth far more than rooting one in an
+     * empty corner.
+     */
+    rootExploitFactor: 0.6,
+    /**
+     * Opportunity cost of spending a once-per-game special. A special must beat
+     * the best basic-attack option by at least this margin to be chosen.
+     */
+    specialReserve: 8,
+    /** Round at which the special reserve starts fading (see specialReserveFor). */
+    reserveDecayStartRound: 6,
+    /** Round at which the special reserve reaches 0. */
+    reserveDecayEndRound: 12,
+    /**
+     * THREAT-HOLDING: minimum enemies an AOE special must hit to be worth
+     * spending — while more than one enemy is still alive. A held Firestorm
+     * zones the whole enemy team (they must spread out or eat a multi-hit);
+     * spent on one target it's just an overpriced basic attack. When only one
+     * enemy remains there is nothing left to save it for, so the gate lifts.
+     */
+    aoeSpecialMinEnemies: 2,
+    /**
+     * THREAT-HOLDING (defensive side): penalty factor on positions that stand
+     * clustered with an ally while an enemy holds an unspent damaging AOE
+     * special that could plausibly reach. This is what makes the enemy's held
+     * Firestorm actually cost us tempo — we spread out, or we knowingly pay.
+     */
+    aoeClusterAvoidance: 0.3,
+    /** How much the brain cares about standing in enemy threat range. */
+    danger: 0.35,
+    /** Danger multiplier when the incoming expected damage could kill us. */
+    dangerLethalMult: 2.2,
+    /** Pull toward closing the gap to attackable targets (per tile of gap). */
+    approach: 1.5,
+    /** Lean toward approaching low-HP enemies (per point of target HP). */
+    approachHpBias: 0.08,
+    /** Bonus for chipping an enemy into an ally's execute (Kill Shot) threshold. */
+    killShotSetup: 12,
+    // ── Fortune-meter & new-status weights (v6) ──
+    /** Value of an intentional basic attack into a guaranteed dodge — it
+     *  resets the meter, guaranteeing the NEXT attacker lands. */
+    dodgeBurn: 6,
+    /** Value of burning an enemy's shielded status with a cheap attack. */
+    shieldBurn: 5,
+    /** Penalty for friendly-fire AOE consuming an ally's shield. */
+    shieldWastePenalty: 6,
+    /** Floor value of applying shielded to an ally. */
+    shieldBaseValue: 10,
+    /** Bonus when the shielded ally sits inside the enemy execute window. */
+    shieldExecuteDenial: 25,
+    /** Discount on burning's total dot (target may die/heal before it ticks). */
+    burningFactor: 0.85,
+    /** Base value of exposing a target (focus mark). */
+    exposedBase: 5,
+    /** Extra when exposing a target whose meter is about to dodge. */
+    exposedDodgeSteal: 8,
+    /** Value per tile an enemy is dragged toward us. */
+    pullPerTile: 3,
+    /** Fraction of our reachable melee threat credited to a hostile pull. */
+    pullExploitFactor: 0.6,
+    /** Fraction of removed danger credited to Rescue-style ally pulls. */
+    rescueDangerFactor: 0.7,
+    /** Tiny tax per move action so the AI doesn't shuffle pointlessly on ties. */
+    moveTax: 0.01,
+    /** Assumed AC when estimating a unit's generic threat output. */
+    referenceAC: 15,
+};
+/**
+ * GAME RULE (not a heuristic): Charge is only legal during rounds 1-10.
+ * After round 10 the AI must not generate Charge candidates.
+ */
+exports.CHARGE_MAX_ROUND = 10;
+// ---------------------------------------------------------------------------
+// Small shared helpers
+// ---------------------------------------------------------------------------
+/**
+ * LONG-RUN hit rate for a blockable ability — kept ONLY for generic threat
+ * estimates (threatPerTurn vs referenceAC, killValue), where the fortune
+ * meter's long-run average equals the old d20 rate: (26-AC)/20 = 1-(AC-6)/20.
+ * NEVER use this for scoring a specific attack — use willHit().
+ */
+function hitChance(armorClass) {
+    return Math.min(1, Math.max(0, (26 - armorClass) / 20));
+}
+/** Fortune meter increment per blockable attack (engine formula, V5). */
+function missChanceOf(target) {
+    return Math.max(0, target.armorClass - 6) / 20;
+}
+/** Does this ability go through the fortune meter at all? Mirrors the
+ *  engine's needsHitRoll exactly (damage OR lifesteal effects gate it). */
+function abilityUsesFortune(def) {
+    return (!def.isUnblockable &&
+        def.targetingType !== 'self' &&
+        def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal'));
+}
+/**
+ * DETERMINISTIC hit prediction (V5): the next fortune-gated attack on this
+ * target hits iff meter + missChance stays below 1. 'exposed' targets are
+ * always hit (attacks bypass the meter while the status is active).
+ */
+function willHit(target, def) {
+    if (!abilityUsesFortune(def))
+        return true;
+    if (hasStatus(target, 'exposed'))
+        return true;
+    return ((target.fortuneMeter ?? 0) + missChanceOf(target)) < 1.0;
+}
+/** Would this unit dodge the next fortune-gated attack against it? */
+function wouldDodgeNext(unit) {
+    return ((unit.fortuneMeter ?? 0) + missChanceOf(unit)) >= 1.0;
+}
+function hasStatus(u, slug) {
+    // NOTE: no turnsRemaining filter — the engine's validators don't filter
+    // either (tickUnitStatusEffects removes expired effects, so presence in
+    // the array means active). Matching the engine exactly avoids brain/engine
+    // disagreements at tick boundaries (see V3 feedback, Bug B).
+    return u.statusEffects.some((e) => e.slug === slug);
+}
+/** Patch 1.0.04: the freeze/immobilize status slug is 'frozen' everywhere. */
+function isFrozen(u) {
+    return hasStatus(u, 'frozen');
+}
+function isRooted(u) {
+    return hasStatus(u, 'rooted');
+}
+/** Highest turnsRemaining for a status on this unit (0 if absent). */
+function statusTurnsRemaining(u, slug) {
+    let max = 0;
+    for (const e of u.statusEffects) {
+        if (e.slug === slug && e.turnsRemaining > max)
+            max = e.turnsRemaining;
+    }
+    return max;
+}
+/**
+ * TICK-FIRST SEMANTICS (V3 feedback, Bug A): the engine calls
+ * tickUnitStatusEffects(actingUnit) BEFORE validating its actions, so a
+ * status at 1 turn remaining expires before it can block anything the unit
+ * does this turn. A status only blocks the unit's OWN next action when it
+ * has >= 2 turns remaining. Planning with the presence-based check was the
+ * root cause of the V4 round-1 "Must commit a unit" errors: a Fear-rooted(1)
+ * unit CAN legally move on its commit turn, but the brain refused to try.
+ *
+ * (Presence-based hasStatus/isFrozen/isRooted remain correct for scoring
+ * OTHER units — e.g. a frozen enemy is skipped in initiative on presence.)
+ */
+function willBlockOwnAction(u, slug) {
+    return statusTurnsRemaining(u, slug) >= 2;
+}
+function abilityReady(u, slug) {
+    return (u.cooldowns[slug] ?? 0) <= 0;
+}
+function basicDef(u, map) {
+    // Prefer the first NON-special ability rather than trusting index 0 —
+    // ability array order is a convention, not a guarantee, across data
+    // sources (defensive hardening from the V4 review).
+    for (const slug of u.abilities) {
+        const d = map.get(slug);
+        if (d && !d.isSpecial)
+            return d;
+    }
+    return u.abilities.length > 0 ? map.get(u.abilities[0]) : undefined;
+}
+/** The unit's special ability slug, resolved by isSpecial (order-agnostic). */
+function specialSlugOf(u, map) {
+    for (const slug of u.abilities) {
+        if (map.get(slug)?.isSpecial)
+            return slug;
+    }
+    return u.abilities[1];
+}
+function isMelee(u, map) {
+    const b = basicDef(u, map);
+    return (b?.range ?? 1) <= 1;
+}
+/** Expected damage of one ability use vs a given AC (execute effects excluded). */
+function expectedDamageOfAbility(def, targetAC) {
+    let total = 0;
+    for (const eff of def.effects) {
+        if (eff.type !== 'damage' && eff.type !== 'lifesteal')
+            continue;
+        if (eff.type === 'damage' && eff.healthThreshold !== undefined)
+            continue; // conditional executes aren't steady DPS
+        const p = def.isUnblockable ? 1 : hitChance(targetAC);
+        total += p * eff.value;
+    }
+    return total;
+}
+/** Expected damage per turn this unit projects with its basic attack. */
+function threatPerTurn(u, map) {
+    const b = basicDef(u, map);
+    if (!b)
+        return 0;
+    return expectedDamageOfAbility(b, exports.WEIGHTS.referenceAC);
+}
+/** Value of removing an enemy unit from the board. */
+function killValue(target, map) {
+    let v = exports.WEIGHTS.killBase + threatPerTurn(target, map) * exports.WEIGHTS.killThreatFactor;
+    const specialSlug = specialSlugOf(target, map);
+    if (specialSlug && abilityReady(target, specialSlug))
+        v += 10; // unspent special = extra latent threat
+    return v;
+}
+/**
+ * Highest execute threshold (e.g., Kill Shot's healthThreshold) available to
+ * any living ally right now — used to reward chipping enemies into range.
+ */
+function bestKillThreshold(allies, map) {
+    let best = 0;
+    for (const a of allies) {
+        for (const slug of a.abilities) {
+            if (!abilityReady(a, slug))
+                continue;
+            const def = map.get(slug);
+            if (!def)
+                continue;
+            for (const eff of def.effects) {
+                if (eff.type === 'damage' && eff.healthThreshold !== undefined) {
+                    best = Math.max(best, eff.healthThreshold);
+                }
+            }
+        }
+    }
+    return best;
+}
+/** How many living-unit initiative slots until `targetId` acts (99 if unknown). */
+function slotsUntilUnitActs(state, targetId) {
+    const { order, slot } = state.initiative;
+    if (order.length === 0)
+        return 99;
+    const byId = new Map(state.units.map((u) => [u.instanceId, u]));
+    let count = 0;
+    for (let i = 1; i <= order.length; i++) {
+        const id = order[(slot + i) % order.length];
+        const u = byId.get(id);
+        if (!u || !u.isAlive)
+            continue;
+        count++;
+        if (id === targetId)
+            return count;
+    }
+    return 99;
+}
+/** A unit's effective position within a hypothetical plan. */
+function effPos(ctx, u) {
+    return u.instanceId === ctx.caster.instanceId ? ctx.casterPos : u.position;
+}
+/** Score all of an ability's effects as applied to one target unit. */
+function scoreEffectsOnTarget(ctx, def, target, 
+/** Precomputed willHit for this (ability,target) — AOE loops pass it per
+ *  target; single-target callers may omit (computed here). */
+hitsParam) {
+    const { caster, map } = ctx;
+    const isSelf = target.instanceId === caster.instanceId;
+    const isAllyTarget = target.ownerPlayerId === caster.ownerPlayerId;
+    const isEnemy = !isAllyTarget;
+    let s = 0;
+    // ── DETERMINISTIC NEGATION GATE (fortune meter + shielded) ──
+    // The engine gates ALL of a damaging ability's effects behind ONE fortune
+    // check per target (twin's two hits land or miss together; a blockable
+    // damage+status ability loses its status on a dodge too). 'shielded'
+    // negates the next hit entirely — including unblockable damage; that is
+    // Ward's whole job vs Assassinate.
+    const isDamaging = def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+    if (isDamaging && !isSelf) {
+        if (hasStatus(target, 'shielded')) {
+            // Attack eaten by the shield. Burning an ENEMY's shield with a cheap
+            // attack opens them up for the follow-up; clipping an ALLY's shield
+            // with friendly-fire AOE wastes it.
+            return isEnemy ? exports.WEIGHTS.shieldBurn : -exports.WEIGHTS.shieldWastePenalty;
+        }
+        if (abilityUsesFortune(def)) {
+            const hits = hitsParam ?? willHit(target, def);
+            if (!hits) {
+                // Guaranteed dodge: engine skips ALL effects. Burning the dodge
+                // resets the meter low, so the NEXT attacker lands — a cheap basic
+                // into a full meter is a real play. (Specials are hard-gated at the
+                // candidate level and never reach this branch.)
+                return isEnemy ? exports.WEIGHTS.dodgeBurn : 0;
+            }
+        }
+    }
+    // Weakened caster: outgoing attack damage reduced by 4, applied once per
+    // ability use to the first damage/lifesteal effect (matches the engine's
+    // weakenedAdjustedDamage hook in abilityExecutor.ts).
+    let weakenRemaining = hasStatus(caster, 'weakened') ? 4 : 0;
+    // Effects apply in sequence: a push moves the target BEFORE a subsequent
+    // root lands (Fear = push, then root). Track the projected position so
+    // position-sensitive effects evaluate where the target will actually be,
+    // and the actual pushed distance so the root's turn-denial model can
+    // count the re-closing travel turns (0 for a fully blocked push).
+    let projectedPos = target.position;
+    let pushedDistance = 0;
+    for (const eff of def.effects) {
+        switch (eff.type) {
+            case 'damage': {
+                // FORTUNE MODEL: by this point the ability is known to LAND on this
+                // target (the negation gate above returned early otherwise), so
+                // damage is scored at full deterministic value — no probabilities.
+                // Execute effect (Kill Shot): only worth anything at/below threshold.
+                if (eff.healthThreshold !== undefined) {
+                    if (isEnemy && target.currentHealth <= eff.healthThreshold) {
+                        s += killValue(target, map);
+                    }
+                    break;
+                }
+                let raw = eff.value;
+                if (weakenRemaining > 0) {
+                    const cut = Math.min(weakenRemaining, raw);
+                    raw -= cut;
+                    weakenRemaining -= cut;
+                }
+                const effective = Math.min(raw, target.currentHealth);
+                if (isEnemy) {
+                    s += effective * exports.WEIGHTS.damage;
+                    if (raw >= target.currentHealth) {
+                        s += killValue(target, map); // guaranteed kill this action
+                    }
+                    else if (ctx.killThreshold > 0 &&
+                        target.currentHealth > ctx.killThreshold &&
+                        target.currentHealth - raw <= ctx.killThreshold) {
+                        s += exports.WEIGHTS.killShotSetup; // banks the execute window for real
+                    }
+                }
+                else {
+                    s -= effective * (isSelf ? exports.WEIGHTS.selfDamage : exports.WEIGHTS.allyDamage);
+                    if (raw >= target.currentHealth) {
+                        s -= exports.WEIGHTS.allyDeathPenalty;
+                    }
+                    else if (target.currentHealth - effective <=
+                        target.maxHealth * exports.WEIGHTS.allyNearDeathThreshold) {
+                        // Near-death deterrent: this hit wouldn't kill the ally, but it
+                        // would leave them one hit from dying to anything.
+                        s -= exports.WEIGHTS.allyDeathPenalty * exports.WEIGHTS.allyNearDeathFactor;
+                    }
+                }
+                break;
+            }
+            case 'lifesteal': {
+                // Damages target, heals caster (Life Drain). Scored like flat damage
+                // for the target side, plus a heal-on-caster term.
+                let raw = eff.value;
+                if (weakenRemaining > 0) {
+                    const cut = Math.min(weakenRemaining, raw);
+                    raw -= cut;
+                    weakenRemaining -= cut;
+                }
+                const effective = Math.min(raw, target.currentHealth);
+                if (isEnemy) {
+                    s += effective * exports.WEIGHTS.damage;
+                    if (raw >= target.currentHealth) {
+                        s += killValue(target, map);
+                    }
+                    else if (ctx.killThreshold > 0 &&
+                        target.currentHealth > ctx.killThreshold &&
+                        target.currentHealth - raw <= ctx.killThreshold) {
+                        s += exports.WEIGHTS.killShotSetup;
+                    }
+                }
+                else {
+                    s -= effective * (isSelf ? exports.WEIGHTS.selfDamage : exports.WEIGHTS.allyDamage);
+                    if (raw >= target.currentHealth)
+                        s -= exports.WEIGHTS.allyDeathPenalty;
+                }
+                // Self-heal component: only meaningful if the caster is actually
+                // missing HP (matches applyHeal's clamp-to-max in the executor).
+                const casterMissing = caster.maxHealth - caster.currentHealth;
+                if (casterMissing > 0) {
+                    const healEffective = Math.min(eff.healValue, casterMissing);
+                    s += healEffective * exports.WEIGHTS.heal;
+                    if (caster.currentHealth <= caster.maxHealth * 0.4) {
+                        s += healEffective * exports.WEIGHTS.healUrgency;
+                    }
+                }
+                break;
+            }
+            case 'heal': {
+                if (isEnemy) {
+                    s -= eff.value; // never heal enemies
+                    break;
+                }
+                const effective = Math.min(eff.value, target.maxHealth - target.currentHealth);
+                s += effective * exports.WEIGHTS.heal;
+                if (target.currentHealth <= target.maxHealth * 0.4) {
+                    s += effective * exports.WEIGHTS.healUrgency; // triage bonus
+                }
+                break;
+            }
+            case 'apply_status': {
+                // Beneficial statuses (Ward's shielded) are FOR allies.
+                if (eff.statusSlug === 'shielded') {
+                    if (isEnemy) {
+                        s -= exports.WEIGHTS.statusOnAllyPenalty;
+                        break;
+                    }
+                    if (hasStatus(target, 'shielded'))
+                        break; // no stacking value
+                    // Worth roughly the biggest single hit the enemy team projects
+                    // at this target, weighted up if the target sits in the enemy's
+                    // execute window (eating an Assassinate is the dream block).
+                    let biggest = 0;
+                    for (const e of ctx.state.units) {
+                        if (!e.isAlive || e.ownerPlayerId === caster.ownerPlayerId)
+                            continue;
+                        const b = basicDef(e, map);
+                        if (b) {
+                            for (const be of b.effects) {
+                                if (be.type === 'damage' && be.healthThreshold === undefined) {
+                                    biggest = Math.max(biggest, be.value);
+                                }
+                                else if (be.type === 'lifesteal') {
+                                    biggest = Math.max(biggest, be.value);
+                                }
+                            }
+                        }
+                    }
+                    s += Math.max(exports.WEIGHTS.shieldBaseValue, biggest);
+                    if (ctx.enemyKillThreshold > 0 &&
+                        target.currentHealth <= ctx.enemyKillThreshold) {
+                        s += exports.WEIGHTS.shieldExecuteDenial; // blocks a pending Kill Shot
+                    }
+                    break;
+                }
+                if (!isEnemy) {
+                    s -= exports.WEIGHTS.statusOnAllyPenalty;
+                    break;
+                }
+                // ── New hostile statuses (v6 roster) ──
+                if (eff.statusSlug === 'burning') {
+                    // 5 damage at the start of each of the target's turns. Attrition
+                    // value discounted slightly (they may die/heal first), capped by
+                    // remaining HP.
+                    const dot = Math.min(5 * eff.durationTurns, target.currentHealth);
+                    s += dot * exports.WEIGHTS.burningFactor;
+                    if (hasStatus(target, 'burning'))
+                        s *= exports.WEIGHTS.redundantStatusFactor;
+                    break;
+                }
+                if (eff.statusSlug === 'weakened') {
+                    // -4 outgoing damage while active: worth 4 per turn the target
+                    // would actually be attacking, scaled by how threatening it is.
+                    const rel = Math.min(1, threatPerTurn(target, map) / 8);
+                    s += 4 * eff.durationTurns * (0.5 + rel);
+                    if (hasStatus(target, 'weakened'))
+                        s *= exports.WEIGHTS.redundantStatusFactor;
+                    break;
+                }
+                if (eff.statusSlug === 'exposed') {
+                    // Attacks vs the target bypass the fortune meter: converts their
+                    // upcoming dodges into hits and marks the focus target. Worth more
+                    // the closer their meter is to a dodge and the higher their AC.
+                    const denied = missChanceOf(target) * 20; // ~AC-derived dodge rate
+                    const meterBonus = wouldDodgeNext(target) ? exports.WEIGHTS.exposedDodgeSteal : 0;
+                    s += exports.WEIGHTS.exposedBase + denied * 0.6 * eff.durationTurns + meterBonus;
+                    if (hasStatus(target, 'exposed'))
+                        s *= exports.WEIGHTS.redundantStatusFactor;
+                    break;
+                }
+                // Redundancy guards — don't waste debuffs on already-debuffed targets:
+                // a frozen unit can't move or act, so rooting it adds nothing.
+                if (eff.statusSlug === 'rooted' && hasStatus(target, 'frozen'))
+                    break;
+                // Re-applying an active status only refreshes its duration. Graded
+                // by how much is left: >= 2 turns remaining -> nearly worthless
+                // (redundantStatusFactor); exactly 1 remaining -> about half value,
+                // since the old application is one tick from expiring.
+                {
+                    const remaining = statusTurnsRemaining(target, eff.statusSlug);
+                    if (remaining > 0) {
+                        const factor = remaining >= 2 ? exports.WEIGHTS.redundantStatusFactor : 0.5;
+                        if (eff.statusSlug === 'frozen') {
+                            s +=
+                                (exports.WEIGHTS.stunFlat +
+                                    eff.durationTurns * threatPerTurn(target, map) * exports.WEIGHTS.stunThreatFactor) *
+                                    factor;
+                        }
+                        else if (eff.statusSlug === 'rooted') {
+                            s += eff.durationTurns * exports.WEIGHTS.rootRangedFlat * factor;
+                        }
+                        break;
+                    }
+                }
+                if (eff.statusSlug === 'frozen') {
+                    s +=
+                        exports.WEIGHTS.stunFlat +
+                            eff.durationTurns * threatPerTurn(target, map) * exports.WEIGHTS.stunThreatFactor;
+                    if (slotsUntilUnitActs(ctx.state, target.instanceId) <= 2) {
+                        s += exports.WEIGHTS.initiativeSoonBonus;
+                    }
+                }
+                else if (eff.statusSlug === 'rooted') {
+                    if (isMelee(target, map)) {
+                        // TURN-DENIAL MODEL: the real value of rooting a melee unit is
+                        // how many turns of its damage output we deny, not tiles gained.
+                        //
+                        // (a) Immobile turns: for the root's duration it attacks only if
+                        //     one of our units sits within its basic range of where it
+                        //     will actually stand (post-push projected position).
+                        const tBasic = basicDef(target, map);
+                        const tRange = tBasic?.range ?? 1;
+                        const canStillReachUs = ctx.state.units.some((u) => u.isAlive &&
+                            u.ownerPlayerId === caster.ownerPlayerId &&
+                            (0, geometry_1.manhattanDistance)(effPos(ctx, u), projectedPos) <= tRange);
+                        // TICK-FIRST SEMANTICS: the engine ticks the target's statuses
+                        // before validating ITS actions, so a root of duration d only
+                        // blocks movement for d-1 of the target's turns (a 1-turn root
+                        // blocks nothing — its value is entirely the push displacement).
+                        // *** DESIGN FLAG for gameData: Fear's root is durationTurns 1,
+                        // which under these semantics denies zero immobile turns. If the
+                        // intent is "loses a turn of movement", it needs durationTurns 2
+                        // (or the engine should tick at END of turn). ***
+                        const immobileTurns = Math.max(0, eff.durationTurns - 1) * (canStillReachUs ? 0.3 : 1);
+                        // (b) Travel turns: after the root expires it must re-close the
+                        //     gap the push opened before it can attack again. A fully
+                        //     blocked push (pushedDistance 0) contributes nothing here.
+                        const travelTurns = pushedDistance / Math.max(1, target.movementRange);
+                        s +=
+                            (immobileTurns + travelTurns) *
+                                threatPerTurn(target, map) *
+                                exports.WEIGHTS.rootTurnDenialFactor;
+                    }
+                    else {
+                        s += eff.durationTurns * exports.WEIGHTS.rootRangedFlat;
+                    }
+                    // Ally exploitation: a rooted unit that one of our melee units can
+                    // reach is a free target for the root's duration. Bonus scales with
+                    // the best qualifying ally's per-turn threat. Uses the projected
+                    // (post-push) position — pushing an enemy AWAY from our fighter
+                    // and then rooting it earns no exploitation credit.
+                    let exploit = 0;
+                    for (const a of ctx.state.units) {
+                        if (!a.isAlive || a.ownerPlayerId !== caster.ownerPlayerId)
+                            continue;
+                        if (a.instanceId === caster.instanceId)
+                            continue;
+                        if (!isMelee(a, map))
+                            continue;
+                        if ((0, geometry_1.manhattanDistance)(effPos(ctx, a), projectedPos) <=
+                            a.movementRange + 1) {
+                            exploit = Math.max(exploit, threatPerTurn(a, map));
+                        }
+                    }
+                    s += exploit * eff.durationTurns * exports.WEIGHTS.rootExploitFactor;
+                }
+                break;
+            }
+            case 'push': {
+                if (!isEnemy) {
+                    s -= 10;
+                    break;
+                }
+                // Immovable passive: push does nothing — no displacement value.
+                if ((target.passives ?? []).includes('immovable'))
+                    break;
+                // pushDestination walks tile-by-tile and stops at occupied/invalid
+                // tiles, so `moved` is the ACTUAL displacement — a fully blocked
+                // push scores zero. Record the destination so later effects in the
+                // same ability (e.g., Fear's root) evaluate the post-push position.
+                const dest = (0, geometry_1.pushDestination)(ctx.casterPos, projectedPos, eff.distance, ctx.state.units, target.instanceId);
+                const moved = (0, geometry_1.chebyshevDistance)(projectedPos, dest);
+                projectedPos = dest;
+                pushedDistance += moved;
+                s += moved * (isMelee(target, map) ? exports.WEIGHTS.pushMeleePerTile : exports.WEIGHTS.pushRangedPerTile);
+                break;
+            }
+            case 'pull': {
+                // Eldritch Grasp (enemy) / Rescue (ally). Immovable targets don't move.
+                if ((target.passives ?? []).includes('immovable'))
+                    break;
+                const dest = (0, geometry_1.pullDestination)(ctx.casterPos, projectedPos, eff.distance, ctx.state.units, target.instanceId);
+                const moved = (0, geometry_1.chebyshevDistance)(projectedPos, dest);
+                projectedPos = dest;
+                if (isEnemy) {
+                    // Dragging an enemy INTO our melee: exploitation value — how much
+                    // of our melee threat can now reach the landing tile.
+                    let exploit = 0;
+                    for (const a of ctx.state.units) {
+                        if (!a.isAlive || a.ownerPlayerId !== caster.ownerPlayerId)
+                            continue;
+                        if (!isMelee(a, map))
+                            continue;
+                        const ab = basicDef(a, map);
+                        if (!ab)
+                            continue;
+                        if ((0, geometry_1.manhattanDistance)(effPos(ctx, a), dest) <= a.movementRange + 1) {
+                            exploit += threatPerTurn(a, map);
+                        }
+                    }
+                    s += moved * exports.WEIGHTS.pullPerTile + exploit * exports.WEIGHTS.pullExploitFactor;
+                    // Dragging a RANGED enemy out of its safe pocket is extra tempo.
+                    if (!isMelee(target, map))
+                        s += moved * 1.5;
+                }
+                else {
+                    // Rescue: value = how much danger the pull removes from the ally.
+                    const before = dangerAt(ctx.state, target, target.position, caster.ownerPlayerId, map);
+                    const after = dangerAt(ctx.state, target, dest, caster.ownerPlayerId, map);
+                    s += Math.max(0, before - after) * exports.WEIGHTS.rescueDangerFactor;
+                }
+                break;
+            }
+            case 'remove_status': {
+                // Purify: worth the harm it removes from an ALLY.
+                if (isEnemy) {
+                    s -= 10;
+                    break;
+                }
+                const rem = statusTurnsRemaining(target, eff.statusSlug);
+                if (rem <= 0)
+                    break;
+                if (eff.statusSlug === 'frozen') {
+                    s += rem * threatPerTurn(target, map) * 1.1 + 6; // restored turns
+                }
+                else if (eff.statusSlug === 'rooted') {
+                    s += rem * (isMelee(target, map) ? threatPerTurn(target, map) : 4);
+                }
+                else if (eff.statusSlug === 'burning') {
+                    s += Math.min(5 * rem, target.currentHealth) * exports.WEIGHTS.burningFactor;
+                }
+                else if (eff.statusSlug === 'weakened') {
+                    s += 4 * rem;
+                }
+                break;
+            }
+            default:
+                break; // modify_cooldown / teleport: no current abilities use them
+        }
+    }
+    return s;
+}
+// ---------------------------------------------------------------------------
+// Candidate action enumeration
+// ---------------------------------------------------------------------------
+/**
+ * Opportunity cost of spending a once-per-game special, decaying with round
+ * number: early on, holding preserves option value; late game an unspent
+ * special is simply a wasted special (V4 Bug 2 — specials were dying
+ * unspent in 93% of long games). Linear fade between the decay rounds.
+ */
+function specialReserveFor(state) {
+    const r = state.roundNumber;
+    const start = exports.WEIGHTS.reserveDecayStartRound;
+    const end = exports.WEIGHTS.reserveDecayEndRound;
+    if (r <= start)
+        return exports.WEIGHTS.specialReserve;
+    if (r >= end)
+        return 0;
+    return (exports.WEIGHTS.specialReserve * (end - r)) / (end - start);
+}
+/**
+ * Hard-veto check: would this ability's raw damage kill a teammate (an ally
+ * or the caster itself)? Used to discard AOE centers / line directions
+ * outright — no enemy kill bonus is allowed to buy an ally's death.
+ * (Execute effects with healthThreshold are enemy-only and ignored here.)
+ */
+function wouldKillTeammate(def, caster, target) {
+    if (target.ownerPlayerId !== caster.ownerPlayerId)
+        return false;
+    for (const eff of def.effects) {
+        if (eff.type !== 'damage' && eff.type !== 'lifesteal')
+            continue;
+        if (eff.type === 'damage' && eff.healthThreshold !== undefined)
+            continue;
+        if (eff.value >= target.currentHealth)
+            return true;
+    }
+    return false;
+}
+const LINE_DIRECTIONS = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+];
+/**
+ * Enumerate every worthwhile ability use available to the caster from
+ * ctx.casterPos. Returns only candidates with positive score (a negative or
+ * zero-value ability use is always dominated by doing nothing).
+ */
+function enumerateAbilityActions(ctx) {
+    const { caster, casterPos, map, state } = ctx;
+    const out = [];
+    const units = state.units;
+    const aliveEnemyCount = units.filter((u) => u.isAlive && u.ownerPlayerId !== caster.ownerPlayerId).length;
+    for (const slug of caster.abilities) {
+        if (!abilityReady(caster, slug))
+            continue;
+        const def = map.get(slug);
+        if (!def)
+            continue;
+        const reserve = def.isSpecial ? specialReserveFor(state) : 0;
+        switch (def.targetingType) {
+            case 'self': {
+                const score = scoreEffectsOnTarget(ctx, def, caster) - reserve;
+                if (score > 0) {
+                    out.push({
+                        action: {
+                            type: 'USE_ABILITY',
+                            unitInstanceId: caster.instanceId,
+                            abilitySlug: slug,
+                            target: casterPos,
+                        },
+                        score,
+                    });
+                }
+                break;
+            }
+            case 'single': {
+                const damaging = def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+                for (const t of units) {
+                    if (!t.isAlive)
+                        continue;
+                    const tPos = effPos(ctx, t);
+                    const dist = (0, geometry_1.manhattanDistance)(casterPos, tPos);
+                    if (dist > def.range)
+                        continue;
+                    // LOS: matches engine reality — processUseAbility does not check
+                    // LOS today, so the brain takes every legal shot. Flips with the
+                    // engine via geometry.LOS_ENFORCED.
+                    if (geometry_1.LOS_ENFORCED &&
+                        t.instanceId !== caster.instanceId &&
+                        !(0, geometry_1.hasLineOfSight)(casterPos, tPos, units, [
+                            caster.instanceId,
+                            t.instanceId,
+                        ])) {
+                        continue;
+                    }
+                    // HARD GATE (V5): a once-per-game special never fires into a
+                    // guaranteed negation — a known dodge or an active shield. Basics
+                    // may (dodge/shield burn is real value); specials retarget/defer.
+                    if (def.isSpecial &&
+                        damaging &&
+                        t.ownerPlayerId !== caster.ownerPlayerId &&
+                        (hasStatus(t, 'shielded') || !willHit(t, def))) {
+                        continue;
+                    }
+                    const score = scoreEffectsOnTarget(ctx, def, t) - reserve;
+                    if (score > 0) {
+                        out.push({
+                            action: {
+                                type: 'USE_ABILITY',
+                                unitInstanceId: caster.instanceId,
+                                abilitySlug: slug,
+                                target: tPos,
+                            },
+                            score,
+                        });
+                    }
+                }
+                break;
+            }
+            case 'aoe': {
+                const centers = [];
+                if (def.range === 0) {
+                    centers.push(casterPos);
+                }
+                else {
+                    for (let x = 0; x < geometry_1.BOARD_SIZE; x++) {
+                        for (let y = 0; y < geometry_1.BOARD_SIZE; y++) {
+                            const c = { x, y };
+                            if (!(0, geometry_1.isInBounds)(c))
+                                continue;
+                            if ((0, geometry_1.manhattanDistance)(casterPos, c) <= def.range)
+                                centers.push(c);
+                        }
+                    }
+                }
+                for (const c of centers) {
+                    let score = -reserve;
+                    let hitAny = false;
+                    let enemiesHit = 0;
+                    let expectsKill = false;
+                    let vetoed = false;
+                    for (const t of units) {
+                        if (!t.isAlive)
+                            continue;
+                        // Self-centered AOE (Whirlwind) hits everything adjacent but not the caster.
+                        if (def.range === 0 && t.instanceId === caster.instanceId)
+                            continue;
+                        if ((0, geometry_1.chebyshevDistance)(c, effPos(ctx, t)) > def.areaRadius)
+                            continue;
+                        // AOE ally exclusion (e.g. Roar): filter allies out entirely
+                        // before any scoring, matching the engine's resolveTargets.
+                        if (def.excludeAllies && t.ownerPlayerId === caster.ownerPlayerId)
+                            continue;
+                        // FORTUNE (V5): each blast target checks its OWN meter. A target
+                        // whose meter guarantees a dodge takes nothing from this cast —
+                        // including allies, so a clipped ally who will dodge is SAFE.
+                        const hits = willHit(t, def) && !hasStatus(t, 'shielded');
+                        // HARD VETO: never place an AOE where it could kill a teammate —
+                        // but only a hit that actually LANDS can kill.
+                        if (hits && wouldKillTeammate(def, caster, t)) {
+                            vetoed = true;
+                            break;
+                        }
+                        hitAny = true;
+                        if (t.ownerPlayerId !== caster.ownerPlayerId && hits) {
+                            enemiesHit++;
+                            // Lethal check for the gate bypass below: raw AOE damage
+                            // covers the target's remaining HP (execute effects excluded).
+                            for (const ef of def.effects) {
+                                if ((ef.type === 'damage' &&
+                                    ef.healthThreshold === undefined &&
+                                    ef.value >= t.currentHealth) ||
+                                    (ef.type === 'lifesteal' && ef.value >= t.currentHealth)) {
+                                    expectsKill = true;
+                                }
+                            }
+                        }
+                        score += scoreEffectsOnTarget(ctx, def, t, hits);
+                    }
+                    // THREAT-HOLDING: a once-per-game AOE only fires on a real cluster.
+                    // Spent on a single target it's a wasted zoning threat — unless
+                    // only one enemy remains (nothing left to hold for), OR the blast
+                    // would KILL someone (a kill now beats a hypothetical multi-hit
+                    // later — V4 Bug 2, the gate was suppressing lethal single-target
+                    // casts and leaving specials unspent in 93% of games).
+                    if (def.isSpecial &&
+                        enemiesHit < exports.WEIGHTS.aoeSpecialMinEnemies &&
+                        aliveEnemyCount >= 2 &&
+                        !expectsKill) {
+                        continue;
+                    }
+                    if (!vetoed && hitAny && score > 0) {
+                        out.push({
+                            action: {
+                                type: 'USE_ABILITY',
+                                unitInstanceId: caster.instanceId,
+                                abilitySlug: slug,
+                                target: c,
+                            },
+                            score,
+                        });
+                    }
+                }
+                break;
+            }
+            case 'line': {
+                for (const [dx, dy] of LINE_DIRECTIONS) {
+                    let score = -reserve;
+                    let hitAny = false;
+                    let vetoed = false;
+                    let lastInBounds = null;
+                    for (let k = 1; k <= def.range; k++) {
+                        const p = { x: casterPos.x + dx * k, y: casterPos.y + dy * k };
+                        if (p.x < 0 || p.x >= geometry_1.BOARD_SIZE || p.y < 0 || p.y >= geometry_1.BOARD_SIZE)
+                            break;
+                        if ((0, geometry_1.isInBounds)(p))
+                            lastInBounds = p;
+                        const t = units.find((u) => u.isAlive &&
+                            u.instanceId !== caster.instanceId &&
+                            (0, geometry_1.samePos)(effPos(ctx, u), p));
+                        if (t) {
+                            // FORTUNE (V5): each unit along the ray checks its own meter.
+                            const hits = willHit(t, def) && !hasStatus(t, 'shielded');
+                            // HARD VETO: never fire a line that could kill a teammate —
+                            // but only a landing hit can kill (a dodging ally is safe).
+                            if (hits && wouldKillTeammate(def, caster, t)) {
+                                vetoed = true;
+                                break;
+                            }
+                            hitAny = true;
+                            score += scoreEffectsOnTarget(ctx, def, t, hits);
+                        }
+                    }
+                    if (!vetoed && hitAny && score > 0 && lastInBounds) {
+                        // Target = farthest in-bounds tile along the ray; the engine only
+                        // needs it to derive the direction.
+                        out.push({
+                            action: {
+                                type: 'USE_ABILITY',
+                                unitInstanceId: caster.instanceId,
+                                abilitySlug: slug,
+                                target: lastInBounds,
+                            },
+                            score,
+                        });
+                    }
+                }
+                break;
+            }
+            default:
+                break; // 'cone' — no current abilities use it
+        }
+    }
+    return out;
+}
+// ---------------------------------------------------------------------------
+// Position scoring (safety + approach)
+// ---------------------------------------------------------------------------
+/**
+ * Expected per-turn danger at a tile: the single most dangerous enemy who can
+ * reach it, plus a discounted contribution from every other enemy in reach
+ * (only one unit acts per initiative slot, so summing at full value wildly
+ * overestimates real per-turn threat).
+ */
+function dangerAt(state, unit, pos, myPlayerId, map) {
+    // FORTUNE-AWARE (V5): our meter is knowable, so the next incoming
+    // blockable attack is a known hit or a known dodge. One dodge covers ONE
+    // attacker — a smart opponent burns it with their CHEAPEST blockable
+    // attack — so when multiple blockable attackers threaten this tile, the
+    // smallest blockable contribution is the one the dodge erases.
+    const blockable = [];
+    const guaranteed = []; // unblockable, or target Exposed
+    const exposed = hasStatus(unit, 'exposed');
+    for (const e of state.units) {
+        if (!e.isAlive || e.ownerPlayerId === myPlayerId)
+            continue;
+        if (isFrozen(e))
+            continue;
+        const b = basicDef(e, map);
+        if (!b)
+            continue;
+        const reach = (willBlockOwnAction(e, 'rooted') ? 0 : e.movementRange) + (b.range || 1);
+        if ((0, geometry_1.manhattanDistance)(e.position, pos) > reach)
+            continue;
+        let raw = 0;
+        for (const eff of b.effects) {
+            if ((eff.type === 'damage' && eff.healthThreshold === undefined) ||
+                eff.type === 'lifesteal') {
+                raw += eff.value;
+            }
+        }
+        if (hasStatus(e, 'weakened'))
+            raw = Math.max(0, raw - 4);
+        if (raw <= 0)
+            continue;
+        if (b.isUnblockable || exposed || !abilityUsesFortune(b))
+            guaranteed.push(raw);
+        else
+            blockable.push(raw);
+    }
+    // Shielded: the next single hit is negated outright — it eats the
+    // BIGGEST incoming hit (the opponent can't avoid feeding it something,
+    // but we credit the best case for the shield conservatively as the
+    // smallest, matching how a smart opponent burns it).
+    const all = [...guaranteed, ...blockable];
+    if (all.length === 0)
+        return 0;
+    const dodging = wouldDodgeNext(unit) && !exposed;
+    if (dodging && blockable.length > 0) {
+        blockable.splice(blockable.indexOf(Math.min(...blockable)), 1);
+    }
+    if (hasStatus(unit, 'shielded')) {
+        const rest = [...guaranteed, ...blockable];
+        if (rest.length > 0)
+            rest.splice(rest.indexOf(Math.min(...rest)), 1);
+        if (rest.length === 0)
+            return 0;
+        const mx = Math.max(...rest);
+        return mx + (rest.reduce((s, v) => s + v, 0) - mx) * exports.WEIGHTS.dangerSecondary;
+    }
+    const remaining = [...guaranteed, ...blockable];
+    if (remaining.length === 0)
+        return 0;
+    const mx = Math.max(...remaining);
+    return mx + (remaining.reduce((s, v) => s + v, 0) - mx) * exports.WEIGHTS.dangerSecondary;
+}
+function positionScore(state, unit, pos, myPlayerId, map, dangerScale = 1) {
+    const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId);
+    if (enemies.length === 0)
+        return 0;
+    let s = 0;
+    // Danger term (scalable: the cornered-unit fallback zeroes this out when
+    // no reachable tile is meaningfully safer than any other).
+    if (dangerScale > 0) {
+        const danger = dangerAt(state, unit, pos, myPlayerId, map);
+        const lethal = danger >= unit.currentHealth;
+        s -=
+            dangerScale *
+                danger *
+                exports.WEIGHTS.danger *
+                (lethal ? exports.WEIGHTS.dangerLethalMult : 1);
+    }
+    // Approach: shrink the gap to the most attractive target for our basic
+    // attack. The low-HP bias only applies while there IS a gap to close —
+    // an in-range position costs nothing (previously the bias leaked into
+    // gap-0 positions and nudged units to drift out of fights).
+    const myBasic = basicDef(unit, map);
+    const prefRange = myBasic?.range ?? 1;
+    let bestApproachCost = Infinity;
+    for (const e of enemies) {
+        const gap = Math.max(0, (0, geometry_1.manhattanDistance)(pos, e.position) - prefRange);
+        const cost = gap > 0
+            ? gap * exports.WEIGHTS.approach + e.currentHealth * exports.WEIGHTS.approachHpBias
+            : 0;
+        if (cost < bestApproachCost)
+            bestApproachCost = cost;
+    }
+    s -= bestApproachCost;
+    // THREAT-HOLDING (defensive): respect enemy zoning. If an enemy still
+    // holds a damaging AOE special that could plausibly reach this tile next
+    // turn, standing clustered with an ally hands them a multi-hit. Penalize
+    // proportionally to the held special's damage — the unit spreads out
+    // unless the position buys something worth more.
+    for (const e of enemies) {
+        if (isFrozen(e))
+            continue;
+        const specialSlug = specialSlugOf(e, map);
+        if (!specialSlug || !abilityReady(e, specialSlug))
+            continue;
+        const sd = map.get(specialSlug);
+        if (!sd || sd.targetingType !== 'aoe')
+            continue;
+        const dmg = sd.effects.reduce((t, ef) => (ef.type === 'damage' && ef.healthThreshold === undefined) || ef.type === 'lifesteal'
+            ? t + ef.value
+            : t, 0);
+        if (dmg <= 0)
+            continue;
+        const castReach = (willBlockOwnAction(e, 'rooted') ? 0 : e.movementRange) +
+            sd.range +
+            sd.areaRadius;
+        if ((0, geometry_1.manhattanDistance)(e.position, pos) > castReach)
+            continue;
+        const clusteredWithAlly = state.units.some((u) => u.isAlive &&
+            u.instanceId !== unit.instanceId &&
+            u.ownerPlayerId === myPlayerId &&
+            (0, geometry_1.chebyshevDistance)(u.position, pos) <= sd.areaRadius * 2);
+        if (clusteredWithAlly)
+            s -= dmg * exports.WEIGHTS.aoeClusterAvoidance;
+    }
+    return s;
+}
+/**
+ * Plan the best full turn for `unit`: some combination of movement, one
+ * ability use (or Charge), in either order, ending with END_TURN.
+ *
+ * `mustAct` forces the plan to contain at least one unit-identifying action
+ * (needed in Round 1 where END_TURN commits a unit and the engine must know
+ * which one was selected).
+ */
+function planBestTurn(state, unit, myPlayerId, map, mustAct = false) {
+    const allies = state.units.filter((u) => u.isAlive && u.ownerPlayerId === myPlayerId);
+    const killThreshold = bestKillThreshold(allies, map);
+    const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId);
+    const enemyKillThreshold = bestKillThreshold(enemies, map);
+    const rooted = willBlockOwnAction(unit, 'rooted'); // tick-first: rooted(1) can still move
+    const moveTiles = rooted
+        ? []
+        : (0, geometry_1.reachableTiles)(unit, state.units, unit.movementRange);
+    // Cornered-unit fallback (anti-kiting): when this is our LAST living unit
+    // and no reachable tile is meaningfully safer than any other, retreating
+    // gains nothing — the danger penalty just makes every fighting position
+    // look suicidal (dangerLethalMult fires everywhere). Zero the danger term
+    // so pure action value decides, and the unit fights instead of fleeing.
+    // The approach term stays active, so it still closes toward targets.
+    let dangerScale = 1;
+    if (allies.length === 1 && moveTiles.length > 0) {
+        let lo = Infinity;
+        let hi = -Infinity;
+        for (const pos of [unit.position, ...moveTiles]) {
+            const d = dangerAt(state, unit, pos, myPlayerId, map);
+            if (d < lo)
+                lo = d;
+            if (d > hi)
+                hi = d;
+        }
+        if (hi - lo < exports.WEIGHTS.corneredDangerSpread)
+            dangerScale = 0;
+    }
+    const pScore = (pos) => positionScore(state, unit, pos, myPlayerId, map, dangerScale);
+    const END = { type: 'END_TURN' };
+    let best = { score: -Infinity, actions: [END] };
+    const consider = (score, actions) => {
+        if (score > best.score)
+            best = { score, actions };
+    };
+    // 1. Do nothing.
+    if (!mustAct) {
+        consider(pScore(unit.position), [END]);
+    }
+    // 2. Move only.
+    for (const pos of moveTiles) {
+        consider(pScore(pos) - exports.WEIGHTS.moveTax, [
+            { type: 'MOVE', unitInstanceId: unit.instanceId, destination: pos },
+            END,
+        ]);
+    }
+    // Precompute the best retreat tile (for act-then-move / hit-and-run).
+    let bestRetreat = null;
+    let bestRetreatScore = -Infinity;
+    for (const pos of moveTiles) {
+        const ps = pScore(pos);
+        if (ps > bestRetreatScore) {
+            bestRetreatScore = ps;
+            bestRetreat = pos;
+        }
+    }
+    // 3. Act from the current tile, optionally retreating afterward.
+    const ctxHere = {
+        state,
+        map,
+        caster: unit,
+        casterPos: unit.position,
+        myPlayerId,
+        killThreshold,
+        enemyKillThreshold,
+    };
+    for (const cand of enumerateAbilityActions(ctxHere)) {
+        consider(cand.score + pScore(unit.position), [cand.action, END]);
+        if (bestRetreat) {
+            consider(cand.score + bestRetreatScore - exports.WEIGHTS.moveTax, [
+                cand.action,
+                { type: 'MOVE', unitInstanceId: unit.instanceId, destination: bestRetreat },
+                END,
+            ]);
+        }
+    }
+    // 4. Move, then act.
+    for (const pos of moveTiles) {
+        const ps = pScore(pos) - exports.WEIGHTS.moveTax;
+        const ctx = {
+            state,
+            map,
+            caster: unit,
+            casterPos: pos,
+            myPlayerId,
+            killThreshold,
+            enemyKillThreshold,
+        };
+        for (const cand of enumerateAbilityActions(ctx)) {
+            consider(cand.score + ps, [
+                { type: 'MOVE', unitInstanceId: unit.instanceId, destination: pos },
+                cand.action,
+                END,
+            ]);
+        }
+    }
+    // 5. Move + Charge (double move). Pure repositioning — competes on position
+    //    score alone, so it only wins when no ability use is worth anything.
+    //    GAME RULE: Charge is only legal during rounds 1-10.
+    if (state.roundNumber <= exports.CHARGE_MAX_ROUND) {
+        for (const posA of moveTiles) {
+            const fromA = (0, geometry_1.reachableFrom)(posA, unit, state.units, unit.movementRange);
+            for (const posB of fromA) {
+                consider(pScore(posB) - 2 * exports.WEIGHTS.moveTax, [
+                    { type: 'MOVE', unitInstanceId: unit.instanceId, destination: posA },
+                    { type: 'CHARGE', unitInstanceId: unit.instanceId, destination: posB },
+                    END,
+                ]);
+            }
+        }
+    }
+    // Fallback for mustAct when the unit literally cannot move or act.
+    if (best.score === -Infinity) {
+        best = { score: 0, actions: [END] };
+    }
+    return best;
+}
+// ---------------------------------------------------------------------------
+// Integration diagnostics (V4)
+// ---------------------------------------------------------------------------
+/**
+ * Defensive normalization for DB-seeded ability definitions. Effect JSON
+ * coming out of Postgres sometimes carries snake_case keys
+ * (health_threshold, status_slug, duration_turns) — if healthThreshold
+ * arrives undefined, execute abilities like assassinate mis-score silently.
+ * Apply this once wherever the ability map is built. Camel-cased input
+ * passes through untouched.
+ */
+function normalizeAbilityDefinitions(defs) {
+    const topMap = {
+        targeting_type: 'targetingType',
+        area_radius: 'areaRadius',
+        cooldown_turns: 'cooldownTurns',
+        is_special: 'isSpecial',
+        is_unblockable: 'isUnblockable',
+        exclude_allies: 'excludeAllies',
+    };
+    const effMap = {
+        health_threshold: 'healthThreshold',
+        status_slug: 'statusSlug',
+        duration_turns: 'durationTurns',
+        ability_slug: 'abilitySlug',
+        heal_value: 'healValue',
+    };
+    const lift = (obj, map) => {
+        const out = { ...obj };
+        for (const [snake, camel] of Object.entries(map)) {
+            if (out[snake] !== undefined && out[camel] === undefined) {
+                out[camel] = out[snake];
+            }
+        }
+        return out;
+    };
+    return defs.map((d) => {
+        const top = lift(d, topMap);
+        top.effects = (d.effects ?? []).map((e) => lift(e, effMap));
+        return top;
+    });
+}
+/** Map-level convenience wrapper for normalizeAbilityDefinitions. */
+function normalizeAbilityMap(map) {
+    const defs = normalizeAbilityDefinitions([...map.values()]);
+    return new Map(defs.map((d) => [d.slug, d]));
+}
+/**
+ * Human-readable dump of everything the brain considered for one unit:
+ * statuses (with tick-aware blocking), reserve, every positive-scoring
+ * ability candidate from the current tile AND from the best move tile, and
+ * the chosen plan. Purpose: when a special "never fires" in sims (V4 Bug 1),
+ * run this on a saved state and read exactly where it drops out.
+ *
+ *   console.log(explainTurn(state, unitId, playerId, abilityMap));
+ */
+function explainTurn(state, unitInstanceId, myPlayerId, abilityMap) {
+    const unit = state.units.find((u) => u.instanceId === unitInstanceId);
+    if (!unit)
+        return `explainTurn: no unit ${unitInstanceId}`;
+    const lines = [];
+    const allies = state.units.filter((u) => u.isAlive && u.ownerPlayerId === myPlayerId);
+    const killThreshold = 0; // recomputed below via ctx like the planner does
+    void killThreshold;
+    lines.push(`unit ${unit.definitionSlug} @(${unit.position.x},${unit.position.y}) ` +
+        `hp ${unit.currentHealth}/${unit.maxHealth} round ${state.roundNumber}`);
+    lines.push(`  fortune ${(unit.fortuneMeter ?? 0).toFixed(2)} ` +
+        `(missChance ${missChanceOf(unit).toFixed(2)}, ` +
+        `next incoming blockable: ${wouldDodgeNext(unit) ? 'DODGE' : 'HIT'})`);
+    for (const e of unit.statusEffects) {
+        lines.push(`  status ${e.slug} remaining=${e.turnsRemaining} ` +
+            `blocksOwnAction=${willBlockOwnAction(unit, e.slug)}`);
+    }
+    for (const slug of unit.abilities) {
+        const def = abilityMap.get(slug);
+        if (!def) {
+            lines.push(`  ability ${slug}: *** NOT IN ABILITY MAP ***`);
+            continue;
+        }
+        const execEff = def.effects.find((e) => e.type === 'damage' && e.healthThreshold !== undefined);
+        lines.push(`  ability ${slug}: ready=${abilityReady(unit, slug)} ` +
+            `special=${!!def.isSpecial} type=${def.targetingType} ` +
+            `range=${def.range}` +
+            (execEff && execEff.type === 'damage'
+                ? ` executeThreshold=${execEff.healthThreshold}`
+                : ''));
+        if (def.effects.some((e) => e['health_threshold'] !==
+            undefined)) {
+            lines.push(`    *** snake_case health_threshold detected — run ` +
+                `normalizeAbilityDefinitions on your ability map ***`);
+        }
+    }
+    lines.push(`  specialReserve now = ${specialReserveFor(state).toFixed(1)}`);
+    const ctx = {
+        state,
+        map: abilityMap,
+        caster: unit,
+        casterPos: unit.position,
+        myPlayerId,
+        killThreshold: bestKillThreshold(allies, abilityMap),
+        enemyKillThreshold: bestKillThreshold(state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId), abilityMap),
+    };
+    const here = enumerateAbilityActions(ctx);
+    lines.push(`  candidates from current tile: ${here.length}`);
+    for (const c of here.sort((a, b) => b.score - a.score).slice(0, 8)) {
+        if (c.action.type === 'USE_ABILITY') {
+            lines.push(`    ${c.action.abilitySlug} @(${c.action.target.x},${c.action.target.y}) ` +
+                `score=${c.score.toFixed(1)}`);
+        }
+    }
+    const plan = planBestTurn(state, unit, myPlayerId, abilityMap);
+    lines.push(`  chosen plan (score ${plan.score.toFixed(1)}): ` +
+        plan.actions
+            .map((a) => a.type === 'USE_ABILITY'
+            ? `${a.type}:${a.abilitySlug}`
+            : a.type === 'MOVE' || a.type === 'CHARGE'
+                ? `${a.type}->(${a.destination.x},${a.destination.y})`
+                : a.type)
+            .join(' '));
+    return lines.join('\n');
+}
+// ---------------------------------------------------------------------------
+// OptimalBrain
+// ---------------------------------------------------------------------------
+class OptimalBrain {
+    selectActions(state, myPlayerId, abilityMap) {
+        const initiative = state.initiative;
+        // Case 1: the engine has designated the active unit (Round 2+, or a
+        // Round-1 harness that pre-selects). We must act with that unit.
+        if (initiative.activeUnitId) {
+            const u = state.units.find((x) => x.instanceId === initiative.activeUnitId);
+            if (!u || u.ownerPlayerId !== myPlayerId || !u.isAlive || willBlockOwnAction(u, 'frozen')) {
+                return [{ type: 'END_TURN' }];
+            }
+            return planBestTurn(state, u, myPlayerId, abilityMap).actions;
+        }
+        // Case 2: Round 1 with no pre-selected unit — the brain also chooses
+        // which uncommitted unit to commit. Units already in initiative.order
+        // are committed. Round 1 commitment is about locking a unit into the
+        // initiative order, so even frozen or dead units must eventually be
+        // committed — the engine rejects END_TURN without a commitment.
+        if (initiative.isRound1) {
+            const committed = new Set(initiative.order);
+            const uncommitted = state.units.filter((u) => u.ownerPlayerId === myPlayerId && !committed.has(u.instanceId));
+            // Group 1 — usable this round (alive, not frozen): always preferred.
+            // Commit the unit whose best turn scores highest, which naturally
+            // front-loads units with real work available.
+            // ENGINE CHANGE (v6): round-1 commitment now rejects frozen units
+            // BEFORE the tick ("A frozen unit cannot join the initiative"), so the
+            // commit filter is PRESENCE-based for frozen — any turnsRemaining
+            // disqualifies. (Rooted stays tick-aware: no pre-tick rooted check
+            // exists, so a rooted(1) unit can still legally MOVE to commit.)
+            const usable = uncommitted.filter((u) => u.isAlive && !hasStatus(u, 'frozen'));
+            if (usable.length > 0) {
+                let bestPlan = null;
+                for (const c of usable) {
+                    const p = planBestTurn(state, c, myPlayerId, abilityMap, true);
+                    // Round 1 REQUIRES a per-unit action (move or ability) — a plan
+                    // that degenerated to bare END_TURN cannot commit anything and
+                    // would draw "Must commit a unit in round 1" from the engine.
+                    if (!p.actions.some((a) => a.type !== 'END_TURN'))
+                        continue;
+                    if (!bestPlan || p.score > bestPlan.score)
+                        bestPlan = p;
+                }
+                if (bestPlan)
+                    return bestPlan.actions;
+            }
+            // Group 2 — forced commitment: only frozen/dead units remain. The
+            // engine rejects frozen units from joining the initiative PRE-tick
+            // and dead units always, so the brain returns bare END_TURN and the
+            // harness/server pre-flight appends the unit to initiative.order
+            // directly. (V3 Bug A + v6 engine frozen-join rule.)
+            if (uncommitted.length > 0) {
+                return [{ type: 'END_TURN' }];
+            }
+        }
+        return [{ type: 'END_TURN' }];
+    }
+}
+exports.OptimalBrain = OptimalBrain;
+// ---------------------------------------------------------------------------
+// BaselineBrain — the sim-baseline "minimum" AI: walk toward the nearest
+// enemy and basic-attack when in range. Useful as a sanity-check opponent
+// and for measuring how much the OptimalBrain's heuristics matter.
+// ---------------------------------------------------------------------------
+class BaselineBrain {
+    selectActions(state, myPlayerId, abilityMap) {
+        const unit = this.resolveUnit(state, myPlayerId);
+        if (!unit || isFrozen(unit))
+            return [{ type: 'END_TURN' }];
+        const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId);
+        if (enemies.length === 0)
+            return [{ type: 'END_TURN' }];
+        const basicSlug = unit.abilities[0];
+        const basic = basicSlug ? abilityMap.get(basicSlug) : undefined;
+        const range = basic?.range ?? 1;
+        let nearest = enemies[0];
+        for (const e of enemies) {
+            if ((0, geometry_1.manhattanDistance)(unit.position, e.position) <
+                (0, geometry_1.manhattanDistance)(unit.position, nearest.position)) {
+                nearest = e;
+            }
+        }
+        const actions = [];
+        let pos = unit.position;
+        // Step toward the nearest enemy if out of range.
+        if ((0, geometry_1.manhattanDistance)(pos, nearest.position) > range && !isRooted(unit)) {
+            const tiles = (0, geometry_1.reachableTiles)(unit, state.units, unit.movementRange);
+            let bestTile = null;
+            let bestDist = (0, geometry_1.manhattanDistance)(pos, nearest.position);
+            for (const t of tiles) {
+                const d = (0, geometry_1.manhattanDistance)(t, nearest.position);
+                if (d < bestDist) {
+                    bestDist = d;
+                    bestTile = t;
+                }
+            }
+            if (bestTile) {
+                actions.push({
+                    type: 'MOVE',
+                    unitInstanceId: unit.instanceId,
+                    destination: bestTile,
+                });
+                pos = bestTile;
+            }
+        }
+        // Attack if now in range with LOS.
+        if (basic &&
+            (0, geometry_1.manhattanDistance)(pos, nearest.position) <= range &&
+            (0, geometry_1.hasLineOfSight)(pos, nearest.position, state.units, [
+                unit.instanceId,
+                nearest.instanceId,
+            ])) {
+            actions.push({
+                type: 'USE_ABILITY',
+                unitInstanceId: unit.instanceId,
+                abilitySlug: basic.slug,
+                target: nearest.position,
+            });
+        }
+        actions.push({ type: 'END_TURN' });
+        return actions;
+    }
+    resolveUnit(state, myPlayerId) {
+        const { initiative } = state;
+        if (initiative.activeUnitId) {
+            const u = state.units.find((x) => x.instanceId === initiative.activeUnitId);
+            return u && u.ownerPlayerId === myPlayerId && u.isAlive ? u : null;
+        }
+        if (initiative.isRound1) {
+            const committed = new Set(initiative.order);
+            return (state.units.find((u) => u.ownerPlayerId === myPlayerId &&
+                u.isAlive &&
+                !committed.has(u.instanceId) &&
+                !isFrozen(u)) ?? null);
+        }
+        return null;
+    }
+}
+exports.BaselineBrain = BaselineBrain;
+//# sourceMappingURL=aiBrain.js.map

@@ -36,9 +36,7 @@ async function enterQueue(userId, teamId) {
     const teamResult = await (0, pool_js_1.query)('SELECT id FROM teams WHERE id = $1 AND user_id = $2 AND is_active = TRUE', [teamId, userId]);
     if (!teamResult.rows[0])
         throw new TeamNotFoundError();
-    const activeMatch = await (0, pool_js_1.query)('SELECT id FROM matches WHERE (player_one_id = $1 OR player_two_id = $1) AND status = $2 LIMIT 1', [userId, 'active']);
-    if (activeMatch.rows.length > 0)
-        throw new ActiveMatchExistsError();
+    // Multiple simultaneous async games are allowed — no active-match restriction
     const userResult = await (0, pool_js_1.query)('SELECT elo FROM users WHERE id = $1', [userId]);
     const elo = userResult.rows[0]?.elo ?? 1200;
     try {

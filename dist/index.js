@@ -17,5 +17,4 @@ main().catch((err) => {
     logger_js_1.logger.error({ err }, 'Failed to start server');
     process.exit(1);
 });
-// trigger redeploy
 //# sourceMappingURL=index.js.map

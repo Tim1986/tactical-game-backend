@@ -46,7 +46,7 @@ import {
   BOARD_WIDTH,
   BOARD_HEIGHT,
 } from '../types/matchState.js';
-import { AbilityDefinition } from '../types/index.js';
+import { AbilityDefinition, UnitCustomization } from '../types/index.js';
 
 // ─── Placement ────────────────────────────────────────────────────────────────
 
@@ -69,26 +69,49 @@ const MAX_TURNS = 150;
 
 // ─── State builder ────────────────────────────────────────────────────────────
 
+/**
+ * Builds a unit instance, optionally applying a chosen special/passive
+ * loadout — mirrors matchService.ts's buildUnitInstance exactly (same
+ * basic/special resolution via specialOptions, same passive stat/flag
+ * application) so sims reflect the real engine's customization behavior.
+ * Omitting `customization` (or passing none) falls back to each unit's
+ * default loadout — the first specialOption and no passive — matching prior
+ * sim behavior before customization existed.
+ */
 function buildUnitInstance(
   slug: string,
   ownerId: string,
   position: BoardPosition,
+  customization?: UnitCustomization,
 ): UnitInstance {
   const def = UNIT_DEFS[slug];
   if (!def) throw new Error(`Unknown unit slug: ${slug}`);
+
+  const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
+  const specialSlug = customization?.specialSlug ?? def.specialOptions[0] ?? def.abilities[1];
+  const abilities = basicSlug && specialSlug ? [basicSlug, specialSlug] : def.abilities;
+
+  const passive = customization?.passiveSlug
+    ? def.passiveOptions.find((p) => p.slug === customization.passiveSlug)
+    : undefined;
+  const maxHealth = def.maxHealth + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0);
+  const armorClass = def.armorClass + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0);
+  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0);
+  const passives = passive?.passiveFlag ? [...def.passives, passive.passiveFlag] : def.passives;
+
   const cooldowns: Record<string, number> = {};
-  for (const s of def.abilities) cooldowns[s] = 0;
+  for (const s of abilities) cooldowns[s] = 0;
   return {
     instanceId: uuidv4(),
     definitionSlug: def.slug,
     ownerPlayerId: ownerId,
     position,
-    currentHealth: def.maxHealth,
-    maxHealth: def.maxHealth,
-    armorClass: def.armorClass,
-    movementRange: def.movementRange,
-    abilities: def.abilities,
-    passives: def.passives,
+    currentHealth: maxHealth,
+    maxHealth,
+    armorClass,
+    movementRange,
+    abilities,
+    passives,
     isAlive: true,
     hasMovedThisTurn: false,
     hasActedThisTurn: false,
@@ -106,10 +129,12 @@ function buildMatchState(
   p1Placement = DEFAULT_P1_PLACEMENT,
   p2Placement = DEFAULT_P2_PLACEMENT,
   forceFirstPlayerId?: string,
+  p1Customizations?: (UnitCustomization | undefined)[],
+  p2Customizations?: (UnitCustomization | undefined)[],
 ): MatchState {
   const units: UnitInstance[] = [
-    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i])),
-    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i])),
+    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i])),
+    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i])),
   ];
   const firstPlayer =
     forceFirstPlayerId ?? (Math.random() < 0.5 ? p1Id : p2Id);
@@ -256,6 +281,9 @@ export interface MatchOptions {
   p1Id?: string;
   p2Id?: string;
   forceFirstPlayerId?: string;
+  /** Per-slot special/passive loadout for each team (parallel to p1Slugs/p2Slugs). Omit for default loadouts. */
+  p1Customizations?: (UnitCustomization | undefined)[];
+  p2Customizations?: (UnitCustomization | undefined)[];
   /** Called on every recovered validation error (for logging/diagnosis). */
   onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
 }
@@ -279,6 +307,8 @@ export function runMatch(
     DEFAULT_P1_PLACEMENT,
     DEFAULT_P2_PLACEMENT,
     options.forceFirstPlayerId,
+    options.p1Customizations,
+    options.p2Customizations,
   );
   const firstPlayerId = state.initiative.round1FirstPlayerId;
   let turns = 0;
@@ -360,9 +390,12 @@ export function runMatch(
         );
       const canLegallyCommit = (u: UnitInstance): boolean => {
         if (!u.isAlive) return false;
-        // Engine ticks the acting unit's statuses BEFORE validating, so a
-        // status at 1 remaining expires and cannot block the commit.
-        if (remaining(u, 'frozen') >= 2) return false;
+        // Frozen is checked PRESENCE-based, pre-tick, at the very top of the
+        // engine's round-1 commit gate (turnProcessor.ts) — any turnsRemaining
+        // disqualifies, unlike rooted below which IS tick-first (the engine
+        // ticks the acting unit's own statuses before validating MOVE/ability,
+        // so a rooted(1) unit's root expires before that check runs).
+        if (remaining(u, 'frozen') >= 1) return false;
         if (remaining(u, 'rooted') >= 2) {
           // Rooted (still active after the tick): cannot move — can only
           // commit via an ability, which needs a target in range.
@@ -502,6 +535,9 @@ export function runSim(
     brain1?: AIBrain;
     brain2?: AIBrain;
     abilityMap?: Map<string, AbilityDefinition>;
+    /** Per-slot special/passive loadout for each team (parallel to p1Slugs/p2Slugs), held constant across all games. Omit for default loadouts. */
+    p1Customizations?: (UnitCustomization | undefined)[];
+    p2Customizations?: (UnitCustomization | undefined)[];
     /** Log every recovered validation error with its action payload. */
     verbose?: boolean;
     /**
@@ -561,6 +597,8 @@ export function runSim(
       firstPlayerMode === 'alternate' ? (i % 2 === 0 ? 'p1' : 'p2') : undefined;
     const r = runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, {
       forceFirstPlayerId,
+      p1Customizations: options.p1Customizations,
+      p2Customizations: options.p2Customizations,
       onValidationError: (err, actions) => {
         if (!seenErrors.has(err.message) && sampleErrors.length < 5) {
           seenErrors.add(err.message);

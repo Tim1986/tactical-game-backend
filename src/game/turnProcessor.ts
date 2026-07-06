@@ -238,6 +238,15 @@ export function processTurn(
 
       ws.turnNumber++;
       events.push({ type: 'TURN_ENDED' });
+
+      // A skipped slot's status tick (advanceSlot ticks frozen units, which
+      // now includes burning DoT) can end the match without any MOVE/CHARGE/
+      // USE_ABILITY action being processed this call — check here too.
+      const endTurnWinCheck = checkWinCondition(ws, playerOneId, playerTwoId);
+      if (endTurnWinCheck.isOver) {
+        matchOver = true; winnerId = endTurnWinCheck.winnerId;
+        events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined });
+      }
       break;
     }
 
@@ -325,7 +334,7 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     if (!targetUnit) throw new TurnValidationError('No unit at target position');
   }
   events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}`, abilitySlug: ability.slug });
-  executeAbility({ state, caster: unit, targetPosition: action.target, ability, events });
+  executeAbility({ state, caster: unit, targetPosition: action.target, ability, events, pushDestination: action.pushDestination });
   if (ability.cooldownTurns > 0) unit.cooldowns[action.abilitySlug] = ability.cooldownTurns;
   unit.hasActedThisTurn = true;
 }

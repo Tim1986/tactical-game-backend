@@ -1,4 +1,4 @@
-import { Team } from '../types/index.js';
+import { Team, UnitCustomization } from '../types/index.js';
 export declare class TeamValidationError extends Error {
     constructor(message: string);
 }
@@ -16,6 +16,7 @@ export interface CreateTeamInput {
         x: number;
         y: number;
     }>;
+    unitCustomizations?: UnitCustomization[];
 }
 export declare function createTeam(input: CreateTeamInput): Promise<Team>;
 export interface UpdateTeamInput {
@@ -28,6 +29,7 @@ export interface UpdateTeamInput {
         x: number;
         y: number;
     }>;
+    unitCustomizations?: UnitCustomization[];
 }
 export declare function updateTeam(input: UpdateTeamInput): Promise<Team>;
 export declare function deleteTeam(teamId: string, userId: string): Promise<void>;

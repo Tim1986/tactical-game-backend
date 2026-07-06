@@ -1,17 +1,59 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.executeAbility = executeAbility;
+exports.tickUnitStatusEffects = tickUnitStatusEffects;
+exports.tickUnitCooldowns = tickUnitCooldowns;
+exports.resetUnitTurnFlags = resetUnitTurnFlags;
 exports.tickStatusEffects = tickStatusEffects;
 exports.tickCooldowns = tickCooldowns;
 exports.resetTurnFlags = resetTurnFlags;
 const boardUtils_js_1 = require("./boardUtils.js");
+/** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
+const WEAKENED_DAMAGE_REDUCTION = 4;
+/** Flat damage-over-time dealt per stack of 'burning', once per stack per tick. */
+const BURNING_DAMAGE_PER_STACK = 5;
+function hasStatusEffect(unit, slug) {
+    return unit.statusEffects.some((se) => se.slug === slug);
+}
 function executeAbility(ctx) {
     const targets = resolveTargets(ctx);
+    const dealsDamage = ctx.ability.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+    const needsHitRoll = !ctx.ability.isUnblockable
+        && ctx.ability.targetingType !== 'self'
+        && dealsDamage;
     for (const target of targets) {
+        // Shielded fully negates the next hit (including unblockable/execute
+        // effects) and is consumed entirely — checked before the hit roll so an
+        // unblockable ability never even reaches the fortune meter for this target.
+        if (dealsDamage && hasStatusEffect(target, 'shielded')) {
+            consumeShield(ctx, target);
+            continue;
+        }
+        if (needsHitRoll) {
+            // Exposed bypasses the fortune meter entirely — the attack always
+            // connects and the meter is left untouched (mirrors unblockable).
+            if (!hasStatusEffect(target, 'exposed')) {
+                // Pseudo-random distribution (Bresenham accumulator): each attack adds the
+                // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
+                // misses and the meter resets by 1. Outcomes converge exactly to the
+                // intended dodge rate with no streaks.
+                const missChance = Math.max(0, target.armorClass - 6) / 20;
+                target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
+                if (target.fortuneMeter >= 1) {
+                    target.fortuneMeter -= 1;
+                    ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
+                    continue;
+                }
+            }
+        }
         for (const effect of ctx.ability.effects) {
             applyEffect(ctx, target, effect);
         }
     }
+}
+function consumeShield(ctx, target) {
+    target.statusEffects = target.statusEffects.filter((se) => se.slug !== 'shielded');
+    ctx.events.push({ type: 'SHIELD_ABSORBED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Shield absorbed the hit' });
 }
 function resolveTargets(ctx) {
     const { state, caster, targetPosition, ability } = ctx;
@@ -24,7 +66,12 @@ function resolveTargets(ctx) {
         case 'self': return [caster];
         case 'aoe': {
             const center = ability.range === 0 ? caster.position : targetPosition;
-            return (0, boardUtils_js_1.getUnitsInRadius)(center, ability.areaRadius, aliveUnits);
+            let hits = (0, boardUtils_js_1.getUnitsInRadius)(center, ability.areaRadius, aliveUnits);
+            if (ability.range === 0)
+                hits = hits.filter((u) => u.instanceId !== caster.instanceId);
+            if (ability.excludeAllies)
+                hits = hits.filter((u) => u.ownerPlayerId !== caster.ownerPlayerId);
+            return hits;
         }
         case 'line': {
             const tiles = (0, boardUtils_js_1.getLineTiles)(caster.position, targetPosition, ability.range);
@@ -57,33 +104,42 @@ function applyEffect(ctx, target, effect) {
         case 'modify_cooldown':
             applyModifyCooldown(ctx, target, effect);
             break;
+        case 'lifesteal':
+            applyLifesteal(ctx, target, effect);
+            break;
     }
 }
+/** Reduces outgoing damage from a 'weakened' caster. Floors at 0. */
+function weakenedAdjustedDamage(ctx, rawValue) {
+    return hasStatusEffect(ctx.caster, 'weakened') ? Math.max(0, rawValue - WEAKENED_DAMAGE_REDUCTION) : rawValue;
+}
 function applyDamage(ctx, target, effect) {
-    let damage = effect.value;
-    if (effect.damageType !== 'true') {
-        const shield = target.statusEffects.find((se) => se.slug === 'shielded');
-        if (shield && shield.shieldValue && shield.shieldValue > 0) {
-            const absorbed = Math.min(shield.shieldValue, damage);
-            shield.shieldValue -= absorbed;
-            damage -= absorbed;
-            ctx.events.push({ type: 'SHIELD_ABSORBED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: absorbed });
-            if (shield.shieldValue <= 0) {
-                target.statusEffects = target.statusEffects.filter((se) => se.slug !== 'shielded');
-                ctx.events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: target.instanceId, statusSlug: 'shielded' });
-            }
-        }
-    }
-    const casterWeakened = ctx.caster.statusEffects.find((se) => se.slug === 'weakened');
-    if (casterWeakened)
-        damage = Math.floor(damage * 0.75);
-    if (damage <= 0)
+    if (effect.healthThreshold !== undefined && target.currentHealth > effect.healthThreshold) {
+        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
         return;
+    }
+    const damage = weakenedAdjustedDamage(ctx, effect.value);
     target.currentHealth = Math.max(0, target.currentHealth - damage);
-    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: damage + ' ' + effect.damageType + ' damage' });
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
     if (target.currentHealth <= 0) {
         target.isAlive = false;
         ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
+    }
+}
+function applyLifesteal(ctx, target, effect) {
+    const damage = weakenedAdjustedDamage(ctx, effect.value);
+    target.currentHealth = Math.max(0, target.currentHealth - damage);
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
+    if (target.currentHealth <= 0) {
+        target.isAlive = false;
+        ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
+    }
+    if (ctx.caster.isAlive) {
+        const healAmount = Math.min(effect.healValue, ctx.caster.maxHealth - ctx.caster.currentHealth);
+        if (healAmount > 0) {
+            ctx.caster.currentHealth += healAmount;
+            ctx.events.push({ type: 'HEALING_DONE', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: healAmount });
+        }
     }
 }
 function applyHeal(ctx, target, effect) {
@@ -104,12 +160,10 @@ function applyStatus(ctx, target, effect) {
         existing.stacks = Math.min(existing.stacks + effect.stacks, 3);
     }
     else {
-        const newEffect = {
+        target.statusEffects.push({
             slug: effect.statusSlug, turnsRemaining: effect.durationTurns,
             stacks: effect.stacks, sourceUnitInstanceId: ctx.caster.instanceId,
-            ...(effect.statusSlug === 'shielded' && { shieldValue: 30 }),
-        };
-        target.statusEffects.push(newEffect);
+        });
     }
     ctx.events.push({ type: 'STATUS_APPLIED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, statusSlug: effect.statusSlug });
 }
@@ -125,8 +179,9 @@ function applyPush(ctx, target, effect) {
         return;
     if (hasPassive(target, 'immovable'))
         return;
-    const destination = (0, boardUtils_js_1.calculatePushDestination)(target.position, ctx.caster.position, effect.distance);
-    const finalPos = findLastFreePosition(target.position, destination, ctx.state.units, target.instanceId);
+    const idealDestination = ctx.pushDestination
+        ?? (0, boardUtils_js_1.calculatePushDestination)(target.position, ctx.caster.position, effect.distance);
+    const finalPos = findLastFreePosition(target.position, idealDestination, ctx.state.units, target.instanceId);
     target.position = finalPos;
     ctx.events.push({ type: 'UNIT_PUSHED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
 }
@@ -155,6 +210,8 @@ function findLastFreePosition(start, end, units, movingUnitId) {
     let lastFree = start;
     for (let i = 1; i <= steps; i++) {
         const pos = { x: start.x + Math.round(normX * i), y: start.y + Math.round(normY * i) };
+        if (!(0, boardUtils_js_1.isInBounds)(pos))
+            break;
         const occupant = units.find((u) => u.isAlive && u.instanceId !== movingUnitId && u.position.x === pos.x && u.position.y === pos.y);
         if (occupant)
             break;
@@ -163,60 +220,68 @@ function findLastFreePosition(start, end, units, movingUnitId) {
     return lastFree;
 }
 function hasPassive(unit, passiveSlug) {
-    const passives = unit.passives ?? [];
-    return passives.includes(passiveSlug);
+    return (unit.passives ?? []).includes(passiveSlug);
 }
-function tickStatusEffects(state, playerId, events) {
-    const playerUnits = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-    for (const unit of playerUnits) {
-        const expiredEffects = [];
-        for (const effect of unit.statusEffects) {
-            if (effect.slug === 'burning') {
-                const damage = 8 * effect.stacks;
-                unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-                events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'burning', value: damage });
-                if (unit.currentHealth <= 0) {
-                    unit.isAlive = false;
-                    events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
-                }
-            }
-            if (effect.slug === 'poisoned') {
-                const damage = 5 * effect.stacks;
-                unit.currentHealth = Math.max(0, unit.currentHealth - damage);
-                events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'poisoned', value: damage });
-                if (unit.currentHealth <= 0) {
-                    unit.isAlive = false;
-                    events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
-                }
-            }
-            if (effect.slug === 'regenerating') {
-                const heal = 10;
-                unit.currentHealth = Math.min(unit.maxHealth, unit.currentHealth + heal);
-                events.push({ type: 'STATUS_TICK', targetUnitInstanceId: unit.instanceId, statusSlug: 'regenerating', value: heal });
-            }
-            if (effect.turnsRemaining > 0) {
-                effect.turnsRemaining--;
-                if (effect.turnsRemaining === 0)
-                    expiredEffects.push(effect.slug);
-            }
+/** Tick status effects for a single unit (called at the start of that unit's initiative turn). */
+function tickUnitStatusEffects(unit, events) {
+    if (!unit.isAlive)
+        return;
+    // Burning: flat damage-over-time, applied once per stack at the start of
+    // the afflicted unit's own turn (or when their slot is skipped, e.g. while
+    // frozen — see turnProcessor's advanceSlot, which also calls this
+    // function). Applied before duration/expiry ticking below so the final
+    // turn a burn is active still deals its damage.
+    const burning = unit.statusEffects.find((se) => se.slug === 'burning');
+    if (burning) {
+        const burnDamage = BURNING_DAMAGE_PER_STACK * burning.stacks;
+        unit.currentHealth = Math.max(0, unit.currentHealth - burnDamage);
+        events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: burning.sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, value: burnDamage, message: `${burnDamage} burning damage` });
+        if (unit.currentHealth <= 0 && unit.isAlive) {
+            unit.isAlive = false;
+            events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
         }
-        unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
+    }
+    const expiredEffects = [];
+    for (const effect of unit.statusEffects) {
+        if (effect.turnsRemaining > 0) {
+            effect.turnsRemaining--;
+            if (effect.turnsRemaining === 0)
+                expiredEffects.push(effect.slug);
+        }
+    }
+    unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
+    if (expiredEffects.length > 0) {
+        for (const slug of expiredEffects) {
+            events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: unit.instanceId, statusSlug: slug });
+        }
+    }
+}
+/** Tick ability cooldowns for a single unit (called at the end of that unit's initiative turn). */
+function tickUnitCooldowns(unit) {
+    for (const slug of Object.keys(unit.cooldowns)) {
+        if (unit.cooldowns[slug] > 0)
+            unit.cooldowns[slug]--;
+    }
+}
+/** Reset move/act flags for a single unit (called at the start of that unit's initiative turn). */
+function resetUnitTurnFlags(unit) {
+    unit.hasMovedThisTurn = false;
+    unit.hasActedThisTurn = false;
+}
+// Legacy per-player helpers (kept for any non-initiative code paths)
+function tickStatusEffects(state, playerId, events) {
+    for (const unit of state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId)) {
+        tickUnitStatusEffects(unit, events);
     }
 }
 function tickCooldowns(state, playerId) {
-    const playerUnits = state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId);
-    for (const unit of playerUnits) {
-        for (const slug of Object.keys(unit.cooldowns)) {
-            if (unit.cooldowns[slug] > 0)
-                unit.cooldowns[slug]--;
-        }
+    for (const unit of state.units.filter((u) => u.isAlive && u.ownerPlayerId === playerId)) {
+        tickUnitCooldowns(unit);
     }
 }
 function resetTurnFlags(state, playerId) {
-    const playerUnits = state.units.filter((u) => u.ownerPlayerId === playerId);
-    for (const unit of playerUnits) {
-        unit.hasMovedThisTurn = false;
-        unit.hasActedThisTurn = false;
+    for (const unit of state.units.filter((u) => u.ownerPlayerId === playerId)) {
+        resetUnitTurnFlags(unit);
     }
 }
 //# sourceMappingURL=abilityExecutor.js.map

@@ -16,7 +16,9 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const pool_js_1 = require("../db/pool.js");
 const index_js_1 = require("../config/index.js");
+const unitService_js_1 = require("./unitService.js");
 const BCRYPT_ROUNDS = 12;
+const DEFAULT_TEAM_UNIT_SLUGS = ['fighter', 'barbarian', 'ranger', 'rogue'];
 // ---------------------------------------------------------------
 // Token helpers
 // ---------------------------------------------------------------
@@ -37,20 +39,49 @@ async function register(input) {
         throw new ConflictError('Username or email is already taken');
     }
     const passwordHash = await bcrypt_1.default.hash(password, BCRYPT_ROUNDS);
-    const result = await (0, pool_js_1.query)(`INSERT INTO users (username, email, password_hash)
-     VALUES ($1, $2, $3)
-     RETURNING id, username, email, elo, account_level, token_version`, [username, email, passwordHash]);
-    const row = result.rows[0];
-    const tokens = issueTokenPair({ id: row.id, username: row.username, tokenVersion: row.token_version });
+    // Resolve default team unit slugs to IDs before opening the transaction
+    // (pure read against a static table, doesn't need to be transactional)
+    const defaultUnits = await Promise.all(DEFAULT_TEAM_UNIT_SLUGS.map((slug) => (0, unitService_js_1.getUnitBySlug)(slug)));
+    const missingIndex = defaultUnits.findIndex((u) => !u);
+    if (missingIndex !== -1) {
+        throw new Error(`Default team unit slug not found in unit_definitions: ${DEFAULT_TEAM_UNIT_SLUGS[missingIndex]}`);
+    }
+    const defaultUnitIds = defaultUnits.map((u) => u.id);
+    const { userRow, teamRow } = await (0, pool_js_1.withTransaction)(async (client) => {
+        const userResult = await client.query(`INSERT INTO users (username, email, password_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id, username, email, elo, account_level, token_version`, [username, email, passwordHash]);
+        const insertedUser = userResult.rows[0];
+        const teamResult = await client.query(`INSERT INTO teams (user_id, name, unit_ids)
+       VALUES ($1, $2, $3)
+       RETURNING id, user_id, name, unit_ids, placement, is_active, created_at`, [insertedUser.id, 'Default Team', JSON.stringify(defaultUnitIds)]);
+        return { userRow: insertedUser, teamRow: teamResult.rows[0] };
+    });
+    const tokens = issueTokenPair({
+        id: userRow.id,
+        username: userRow.username,
+        tokenVersion: userRow.token_version,
+    });
+    const team = {
+        id: teamRow.id,
+        userId: teamRow.user_id,
+        name: teamRow.name,
+        unitIds: teamRow.unit_ids,
+        placement: teamRow.placement,
+        unitCustomizations: teamRow.unit_customizations ?? [],
+        isActive: teamRow.is_active,
+        createdAt: teamRow.created_at,
+    };
     return {
         user: {
-            id: row.id,
-            username: row.username,
-            email: row.email,
-            elo: row.elo,
-            accountLevel: row.account_level,
+            id: userRow.id,
+            username: userRow.username,
+            email: userRow.email,
+            elo: userRow.elo,
+            accountLevel: userRow.account_level,
         },
         tokens,
+        team,
     };
 }
 async function login(input) {

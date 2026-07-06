@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.startBackgroundJobs = startBackgroundJobs;
 const node_cron_1 = __importDefault(require("node-cron"));
 const matchmakingService_js_1 = require("../services/matchmakingService.js");
+const leaderboardService_js_1 = require("../services/leaderboardService.js");
 const index_js_1 = require("../config/index.js");
 const logger_js_1 = require("../utils/logger.js");
 function startBackgroundJobs() {
@@ -18,6 +19,11 @@ function startBackgroundJobs() {
         (0, matchmakingService_js_1.runDeadlineEnforcer)().catch((err) => { logger_js_1.logger.error({ err }, 'Deadline enforcer job failed'); });
     });
     logger_js_1.logger.info('Deadline enforcer started (every 5 minutes)');
+    // Refresh leaderboard snapshot once per day at 00:05 UTC
+    node_cron_1.default.schedule('5 0 * * *', () => {
+        (0, leaderboardService_js_1.refreshLeaderboardSnapshot)().catch((err) => { logger_js_1.logger.error({ err }, 'Leaderboard refresh failed'); });
+    });
+    logger_js_1.logger.info('Leaderboard daily refresh started (00:05 UTC)');
     process.on('SIGTERM', () => { clearInterval(matchmakingJob); logger_js_1.logger.info('Background jobs stopped'); });
     process.on('SIGINT', () => { clearInterval(matchmakingJob); logger_js_1.logger.info('Background jobs stopped'); });
 }

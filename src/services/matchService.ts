@@ -88,13 +88,16 @@ function buildUnitInstance(def: UnitDefinition, ownerId: string, position: Board
   const specialSlug = customization?.specialSlug ?? def.specialOptions[0] ?? def.abilities[1];
   const abilities = basicSlug && specialSlug ? [basicSlug, specialSlug] : def.abilities;
 
-  // Apply chosen passive: stat boost selected at team-build time.
+  // Apply chosen passive: either a stat boost, or a behavioral flag appended
+  // to the instance's `passives` array (e.g. 'immovable' — read generically
+  // by abilityExecutor.ts's hasPassive() checks, unrelated to this switch).
   const passive = customization?.passiveSlug
     ? def.passiveOptions.find((p) => p.slug === customization.passiveSlug)
     : undefined;
-  const maxHealth = def.maxHealth + (passive?.stat === 'maxHealth' ? passive.value : 0);
-  const armorClass = (def.armorClass ?? 10) + (passive?.stat === 'armorClass' ? passive.value : 0);
-  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? passive.value : 0);
+  const maxHealth = def.maxHealth + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0);
+  const armorClass = (def.armorClass ?? 10) + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0);
+  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0);
+  const passives = passive?.passiveFlag ? [...def.passives, passive.passiveFlag] : def.passives;
 
   const cooldowns: Record<string, number> = {};
   for (const slug of abilities) cooldowns[slug] = 0;
@@ -103,7 +106,7 @@ function buildUnitInstance(def: UnitDefinition, ownerId: string, position: Board
     instanceId: uuidv4(), definitionSlug: def.slug, ownerPlayerId: ownerId,
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange,
-    abilities, passives: def.passives,
+    abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: [], fortuneMeter: 0,
   };
@@ -291,12 +294,12 @@ async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: Unit
 }
 
 async function loadAbilityMapDirect(): Promise<Map<string, AbilityDefinition>> {
-  const result = await query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; effects: unknown[]; }>(
-    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, effects FROM ability_definitions'
+  const result = await query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; effects: unknown[]; }>(
+    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects FROM ability_definitions'
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, effects: row.effects as AbilityDefinition['effects'] });
   }
   return map;
 }
@@ -332,12 +335,12 @@ async function runFableTurns(
 }
 
 async function loadAbilityMap(client: import('pg').PoolClient): Promise<Map<string, AbilityDefinition>> {
-  const result = await client.query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; effects: unknown[]; }>(
-    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, effects FROM ability_definitions'
+  const result = await client.query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; effects: unknown[]; }>(
+    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects FROM ability_definitions'
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, effects: row.effects as AbilityDefinition['effects'] });
   }
   return map;
 }

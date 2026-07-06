@@ -1,7 +1,22 @@
 import { BoardPosition, BOARD_WIDTH, BOARD_HEIGHT, UnitInstance } from '../types/matchState.js';
 
+/**
+ * The four extreme corner tiles are removed from the board (60-tile cross).
+ * Must stay in lockstep with backend/src/ai/geometry.ts's isCorner — that
+ * module is the canonical definition; this one is duplicated here only
+ * because game/ code can't import from ai/ without an awkward dependency
+ * direction. If you change one, change both.
+ */
+export function isCorner(x: number, y: number): boolean {
+  return (x === 0 || x === BOARD_WIDTH - 1) && (y === 0 || y === BOARD_HEIGHT - 1);
+}
+
 export function isInBounds(pos: BoardPosition): boolean {
-  return pos.x >= 0 && pos.x < BOARD_WIDTH && pos.y >= 0 && pos.y < BOARD_HEIGHT;
+  return (
+    pos.x >= 0 && pos.x < BOARD_WIDTH &&
+    pos.y >= 0 && pos.y < BOARD_HEIGHT &&
+    !isCorner(pos.x, pos.y)
+  );
 }
 
 export function chebyshevDistance(a: BoardPosition, b: BoardPosition): number {
@@ -25,6 +40,7 @@ export function getReachableTiles(from: BoardPosition, range: number, units: Uni
   for (let x = 0; x < BOARD_WIDTH; x++) {
     for (let y = 0; y < BOARD_HEIGHT; y++) {
       const pos = { x, y };
+      if (!isInBounds(pos)) continue;
       if (chebyshevDistance(from, pos) <= range && chebyshevDistance(from, pos) > 0) {
         const occupant = getUnitAtPosition(units, pos);
         if (!occupant || occupant.instanceId === excludeUnitInstanceId) reachable.push(pos);
@@ -39,6 +55,7 @@ export function getTilesInRange(from: BoardPosition, range: number): BoardPositi
   for (let x = 0; x < BOARD_WIDTH; x++) {
     for (let y = 0; y < BOARD_HEIGHT; y++) {
       const pos = { x, y };
+      if (!isInBounds(pos)) continue;
       if (chebyshevDistance(from, pos) <= range) tiles.push(pos);
     }
   }

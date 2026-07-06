@@ -27,14 +27,13 @@ export interface PushToken {
     updatedAt: ISOTimestamp;
 }
 export type TargetingType = 'single' | 'aoe' | 'self' | 'line' | 'cone';
-export type DamageType = 'physical' | 'magical' | 'true';
 export type EffectTrigger = 'on_turn_start' | 'on_turn_end' | 'on_hit' | 'on_death';
-export type AbilityEffectType = 'damage' | 'heal' | 'apply_status' | 'remove_status' | 'push' | 'pull' | 'teleport' | 'modify_cooldown';
+export type AbilityEffectType = 'damage' | 'heal' | 'apply_status' | 'remove_status' | 'push' | 'pull' | 'teleport' | 'modify_cooldown' | 'lifesteal';
 export interface DamageEffect {
     type: 'damage';
     formula: 'flat';
     value: number;
-    damageType: DamageType;
+    healthThreshold?: number;
 }
 export interface HealEffect {
     type: 'heal';
@@ -66,7 +65,14 @@ export interface ModifyCooldownEffect {
     abilitySlug: string;
     delta: number;
 }
-export type AbilityEffect = DamageEffect | HealEffect | ApplyStatusEffect | RemoveStatusEffect | PushEffect | PullEffect | ModifyCooldownEffect;
+/** Damages the target, then heals the caster (e.g. Life Drain). */
+export interface LifestealEffect {
+    type: 'lifesteal';
+    formula: 'flat';
+    value: number;
+    healValue: number;
+}
+export type AbilityEffect = DamageEffect | HealEffect | ApplyStatusEffect | RemoveStatusEffect | PushEffect | PullEffect | ModifyCooldownEffect | LifestealEffect;
 export interface AbilityDefinition {
     id: UUID;
     slug: string;
@@ -76,6 +82,11 @@ export interface AbilityDefinition {
     range: number;
     areaRadius: number;
     cooldownTurns: number;
+    isSpecial: boolean;
+    isUnblockable: boolean;
+    canTargetAlly?: boolean;
+    /** AOE abilities only: when true, allies are excluded from the blast (e.g. Roar). Default false — existing AOEs (Whirlwind, Firestorm, Piercing) hit allies unchanged. */
+    excludeAllies?: boolean;
     effects: AbilityEffect[];
 }
 export interface StatusEffectDefinition {
@@ -92,17 +103,32 @@ export interface PassiveDefinition {
     name: string;
     description: string;
 }
+export interface PassiveOption {
+    slug: string;
+    name: string;
+    description: string;
+    stat?: 'maxHealth' | 'armorClass' | 'movementRange';
+    value?: number;
+    passiveFlag?: string;
+}
 export interface UnitDefinition {
     id: UUID;
     slug: string;
     name: string;
     maxHealth: number;
+    armorClass: number;
     movementRange: number;
     abilities: string[];
     passives: string[];
+    specialOptions: string[];
+    passiveOptions: PassiveOption[];
     unlockLevel: number;
     assetKey: string;
     isActive: boolean;
+}
+export interface UnitCustomization {
+    specialSlug: string;
+    passiveSlug: string | null;
 }
 export interface Team {
     id: UUID;
@@ -113,6 +139,7 @@ export interface Team {
         x: number;
         y: number;
     }>;
+    unitCustomizations: UnitCustomization[];
     isActive: boolean;
     createdAt: ISOTimestamp;
 }

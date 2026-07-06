@@ -1,13 +1,14 @@
 import {
-  MatchState, UnitInstance, GameEvent, BoardPosition, BOARD_WIDTH, BOARD_HEIGHT,
+  MatchState, UnitInstance, GameEvent, BoardPosition,
 } from '../types/matchState.js';
 import {
   AbilityDefinition, AbilityEffect, DamageEffect, HealEffect,
   ApplyStatusEffect, RemoveStatusEffect, PushEffect, PullEffect, ModifyCooldownEffect,
+  LifestealEffect,
 } from '../types/index.js';
 import {
   getUnitsInRadius, getLineTiles, calculatePushDestination,
-  calculatePullDestination, getUnitAtPosition,
+  calculatePullDestination, getUnitAtPosition, isInBounds,
 } from './boardUtils.js';
 
 export interface ExecutionContext {
@@ -19,30 +20,56 @@ export interface ExecutionContext {
   pushDestination?: BoardPosition;
 }
 
+/** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
+const WEAKENED_DAMAGE_REDUCTION = 4;
+/** Flat damage-over-time dealt per stack of 'burning', once per stack per tick. */
+const BURNING_DAMAGE_PER_STACK = 5;
+
+function hasStatusEffect(unit: UnitInstance, slug: string): boolean {
+  return unit.statusEffects.some((se) => se.slug === slug);
+}
+
 export function executeAbility(ctx: ExecutionContext): void {
   const targets = resolveTargets(ctx);
+  const dealsDamage = ctx.ability.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
   const needsHitRoll = !ctx.ability.isUnblockable
     && ctx.ability.targetingType !== 'self'
-    && ctx.ability.effects.some((e) => e.type === 'damage');
+    && dealsDamage;
 
   for (const target of targets) {
+    // Shielded fully negates the next hit (including unblockable/execute
+    // effects) and is consumed entirely — checked before the hit roll so an
+    // unblockable ability never even reaches the fortune meter for this target.
+    if (dealsDamage && hasStatusEffect(target, 'shielded')) {
+      consumeShield(ctx, target);
+      continue;
+    }
     if (needsHitRoll) {
-      // Pseudo-random distribution (Bresenham accumulator): each attack adds the
-      // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
-      // misses and the meter resets by 1. Outcomes converge exactly to the
-      // intended dodge rate with no streaks.
-      const missChance = Math.max(0, target.armorClass - 6) / 20;
-      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
-      if (target.fortuneMeter >= 1) {
-        target.fortuneMeter -= 1;
-        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
-        continue;
+      // Exposed bypasses the fortune meter entirely — the attack always
+      // connects and the meter is left untouched (mirrors unblockable).
+      if (!hasStatusEffect(target, 'exposed')) {
+        // Pseudo-random distribution (Bresenham accumulator): each attack adds the
+        // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
+        // misses and the meter resets by 1. Outcomes converge exactly to the
+        // intended dodge rate with no streaks.
+        const missChance = Math.max(0, target.armorClass - 6) / 20;
+        target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
+        if (target.fortuneMeter >= 1) {
+          target.fortuneMeter -= 1;
+          ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
+          continue;
+        }
       }
     }
     for (const effect of ctx.ability.effects) {
       applyEffect(ctx, target, effect);
     }
   }
+}
+
+function consumeShield(ctx: ExecutionContext, target: UnitInstance): void {
+  target.statusEffects = target.statusEffects.filter((se) => se.slug !== 'shielded');
+  ctx.events.push({ type: 'SHIELD_ABSORBED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Shield absorbed the hit' });
 }
 
 function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
@@ -56,8 +83,10 @@ function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
     case 'self': return [caster];
     case 'aoe': {
       const center = ability.range === 0 ? caster.position : targetPosition;
-      const hits = getUnitsInRadius(center, ability.areaRadius, aliveUnits);
-      return ability.range === 0 ? hits.filter((u) => u.instanceId !== caster.instanceId) : hits;
+      let hits = getUnitsInRadius(center, ability.areaRadius, aliveUnits);
+      if (ability.range === 0) hits = hits.filter((u) => u.instanceId !== caster.instanceId);
+      if (ability.excludeAllies) hits = hits.filter((u) => u.ownerPlayerId !== caster.ownerPlayerId);
+      return hits;
     }
     case 'line': {
       const tiles = getLineTiles(caster.position, targetPosition, ability.range);
@@ -77,7 +106,13 @@ function applyEffect(ctx: ExecutionContext, target: UnitInstance, effect: Abilit
     case 'push': applyPush(ctx, target, effect); break;
     case 'pull': applyPull(ctx, target, effect); break;
     case 'modify_cooldown': applyModifyCooldown(ctx, target, effect); break;
+    case 'lifesteal': applyLifesteal(ctx, target, effect); break;
   }
+}
+
+/** Reduces outgoing damage from a 'weakened' caster. Floors at 0. */
+function weakenedAdjustedDamage(ctx: ExecutionContext, rawValue: number): number {
+  return hasStatusEffect(ctx.caster, 'weakened') ? Math.max(0, rawValue - WEAKENED_DAMAGE_REDUCTION) : rawValue;
 }
 
 function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: DamageEffect): void {
@@ -85,12 +120,29 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;
   }
-  const damage = effect.value;
+  const damage = weakenedAdjustedDamage(ctx, effect.value);
   target.currentHealth = Math.max(0, target.currentHealth - damage);
   ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
   if (target.currentHealth <= 0) {
     target.isAlive = false;
     ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
+  }
+}
+
+function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
+  const damage = weakenedAdjustedDamage(ctx, effect.value);
+  target.currentHealth = Math.max(0, target.currentHealth - damage);
+  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
+  if (target.currentHealth <= 0) {
+    target.isAlive = false;
+    ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
+  }
+  if (ctx.caster.isAlive) {
+    const healAmount = Math.min(effect.healValue, ctx.caster.maxHealth - ctx.caster.currentHealth);
+    if (healAmount > 0) {
+      ctx.caster.currentHealth += healAmount;
+      ctx.events.push({ type: 'HEALING_DONE', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: healAmount });
+    }
   }
 }
 
@@ -159,7 +211,7 @@ function findLastFreePosition(start: BoardPosition, end: BoardPosition, units: U
   let lastFree = start;
   for (let i = 1; i <= steps; i++) {
     const pos = { x: start.x + Math.round(normX * i), y: start.y + Math.round(normY * i) };
-    if (pos.x < 0 || pos.x >= BOARD_WIDTH || pos.y < 0 || pos.y >= BOARD_HEIGHT) break;
+    if (!isInBounds(pos)) break;
     const occupant = units.find((u) => u.isAlive && u.instanceId !== movingUnitId && u.position.x === pos.x && u.position.y === pos.y);
     if (occupant) break;
     lastFree = pos;
@@ -174,6 +226,23 @@ function hasPassive(unit: UnitInstance, passiveSlug: string): boolean {
 /** Tick status effects for a single unit (called at the start of that unit's initiative turn). */
 export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): void {
   if (!unit.isAlive) return;
+
+  // Burning: flat damage-over-time, applied once per stack at the start of
+  // the afflicted unit's own turn (or when their slot is skipped, e.g. while
+  // frozen — see turnProcessor's advanceSlot, which also calls this
+  // function). Applied before duration/expiry ticking below so the final
+  // turn a burn is active still deals its damage.
+  const burning = unit.statusEffects.find((se) => se.slug === 'burning');
+  if (burning) {
+    const burnDamage = BURNING_DAMAGE_PER_STACK * burning.stacks;
+    unit.currentHealth = Math.max(0, unit.currentHealth - burnDamage);
+    events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: burning.sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, value: burnDamage, message: `${burnDamage} burning damage` });
+    if (unit.currentHealth <= 0 && unit.isAlive) {
+      unit.isAlive = false;
+      events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
+    }
+  }
+
   const expiredEffects: string[] = [];
   for (const effect of unit.statusEffects) {
     if (effect.turnsRemaining > 0) {

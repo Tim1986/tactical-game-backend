@@ -3,7 +3,7 @@ DELETE FROM status_effect_definitions
 WHERE slug IN ('burning', 'poisoned', 'regenerating', 'weakened', 'shielded');
 
 -- Update status effect descriptions to match current mechanics
-UPDATE status_effect_definitions SET description = 'Cannot move, charge, or use abilities.' WHERE slug = 'stunned';
+UPDATE status_effect_definitions SET description = 'Cannot move, charge, or use abilities.' WHERE slug = 'frozen';
 UPDATE status_effect_definitions SET description = 'Cannot move or charge; can still use abilities.' WHERE slug = 'rooted';
 
 -- Twin Strike: two separate hit rolls of 10 each (was one effect of 20)

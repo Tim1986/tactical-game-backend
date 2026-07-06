@@ -38,6 +38,34 @@ export const ABILITY_DEFS = [
     is_unblockable: false,
     effects: [{ type: 'damage', formula: 'flat', value: 15 }],
   },
+  {
+    slug: 'shockwave',
+    name: 'Shockwave',
+    description: 'Deals 8 unblockable damage to all adjacent units and knocks them 2 tiles back.',
+    targeting_type: 'aoe',
+    range: 0,
+    area_radius: 1,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 8 },
+      { type: 'push', direction: 'away_from_caster', distance: 2 },
+    ],
+  },
+  {
+    slug: 'roar',
+    name: 'Roar',
+    description: 'Weakens all enemies within 2 tiles, reducing their outgoing damage for 2 turns. Unblockable.',
+    targeting_type: 'aoe',
+    range: 0,
+    area_radius: 2,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    exclude_allies: true,
+    effects: [{ type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 }],
+  },
 
   // ── Cleric ────────────────────────────────────────────────────────────────
   {
@@ -64,6 +92,35 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [{ type: 'heal', formula: 'flat', value: 25 }],
   },
+  {
+    slug: 'ward',
+    name: 'Ward',
+    description: 'Shields an ally within 2 tiles, fully negating the next hit against them (including unblockable attacks).',
+    targeting_type: 'single',
+    range: 2,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [{ type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+  },
+  {
+    slug: 'purify',
+    name: 'Purify',
+    description: 'Cleanses frozen, rooted, and burning from an ally within 2 tiles, then heals them for 10.',
+    targeting_type: 'single',
+    range: 2,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'remove_status', statusSlug: 'frozen' },
+      { type: 'remove_status', statusSlug: 'rooted' },
+      { type: 'remove_status', statusSlug: 'burning' },
+      { type: 'heal', formula: 'flat', value: 10 },
+    ],
+  },
 
   // ── Fighter ───────────────────────────────────────────────────────────────
   {
@@ -89,6 +146,33 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [{ type: 'heal', formula: 'flat', value: 20 }],
+  },
+  {
+    slug: 'concussive',
+    name: 'Concussive Blow',
+    description: 'A heavy strike dealing 8 damage and dazing the target, freezing them for 1 turn. Can be blocked.',
+    targeting_type: 'single',
+    range: 1,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: false,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 8 },
+      { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
+    ],
+  },
+  {
+    slug: 'rescue',
+    name: 'Rescue',
+    description: 'Pulls an ally within 4 tiles 3 tiles toward you. Unblockable.',
+    targeting_type: 'single',
+    range: 4,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [{ type: 'pull', direction: 'toward_caster', distance: 3 }],
   },
 
   // ── Rogue ─────────────────────────────────────────────────────────────────
@@ -119,6 +203,33 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [{ type: 'damage', formula: 'flat', value: 9999, healthThreshold: 18 }],
   },
+  {
+    slug: 'dagger_toss',
+    name: 'Dagger Toss',
+    description: 'Throws a dagger for 12 unblockable damage from up to 4 tiles away.',
+    targeting_type: 'single',
+    range: 4,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [{ type: 'damage', formula: 'flat', value: 12 }],
+  },
+  {
+    slug: 'expose',
+    name: 'Expose Weakness',
+    description: 'Deals 6 unblockable damage and exposes the target, causing attacks against them to always hit for 2 turns.',
+    targeting_type: 'single',
+    range: 1,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 6 },
+      { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 2 },
+    ],
+  },
 
   // ── Ranger ────────────────────────────────────────────────────────────────
   {
@@ -139,6 +250,33 @@ export const ABILITY_DEFS = [
     description: 'Deals 12 damage to every unit in a straight line (including allies), up to 6 tiles. Can be blocked.',
     targeting_type: 'line',
     range: 6,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: false,
+    effects: [{ type: 'damage', formula: 'flat', value: 12 }],
+  },
+  {
+    slug: 'pinning',
+    name: 'Pinning Shot',
+    description: 'Deals 10 damage from up to 6 tiles away and roots the target for 2 turns. Can be blocked.',
+    targeting_type: 'single',
+    range: 6,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: false,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 10 },
+      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+    ],
+  },
+  {
+    slug: 'longshot',
+    name: 'Longshot',
+    description: 'Deals 12 damage from up to 8 tiles away. Can be blocked.',
+    targeting_type: 'single',
+    range: 8,
     area_radius: 0,
     cooldown_turns: 99,
     is_special: true,
@@ -171,6 +309,33 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [{ type: 'damage', formula: 'flat', value: 14 }],
   },
+  {
+    slug: 'flame_jet',
+    name: 'Flame Jet',
+    description: 'Deals 10 unblockable damage to every unit in a straight line (including allies), up to 4 tiles.',
+    targeting_type: 'line',
+    range: 4,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [{ type: 'damage', formula: 'flat', value: 10 }],
+  },
+  {
+    slug: 'ignite',
+    name: 'Ignite',
+    description: 'Deals 6 unblockable damage and sets the target ablaze, dealing 5 damage per turn for 3 turns.',
+    targeting_type: 'single',
+    range: 5,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 6 },
+      { type: 'apply_status', statusSlug: 'burning', stacks: 1, durationTurns: 3 },
+    ],
+  },
 
   // ── Warlock ───────────────────────────────────────────────────────────────
   {
@@ -200,6 +365,33 @@ export const ABILITY_DEFS = [
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],
   },
+  {
+    slug: 'grasp',
+    name: 'Eldritch Grasp',
+    description: 'Pulls an enemy within 5 tiles 3 tiles toward you and roots them for 1 turn. Unblockable.',
+    targeting_type: 'single',
+    range: 5,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'pull', direction: 'toward_caster', distance: 3 },
+      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+    ],
+  },
+  {
+    slug: 'drain',
+    name: 'Life Drain',
+    description: 'Deals 10 unblockable damage from up to 4 tiles away and heals you for 6.',
+    targeting_type: 'single',
+    range: 4,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [{ type: 'lifesteal', formula: 'flat', value: 10, healValue: 6 }],
+  },
 
   // ── Wizard ────────────────────────────────────────────────────────────────
   {
@@ -226,30 +418,74 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [{ type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 2 }],
   },
+  {
+    slug: 'blizzard',
+    name: 'Blizzard',
+    description: 'Deals 4 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
+    targeting_type: 'aoe',
+    range: 3,
+    area_radius: 1,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 4 },
+      { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
+    ],
+  },
+  {
+    slug: 'cold_snap',
+    name: 'Cold Snap',
+    description: 'Deals 10 unblockable damage from up to 5 tiles away and roots the target for 1 turn.',
+    targeting_type: 'single',
+    range: 5,
+    area_radius: 0,
+    cooldown_turns: 99,
+    is_special: true,
+    is_unblockable: true,
+    effects: [
+      { type: 'damage', formula: 'flat', value: 10 },
+      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+    ],
+  },
 ] as const;
 
 // ---------------------------------------------------------------------------
 // Unit definitions
 // ---------------------------------------------------------------------------
 
-// PassiveOption: a stat boost the player selects at team-build time.
-// stat: which field on UnitInstance it modifies.
-// value: added directly (e.g. +5 maxHealth, +1 armorClass, +1 movementRange).
+// PassiveOption: a passive the player selects at team-build time. Either a
+// stat boost (stat + value, added directly to the built instance) or a
+// behavioral flag (passiveFlag, appended to the instance's `passives` array
+// — e.g. 'immovable' blocks push/pull in abilityExecutor.ts). Exactly one
+// of the two styles should be set per option.
 export interface PassiveOption {
   slug: string;
   name: string;
   description: string;
-  stat: 'maxHealth' | 'armorClass' | 'movementRange';
-  value: number;
+  stat?: 'maxHealth' | 'armorClass' | 'movementRange';
+  value?: number;
+  passiveFlag?: string;
 }
 
+// Passive-option pool (mixed stat/behavioral design): frontline melee
+// classes (Fighter, Barbarian) get an 'immovable' behavioral option instead
+// of 'swift', since they don't rely on mobility as much as squishier classes.
+const VITALITY: PassiveOption = { slug: 'vitality', name: 'Vitality', description: '+8 max health.', stat: 'maxHealth', value: 8 };
+const HARDENED: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+2 armor class.', stat: 'armorClass', value: 2 };
+const SWIFT: PassiveOption = { slug: 'swift', name: 'Swift', description: '+1 movement range.', stat: 'movementRange', value: 1 };
+const IMMOVABLE: PassiveOption = { slug: 'immovable', name: 'Immovable', description: 'Cannot be pushed or pulled.', passiveFlag: 'immovable' };
+
+const FRONTLINE_PASSIVES: PassiveOption[] = [VITALITY, HARDENED, IMMOVABLE];
+const STANDARD_PASSIVES: PassiveOption[] = [VITALITY, HARDENED, SWIFT];
+
 export const UNIT_DEFS = [
-  { slug: 'fighter',   name: 'Fighter',   max_health: 42, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind'], passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
-  { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind'],   passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
-  { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing'],    passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
-  { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate'], passive_options: [] as PassiveOption[], unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
-  { slug: 'cleric',    name: 'Cleric',    max_health: 40, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal'],        passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
-  { slug: 'wizard',    name: 'Wizard',    max_health: 30, armor_class: 16, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze'],      passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
-  { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 30, armor_class: 14, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh'],         passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
-  { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear'],        passive_options: [] as PassiveOption[], unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
+  { slug: 'fighter',   name: 'Fighter',   max_health: 42, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind', 'concussive', 'rescue'], passive_options: FRONTLINE_PASSIVES, unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
+  { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: FRONTLINE_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
+  { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing', 'pinning', 'longshot'],      passive_options: STANDARD_PASSIVES,  unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
+  { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate', 'dagger_toss', 'expose'], passive_options: STANDARD_PASSIVES,  unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
+  { slug: 'cleric',    name: 'Cleric',    max_health: 40, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: STANDARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
+  { slug: 'wizard',    name: 'Wizard',    max_health: 30, armor_class: 16, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze', 'blizzard', 'cold_snap'],      passive_options: STANDARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
+  { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 30, armor_class: 14, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh', 'flame_jet', 'ignite'],           passive_options: STANDARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
+  { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear', 'grasp', 'drain'],               passive_options: STANDARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
 ];

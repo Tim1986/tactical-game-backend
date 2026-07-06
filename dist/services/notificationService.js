@@ -21,6 +21,8 @@ function buildPayload(type, data) {
             return { title: 'Challenge received!', body: (data.challengerUsername ?? 'Someone') + ' has challenged you to a match.', data: { type, challengeId: data.challengeId ?? '' } };
         case 'CHALLENGE_ACCEPTED':
             return { title: 'Challenge accepted!', body: (data.opponentUsername ?? 'Your opponent') + ' accepted your challenge.', data: { type, matchId: data.matchId ?? '' } };
+        case 'ACHIEVEMENT_UNLOCKED':
+            return { title: 'Achievement unlocked!', body: data.achievementName ?? 'You earned a new achievement.', data: { type, achievementSlug: data.achievementSlug ?? '' } };
     }
 }
 async function notifyUser(userId, type, data = {}) {

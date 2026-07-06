@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isCorner = isCorner;
 exports.isInBounds = isInBounds;
 exports.chebyshevDistance = chebyshevDistance;
 exports.manhattanDistance = manhattanDistance;
@@ -13,8 +14,20 @@ exports.calculatePullDestination = calculatePullDestination;
 exports.getLineTiles = getLineTiles;
 exports.positionsEqual = positionsEqual;
 const matchState_js_1 = require("../types/matchState.js");
+/**
+ * The four extreme corner tiles are removed from the board (60-tile cross).
+ * Must stay in lockstep with backend/src/ai/geometry.ts's isCorner — that
+ * module is the canonical definition; this one is duplicated here only
+ * because game/ code can't import from ai/ without an awkward dependency
+ * direction. If you change one, change both.
+ */
+function isCorner(x, y) {
+    return (x === 0 || x === matchState_js_1.BOARD_WIDTH - 1) && (y === 0 || y === matchState_js_1.BOARD_HEIGHT - 1);
+}
 function isInBounds(pos) {
-    return pos.x >= 0 && pos.x < matchState_js_1.BOARD_WIDTH && pos.y >= 0 && pos.y < matchState_js_1.BOARD_HEIGHT;
+    return (pos.x >= 0 && pos.x < matchState_js_1.BOARD_WIDTH &&
+        pos.y >= 0 && pos.y < matchState_js_1.BOARD_HEIGHT &&
+        !isCorner(pos.x, pos.y));
 }
 function chebyshevDistance(a, b) {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -33,6 +46,8 @@ function getReachableTiles(from, range, units, excludeUnitInstanceId) {
     for (let x = 0; x < matchState_js_1.BOARD_WIDTH; x++) {
         for (let y = 0; y < matchState_js_1.BOARD_HEIGHT; y++) {
             const pos = { x, y };
+            if (!isInBounds(pos))
+                continue;
             if (chebyshevDistance(from, pos) <= range && chebyshevDistance(from, pos) > 0) {
                 const occupant = getUnitAtPosition(units, pos);
                 if (!occupant || occupant.instanceId === excludeUnitInstanceId)
@@ -47,6 +62,8 @@ function getTilesInRange(from, range) {
     for (let x = 0; x < matchState_js_1.BOARD_WIDTH; x++) {
         for (let y = 0; y < matchState_js_1.BOARD_HEIGHT; y++) {
             const pos = { x, y };
+            if (!isInBounds(pos))
+                continue;
             if (chebyshevDistance(from, pos) <= range)
                 tiles.push(pos);
         }

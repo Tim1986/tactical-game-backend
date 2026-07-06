@@ -28,6 +28,7 @@ interface AbilityRow {
   cooldown_turns: number;
   is_special: boolean;
   is_unblockable: boolean;
+  exclude_allies: boolean;
   effects: unknown[];
 }
 
@@ -49,7 +50,15 @@ function rowToUnit(row: UnitRow): UnitDefinition {
   };
 }
 
+// Abilities whose non-heal effects (e.g. shielded, pull) are still meant to
+// target an ally rather than an enemy — can't be derived from effect type
+// alone since the same effect types (apply_status, pull) are also used by
+// enemy-targeting abilities (e.g. Blizzard's frozen, Grasp's pull-toward-caster).
+const ALLY_TARGETABLE_SPECIAL_SLUGS = new Set(['ward', 'rescue']);
+
 function rowToAbility(row: AbilityRow): AbilityDefinition {
+  const effects = row.effects as Array<{ type: string }>;
+  const isHealOnly = row.targeting_type !== 'self' && Array.isArray(effects) && effects.length > 0 && effects.every((e) => e.type === 'heal');
   return {
     id: row.id,
     slug: row.slug,
@@ -60,10 +69,10 @@ function rowToAbility(row: AbilityRow): AbilityDefinition {
     areaRadius: row.area_radius,
     cooldownTurns: row.cooldown_turns,
     isUnblockable: row.is_unblockable,
+    excludeAllies: row.exclude_allies,
     effects: row.effects as AbilityDefinition['effects'],
-    // canTargetAlly: true when all effects are heals (no damage) and not self-targeting
     isSpecial: row.is_special,
-    canTargetAlly: row.targeting_type !== 'self' && Array.isArray(row.effects) && row.effects.length > 0 && (row.effects as Array<{ type: string }>).every((e) => e.type === 'heal'),
+    canTargetAlly: isHealOnly || ALLY_TARGETABLE_SPECIAL_SLUGS.has(row.slug),
   };
 }
 
@@ -84,8 +93,11 @@ export async function getUnlockedUnits(
 
   const units = unitResult.rows.map((row: UnitRow) => rowToUnit(row));
 
-  // Collect all ability slugs referenced by these units
-  const allAbilitySlugs = [...new Set(units.flatMap((u) => u.abilities))];
+  // Collect all ability slugs referenced by these units — includes every
+  // special option (not just the default-baked abilities array), since a
+  // player's chosen special ends up as the unit instance's abilities[1] and
+  // the client needs the full AbilityDefinition for whichever one they pick.
+  const allAbilitySlugs = [...new Set(units.flatMap((u) => [...u.abilities, ...u.specialOptions]))];
 
   if (allAbilitySlugs.length === 0) {
     return { units, abilities: [] };
@@ -94,7 +106,7 @@ export async function getUnlockedUnits(
   // Fetch full ability definitions for client display
   const abilityResult = await query<AbilityRow>(
     `SELECT id, slug, name, description, targeting_type, range, area_radius,
-            cooldown_turns, is_special, is_unblockable, effects
+            cooldown_turns, is_special, is_unblockable, exclude_allies, effects
      FROM ability_definitions
      WHERE slug = ANY($1)`,
     [allAbilitySlugs]

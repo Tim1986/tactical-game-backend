@@ -1,6 +1,6 @@
 {
   "name": "tactical-game-backend",
-  "version": "1.0.04",
+  "version": "1.0.05",
   "description": "Authoritative backend for async tactical strategy game",
   "main": "dist/index.js",
   "scripts": {

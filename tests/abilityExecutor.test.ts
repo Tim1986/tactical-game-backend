@@ -81,9 +81,10 @@ afterEach(() => { vi.restoreAllMocks(); });
 // ─── AC Roll ──────────────────────────────────────────────────────────────────
 
 describe('AC roll', () => {
-  it('hits when d20 + 5 >= target AC', () => {
-    // AC 15: need roll >= 10. mockReturnValue(0.45) → floor(0.45*20)+1 = 10 → hits
-    vi.spyOn(Math, 'random').mockReturnValue(0.45);
+  it('hits when the fortune meter has not yet accumulated enough miss chance', () => {
+    // Deterministic fortune meter, not a d20 roll: a fresh unit starts at
+    // fortuneMeter 0, and a single hit's missChance (max realistic AC) never
+    // reaches 1.0 on its own, so the very first attack always connects.
     const caster = makeUnit('u1', 'p1', 0, 0);
     const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 15 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
@@ -92,11 +93,11 @@ describe('AC roll', () => {
     expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(false);
   });
 
-  it('misses when d20 + 5 < target AC', () => {
-    // AC 15: need roll >= 10. mockReturnValue(0.3) → floor(0.3*20)+1 = 7 → misses
-    vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  it('misses when its fortune meter tips over from accumulated miss chance', () => {
+    // Deterministic fortune meter (not a d20 roll): missChance = max(0, AC-6)/20.
+    // AC 15 -> missChance 0.45. Pre-seed the meter so this hit crosses 1.0.
     const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 15 });
+    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 15, fortuneMeter: 0.6 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
     executeAbility(ctx);
     expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);
@@ -105,9 +106,7 @@ describe('AC roll', () => {
     expect(target.currentHealth).toBe(40);
   });
 
-  it('high-AC unit (fighter AC 20) is harder to hit', () => {
-    // AC 20: need roll >= 15. mockReturnValue(0.7) → floor(0.7*20)+1 = 15 → hits
-    vi.spyOn(Math, 'random').mockReturnValue(0.7);
+  it('high-AC unit (fighter AC 20) still hits on a fresh (zero) fortune meter', () => {
     const caster = makeUnit('u1', 'p1', 0, 0);
     const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
@@ -115,11 +114,10 @@ describe('AC roll', () => {
     expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
   });
 
-  it('high-AC unit (fighter AC 20) misses on roll 14', () => {
-    // AC 20: need roll >= 15. mockReturnValue(0.65) → floor(0.65*20)+1 = 14 → misses
-    vi.spyOn(Math, 'random').mockReturnValue(0.65);
+  it('high-AC unit (fighter AC 20) misses when its fortune meter tips over', () => {
+    // AC 20 -> missChance 0.7. A modest pre-seeded meter is enough to cross 1.0.
     const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 });
+    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20, fortuneMeter: 0.35 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
     executeAbility(ctx);
     expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);
@@ -202,11 +200,10 @@ describe('Piercing Shot', () => {
     expect(t2.currentHealth).toBe(25);
   });
 
-  it('misses a unit in line when AC roll fails', () => {
-    // AC 15: need roll >= 10. mockReturnValue(0.3) → roll 7 → miss
-    vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  it('misses a unit in line when its fortune meter tips over', () => {
+    // AC 15 -> missChance 0.45. Pre-seed the meter so this hit crosses 1.0.
     const caster = makeUnit('u1', 'p1', 0, 3);
-    const t1 = makeUnit('u2', 'p2', 2, 3, { armorClass: 15 });
+    const t1 = makeUnit('u2', 'p2', 2, 3, { armorClass: 15, fortuneMeter: 0.6 });
     const ctx = makeCtx(caster, { x: 6, y: 3 }, PIERCING_SHOT, makeState([caster, t1]));
     executeAbility(ctx);
     expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);

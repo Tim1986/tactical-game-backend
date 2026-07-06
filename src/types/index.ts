@@ -55,7 +55,8 @@ export type AbilityEffectType =
   | 'push'
   | 'pull'
   | 'teleport'
-  | 'modify_cooldown';
+  | 'modify_cooldown'
+  | 'lifesteal';
 
 export interface DamageEffect {
   type: 'damage';
@@ -100,6 +101,14 @@ export interface ModifyCooldownEffect {
   delta: number;
 }
 
+/** Damages the target, then heals the caster (e.g. Life Drain). */
+export interface LifestealEffect {
+  type: 'lifesteal';
+  formula: 'flat';
+  value: number;
+  healValue: number;
+}
+
 export type AbilityEffect =
   | DamageEffect
   | HealEffect
@@ -107,7 +116,8 @@ export type AbilityEffect =
   | RemoveStatusEffect
   | PushEffect
   | PullEffect
-  | ModifyCooldownEffect;
+  | ModifyCooldownEffect
+  | LifestealEffect;
 
 export interface AbilityDefinition {
   id: UUID;
@@ -121,6 +131,8 @@ export interface AbilityDefinition {
   isSpecial: boolean;
   isUnblockable: boolean;
   canTargetAlly?: boolean; // derived field for client: true if all effects are heals
+  /** AOE abilities only: when true, allies are excluded from the blast (e.g. Roar). Default false — existing AOEs (Whirlwind, Firestorm, Piercing) hit allies unchanged. */
+  excludeAllies?: boolean;
   effects: AbilityEffect[];
 }
 
@@ -144,12 +156,17 @@ export interface PassiveDefinition {
   description: string;
 }
 
+// A passive option is EITHER a numeric stat boost (stat + value) OR a
+// behavioral flag (passiveFlag — appended to the unit instance's `passives`
+// array, e.g. 'immovable' blocks push/pull in abilityExecutor.ts). Exactly
+// one of the two styles should be set per option.
 export interface PassiveOption {
   slug: string;
   name: string;
   description: string;
-  stat: 'maxHealth' | 'armorClass' | 'movementRange';
-  value: number;
+  stat?: 'maxHealth' | 'armorClass' | 'movementRange';
+  value?: number;
+  passiveFlag?: string;
 }
 
 export interface UnitDefinition {

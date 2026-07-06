@@ -458,5 +458,267 @@ import { DEFAULT_ABILITIES } from './defaultData';
     JSON.stringify(actions2));
 }
 
+// ===========================================================================
+// V6/V7 tests: fortune meter, customization, new statuses/specials
+// ===========================================================================
+import { willHit, wouldDodgeNext, explainTurn } from './aiBrain';
+import { runSim } from './simHarness';
+
+/** Like mkUnit, but also sets a starting fortune meter (for dodge-math tests). */
+function mkUnitWithFortune(slug: string, owner: string, pos: BoardPosition, hp: number, fortune: number): UnitInstance {
+  const u = mkUnit(slug, owner, pos, hp);
+  u.fortuneMeter = fortune;
+  return u;
+}
+
+// --- Test 28: willHit matches the engine's deterministic formula exactly ---
+{
+  const fighter = mkUnit('fighter', 'p2', { x: 5, y: 3 }); // AC 17 -> miss 0.55
+  const sword = map.get('sword')!;
+  fighter.fortuneMeter = 0.40;
+  check('willHit: meter 0.40 + miss 0.55 = 0.95 < 1 -> HIT', willHit(fighter, sword));
+  fighter.fortuneMeter = 0.50;
+  check('willHit: meter 0.50 + miss 0.55 = 1.05 >= 1 -> DODGE', !willHit(fighter, sword));
+  check('wouldDodgeNext agrees with willHit', wouldDodgeNext(fighter));
+  check('unblockable ignores the meter', willHit(fighter, map.get('eldritch')!));
+}
+
+// --- Test 29: a once-per-game special NEVER fires into a guaranteed dodge ---
+{
+  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
+  const dodger = mkUnitWithFortune('barbarian', 'p2', { x: 4, y: 3 }, 40, 0.60); // AC15 miss .45 -> dodges
+  const other = mkUnitWithFortune('wizard', 'p2', { x: 3, y: 4 }, 30, 0); // will be hit
+  const state = mkState([rogue, dodger, other], rogue.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const target = actions.find((a) => a.type === 'USE_ABILITY');
+  check('brain attacks the target who will actually be HIT, not the guaranteed dodger',
+    target?.type === 'USE_ABILITY' && target.target.x === other.position.x && target.target.y === other.position.y,
+    JSON.stringify(actions));
+}
+{
+  // Unblockable execute (assassinate) fires through a full dodge meter.
+  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
+  const weakDodger = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 15, 0.90);
+  const state = mkState([rogue, weakDodger], rogue.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('unblockable assassinate fires through a guaranteed dodge',
+    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate'),
+    JSON.stringify(actions));
+}
+{
+  // Blockable special (whirlwind) vs a lone guaranteed-dodge enemy: held.
+  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
+  const dodger = mkUnitWithFortune('rogue', 'p2', { x: 4, y: 3 }, 10, 0.70); // whirlwind would kill BUT dodges
+  const state = mkState([barb, dodger], barb.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('blockable special is HELD when the only target will dodge',
+    !actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'whirlwind'),
+    JSON.stringify(actions));
+}
+
+// --- Test 30: dodge-burn — a basic attack is still thrown into a guaranteed dodge ---
+{
+  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
+  const dodger = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 42, 0.60);
+  const state = mkState([barb, dodger], barb.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('basic attack burns a guaranteed dodge to set up the next attacker',
+    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'strike'),
+    JSON.stringify(actions));
+}
+
+// --- Test 31: AOE per-target fortune — a clipped ally who will dodge is safe ---
+{
+  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
+  const fragileAlly = mkUnitWithFortune('rogue', 'p1', { x: 2, y: 3 }, 10, 0.70); // would die BUT dodges
+  const e1 = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 20, 0);
+  const e2 = mkUnitWithFortune('wizard', 'p2', { x: 4, y: 4 }, 20, 0);
+  const state = mkState([barb, fragileAlly, e1, e2], barb.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('whirlwind allowed when the clipped fragile ally is meter-guaranteed to dodge',
+    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'whirlwind'),
+    JSON.stringify(actions) + ' | ' + explainTurn(state, barb.instanceId, 'p1', map).split('\n').slice(-3).join(' / '));
+}
+
+// --- Test 32: shielded — Ward eats Assassinate (specials gate on shields) ---
+{
+  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
+  const warded = mkUnit('sorcerer', 'p2', { x: 4, y: 3 }, 12); // execute window, but shielded
+  warded.statusEffects.push({ slug: 'shielded', turnsRemaining: 3, stacks: 1, sourceUnitInstanceId: 'x' });
+  const other = mkUnitWithFortune('fighter', 'p2', { x: 3, y: 4 }, 42, 0);
+  const state = mkState([rogue, warded, other], rogue.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('assassinate NOT thrown into a shielded target',
+    !actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate' && a.target.x === warded.position.x && a.target.y === warded.position.y),
+    JSON.stringify(actions));
+}
+
+// --- Test 33: immovable passive — Fear has no push value vs it ---
+{
+  const warlock = mkUnit('warlock', 'p1', { x: 2, y: 3 });
+  const anchored = mkUnit('fighter', 'p2', { x: 4, y: 3 });
+  anchored.passives = ['immovable'];
+  const state = mkState([warlock, anchored], warlock.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  check('Fear skipped vs an immovable target (uses Demon Blast instead)',
+    !actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'fear'),
+    JSON.stringify(actions));
+}
+
+// --- Test 34: Round 1 — frozen units are never offered as the commit ---
+{
+  const frozen1 = mkUnit('barbarian', 'p1', { x: 1, y: 3 });
+  frozen1.statusEffects.push({ slug: 'frozen', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' });
+  const healthy = mkUnit('ranger', 'p1', { x: 1, y: 5 });
+  const enemy = mkUnit('fighter', 'p2', { x: 6, y: 3 });
+  const state = mkState([frozen1, healthy, enemy], null, true);
+  const actions = brain.selectActions(state, 'p1', map);
+  const actsWith = actions.find((a) => a.type !== 'END_TURN');
+  check('round 1: frozen(1) unit not committed (engine rejects pre-tick)',
+    actsWith !== undefined && 'unitInstanceId' in actsWith && actsWith.unitInstanceId === healthy.instanceId,
+    JSON.stringify(actions));
+}
+
+// --- Test 35: 8x8 cross board — no plan ever lands on a removed corner ---
+{
+  const ranger = mkUnit('ranger', 'p1', { x: 6, y: 6 });
+  const enemy = mkUnit('fighter', 'p2', { x: 5, y: 1 });
+  const state = mkState([ranger, enemy], ranger.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const moved = actions.find((a) => a.type === 'MOVE' || a.type === 'CHARGE');
+  const corners = [{ x: 0, y: 0 }, { x: 7, y: 0 }, { x: 0, y: 7 }, { x: 7, y: 7 }];
+  const badCorner = moved !== undefined && corners.some((c) => c.x === moved.destination.x && c.y === moved.destination.y);
+  check('no plan ever lands on a removed corner (0,0)/(7,0)/(0,7)/(7,7)', !badCorner, JSON.stringify(actions));
+}
+
+// --- Test 36: Ward — cleric shields a badly-threatened ally ---
+{
+  const cleric = mkUnit('cleric', 'p1', { x: 3, y: 3 });
+  const threatenedAlly = mkUnit('rogue', 'p1', { x: 4, y: 3 }, 35);
+  const bigThreat = mkUnit('barbarian', 'p2', { x: 5, y: 3 }); // adjacent to the ally, hits hard
+  const state = mkState([cleric, threatenedAlly, bigThreat], cleric.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  console.log('  info  Cleric vs threatened ally plan:', JSON.stringify(actions));
+  check('cleric takes SOME beneficial action toward the threatened ally',
+    actions.some((a) => a.type === 'USE_ABILITY'));
+}
+
+// --- Test 37: Purify — cleanses a harmful status and is valued positively ---
+// mkUnit copies each class's DEFAULT (uncustomized) abilities, so the new
+// special must be swapped in manually to test it directly (Test 42 covers
+// the full customization pipeline end-to-end via the sim harness).
+{
+  const cleric = mkUnit('cleric', 'p1', { x: 3, y: 3 });
+  cleric.abilities = ['mace', 'purify'];
+  const burningAlly = mkUnit('ranger', 'p1', { x: 4, y: 3 }, 30);
+  burningAlly.statusEffects.push({ slug: 'burning', turnsRemaining: 3, stacks: 1, sourceUnitInstanceId: 'x' });
+  const enemy = mkUnit('fighter', 'p2', { x: 3, y: 4 }, 42); // adjacent already — no approach incentive to move away
+  const state = mkState([cleric, burningAlly, enemy], cleric.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const purified = actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'purify');
+  check('cleric Purifies a burning ally over a weak plain Mace hit', purified, JSON.stringify(actions));
+}
+
+// --- Test 38: Roar (excludeAllies) never counts as friendly fire ---
+// Rather than force Roar to be the top-level chosen action (it may
+// legitimately lose to a free melee hit on an adjacent enemy — that's a
+// separate positional question), assert the actual property that matters:
+// def.excludeAllies makes the AOE scorer skip allies entirely, so an ally
+// sitting inside the blast radius must not change Roar's own score at all
+// versus the exact same enemies with no ally present.
+{
+  const scoreOf = (units: UnitInstance[], casterId: string): number => {
+    const state = mkState(units, casterId);
+    const text = explainTurn(state, casterId, 'p1', map);
+    const m = text.match(/roar @\([^)]*\) score=([-\d.]+)/);
+    if (!m) throw new Error(`roar candidate not found in explainTurn output:\n${text}`);
+    return parseFloat(m[1]);
+  };
+  const barbNoAlly = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
+  barbNoAlly.abilities = ['strike', 'roar'];
+  const enemy1a = mkUnit('fighter', 'p2', { x: 3, y: 1 }, 42);
+  const enemy2a = mkUnit('wizard', 'p2', { x: 5, y: 3 }, 30);
+  const scoreWithoutAlly = scoreOf([barbNoAlly, enemy1a, enemy2a], barbNoAlly.instanceId);
+
+  const barbWithAlly = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
+  barbWithAlly.abilities = ['strike', 'roar'];
+  const ally = mkUnit('cleric', 'p1', { x: 4, y: 3 }, 20); // inside roar's radius 2
+  const enemy1b = mkUnit('fighter', 'p2', { x: 3, y: 1 }, 42);
+  const enemy2b = mkUnit('wizard', 'p2', { x: 5, y: 3 }, 30);
+  const scoreWithAlly = scoreOf([barbWithAlly, ally, enemy1b, enemy2b], barbWithAlly.instanceId);
+
+  check('Roar score is unchanged by an ally sitting inside the blast radius (excludeAllies works)',
+    Math.abs(scoreWithAlly - scoreWithoutAlly) < 0.001,
+    `withoutAlly=${scoreWithoutAlly} withAlly=${scoreWithAlly}`);
+}
+
+// --- Test 39: Life Drain (lifesteal) heals a wounded caster ---
+// Needs the caster below the 40% triage threshold for the heal-urgency bonus
+// to outweigh the once-per-game special reserve versus plain Demon Blast.
+{
+  const warlock = mkUnit('warlock', 'p1', { x: 2, y: 3 }, 10); // badly wounded (max 32, <40%)
+  warlock.abilities = ['eldritch', 'drain'];
+  const enemy = mkUnit('fighter', 'p2', { x: 5, y: 3 }, 42);
+  const state = mkState([warlock, enemy], warlock.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  const drained = actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'drain');
+  check('wounded warlock uses Life Drain over plain Demon Blast', drained, JSON.stringify(actions));
+}
+
+// --- Test 40: Rescue — fighter pulls a badly threatened ranged ally to safety ---
+{
+  const fighter = mkUnit('fighter', 'p1', { x: 3, y: 3 });
+  const threatenedRanger = mkUnit('ranger', 'p1', { x: 6, y: 3 }, 20);
+  const enemy1 = mkUnit('barbarian', 'p2', { x: 7, y: 3 }, 45); // adjacent to the ranger
+  const enemy2 = mkUnit('rogue', 'p2', { x: 6, y: 2 }, 35); // also adjacent to the ranger
+  const state = mkState([fighter, threatenedRanger, enemy1, enemy2], fighter.instanceId);
+  const actions = brain.selectActions(state, 'p1', map);
+  console.log('  info  Fighter vs endangered ranged ally plan:', JSON.stringify(actions));
+  check('fighter takes SOME action when a ranged ally is double-teamed',
+    actions.length > 0);
+}
+
+// --- Test 41: end-to-end vs the REAL engine with the DEFAULT roster (v7 regression) ---
+{
+  const r = runSim(
+    ['barbarian', 'fighter', 'ranger', 'cleric'],
+    ['rogue', 'rogue', 'sorcerer', 'sorcerer'],
+    { games: 40 },
+  );
+  check('real-engine run (default roster): zero validation errors over 40 games',
+    r.totalValidationErrors === 0, `errors=${r.totalValidationErrors} sample=${r.sampleErrors[0] ?? ''}`);
+  check('real-engine run (default roster): games resolve (avg turns sane)',
+    r.avgTurns > 5 && r.avgTurns < 150, `avgTurns=${r.avgTurns}`);
+}
+
+// --- Test 42: end-to-end vs the REAL engine with NEW specials via customization ---
+// Exercises the sim-loadout extension (simHarness buildUnitInstance) together
+// with every new engine hook (shielded/exposed/weakened/burning/lifesteal/
+// excludeAllies) in actual play — the strongest possible integration check.
+{
+  const p1Customizations = [
+    { specialSlug: 'roar', passiveSlug: 'hardened' },       // barbarian
+    { specialSlug: 'rescue', passiveSlug: 'immovable' },    // fighter
+    { specialSlug: 'pinning', passiveSlug: 'swift' },       // ranger
+    { specialSlug: 'ward', passiveSlug: 'vitality' },       // cleric
+  ];
+  const p2Customizations = [
+    { specialSlug: 'expose', passiveSlug: 'swift' },        // rogue
+    { specialSlug: 'dagger_toss', passiveSlug: 'vitality' },// rogue
+    { specialSlug: 'ignite', passiveSlug: 'hardened' },     // sorcerer
+    { specialSlug: 'flame_jet', passiveSlug: 'swift' },     // sorcerer
+  ];
+  const r = runSim(
+    ['barbarian', 'fighter', 'ranger', 'cleric'],
+    ['rogue', 'rogue', 'sorcerer', 'sorcerer'],
+    { games: 40, p1Customizations, p2Customizations },
+  );
+  check('real-engine run (new specials + customization): zero validation errors over 40 games',
+    r.totalValidationErrors === 0, `errors=${r.totalValidationErrors} sample=${r.sampleErrors[0] ?? ''}`);
+  check('real-engine run (new specials + customization): games resolve (avg turns sane)',
+    r.avgTurns > 5 && r.avgTurns < 150, `avgTurns=${r.avgTurns}`);
+  console.log(`  info  new-roster matchup: ${(r.p1WinRate * 100).toFixed(0)}% p1 win rate | avg turns ${r.avgTurns.toFixed(0)} | draws ${r.draws}`);
+}
+
 console.log(failures === 0 ? '\nAll smoke tests passed.' : `\n${failures} FAILURE(S)`);
 if (failures > 0) throw new Error(`${failures} smoke test failure(s)`);

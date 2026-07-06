@@ -109,6 +109,16 @@ export function hasLineOfSight(
   return true;
 }
 
+/**
+ * The engine (processUseAbility) does not validate line of sight server-side
+ * today — ranged basic attacks work in practice because the mobile client
+ * won't let a human select an LOS-blocked tile, and the brain voluntarily
+ * respects hasLineOfSight() above when choosing its own actions (this flag
+ * documents that choice; it does not change engine behavior). Flip to true
+ * only if/when server-side LOS enforcement is added to processUseAbility.
+ */
+export const LOS_ENFORCED = false;
+
 const MOVE_DIRECTIONS: ReadonlyArray<readonly [number, number]> = [
   [1, 0],
   [-1, 0],
@@ -197,6 +207,37 @@ export function pushDestination(
   for (let i = 0; i < distance; i++) {
     const next = { x: cur.x + step.x, y: cur.y + step.y };
     if (!isInBounds(next)) break;
+    const occupant = allUnits.find(
+      (u) =>
+        u.isAlive &&
+        u.instanceId !== movingUnitId &&
+        samePos(u.position, next),
+    );
+    if (occupant) break;
+    cur = next;
+  }
+  return cur;
+}
+
+/**
+ * Resolve a pull (e.g., Rescue, Eldritch Grasp): target slides tile-by-tile
+ * directly toward the caster, stopping early at the board edge, a removed
+ * corner, an occupied tile, or the caster's own tile (never lands on top of
+ * the caster). Returns the final position.
+ */
+export function pullDestination(
+  casterPos: BoardPosition,
+  targetPos: BoardPosition,
+  distance: number,
+  allUnits: UnitInstance[],
+  movingUnitId: string,
+): BoardPosition {
+  const step = rayStep(targetPos, casterPos);
+  let cur = { ...targetPos };
+  for (let i = 0; i < distance; i++) {
+    const next = { x: cur.x + step.x, y: cur.y + step.y };
+    if (!isInBounds(next)) break;
+    if (samePos(next, casterPos)) break;
     const occupant = allUnits.find(
       (u) =>
         u.isAlive &&

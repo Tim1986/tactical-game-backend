@@ -23,6 +23,7 @@ export const DEFAULT_ABILITIES: AbilityDefinition[] = ABILITY_DEFS.map((a) => ({
   cooldownTurns: a.cooldown_turns,
   isSpecial:     a.is_special,
   isUnblockable: a.is_unblockable,
+  excludeAllies: (a as typeof a & { exclude_allies?: boolean }).exclude_allies ?? false,
   effects:       a.effects as unknown as AbilityDefinition['effects'],
 }));
 
@@ -46,6 +47,8 @@ export const DEFAULT_UNITS: Record<string, UnitDefinition> = Object.fromEntries(
       movementRange: u.movement_range,
       abilities:     [...u.abilities],
       passives:      [...(u.passives ?? [])],
+      specialOptions: [...(u.special_options ?? [])],
+      passiveOptions: [...(u.passive_options ?? [])],
     } satisfies UnitDefinition,
   ]),
 );

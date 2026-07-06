@@ -16,12 +16,17 @@ const teams_js_1 = require("./routes/teams.js");
 const matches_js_1 = require("./routes/matches.js");
 const matchmaking_js_1 = require("./routes/matchmaking.js");
 const challenges_js_1 = require("./routes/challenges.js");
+const achievements_js_1 = require("./routes/achievements.js");
+const leaderboard_js_1 = require("./routes/leaderboard.js");
 const errorHandler_js_1 = require("./middleware/errorHandler.js");
 const response_js_1 = require("./utils/response.js");
 function createApp() {
     const app = (0, express_1.default)();
+    app.set('trust proxy', 1);
     app.use((0, helmet_1.default)());
-    app.use((0, cors_1.default)({ origin: index_js_1.config.isDevelopment ? '*' : (process.env['ALLOWED_ORIGINS'] ?? '').split(','), methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+    // CORS allowlist: only browser-based clients (web) are restricted by this; native iOS/Android apps are unaffected.
+    // Add your production web domain here when you deploy a web build, e.g. 'https://yourapp.com'
+    app.use((0, cors_1.default)({ origin: ['http://localhost:8081'], methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
     app.use(express_1.default.json({ limit: '100kb' }));
     const authLimiter = (0, express_rate_limit_1.default)({ windowMs: index_js_1.config.rateLimit.auth.windowMs, max: index_js_1.config.rateLimit.auth.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
     const apiLimiter = (0, express_rate_limit_1.default)({ windowMs: index_js_1.config.rateLimit.api.windowMs, max: index_js_1.config.rateLimit.api.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
@@ -33,6 +38,8 @@ function createApp() {
     app.use('/matches', apiLimiter, matches_js_1.matchRouter);
     app.use('/matchmaking', apiLimiter, matchmaking_js_1.matchmakingRouter);
     app.use('/challenges', apiLimiter, challenges_js_1.challengeRouter);
+    app.use('/achievements', apiLimiter, achievements_js_1.achievementRouter);
+    app.use('/leaderboard', apiLimiter, leaderboard_js_1.leaderboardRouter);
     app.use(errorHandler_js_1.notFoundHandler);
     app.use(errorHandler_js_1.errorHandler);
     return app;
