@@ -58,13 +58,17 @@ matchRouter.get('/:id/history', async (req: Request, res: Response): Promise<voi
   }
 });
 
-const CreatePveMatchSchema = z.object({ myTeamId: z.string().uuid(), fableTeamId: z.string().uuid() });
+const CreatePveMatchSchema = z.object({
+  myTeamId: z.string().uuid(),
+  fableTeamId: z.string().uuid(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+});
 
 matchRouter.post('/pve', async (req: Request, res: Response): Promise<void> => {
   const parsed = CreatePveMatchSchema.safeParse(req.body);
   if (!parsed.success) { Errors.validation(res, parsed.error.message); return; }
-  const { myTeamId, fableTeamId } = parsed.data;
-  const { matchId, state } = await matchService.createPveMatch(req.user!.id, myTeamId, fableTeamId);
+  const { myTeamId, fableTeamId, difficulty } = parsed.data;
+  const { matchId, state } = await matchService.createPveMatch(req.user!.id, myTeamId, fableTeamId, difficulty ?? 'hard');
   sendSuccess(res, { matchId, state });
 });
 

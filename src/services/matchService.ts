@@ -27,17 +27,22 @@ interface MatchRow {
 
 const fableBrain = new OptimalBrain();
 
+export type FableDifficulty = 'easy' | 'medium' | 'hard';
+
+const FABLE_HP_SCALE: Record<FableDifficulty, number> = { easy: 0.8, medium: 0.9, hard: 1.0 };
+
 export async function createPveMatch(
   humanPlayerId: string,
   humanTeamId: string,
   fableTeamId: string,
+  difficulty: FableDifficulty = 'hard',
 ): Promise<{ matchId: string; state: MatchState }> {
   const [humanResult, fableResult] = await Promise.all([
     loadTeamUnitsWithPlacement(humanTeamId),
     loadTeamUnitsWithPlacement(fableTeamId),
   ]);
   // Human always goes first in PvE — simpler UX, no auto-process needed at creation
-  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId, humanResult.customizations, fableResult.customizations);
+  const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId, humanResult.customizations, fableResult.customizations, FABLE_HP_SCALE[difficulty]);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + 72);
   const result = await query<{ id: string }>(
@@ -64,7 +69,7 @@ export async function createMatch(playerOneId: string, playerTwoId: string, play
   return { matchId, state: initialState };
 }
 
-function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string, p1Customizations?: import('../types/index.js').UnitCustomization[], p2Customizations?: import('../types/index.js').UnitCustomization[]): MatchState {
+function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string, p1Customizations?: import('../types/index.js').UnitCustomization[], p2Customizations?: import('../types/index.js').UnitCustomization[], fableHpScale = 1): MatchState {
   // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
   const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
   // Mirror P2 placement: team is saved as if they were P1 (left side), so flip x: newX = 7 - x
@@ -75,7 +80,15 @@ function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: Un
   const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
   const units: UnitInstance[] = [
     ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),
-    ...p2Units.map((def, i) => buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i])),
+    ...p2Units.map((def, i) => {
+      const inst = buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i]);
+      if (playerTwoId === FABLE_PLAYER_ID && fableHpScale < 1) {
+        const scaled = Math.max(1, Math.floor(inst.maxHealth * fableHpScale));
+        inst.maxHealth = scaled;
+        inst.currentHealth = scaled;
+      }
+      return inst;
+    }),
   ];
   const round1FirstPlayerId = forceFirstPlayerId ?? (Math.random() < 0.5 ? playerOneId : playerTwoId);
   const initiative: InitiativeState = { order: [], slot: 0, round1FirstPlayerId, activeUnitId: null, isRound1: true };

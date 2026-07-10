@@ -164,7 +164,7 @@ export async function deleteTeam(teamId: string, userId: string): Promise<void> 
 // ---------------------------------------------------------------
 // Resolve customizations: fill defaults for any slots missing choices.
 // specialSlug defaults to the first entry in the unit's special_options.
-// passiveSlug defaults to null (no passive chosen) until options exist.
+// passiveSlug defaults to the first passive option when available.
 // ---------------------------------------------------------------
 function resolveCustomizations(
   unitIds: string[],
@@ -179,9 +179,10 @@ function resolveCustomizations(
     const specialSlug = given?.specialSlug && def?.specialOptions.includes(given.specialSlug)
       ? given.specialSlug
       : defaultSpecial;
+    const defaultPassive = def?.passiveOptions[0]?.slug ?? null;
     const passiveSlug = given?.passiveSlug && def?.passiveOptions.some((p) => p.slug === given.passiveSlug)
       ? given.passiveSlug
-      : null;
+      : defaultPassive;
     return { specialSlug, passiveSlug };
   });
 }

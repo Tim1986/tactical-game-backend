@@ -14,6 +14,11 @@ export class TurnValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'TurnValidationError'; }
 }
 
+/** Round 1 = turns 1–8, round 2 = turns 9–16, etc. (dead-unit skips still count). */
+export function roundFromTurn(turnNumber: number): number {
+  return Math.floor((turnNumber - 1) / 8) + 1;
+}
+
 // ─── Initiative helpers ───────────────────────────────────────────────────────
 
 /**
@@ -209,6 +214,7 @@ export function processTurn(
           initiative.slot = firstSlot.slot;
           initiative.activeUnitId = firstSlot.activeUnitId;
           ws.turnNumber += firstSlot.skippedSlots;
+          ws.roundNumber = roundFromTurn(ws.turnNumber);
           // Reset all turn flags at round boundary
           for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
           const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
@@ -225,7 +231,6 @@ export function processTurn(
         // Round 2+: advance slot
         const next = advanceSlot(initiative, ws.units, events);
         if (next.newRoundStarted) {
-          ws.roundNumber = (ws.roundNumber ?? 1) + 1;
           for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
         }
         initiative.slot = next.slot;
@@ -237,6 +242,7 @@ export function processTurn(
       }
 
       ws.turnNumber++;
+      ws.roundNumber = roundFromTurn(ws.turnNumber);
       events.push({ type: 'TURN_ENDED' });
 
       // A skipped slot's status tick (advanceSlot ticks frozen units, which
@@ -368,6 +374,7 @@ function processLegacyTurn(
       const otherPlayerId = submittingPlayerId === playerOneId ? playerTwoId : playerOneId;
       ws.activePlayerId = otherPlayerId;
       ws.turnNumber++;
+      ws.roundNumber = roundFromTurn(ws.turnNumber);
       events.push({ type: 'TURN_ENDED' });
       break;
     }
