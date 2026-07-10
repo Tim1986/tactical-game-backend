@@ -36,8 +36,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
-import { OptimalBrain, AIBrain, normalizeAbilityMap } from './aiBrain.js';
+import { OptimalBrain, AIBrain, normalizeAbilityMap, willDieToOwnTick } from './aiBrain.js';
 import { buildAbilityMap, UNIT_DEFS } from './defaultData.js';
+import { planPlacement } from './placement.js';
 import {
   MatchState,
   UnitInstance,
@@ -83,6 +84,7 @@ function buildUnitInstance(
   ownerId: string,
   position: BoardPosition,
   customization?: UnitCustomization,
+  initialFortune = 0,
 ): UnitInstance {
   const def = UNIT_DEFS[slug];
   if (!def) throw new Error(`Unknown unit slug: ${slug}`);
@@ -117,7 +119,7 @@ function buildUnitInstance(
     hasActedThisTurn: false,
     cooldowns,
     statusEffects: [],
-    fortuneMeter: 0,
+    fortuneMeter: initialFortune,
   };
 }
 
@@ -131,10 +133,14 @@ function buildMatchState(
   forceFirstPlayerId?: string,
   p1Customizations?: (UnitCustomization | undefined)[],
   p2Customizations?: (UnitCustomization | undefined)[],
+  rng?: () => number,
 ): MatchState {
+  // Fortune meters seed at a random phase (matches the live engine's
+  // Math.random() — see matchService.buildUnitInstance). A seeded rng keeps
+  // sim runs reproducible; rng omitted = phase 0 (legacy fully-deterministic).
   const units: UnitInstance[] = [
-    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i])),
-    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i])),
+    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i], rng ? rng() : 0)),
+    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i], rng ? rng() : 0)),
   ];
   const firstPlayer =
     forceFirstPlayerId ?? (Math.random() < 0.5 ? p1Id : p2Id);
@@ -287,6 +293,8 @@ export interface MatchOptions {
   /** Starting tiles (parallel to slugs). Omit for the fixed default pattern. */
   p1Placement?: BoardPosition[];
   p2Placement?: BoardPosition[];
+  /** RNG for fortune-meter phase seeding. Omit for phase 0 (deterministic). */
+  rng?: () => number;
   /** Called on every recovered validation error (for logging/diagnosis). */
   onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
 }
@@ -352,6 +360,7 @@ export function runMatch(
     options.forceFirstPlayerId,
     options.p1Customizations,
     options.p2Customizations,
+    options.rng,
   );
   const firstPlayerId = state.initiative.round1FirstPlayerId;
   let turns = 0;
@@ -433,6 +442,10 @@ export function runMatch(
         );
       const canLegallyCommit = (u: UnitInstance): boolean => {
         if (!u.isAlive) return false;
+        // Doomed to its own burning tick: the engine ticks the committing
+        // unit before processing its actions, so every action it could
+        // commit with would execute against a corpse.
+        if (willDieToOwnTick(u)) return false;
         // Frozen is checked PRESENCE-based, pre-tick, at the very top of the
         // engine's round-1 commit gate (turnProcessor.ts) — any turnsRemaining
         // disqualifies, unlike rooted below which IS tick-first (the engine
@@ -589,14 +602,16 @@ export function runSim(
      */
     firstPlayerMode?: 'alternate' | 'random';
     /**
-     * 'fixed' (default): the historical fixed pattern — NOTE the engine is
-     * deterministic, so fixed placements give only 2 distinct games per
-     * matchup (see Placement sampling above). 'random': each game draws
-     * fresh independent placements per side (seeded — reproducible).
+     * 'brain' (default): the placement planner picks starting tiles per comp
+     * (melee forward-center, ranged mid, healers backline, AoE-denial
+     * spacing) — deterministic per comp; game variance comes from the
+     * fortune meters' random phase. 'fixed': the historical fixed pattern.
+     * 'random': each game draws fresh placements per side (both from the
+     * seeded rng) — placement-space stress testing, not realistic play.
      */
-    placementMode?: 'fixed' | 'random';
-    /** Seed for 'random' placements (default 1). Same seed → same games. */
-    placementSeed?: number;
+    placementMode?: 'fixed' | 'random' | 'brain';
+    /** RNG seed for fortune-meter phases and 'random' placements (default 1). Same seed → same games. */
+    seed?: number;
   } = {},
 ): SimResult {
   const games = options.games ?? 100;
@@ -604,8 +619,14 @@ export function runSim(
   const brain2 = options.brain2 ?? new OptimalBrain();
   const abilityMap = options.abilityMap ?? buildAbilityMap();
   const firstPlayerMode = options.firstPlayerMode ?? 'alternate';
-  const placementMode = options.placementMode ?? 'fixed';
-  const rng = makeRng(options.placementSeed ?? 1);
+  const placementMode = options.placementMode ?? 'brain';
+  const rng = makeRng(options.seed ?? 1);
+  const plannedP1 = placementMode === 'brain'
+    ? planPlacement(p1Slugs, normalizeAbilityMap(abilityMap), options.p1Customizations)
+    : undefined;
+  const plannedP2 = placementMode === 'brain'
+    ? mirrorPlacement(planPlacement(p2Slugs, normalizeAbilityMap(abilityMap), options.p2Customizations))
+    : undefined;
 
   let p1Wins = 0;
   let p2Wins = 0;
@@ -654,18 +675,19 @@ export function runSim(
     // Random placements: draw a fresh pair per PAIR of games so the
     // alternating first-player games i and i+1 share the same board — the
     // alternation then cancels first-mover bias within each placement draw.
-    const p1Placement = placementMode === 'random'
-      ? (i % 2 === 0 ? randomPlacement(rng) : lastP1Placement)
-      : undefined;
-    const p2Placement = placementMode === 'random'
-      ? (i % 2 === 0 ? mirrorPlacement(randomPlacement(rng)) : lastP2Placement)
-      : undefined;
-    if (p1Placement) lastP1Placement = p1Placement;
-    if (p2Placement) lastP2Placement = p2Placement;
+    let p1Placement = plannedP1;
+    let p2Placement = plannedP2;
+    if (placementMode === 'random') {
+      p1Placement = i % 2 === 0 ? randomPlacement(rng) : lastP1Placement;
+      p2Placement = i % 2 === 0 ? mirrorPlacement(randomPlacement(rng)) : lastP2Placement;
+      lastP1Placement = p1Placement;
+      lastP2Placement = p2Placement;
+    }
     const r = runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, {
       forceFirstPlayerId,
       p1Placement,
       p2Placement,
+      rng,
       p1Customizations: options.p1Customizations,
       p2Customizations: options.p2Customizations,
       onValidationError: (err, actions) => {

@@ -121,7 +121,11 @@ function buildUnitInstance(def: UnitDefinition, ownerId: string, position: Board
     armorClass, movementRange,
     abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    cooldowns, statusEffects: [], fortuneMeter: 0,
+    // Fortune meter seeds at a random phase in [0,1): the long-run dodge rate
+    // is exactly AC-derived either way, but WHICH attack in the cycle misses
+    // is random per unit per match. Seeding at 0 made every game with the
+    // same comps play out identically (the meter is the only "dice" left).
+    cooldowns, statusEffects: [], fortuneMeter: Math.random(),
   };
 }
 

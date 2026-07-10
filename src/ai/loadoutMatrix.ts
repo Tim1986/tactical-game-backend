@@ -118,10 +118,9 @@ export function runDuelMatrix(
         games: gamesPerPair,
         p1Customizations: Array(4).fill(loadouts[i]),
         p2Customizations: Array(4).fill(loadouts[j]),
-        // The engine is deterministic — random placements are what make
-        // win rates a real sample instead of 2 replayed games.
-        placementMode: 'random',
-        placementSeed: i * 100 + j,
+        // Brain-planned placement (default); variance comes from the
+        // fortune meters' seeded random phase.
+        seed: i * 100 + j,
       });
       totalValidationErrors += r.totalValidationErrors;
       cell[i][j] = r.p1WinRate;
@@ -180,8 +179,7 @@ export function runReferenceMatrix(
       games: gamesPerLoadout,
       p1Customizations: Array(4).fill(lo),
       p2Customizations: refCustomizations,
-      placementMode: 'random',
-      placementSeed: 7,
+      seed: 7,
     });
     totalValidationErrors += r.totalValidationErrors;
     log(`  ${lo.label.padEnd(24)} vs reference party  ${(r.p1WinRate * 100).toFixed(0)}%  special ${(100 * (r.specialUsageRates[classSlug] ?? 0)).toFixed(0)}%  (err ${r.totalValidationErrors})`);

@@ -309,6 +309,19 @@ export function willBlockOwnAction(u: UnitInstance, slug: string): boolean {
   return statusTurnsRemaining(u, slug) >= 2;
 }
 
+/**
+ * True if this unit's own start-of-turn status tick will kill it. The engine
+ * ticks the acting unit's statuses BEFORE processing its actions (burning:
+ * 5 dmg/stack), so a doomed unit's queued actions would all throw
+ * "Unit is dead" — it must submit bare END_TURN (round 2+) and cannot be
+ * chosen for a round-1 commitment.
+ */
+export function willDieToOwnTick(u: UnitInstance): boolean {
+  const burning = u.statusEffects.find((e) => e.slug === 'burning');
+  if (!burning) return false;
+  return u.currentHealth <= 5 * burning.stacks;
+}
+
 function abilityReady(u: UnitInstance, slug: string): boolean {
   return (u.cooldowns[slug] ?? 0) <= 0;
 }
@@ -1605,6 +1618,9 @@ export class OptimalBrain implements AIBrain {
       if (!u || u.ownerPlayerId !== myPlayerId || !u.isAlive || willBlockOwnAction(u, 'frozen')) {
         return [{ type: 'END_TURN' }];
       }
+      // Doomed to the burning tick: any queued action would execute against
+      // a corpse. Bare END_TURN lets the engine tick, bury, and advance.
+      if (willDieToOwnTick(u)) return [{ type: 'END_TURN' }];
       return planBestTurn(state, u, myPlayerId, abilityMap).actions;
     }
 
@@ -1628,7 +1644,7 @@ export class OptimalBrain implements AIBrain {
       // disqualifies. (Rooted stays tick-aware: no pre-tick rooted check
       // exists, so a rooted(1) unit can still legally MOVE to commit.)
       const usable = uncommitted.filter(
-        (u) => u.isAlive && !hasStatus(u, 'frozen'),
+        (u) => u.isAlive && !hasStatus(u, 'frozen') && !willDieToOwnTick(u),
       );
       if (usable.length > 0) {
         let bestPlan: TurnPlan | null = null;
@@ -1641,6 +1657,112 @@ export class OptimalBrain implements AIBrain {
           if (!bestPlan || p.score > bestPlan.score) bestPlan = p;
         }
         if (bestPlan) return bestPlan.actions;
+
+        // Group 1b — forced commitment move: every usable unit's best plan
+        // degenerated to "do nothing" (a well-planned opening can make
+        // idling optimal — nothing in range, no danger to flee), but round 1
+        // still requires committing a unit with a move or ability. Take the
+        // least-bad MOVE: across all mobile usable units, the reachable tile
+        // with the lowest incoming danger, tie-broken toward staying close
+        // to the current tile.
+        let fbUnit: UnitInstance | null = null;
+        let fbTile: BoardPosition | null = null;
+        let fbCost = Infinity;
+        for (const c of usable) {
+          if (willBlockOwnAction(c, 'rooted')) continue;
+          for (const t of reachableTiles(c, state.units, c.movementRange)) {
+            if (samePos(t, c.position)) continue;
+            const cost =
+              dangerAt(state, c, t, myPlayerId, abilityMap) * 10 +
+              manhattanDistance(t, c.position);
+            if (cost < fbCost) { fbCost = cost; fbUnit = c; fbTile = t; }
+          }
+        }
+        if (fbUnit && fbTile) {
+          return [
+            { type: 'MOVE', unitInstanceId: fbUnit.instanceId, destination: fbTile },
+            { type: 'END_TURN' },
+          ];
+        }
+
+        // Group 1c — forced ability commit: no usable unit can move (e.g.
+        // the last uncommitted unit is rooted) but an ability can still
+        // legally REACH AN ENEMY. Fire the least valuable such cast: basics
+        // before specials. This can burn a special into a bad shot (e.g. a
+        // guaranteed dodge) — the rules force a commitment, so eat the cost.
+        // If no enemy is reachable at all, fall through to bare END_TURN:
+        // the harness/server pre-flight force-commits for free, which beats
+        // wasting a special on empty air.
+        let fcAction: TurnAction | null = null;
+        let fcRank = Infinity; // lower is better: basic=0, special=10
+        for (const c of usable) {
+          for (const slug of c.abilities) {
+            if (!abilityReady(c, slug)) continue;
+            const def = abilityMap.get(slug);
+            if (!def) continue;
+            const rank = def.isSpecial ? 10 : 0;
+            if (rank >= fcRank) continue;
+            let target: BoardPosition | null = null;
+            if (def.targetingType === 'aoe' && def.range === 0) {
+              // Self-centered blast: only worth committing if it clips an enemy.
+              const clipsEnemy = state.units.some(
+                (t) => t.isAlive && t.ownerPlayerId !== myPlayerId &&
+                  chebyshevDistance(c.position, t.position) <= def.areaRadius,
+              );
+              if (clipsEnemy) target = c.position;
+            } else if (def.targetingType === 'single') {
+              const hasPush = def.effects.some((e) => e.type === 'push');
+              for (const t of state.units) {
+                if (!t.isAlive || t.ownerPlayerId === myPlayerId) continue;
+                if (manhattanDistance(c.position, t.position) > def.range) continue;
+                if (!hasPush && LOS_ENFORCED &&
+                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId])) continue;
+                target = t.position;
+                break;
+              }
+            } else if (def.targetingType !== 'self') {
+              // aoe (placed) / line / cone: aim at any enemy in range.
+              for (const t of state.units) {
+                if (!t.isAlive || t.ownerPlayerId === myPlayerId) continue;
+                const d = def.targetingType === 'line'
+                  ? chebyshevDistance(c.position, t.position)
+                  : manhattanDistance(c.position, t.position);
+                if (d <= def.range) { target = t.position; break; }
+              }
+            }
+            if (!target) continue;
+            fcRank = rank;
+            fcAction = { type: 'USE_ABILITY', unitInstanceId: c.instanceId, abilitySlug: slug, target };
+          }
+        }
+        // Last resort — BASIC attack on an own ally: the engine's
+        // single-target validation doesn't check ownership, so this is a
+        // legal commit when no enemy is reachable (e.g. a rooted unit whose
+        // only in-range neighbor is a teammate). Costs a few HP but keeps
+        // the turn legal; specials are never wasted this way. Prefer the
+        // healthiest ally.
+        if (!fcAction) {
+          let bestAllyHp = -1;
+          for (const c of usable) {
+            for (const slug of c.abilities) {
+              if (!abilityReady(c, slug)) continue;
+              const def = abilityMap.get(slug);
+              if (!def || def.isSpecial || def.targetingType !== 'single') continue;
+              if (def.effects.some((e) => e.type === 'push')) continue;
+              for (const t of state.units) {
+                if (!t.isAlive || t.ownerPlayerId !== myPlayerId || t.instanceId === c.instanceId) continue;
+                if (manhattanDistance(c.position, t.position) > def.range) continue;
+                if (LOS_ENFORCED &&
+                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId])) continue;
+                if (t.currentHealth > bestAllyHp) {
+                  bestAllyHp = t.currentHealth;
+                  fcAction = { type: 'USE_ABILITY', unitInstanceId: c.instanceId, abilitySlug: slug, target: t.position };
+                }
+              }
+            }
+          }
+        }
+        if (fcAction) return [fcAction, { type: 'END_TURN' }];
       }
 
       // Group 2 — forced commitment: only frozen/dead units remain. The
