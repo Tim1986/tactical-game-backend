@@ -47,17 +47,27 @@ const COL_PREF: Record<Role, [number, number, number]> = {
   // score for x = 0, 1, 2
   melee:  [0, 15, 30],
   ranged: [15, 20, -10],
-  healer: [25, 10, -15],
+  // Heal is touch-range (1): the healer must START near its patients, one
+  // column behind the front — hiding in the back column wastes whole turns
+  // walking in. AoE-denial spacing (below) keeps it from hugging them.
+  healer: [10, 25, -5],
 };
 
 const CENTER_Y = (BOARD_HEIGHT - 1) / 2;
 
 function tileScore(role: Role, tile: BoardPosition, placed: BoardPosition[]): number {
   let s = COL_PREF[role][tile.x];
-  // Melee want the center of the line (fastest to engage anywhere);
-  // ranged/healers drift slightly toward the edges (harder to collapse on).
+  // Melee want the center of the line (fastest to engage anywhere); ranged
+  // drift slightly toward the edges (harder to collapse on); healers stay
+  // central AND near already-placed allies — their patients.
   const edgeDist = Math.abs(tile.y - CENTER_Y);
-  s += role === 'melee' ? -edgeDist * 2 : edgeDist * 1;
+  s += role === 'melee' ? -edgeDist * 2 : role === 'healer' ? -edgeDist * 1.5 : edgeDist * 1;
+  if (role === 'healer' && placed.length > 0) {
+    const nearest = Math.min(
+      ...placed.map((p) => Math.abs(p.x - tile.x) + Math.abs(p.y - tile.y)),
+    );
+    s -= nearest * 2;
+  }
   // AoE denial: never adjacent to an already-placed ally; Chebyshev 2 is
   // mildly discouraged too.
   for (const p of placed) {
