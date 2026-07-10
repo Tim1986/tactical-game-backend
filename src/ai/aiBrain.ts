@@ -1378,10 +1378,61 @@ export function planBestTurn(
   };
   for (const cand of enumerateAbilityActions(ctxHere)) {
     consider(cand.score + pScore(unit.position), [cand.action, END]);
-    if (bestRetreat) {
-      consider(cand.score + bestRetreatScore - WEIGHTS.moveTax, [
+
+    // Retreat after acting. If the ability DISPLACES a unit (push/pull —
+    // Fear, Rescue), the board changes before our MOVE executes: the
+    // displaced unit can occupy the precomputed retreat tile or block its
+    // path (this produced real "Destination is not reachable" engine
+    // rejections). Recompute the retreat against the post-ability board.
+    let retreat = bestRetreat;
+    let retreatScore = bestRetreatScore;
+    const act = cand.action.type === 'USE_ABILITY' ? cand.action : null;
+    const candDef = act ? map.get(act.abilitySlug) : undefined;
+    const dispEffect = candDef?.effects.find(
+      (e) => e.type === 'push' || e.type === 'pull',
+    );
+    if (act && dispEffect && retreat) {
+      const targetUnit = state.units.find(
+        (u) => u.isAlive && samePos(u.position, act.target),
+      );
+      if (targetUnit && targetUnit.instanceId !== unit.instanceId) {
+        // The engine's exact landing tile can differ from our model by a
+        // step (immovable no-ops, diagonal clamping, findLastFreePosition),
+        // but it always lies ON the displacement ray between the target's
+        // original tile and the ideal destination. Block the whole segment
+        // when pathing the retreat — conservative, never invalid.
+        const ideal =
+          dispEffect.type === 'push'
+            ? act.pushDestination ??
+              pushDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId)
+            : pullDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId);
+        const segment: BoardPosition[] = [{ ...targetUnit.position }];
+        {
+          const sx = Math.sign(ideal.x - targetUnit.position.x);
+          const sy = Math.sign(ideal.y - targetUnit.position.y);
+          let cur = { ...targetUnit.position };
+          while (cur.x !== ideal.x || cur.y !== ideal.y) {
+            cur = { x: cur.x + sx * (cur.x !== ideal.x ? 1 : 0), y: cur.y + sy * (cur.y !== ideal.y ? 1 : 0) };
+            segment.push({ ...cur });
+          }
+        }
+        const adjustedUnits = [
+          ...state.units.filter((u) => u.instanceId !== targetUnit.instanceId),
+          ...segment.map((pos, k) => ({ ...targetUnit, instanceId: `${targetUnit.instanceId}#seg${k}`, position: pos })),
+        ];
+        const validTiles = reachableTiles(unit, adjustedUnits, unit.movementRange);
+        retreat = null;
+        retreatScore = -Infinity;
+        for (const pos of validTiles) {
+          const ps = pScore(pos);
+          if (ps > retreatScore) { retreatScore = ps; retreat = pos; }
+        }
+      }
+    }
+    if (retreat) {
+      consider(cand.score + retreatScore - WEIGHTS.moveTax, [
         cand.action,
-        { type: 'MOVE', unitInstanceId: unit.instanceId, destination: bestRetreat },
+        { type: 'MOVE', unitInstanceId: unit.instanceId, destination: retreat },
         END,
       ]);
     }
