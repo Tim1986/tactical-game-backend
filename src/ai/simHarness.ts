@@ -284,8 +284,51 @@ export interface MatchOptions {
   /** Per-slot special/passive loadout for each team (parallel to p1Slugs/p2Slugs). Omit for default loadouts. */
   p1Customizations?: (UnitCustomization | undefined)[];
   p2Customizations?: (UnitCustomization | undefined)[];
+  /** Starting tiles (parallel to slugs). Omit for the fixed default pattern. */
+  p1Placement?: BoardPosition[];
+  p2Placement?: BoardPosition[];
   /** Called on every recovered validation error (for logging/diagnosis). */
   onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
+}
+
+// ─── Placement sampling ───────────────────────────────────────────────────────
+// The engine is fully deterministic since the fortune meter replaced the d20:
+// with fixed placements, a matchup has exactly TWO distinct games (P1-first /
+// P2-first) and every additional "game" is a replay — win rates quantize to
+// {0, 50, 100}%. Randomized placements restore a meaningful sample space (it
+// is also the variance real games have: players choose their placements).
+
+/** Deterministic LCG so sim runs are reproducible for a given seed. */
+export function makeRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+}
+
+/** All legal P1-zone starting tiles: x 0–2, corners (0,0)/(0,7) excluded. */
+const P1_ZONE: BoardPosition[] = [];
+for (let x = 0; x <= 2; x++) {
+  for (let y = 0; y < BOARD_HEIGHT; y++) {
+    if ((x === 0 || x === BOARD_WIDTH - 1) && (y === 0 || y === BOARD_HEIGHT - 1)) continue;
+    P1_ZONE.push({ x, y });
+  }
+}
+
+/** Draw `count` distinct P1-zone tiles. Mirror with x → WIDTH-1-x for P2. */
+export function randomPlacement(rng: () => number, count = 4): BoardPosition[] {
+  const pool = [...P1_ZONE];
+  const out: BoardPosition[] = [];
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(rng() * pool.length);
+    out.push(pool.splice(idx, 1)[0]);
+  }
+  return out;
+}
+
+export function mirrorPlacement(placement: BoardPosition[]): BoardPosition[] {
+  return placement.map((p) => ({ x: BOARD_WIDTH - 1 - p.x, y: p.y }));
 }
 
 export function runMatch(
@@ -304,8 +347,8 @@ export function runMatch(
     p2Id,
     p1Slugs,
     p2Slugs,
-    DEFAULT_P1_PLACEMENT,
-    DEFAULT_P2_PLACEMENT,
+    options.p1Placement ?? DEFAULT_P1_PLACEMENT,
+    options.p2Placement ?? DEFAULT_P2_PLACEMENT,
     options.forceFirstPlayerId,
     options.p1Customizations,
     options.p2Customizations,
@@ -545,6 +588,15 @@ export function runSim(
      * first-mover bias deterministically. 'random': engine coin flip.
      */
     firstPlayerMode?: 'alternate' | 'random';
+    /**
+     * 'fixed' (default): the historical fixed pattern — NOTE the engine is
+     * deterministic, so fixed placements give only 2 distinct games per
+     * matchup (see Placement sampling above). 'random': each game draws
+     * fresh independent placements per side (seeded — reproducible).
+     */
+    placementMode?: 'fixed' | 'random';
+    /** Seed for 'random' placements (default 1). Same seed → same games. */
+    placementSeed?: number;
   } = {},
 ): SimResult {
   const games = options.games ?? 100;
@@ -552,6 +604,8 @@ export function runSim(
   const brain2 = options.brain2 ?? new OptimalBrain();
   const abilityMap = options.abilityMap ?? buildAbilityMap();
   const firstPlayerMode = options.firstPlayerMode ?? 'alternate';
+  const placementMode = options.placementMode ?? 'fixed';
+  const rng = makeRng(options.placementSeed ?? 1);
 
   let p1Wins = 0;
   let p2Wins = 0;
@@ -567,6 +621,8 @@ export function runSim(
 
   let firstMoverWins = 0;
   let decidedGames = 0;
+  let lastP1Placement: BoardPosition[] | undefined;
+  let lastP2Placement: BoardPosition[] | undefined;
   const firstBloodTurns: number[] = [];
   // slug → { appearances, survivals, specialsSpent, deathTurnSum, deathCount }
   const perSlug: Record<
@@ -595,8 +651,21 @@ export function runSim(
   for (let i = 0; i < games; i++) {
     const forceFirstPlayerId =
       firstPlayerMode === 'alternate' ? (i % 2 === 0 ? 'p1' : 'p2') : undefined;
+    // Random placements: draw a fresh pair per PAIR of games so the
+    // alternating first-player games i and i+1 share the same board — the
+    // alternation then cancels first-mover bias within each placement draw.
+    const p1Placement = placementMode === 'random'
+      ? (i % 2 === 0 ? randomPlacement(rng) : lastP1Placement)
+      : undefined;
+    const p2Placement = placementMode === 'random'
+      ? (i % 2 === 0 ? mirrorPlacement(randomPlacement(rng)) : lastP2Placement)
+      : undefined;
+    if (p1Placement) lastP1Placement = p1Placement;
+    if (p2Placement) lastP2Placement = p2Placement;
     const r = runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, {
       forceFirstPlayerId,
+      p1Placement,
+      p2Placement,
       p1Customizations: options.p1Customizations,
       p2Customizations: options.p2Customizations,
       onValidationError: (err, actions) => {
