@@ -5,7 +5,7 @@ import {
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
-import { reachableFrom } from '../ai/geometry.js';
+import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
 import { tickUnitStatusEffects, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
@@ -338,6 +338,14 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   if (ability.targetingType === 'single') {
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
     if (!targetUnit) throw new TurnValidationError('No unit at target position');
+    // LOS: single-target abilities are blocked by a living unit on a true line
+    // (orthogonal/diagonal) between caster and target; non-aligned targets are
+    // never blocked. Push abilities (Fear) are exempt — mirrors the client's
+    // targeting UI exactly. Line/AoE/self are LOS-free by design.
+    const hasPushEffect = ability.effects.some((e) => e.type === 'push');
+    if (!hasPushEffect && !hasLineOfSight(unit.position, action.target, state.units, [unit.instanceId, targetUnit.instanceId])) {
+      throw new TurnValidationError('No line of sight to target');
+    }
   }
   events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}`, abilitySlug: ability.slug });
   executeAbility({ state, caster: unit, targetPosition: action.target, ability, events, pushDestination: action.pushDestination });

@@ -935,11 +935,13 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
           const tPos = effPos(ctx, t);
           const dist = manhattanDistance(casterPos, tPos);
           if (dist > def.range) continue;
-          // LOS: matches engine reality — processUseAbility does not check
-          // LOS today, so the brain takes every legal shot. Flips with the
-          // engine via geometry.LOS_ENFORCED.
+          // LOS: matches processUseAbility exactly — single-target abilities
+          // are LOS-checked unless they carry a push effect (Fear is exempt,
+          // mirroring the client UI). Flips with the engine via
+          // geometry.LOS_ENFORCED.
           if (
             LOS_ENFORCED &&
+            !def.effects.some((e) => e.type === 'push') &&
             t.instanceId !== caster.instanceId &&
             !hasLineOfSight(casterPos, tPos, units, [
               caster.instanceId,

@@ -110,14 +110,13 @@ export function hasLineOfSight(
 }
 
 /**
- * The engine (processUseAbility) does not validate line of sight server-side
- * today — ranged basic attacks work in practice because the mobile client
- * won't let a human select an LOS-blocked tile, and the brain voluntarily
- * respects hasLineOfSight() above when choosing its own actions (this flag
- * documents that choice; it does not change engine behavior). Flip to true
- * only if/when server-side LOS enforcement is added to processUseAbility.
+ * The engine (processUseAbility) enforces LOS server-side for single-target
+ * abilities WITHOUT a push effect (push abilities like Fear are exempt,
+ * mirroring the client's targeting UI). Line, AoE, and self abilities are
+ * LOS-free by design. This flag keeps the brain's targeting in lockstep with
+ * that engine rule — if the engine rule changes, change both together.
  */
-export const LOS_ENFORCED = false;
+export const LOS_ENFORCED = true;
 
 const MOVE_DIRECTIONS: ReadonlyArray<readonly [number, number]> = [
   [1, 0],
