@@ -698,7 +698,7 @@ function mkUnitWithFortune(slug: string, owner: string, pos: BoardPosition, hp: 
 {
   const p1Customizations = [
     { specialSlug: 'roar', passiveSlug: 'hardened' },       // barbarian
-    { specialSlug: 'rescue', passiveSlug: 'immovable' },    // fighter
+    { specialSlug: 'shield_bash', passiveSlug: 'immovable' }, // fighter
     { specialSlug: 'pinning', passiveSlug: 'swift' },       // ranger
     { specialSlug: 'ward', passiveSlug: 'vitality' },       // cleric
   ];
@@ -706,7 +706,7 @@ function mkUnitWithFortune(slug: string, owner: string, pos: BoardPosition, hp: 
     { specialSlug: 'expose', passiveSlug: 'swift' },        // rogue
     { specialSlug: 'dagger_toss', passiveSlug: 'vitality' },// rogue
     { specialSlug: 'ignite', passiveSlug: 'hardened' },     // sorcerer
-    { specialSlug: 'flame_jet', passiveSlug: 'swift' },     // sorcerer
+    { specialSlug: 'flame_jet', passiveSlug: 'warded' },    // sorcerer
   ];
   const r = runSim(
     ['barbarian', 'fighter', 'ranger', 'cleric'],

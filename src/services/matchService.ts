@@ -115,8 +115,15 @@ function buildUnitInstance(def: UnitDefinition, ownerId: string, position: Board
   const cooldowns: Record<string, number> = {};
   for (const slug of abilities) cooldowns[slug] = 0;
 
+  // Warded passive: start the match shielded (the existing 'shielded' status
+  // is consumed by the first hit; 99 turns ≈ never expires on its own).
+  const instanceId = uuidv4();
+  const initialStatuses = passives.includes('warded')
+    ? [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: instanceId }]
+    : [];
+
   return {
-    instanceId: uuidv4(), definitionSlug: def.slug, ownerPlayerId: ownerId,
+    instanceId, definitionSlug: def.slug, ownerPlayerId: ownerId,
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange,
     abilities, passives,
@@ -125,7 +132,7 @@ function buildUnitInstance(def: UnitDefinition, ownerId: string, position: Board
     // is exactly AC-derived either way, but WHICH attack in the cycle misses
     // is random per unit per match. Seeding at 0 made every game with the
     // same comps play out identically (the meter is the only "dice" left).
-    cooldowns, statusEffects: [], fortuneMeter: Math.random(),
+    cooldowns, statusEffects: initialStatuses, fortuneMeter: Math.random(),
   };
 }
 

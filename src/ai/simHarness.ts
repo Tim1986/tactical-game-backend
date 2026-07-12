@@ -103,8 +103,13 @@ function buildUnitInstance(
 
   const cooldowns: Record<string, number> = {};
   for (const s of abilities) cooldowns[s] = 0;
+  // Warded passive: start the match shielded (see matchService counterpart).
+  const instanceId = uuidv4();
+  const initialStatuses = passives.includes('warded')
+    ? [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: instanceId }]
+    : [];
   return {
-    instanceId: uuidv4(),
+    instanceId,
     definitionSlug: def.slug,
     ownerPlayerId: ownerId,
     position,
@@ -118,7 +123,7 @@ function buildUnitInstance(
     hasMovedThisTurn: false,
     hasActedThisTurn: false,
     cooldowns,
-    statusEffects: [],
+    statusEffects: initialStatuses,
     fortuneMeter: initialFortune,
   };
 }
