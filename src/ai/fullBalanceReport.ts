@@ -38,7 +38,12 @@ const classCell: Record<string, Record<string, number>> = {};
   for (let i = 0; i < ALL_CLASSES.length; i++) {
     for (let j = i + 1; j < ALL_CLASSES.length; j++) {
       const a = ALL_CLASSES[i], b = ALL_CLASSES[j];
-      const r = runSim([a, a, a, a], [b, b, b, b], { games, seed: i * 31 + j });
+      // Legal comps only (max 2 per class): 2x subject + a shared neutral
+      // fill pair, identical on both sides so the A-vs-B signal is isolated.
+      const fill = ['fighter', 'cleric', 'barbarian', 'ranger']
+        .filter((c) => c !== a && c !== b)
+        .slice(0, 2);
+      const r = runSim([a, a, ...fill], [b, b, ...fill], { games, seed: i * 31 + j });
       grandErrors += r.totalValidationErrors;
       classWins[a].w += r.p1Wins; classWins[a].g += r.games;
       classWins[b].w += r.p2Wins; classWins[b].g += r.games;

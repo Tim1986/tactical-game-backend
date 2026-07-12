@@ -344,6 +344,23 @@ export function mirrorPlacement(placement: BoardPosition[]): BoardPosition[] {
   return placement.map((p) => ({ x: BOARD_WIDTH - 1 - p.x, y: p.y }));
 }
 
+/** Mirrors teamService's MAX_DUPLICATES_PER_CLASS — sims must only measure
+ *  comps a real player can field (4-stack mirrors produced degenerate
+ *  balance data: heal-war stalls, meaningless utility valuations). */
+const MAX_PER_CLASS = 2;
+
+export function assertLegalComp(slugs: string[], label: string): void {
+  const counts: Record<string, number> = {};
+  for (const s of slugs) {
+    counts[s] = (counts[s] ?? 0) + 1;
+    if (counts[s] > MAX_PER_CLASS) {
+      throw new Error(
+        `${label} is not a legal team (${counts[s]}x ${s} — max ${MAX_PER_CLASS} per class): ${slugs.join(',')}`,
+      );
+    }
+  }
+}
+
 export function runMatch(
   p1Slugs: string[],
   p2Slugs: string[],
@@ -352,6 +369,8 @@ export function runMatch(
   brain2: AIBrain,
   options: MatchOptions = {},
 ): MatchResult {
+  assertLegalComp(p1Slugs, 'p1');
+  assertLegalComp(p2Slugs, 'p2');
   const p1Id = options.p1Id ?? 'p1';
   const p2Id = options.p2Id ?? 'p2';
   abilityMap = normalizeAbilityMap(abilityMap);

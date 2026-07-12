@@ -111,13 +111,17 @@ export function runDuelMatrix(
   const specialSeen = Array(n).fill(0);
   let totalValidationErrors = 0;
 
-  const team = [classSlug, classSlug, classSlug, classSlug];
+  // Legal comp: 2x subject + 2 fixed escorts (max 2 per class, like the
+  // real game). Both subject copies carry the loadout under test.
+  const escorts = escortsFor(classSlug).slice(0, 2);
+  const team = [classSlug, classSlug, ...escorts];
+  const escortCustomizations = escorts.map((c) => defaultLoadout(c));
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       const r = runSim(team, team, {
         games: gamesPerPair,
-        p1Customizations: Array(4).fill(loadouts[i]),
-        p2Customizations: Array(4).fill(loadouts[j]),
+        p1Customizations: [loadouts[i], loadouts[i], ...escortCustomizations],
+        p2Customizations: [loadouts[j], loadouts[j], ...escortCustomizations],
         // Brain-planned placement (default); variance comes from the
         // fortune meters' seeded random phase.
         seed: i * 100 + j,
@@ -230,13 +234,18 @@ export function runReferenceMatrix(
   // team — the harness pools usage by class slug.
   const refParty = REFERENCE_PARTY.map((c) => (c === classSlug ? 'wizard' : c));
   const refCustomizations = refParty.map((c) => defaultLoadout(c));
-  const team = [classSlug, classSlug, classSlug, classSlug];
+  // Legal comp: 2x subject + 2 escorts. Escorts must also avoid the
+  // reference party's usage-measurement caveat only for the subject slug,
+  // which they can't collide with by construction.
+  const subjEscorts = escortsFor(classSlug).slice(0, 2);
+  const team = [classSlug, classSlug, ...subjEscorts];
+  const subjEscortCustomizations = subjEscorts.map((c) => defaultLoadout(c));
   let totalValidationErrors = 0;
 
   const scores: LoadoutScore[] = loadouts.map((lo) => {
     const r: SimResult = runSim(team, refParty, {
       games: gamesPerLoadout,
-      p1Customizations: Array(4).fill(lo),
+      p1Customizations: [lo, lo, ...subjEscortCustomizations],
       p2Customizations: refCustomizations,
       seed: 7,
     });
