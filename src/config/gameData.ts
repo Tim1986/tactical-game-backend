@@ -215,19 +215,19 @@ export const ABILITY_DEFS = [
   {
     slug: 'dagger_toss',
     name: 'Dagger Toss',
-    description: 'Throws a dagger for 14 unblockable damage from up to 4 tiles away.',
+    description: 'Throws a dagger for 16 unblockable damage from up to 4 tiles away.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 14 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 16 }],
   },
   {
     slug: 'expose',
     name: 'Expose Weakness',
-    description: 'Deals 10 unblockable damage and exposes the target, causing attacks against them to always hit for 3 turns.',
+    description: 'Deals 10 unblockable damage and exposes the target, causing attacks against them to always hit for 2 turns.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -236,7 +236,7 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [
       { type: 'damage', formula: 'flat', value: 10 },
-      { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 3 },
+      { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 2 },
     ],
   },
 
@@ -328,7 +328,7 @@ export const ABILITY_DEFS = [
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 14 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 16 }],
   },
   {
     slug: 'ignite',
@@ -377,7 +377,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'grasp',
     name: 'Eldritch Grasp',
-    description: 'Pulls an enemy within 5 tiles 3 tiles toward you and roots them for 2 turns. Unblockable.',
+    description: 'Deals 10 unblockable damage, pulls the enemy 3 tiles toward you (range 5), and roots them for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -385,8 +385,9 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
+      { type: 'damage', formula: 'flat', value: 10 },
       { type: 'pull', direction: 'toward_caster', distance: 3 },
-      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],
   },
   {
@@ -430,7 +431,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Blizzard',
-    description: 'Deals 4 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
+    description: 'Deals 3 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
     targeting_type: 'aoe',
     range: 3,
     area_radius: 1,
@@ -438,7 +439,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 4 },
+      { type: 'damage', formula: 'flat', value: 3 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
@@ -497,7 +498,7 @@ const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Be
 const FIGHTER_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED1, IMMOVABLE];
 const BARBARIAN_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, IMMOVABLE];
 const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, WARDED];
-const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, SWIFT, WARDED];
+const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, IMMOVABLE, WARDED];
 const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, SWIFT];
 const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
 const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];

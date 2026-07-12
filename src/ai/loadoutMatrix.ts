@@ -150,6 +150,65 @@ export function runDuelMatrix(
 }
 
 // ---------------------------------------------------------------------------
+// Mode: escort duel — subject + 3 fixed standard escorts per side; only the
+// subject's loadout differs between the teams. Measures a loadout in a
+// realistic mixed-team role instead of a degenerate 4-stack mirror (4×cleric
+// heal-wars value utility at zero; 4×wizard mirrors make freeze deny an
+// 8-damage missile).
+// ---------------------------------------------------------------------------
+
+const ESCORT_POOL = ['barbarian', 'fighter', 'ranger', 'cleric'];
+
+export function escortsFor(classSlug: string): string[] {
+  return ESCORT_POOL.filter((c) => c !== classSlug).slice(0, 3);
+}
+
+export function runEscortMatrix(
+  classSlug: string,
+  gamesPerPair = 24,
+  log: (line: string) => void = console.log,
+): DuelMatrixResult {
+  const loadouts = loadoutsFor(classSlug);
+  const n = loadouts.length;
+  const cell: number[][] = Array.from({ length: n }, () => Array(n).fill(NaN));
+  const wins = Array(n).fill(0);
+  const games = Array(n).fill(0);
+  let totalValidationErrors = 0;
+
+  const escorts = escortsFor(classSlug);
+  const team = [classSlug, ...escorts];
+  const escortCustomizations = escorts.map((c) => defaultLoadout(c));
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const r = runSim(team, team, {
+        games: gamesPerPair,
+        p1Customizations: [loadouts[i], ...escortCustomizations],
+        p2Customizations: [loadouts[j], ...escortCustomizations],
+        seed: 9000 + i * 100 + j,
+      });
+      totalValidationErrors += r.totalValidationErrors;
+      cell[i][j] = r.p1WinRate;
+      cell[j][i] = 1 - r.p1WinRate - r.draws / r.games;
+      wins[i] += r.p1Wins; wins[j] += r.p2Wins;
+      games[i] += r.games; games[j] += r.games;
+      log(`  ${loadouts[i].label.padEnd(24)} vs ${loadouts[j].label.padEnd(24)} P1 ${(r.p1WinRate * 100).toFixed(0)}%  (err ${r.totalValidationErrors})`);
+    }
+  }
+
+  const scores: LoadoutScore[] = loadouts.map((lo, i) => ({
+    loadout: lo,
+    games: games[i],
+    wins: wins[i],
+    winRate: games[i] ? wins[i] / games[i] : 0,
+    ci: wilson(wins[i], games[i]),
+    specialUsage: 0, // per-loadout usage not separable here (escorts share slugs)
+    validationErrors: totalValidationErrors,
+  })).sort((a, b) => b.winRate - a.winRate);
+
+  return { classSlug, gamesPerPair, loadouts, cell, scores, totalValidationErrors };
+}
+
+// ---------------------------------------------------------------------------
 // Mode: loadout vs fixed reference party
 // ---------------------------------------------------------------------------
 
@@ -246,6 +305,10 @@ if (isMain) {
       const r = runDuelMatrix(c, games);
       printDuelCells(r);
       printScores(`${c} loadout ranking (round-robin aggregate):`, r.scores);
+      grandErrors += r.totalValidationErrors;
+    } else if (mode === 'escort') {
+      const r = runEscortMatrix(c, games);
+      printScores(`${c} loadout ranking (escort duels, escorts: ${escortsFor(c).join('/')}):`, r.scores);
       grandErrors += r.totalValidationErrors;
     } else {
       const r = runReferenceMatrix(c, games);
