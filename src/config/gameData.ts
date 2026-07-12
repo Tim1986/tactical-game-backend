@@ -132,14 +132,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'sword',
     name: 'Strike',
-    description: 'A disciplined sword strike. Deals 10 damage.',
+    description: 'A disciplined sword strike. Deals 11 damage.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: false,
-    effects: [{ type: 'damage', formula: 'flat', value: 10 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 11 }],
   },
   {
     slug: 'second_wind',
@@ -431,9 +431,9 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Blizzard',
-    description: 'Deals 3 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
+    description: 'Deals 3 unblockable damage and freezes every unit (including allies) in a 3×3 area within 2 tiles for 1 turn.',
     targeting_type: 'aoe',
-    range: 3,
+    range: 2,
     area_radius: 1,
     cooldown_turns: 99,
     is_special: true,
@@ -505,7 +505,7 @@ const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];
 const SORCERER_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, WARDED];
 
 export const UNIT_DEFS = [
-  { slug: 'fighter',   name: 'Fighter',   max_health: 42, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind', 'concussive', 'shield_bash'], passive_options: FIGHTER_PASSIVES, unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
+  { slug: 'fighter',   name: 'Fighter',   max_health: 45, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind', 'concussive', 'shield_bash'], passive_options: FIGHTER_PASSIVES, unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
   { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: BARBARIAN_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
   { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing', 'pinning', 'longshot'],      passive_options: RANGER_PASSIVES,  unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
   { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate', 'dagger_toss', 'expose'], passive_options: ROGUE_PASSIVES,  unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
