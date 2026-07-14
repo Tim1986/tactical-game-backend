@@ -56,7 +56,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'roar',
     name: 'Roar',
-    description: 'Deals 5 unblockable damage to all enemies within 2 tiles and weakens them, reducing their outgoing damage for 2 turns.',
+    description: 'Deals 3 unblockable damage to all enemies within 2 tiles and weakens them, reducing their outgoing damage for 2 turns.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 2,
@@ -65,7 +65,7 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     exclude_allies: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 5 },
+      { type: 'damage', formula: 'flat', value: 3 },
       { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
     ],
   },
@@ -268,7 +268,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'pinning',
     name: 'Pinning Shot',
-    description: 'Deals 12 damage from up to 6 tiles away and roots the target for 2 turns. Can be blocked.',
+    description: 'Deals 11 damage from up to 6 tiles away and roots the target for 2 turns. Can be blocked.',
     targeting_type: 'single',
     range: 6,
     area_radius: 0,
@@ -276,7 +276,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: false,
     effects: [
-      { type: 'damage', formula: 'flat', value: 12 },
+      { type: 'damage', formula: 'flat', value: 11 },
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
     ],
   },
@@ -350,14 +350,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'eldritch',
     name: 'Demon Blast',
-    description: 'Deals 9 unblockable damage from up to 4 tiles away.',
+    description: 'Deals 8 unblockable damage from up to 4 tiles away.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 9 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 8 }],
   },
   {
     slug: 'fear',
@@ -377,7 +377,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'grasp',
     name: 'Shadow Grasp',
-    description: 'Deals 10 unblockable damage, pulls the enemy 3 tiles toward you (range 5), and roots them for 1 turn.',
+    description: 'Deals 4 unblockable damage, pulls the enemy 3 tiles toward you (range 5), and roots them for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -385,7 +385,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 10 },
+      { type: 'damage', formula: 'flat', value: 4 },
       { type: 'pull', direction: 'toward_caster', distance: 3 },
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],

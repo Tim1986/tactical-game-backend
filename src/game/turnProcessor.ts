@@ -7,7 +7,7 @@ import {
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
 import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
-import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
+import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 
@@ -142,11 +142,29 @@ export function processTurn(
 
   // ── Determine acting unit ────────────────────────────────────────────────
   let actingUnit: UnitInstance | null = null;
+  let forcedCommit = false;
 
   if (isRound1) {
     if (gameActions.length === 0) {
-      throw new TurnValidationError('Must commit a unit in round 1 — move or use an ability');
+      // Bare END_TURN is normally illegal in round 1 — but when EVERY
+      // uncommitted unit is dead, frozen, or doomed to its own burning tick,
+      // no legal committing action exists. Force-commit one (alive preferred)
+      // without ticking it, so the player isn't hard-stuck.
+      const committedIds = new Set(initiative.order);
+      const uncommitted = ws.units.filter(
+        (u) => u.ownerPlayerId === submittingPlayerId && !committedIds.has(u.instanceId),
+      );
+      const canCommit = (u: UnitInstance) =>
+        u.isAlive
+        && !u.statusEffects.some((se) => se.slug === 'frozen')
+        && !willDieToStartTick(u);
+      if (uncommitted.length === 0 || uncommitted.some(canCommit)) {
+        throw new TurnValidationError('Must commit a unit in round 1 — move or use an ability');
+      }
+      actingUnit = uncommitted.find((u) => u.isAlive) ?? uncommitted[0];
+      forcedCommit = true;
     }
+    if (!forcedCommit) {
     const unitIds = new Set(gameActions.map((a) => a.unitInstanceId));
     if (unitIds.size !== 1) throw new TurnValidationError('All actions must reference the same unit');
     const actingUnitId = [...unitIds][0];
@@ -157,6 +175,7 @@ export function processTurn(
     if (initiative.order.includes(actingUnitId)) throw new TurnValidationError('Unit already in initiative order');
     if (actingUnit.statusEffects.some((se) => se.slug === 'frozen')) {
       throw new TurnValidationError('A frozen unit cannot join the initiative — choose another unit');
+    }
     }
   } else {
     // Round 2+: active unit is predetermined
@@ -173,18 +192,25 @@ export function processTurn(
     }
   }
 
+  // Every branch above either set actingUnit or threw.
+  if (!actingUnit) throw new TurnValidationError('No acting unit');
+
   // ── Start-of-turn burn + reset flags for active unit ─────────────────────
   // Durations are decremented at END of this unit's turn (see END_TURN below),
   // so debuffs that gate the unit's OWN actions (rooted, weakened) are still in
   // force while it acts. Only burning DoT is applied here.
-  applyStartOfTurnStatusDamage(actingUnit, events);
-  resetUnitTurnFlags(actingUnit);
+  // (Skipped for a forced round-1 commit: the unit never takes a turn — its
+  // frozen slot is ticked by advanceSlot when the initiative reaches it.)
+  if (!forcedCommit) {
+    applyStartOfTurnStatusDamage(actingUnit, events);
+    resetUnitTurnFlags(actingUnit);
 
-  // Check if unit died from a status tick
-  const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
-  if (afterTickWin.isOver) {
-    events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
-    return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
+    // Check if unit died from a status tick
+    const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
+    if (afterTickWin.isOver) {
+      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
+      return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
+    }
   }
 
   // ── Process actions ──────────────────────────────────────────────────────
@@ -193,10 +219,12 @@ export function processTurn(
 
   for (const action of submittedActions) {
     if (action.type === 'END_TURN') {
-      tickUnitCooldowns(actingUnit);
-      // Decrement the acting unit's status durations now that its turn is over.
-      // (Frozen units that never act are ticked in advanceSlot instead.)
-      decrementStatusDurations(actingUnit, events);
+      if (!forcedCommit) {
+        tickUnitCooldowns(actingUnit);
+        // Decrement the acting unit's status durations now that its turn is
+        // over. (Frozen units that never act are ticked in advanceSlot.)
+        decrementStatusDurations(actingUnit, events);
+      }
 
       if (isRound1) {
         // Commit acting unit

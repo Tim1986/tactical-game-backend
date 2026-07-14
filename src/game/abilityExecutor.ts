@@ -269,6 +269,12 @@ export function decrementStatusDurations(unit: UnitInstance, events: GameEvent[]
   }
 }
 
+/** True if this unit's own start-of-turn burning tick will kill it. */
+export function willDieToStartTick(unit: UnitInstance): boolean {
+  const burning = unit.statusEffects.find((se) => se.slug === 'burning');
+  return !!burning && unit.currentHealth <= BURNING_DAMAGE_PER_STACK * burning.stacks;
+}
+
 /**
  * Full tick (start-of-turn damage + duration decrement) for a unit whose turn
  * is auto-consumed without acting — i.e. a frozen unit skipped in the
