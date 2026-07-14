@@ -1,0 +1,14 @@
+# Never copy the host's node_modules into the image — it contains platform-native
+# binaries (e.g. bcrypt built for macOS/arm64) that crash in the Linux container.
+# The image builds its own via `npm ci`. (node_modules is committed to this repo,
+# which is why COPY . . would otherwise overwrite the container's correct copy.)
+node_modules
+
+# dist is rebuilt in-image by `npm run build`; don't ship stale host output.
+dist
+
+# Not needed in the image.
+.git
+.gitignore
+*.log
+.env
