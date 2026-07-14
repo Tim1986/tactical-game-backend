@@ -183,6 +183,9 @@ function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffe
   const idealDestination = ctx.pushDestination
     ?? calculatePushDestination(target.position, ctx.caster.position, effect.distance);
   const finalPos = findLastFreePosition(target.position, idealDestination, ctx.state.units, target.instanceId);
+  // No actual displacement (blocked by a wall or another unit): don't emit a
+  // UNIT_PUSHED event, so the log doesn't claim a push that never happened.
+  if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PUSHED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
 }
@@ -192,6 +195,7 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
   if (hasPassive(target, 'immovable')) return;
   const destination = calculatePullDestination(target.position, ctx.caster.position, effect.distance);
   const finalPos = findLastFreePosition(target.position, destination, ctx.state.units, target.instanceId);
+  if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PULLED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
 }
@@ -223,15 +227,16 @@ function hasPassive(unit: UnitInstance, passiveSlug: string): boolean {
   return (unit.passives ?? []).includes(passiveSlug);
 }
 
-/** Tick status effects for a single unit (called at the start of that unit's initiative turn). */
-export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): void {
+/**
+ * Burning damage-over-time, applied at the START of the afflicted unit's own
+ * turn (or when its slot is skipped, e.g. while frozen). Does NOT decrement
+ * durations — that happens at end of turn (see decrementStatusDurations), so a
+ * debuff that gates the unit's OWN actions (rooted, weakened) is still in force
+ * while the unit acts. Applying the burn tick at start means a unit can die to
+ * its burn before acting, which the caller's win check relies on.
+ */
+export function applyStartOfTurnStatusDamage(unit: UnitInstance, events: GameEvent[]): void {
   if (!unit.isAlive) return;
-
-  // Burning: flat damage-over-time, applied once per stack at the start of
-  // the afflicted unit's own turn (or when their slot is skipped, e.g. while
-  // frozen — see turnProcessor's advanceSlot, which also calls this
-  // function). Applied before duration/expiry ticking below so the final
-  // turn a burn is active still deals its damage.
   const burning = unit.statusEffects.find((se) => se.slug === 'burning');
   if (burning) {
     const burnDamage = BURNING_DAMAGE_PER_STACK * burning.stacks;
@@ -242,7 +247,15 @@ export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): 
       events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
     }
   }
+}
 
+/**
+ * Decrement status durations and expire finished effects. Called at the END of
+ * the unit's own turn, so a status applied with durationTurns:N is in force for
+ * exactly N of that unit's turns before it drops off.
+ */
+export function decrementStatusDurations(unit: UnitInstance, events: GameEvent[]): void {
+  if (!unit.isAlive) return;
   const expiredEffects: string[] = [];
   for (const effect of unit.statusEffects) {
     if (effect.turnsRemaining > 0) {
@@ -251,11 +264,20 @@ export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): 
     }
   }
   unit.statusEffects = unit.statusEffects.filter((se) => !expiredEffects.includes(se.slug));
-  if (expiredEffects.length > 0) {
-    for (const slug of expiredEffects) {
-      events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: unit.instanceId, statusSlug: slug });
-    }
+  for (const slug of expiredEffects) {
+    events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: unit.instanceId, statusSlug: slug });
   }
+}
+
+/**
+ * Full tick (start-of-turn damage + duration decrement) for a unit whose turn
+ * is auto-consumed without acting — i.e. a frozen unit skipped in the
+ * initiative order. A skipped turn still burns and still counts against every
+ * status's duration.
+ */
+export function tickUnitStatusEffects(unit: UnitInstance, events: GameEvent[]): void {
+  applyStartOfTurnStatusDamage(unit, events);
+  decrementStatusDurations(unit, events);
 }
 
 /** Tick ability cooldowns for a single unit (called at the end of that unit's initiative turn). */

@@ -294,19 +294,15 @@ function statusTurnsRemaining(u: UnitInstance, slug: string): number {
 }
 
 /**
- * TICK-FIRST SEMANTICS (V3 feedback, Bug A): the engine calls
- * tickUnitStatusEffects(actingUnit) BEFORE validating its actions, so a
- * status at 1 turn remaining expires before it can block anything the unit
- * does this turn. A status only blocks the unit's OWN next action when it
- * has >= 2 turns remaining. Planning with the presence-based check was the
- * root cause of the V4 round-1 "Must commit a unit" errors: a Fear-rooted(1)
- * unit CAN legally move on its commit turn, but the brain refused to try.
- *
- * (Presence-based hasStatus/isFrozen/isRooted remain correct for scoring
- * OTHER units — e.g. a frozen enemy is skipped in initiative on presence.)
+ * END-OF-TURN TICK SEMANTICS: the engine applies only burning DoT at the start
+ * of a unit's turn and decrements status durations at the END of that turn, so
+ * a debuff is in force for every turn it is present (turnsRemaining >= 1). A
+ * rooted/weakened unit with any remaining duration is blocked/affected on its
+ * next turn. (Was `>= 2` under the old tick-first engine, which expired a
+ * 1-turn debuff before it could bite.)
  */
 export function willBlockOwnAction(u: UnitInstance, slug: string): boolean {
-  return statusTurnsRemaining(u, slug) >= 2;
+  return statusTurnsRemaining(u, slug) >= 1;
 }
 
 /**
@@ -720,16 +716,11 @@ function scoreEffectsOnTarget(
                 u.ownerPlayerId === caster.ownerPlayerId &&
                 manhattanDistance(effPos(ctx, u), projectedPos) <= tRange,
             );
-            // TICK-FIRST SEMANTICS: the engine ticks the target's statuses
-            // before validating ITS actions, so a root of duration d only
-            // blocks movement for d-1 of the target's turns (a 1-turn root
-            // blocks nothing — its value is entirely the push displacement).
-            // *** DESIGN FLAG for gameData: Fear's root is durationTurns 1,
-            // which under these semantics denies zero immobile turns. If the
-            // intent is "loses a turn of movement", it needs durationTurns 2
-            // (or the engine should tick at END of turn). ***
+            // END-OF-TURN TICK SEMANTICS: durations decrement at the end of the
+            // target's turn, so a root of duration d denies movement for d of the
+            // target's turns (a 1-turn root blocks its next turn outright).
             const immobileTurns =
-              Math.max(0, eff.durationTurns - 1) * (canStillReachUs ? 0.3 : 1);
+              eff.durationTurns * (canStillReachUs ? 0.3 : 1);
             // (b) Travel turns: after the root expires it must re-close the
             //     gap the push opened before it can attack again. A fully
             //     blocked push (pushedDistance 0) contributes nothing here.
@@ -1310,7 +1301,7 @@ export function planBestTurn(
     (u) => u.isAlive && u.ownerPlayerId !== myPlayerId,
   );
   const enemyKillThreshold = bestKillThreshold(enemies, map);
-  const rooted = willBlockOwnAction(unit, 'rooted'); // tick-first: rooted(1) can still move
+  const rooted = willBlockOwnAction(unit, 'rooted'); // end-of-turn tick: any rooted duration blocks this turn
   const moveTiles = rooted
     ? []
     : reachableTiles(unit, state.units, unit.movementRange);

@@ -1,4 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
+let _evtSeq = 0;
+function nextEventId(): string { return `e${Date.now().toString(36)}_${(++_evtSeq).toString(36)}`; }
 import {
   MatchState, TurnAction, MoveAction, UseAbilityAction, ChargeAction,
   GameEvent, TurnResult, UnitInstance, InitiativeState,
@@ -6,7 +7,7 @@ import {
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
 import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
-import { tickUnitStatusEffects, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
+import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 
@@ -172,8 +173,11 @@ export function processTurn(
     }
   }
 
-  // ── Tick effects + reset flags for active unit ───────────────────────────
-  tickUnitStatusEffects(actingUnit, events);
+  // ── Start-of-turn burn + reset flags for active unit ─────────────────────
+  // Durations are decremented at END of this unit's turn (see END_TURN below),
+  // so debuffs that gate the unit's OWN actions (rooted, weakened) are still in
+  // force while it acts. Only burning DoT is applied here.
+  applyStartOfTurnStatusDamage(actingUnit, events);
   resetUnitTurnFlags(actingUnit);
 
   // Check if unit died from a status tick
@@ -190,6 +194,9 @@ export function processTurn(
   for (const action of submittedActions) {
     if (action.type === 'END_TURN') {
       tickUnitCooldowns(actingUnit);
+      // Decrement the acting unit's status durations now that its turn is over.
+      // (Frozen units that never act are ticked in advanceSlot instead.)
+      decrementStatusDurations(actingUnit, events);
 
       if (isRound1) {
         // Commit acting unit
@@ -361,7 +368,7 @@ function findAndValidateUnit(state: MatchState, unitInstanceId: string, playerId
   return unit;
 }
 
-export function generateInstanceId(): string { return uuidv4(); }
+export function generateInstanceId(): string { return nextEventId(); }
 
 // Legacy processor for matches created before the initiative system
 function processLegacyTurn(
