@@ -1680,11 +1680,11 @@ export class OptimalBrain implements AIBrain {
       // Group 1 — usable this round (alive, not frozen): always preferred.
       // Commit the unit whose best turn scores highest, which naturally
       // front-loads units with real work available.
-      // ENGINE CHANGE (v6): round-1 commitment now rejects frozen units
-      // BEFORE the tick ("A frozen unit cannot join the initiative"), so the
-      // commit filter is PRESENCE-based for frozen — any turnsRemaining
-      // disqualifies. (Rooted stays tick-aware: no pre-tick rooted check
-      // exists, so a rooted(1) unit can still legally MOVE to commit.)
+      // Frozen commitment is rejected by the engine's round-1 gate ("A frozen
+      // unit cannot join the initiative"), so the commit filter is
+      // PRESENCE-based for frozen. Rooted units CAN commit: via an ability if
+      // a target is in range, or via a zero-distance "hold position" MOVE
+      // (legal while rooted — see processMove).
       const usable = uncommitted.filter(
         (u) => u.isAlive && !hasStatus(u, 'frozen') && !willDieToOwnTick(u),
       );
@@ -1723,6 +1723,18 @@ export class OptimalBrain implements AIBrain {
         if (fbUnit && fbTile) {
           return [
             { type: 'MOVE', unitInstanceId: fbUnit.instanceId, destination: fbTile },
+            { type: 'END_TURN' },
+          ];
+        }
+
+        // Group 1b2 — rooted hold-position commit: every remaining usable
+        // unit is rooted with no better plan. A zero-distance MOVE is legal
+        // while rooted and commits for free — strictly better than burning a
+        // special into empty air (group 1c) or an illegal bare END_TURN.
+        const rootedHold = usable.find((c) => willBlockOwnAction(c, 'rooted'));
+        if (rootedHold) {
+          return [
+            { type: 'MOVE', unitInstanceId: rootedHold.instanceId, destination: rootedHold.position },
             { type: 'END_TURN' },
           ];
         }

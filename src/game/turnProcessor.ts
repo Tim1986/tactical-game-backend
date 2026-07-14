@@ -312,12 +312,17 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
   if (unit.hasMovedThisTurn) throw new TurnValidationError('Unit has already moved this turn');
   if (!isInBounds(action.destination)) throw new TurnValidationError('Destination is out of bounds');
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
-  if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
-  if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   const distance = manhattanDistance(unit.position, action.destination);
+  // Rooted blocks movement, not standing still: a zero-distance MOVE ("hold
+  // position") stays legal so a rooted unit can always satisfy the round-1
+  // commitment requirement.
+  if (distance > 0 && unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');
+  if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Destination out of movement range');
-  const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
-  if (!reachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Destination is not reachable (path blocked by enemy)');
+  if (distance > 0) {
+    const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
+    if (!reachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Destination is not reachable (path blocked by enemy)');
+  }
   unit.position = action.destination;
   unit.hasMovedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination });

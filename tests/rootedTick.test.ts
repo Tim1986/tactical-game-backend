@@ -46,6 +46,14 @@ describe('rooted blocks movement on the victim\'s next turn (end-of-turn tick)',
     expect(after.statusEffects.some((se) => se.slug === 'rooted')).toBe(false);
   });
 
+  it('a zero-distance MOVE ("hold position") is legal while rooted', () => {
+    // Needed so a rooted unit can always satisfy the round-1 commit rule.
+    const rooted = makeUnit('u2', P2, 4, 4, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'u1' }] });
+    const state = makeRound2State([makeUnit('u1', P1, 0, 0), rooted], 'u2', P2);
+    const result = processTurn(state, [{ type: 'MOVE', unitInstanceId: 'u2', destination: { x: 4, y: 4 } }, { type: 'END_TURN' }], P2, P1, P2, abilityMap);
+    expect(result.updatedState.units.find((u) => u.instanceId === 'u2')!.position).toEqual({ x: 4, y: 4 });
+  });
+
   it('a 2-turn root still blocks after one turn has passed', () => {
     const rooted = makeUnit('u2', P2, 4, 4, { statusEffects: [{ slug: 'rooted', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u1' }] });
     const state = makeRound2State([makeUnit('u1', P1, 0, 0), rooted], 'u2', P2);

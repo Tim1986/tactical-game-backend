@@ -470,30 +470,11 @@ export function runMatch(
         // unit before processing its actions, so every action it could
         // commit with would execute against a corpse.
         if (willDieToOwnTick(u)) return false;
-        // Frozen is checked PRESENCE-based, pre-tick, at the very top of the
-        // engine's round-1 commit gate (turnProcessor.ts) — any turnsRemaining
-        // disqualifies, unlike rooted below which IS tick-first (the engine
-        // ticks the acting unit's own statuses before validating MOVE/ability,
-        // so a rooted(1) unit's root expires before that check runs).
+        // Frozen is checked PRESENCE-based at the top of the engine's round-1
+        // commit gate — any turnsRemaining disqualifies. Rooted does NOT
+        // disqualify: a zero-distance "hold position" MOVE is legal while
+        // rooted (see processMove), so a rooted unit can always commit.
         if (remaining(u, 'frozen') >= 1) return false;
-        if (remaining(u, 'rooted') >= 2) {
-          // Rooted (still active after the tick): cannot move — can only
-          // commit via an ability, which needs a target in range.
-          const maxRange = u.abilities.reduce((m, s) => {
-            const d = abilityMap.get(s);
-            const ready = (u.cooldowns[s] ?? 0) <= 0;
-            return d && ready && d.range > m ? d.range : m;
-          }, 0);
-          const hasTarget = state.units.some(
-            (t) =>
-              t.isAlive &&
-              t.instanceId !== u.instanceId &&
-              Math.abs(t.position.x - u.position.x) +
-                Math.abs(t.position.y - u.position.y) <=
-                maxRange,
-          );
-          if (!hasTarget) return false;
-        }
         return true;
       };
       const usable = uncommitted.filter(canLegallyCommit);
