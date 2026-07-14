@@ -498,7 +498,7 @@ const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Be
 const FIGHTER_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED1, IMMOVABLE];
 const BARBARIAN_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, IMMOVABLE];
 const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, VITALITY6];
-const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, WARDED];
+const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, SWIFT];
 const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, SWIFT];
 const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
 const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];
@@ -509,7 +509,7 @@ export const UNIT_DEFS = [
   { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: BARBARIAN_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
   { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing', 'pinning', 'longshot'],      passive_options: RANGER_PASSIVES,  unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
   { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate', 'dagger_toss', 'expose'], passive_options: ROGUE_PASSIVES,  unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
-  { slug: 'cleric',    name: 'Cleric',    max_health: 44, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: CLERIC_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
+  { slug: 'cleric',    name: 'Cleric',    max_health: 46, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: CLERIC_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
   { slug: 'wizard',    name: 'Wizard',    max_health: 34, armor_class: 16, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze', 'blizzard', 'cold_snap'],      passive_options: WIZARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
   { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 34, armor_class: 14, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh', 'flame_jet', 'ignite'],           passive_options: SORCERER_PASSIVES,  unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
   { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear', 'grasp', 'drain'],               passive_options: WARLOCK_PASSIVES,  unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
