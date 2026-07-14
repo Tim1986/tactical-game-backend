@@ -1,15 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
 import { query, withTransaction } from '../db/pool.js';
-import { MatchState, TurnAction, UnitInstance, BoardPosition, BOARD_WIDTH, BOARD_HEIGHT, InitiativeState } from '../types/matchState.js';
+import { MatchState, TurnAction, UnitInstance, BoardPosition } from '../types/matchState.js';
 import { AbilityDefinition, UnitDefinition } from '../types/index.js';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
+import { buildInitialState, buildUnitInstance, FABLE_PLAYER_ID, FABLE_HP_SCALE } from '../game/initialState.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
 import { logger } from '../utils/logger.js';
 import { notifyUser } from './notificationService.js';
 import { evaluateAchievements } from './achievementService.js';
 import { OptimalBrain } from '../ai/aiBrain.js';
 
-export const FABLE_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
+export { FABLE_PLAYER_ID };
 
 export class MatchNotFoundError extends Error { constructor() { super('Match not found'); this.name = 'MatchNotFoundError'; } }
 export class MatchAccessError extends Error { constructor() { super('You are not a participant in this match'); this.name = 'MatchAccessError'; } }
@@ -27,9 +27,7 @@ interface MatchRow {
 
 const fableBrain = new OptimalBrain();
 
-export type FableDifficulty = 'easy' | 'medium' | 'hard';
-
-const FABLE_HP_SCALE: Record<FableDifficulty, number> = { easy: 0.8, medium: 0.9, hard: 1.0 };
+export type FableDifficulty = keyof typeof FABLE_HP_SCALE;
 
 export async function createPveMatch(
   humanPlayerId: string,
@@ -67,73 +65,6 @@ export async function createMatch(playerOneId: string, playerTwoId: string, play
   const matchId = result.rows[0].id;
   logger.info({ matchId, playerOneId, playerTwoId }, 'Match created');
   return { matchId, state: initialState };
-}
-
-function buildInitialState(playerOneId: string, playerTwoId: string, p1Units: UnitDefinition[], p2Units: UnitDefinition[], p1Placement: BoardPosition[], p2Placement: BoardPosition[], forceFirstPlayerId?: string, p1Customizations?: import('../types/index.js').UnitCustomization[], p2Customizations?: import('../types/index.js').UnitCustomization[], fableHpScale = 1): MatchState {
-  // 8×8 diamond board (corners excluded): P1 zone x=0-2, P2 zone x=5-7
-  const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-  // Mirror P2 placement: team is saved as if they were P1 (left side), so flip x: newX = 7 - x
-  const p2Fallback: BoardPosition[] = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
-  const p1Positions = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
-  const p2Raw = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
-  // Mirror P2's saved positions to the right side of the board
-  const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
-  const units: UnitInstance[] = [
-    ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),
-    ...p2Units.map((def, i) => {
-      const inst = buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i]);
-      if (playerTwoId === FABLE_PLAYER_ID && fableHpScale < 1) {
-        const scaled = Math.max(1, Math.floor(inst.maxHealth * fableHpScale));
-        inst.maxHealth = scaled;
-        inst.currentHealth = scaled;
-      }
-      return inst;
-    }),
-  ];
-  const round1FirstPlayerId = forceFirstPlayerId ?? (Math.random() < 0.5 ? playerOneId : playerTwoId);
-  const initiative: InitiativeState = { order: [], slot: 0, round1FirstPlayerId, activeUnitId: null, isRound1: true };
-  return { board: { width: BOARD_WIDTH, height: BOARD_HEIGHT }, units, turnNumber: 1, roundNumber: 1, activePlayerId: round1FirstPlayerId, phase: 'action', initiative };
-}
-
-function buildUnitInstance(def: UnitDefinition, ownerId: string, position: BoardPosition, customization?: import('../types/index.js').UnitCustomization): UnitInstance {
-  // Apply chosen special: replace the default special slot with the player's pick.
-  const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
-  const specialSlug = customization?.specialSlug ?? def.specialOptions[0] ?? def.abilities[1];
-  const abilities = basicSlug && specialSlug ? [basicSlug, specialSlug] : def.abilities;
-
-  // Apply chosen passive: either a stat boost, or a behavioral flag appended
-  // to the instance's `passives` array (e.g. 'immovable' — read generically
-  // by abilityExecutor.ts's hasPassive() checks, unrelated to this switch).
-  const passive = customization?.passiveSlug
-    ? def.passiveOptions.find((p) => p.slug === customization.passiveSlug)
-    : undefined;
-  const maxHealth = def.maxHealth + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0);
-  const armorClass = (def.armorClass ?? 10) + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0);
-  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0);
-  const passives = passive?.passiveFlag ? [...def.passives, passive.passiveFlag] : def.passives;
-
-  const cooldowns: Record<string, number> = {};
-  for (const slug of abilities) cooldowns[slug] = 0;
-
-  // Warded passive: start the match shielded (the existing 'shielded' status
-  // is consumed by the first hit; 99 turns ≈ never expires on its own).
-  const instanceId = uuidv4();
-  const initialStatuses = passives.includes('warded')
-    ? [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: instanceId }]
-    : [];
-
-  return {
-    instanceId, definitionSlug: def.slug, ownerPlayerId: ownerId,
-    position, currentHealth: maxHealth, maxHealth,
-    armorClass, movementRange,
-    abilities, passives,
-    isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    // Fortune meter seeds at a random phase in [0,1): the long-run dodge rate
-    // is exactly AC-derived either way, but WHICH attack in the cycle misses
-    // is random per unit per match. Seeding at 0 made every game with the
-    // same comps play out identically (the meter is the only "dice" left).
-    cooldowns, statusEffects: initialStatuses, fortuneMeter: Math.random(),
-  };
 }
 
 export async function getMatch(matchId: string, requestingUserId: string): Promise<MatchRow> {
