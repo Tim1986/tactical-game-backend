@@ -244,14 +244,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'arrow',
     name: 'Arrow',
-    description: 'Deals 10 damage from up to 6 tiles away.',
+    description: 'Deals 11 damage from up to 6 tiles away.',
     targeting_type: 'single',
     range: 6,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: false,
-    effects: [{ type: 'damage', formula: 'flat', value: 10 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 11 }],
   },
   {
     slug: 'piercing',
@@ -431,9 +431,9 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Blizzard',
-    description: 'Deals 6 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
+    description: 'Deals 6 unblockable damage and freezes every unit (including allies) in a 3×3 area within 2 tiles for 1 turn.',
     targeting_type: 'aoe',
-    range: 3,
+    range: 2,
     area_radius: 1,
     cooldown_turns: 99,
     is_special: true,
@@ -498,7 +498,7 @@ const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Be
 const FIGHTER_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED1, IMMOVABLE];
 const BARBARIAN_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, IMMOVABLE];
 const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, VITALITY6];
-const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, IMMOVABLE, WARDED];
+const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, WARDED];
 const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, SWIFT];
 const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
 const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];
