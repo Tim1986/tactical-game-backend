@@ -16,8 +16,8 @@ export const ABILITY_DEFS = [
   // ── Barbarian ─────────────────────────────────────────────────────────────
   {
     slug: 'strike',
-    name: 'Strike',
-    description: 'A powerful melee blow. Deals 14 damage.',
+    name: 'Axe',
+    description: 'A powerful axe blow. Deals 14 damage.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -131,7 +131,7 @@ export const ABILITY_DEFS = [
   // ── Fighter ───────────────────────────────────────────────────────────────
   {
     slug: 'sword',
-    name: 'Strike',
+    name: 'Sword',
     description: 'A disciplined sword strike. Deals 11 damage.',
     targeting_type: 'single',
     range: 1,
@@ -296,8 +296,8 @@ export const ABILITY_DEFS = [
   // ── Sorcerer ──────────────────────────────────────────────────────────────
   {
     slug: 'bolt',
-    name: 'Arcane Bolt',
-    description: 'Deals 10 damage from up to 5 tiles away.',
+    name: 'Flame Blast',
+    description: 'Deals 10 fire damage from up to 5 tiles away.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -376,7 +376,7 @@ export const ABILITY_DEFS = [
   },
   {
     slug: 'grasp',
-    name: 'Eldritch Grasp',
+    name: 'Shadow Grasp',
     description: 'Deals 10 unblockable damage, pulls the enemy 3 tiles toward you (range 5), and roots them for 1 turn.',
     targeting_type: 'single',
     range: 5,
@@ -392,7 +392,7 @@ export const ABILITY_DEFS = [
   },
   {
     slug: 'drain',
-    name: 'Life Drain',
+    name: 'Essence Drain',
     description: 'Deals 10 unblockable damage from up to 4 tiles away and heals you for 6.',
     targeting_type: 'single',
     range: 4,
