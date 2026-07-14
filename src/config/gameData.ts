@@ -321,7 +321,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'flame_jet',
     name: 'Flame Jet',
-    description: 'Deals 14 unblockable damage to every unit in a straight line (including allies), up to 4 tiles.',
+    description: 'Deals 16 unblockable damage to every unit in a straight line (including allies), up to 4 tiles.',
     targeting_type: 'line',
     range: 4,
     area_radius: 0,

@@ -98,3 +98,15 @@ These were two guards for the same mechanic. The `'stunned'` slug has been remov
 - **DB migration `0014_rename_stunned_to_frozen.sql`** — ran on Railway; updated both `status_effect_definitions` and the freeze ability's effect JSON
 
 All 62 backend tests pass after the rename.
+
+## Methodology rule (added after the Fear/root engine bug, 2026-07)
+
+Balance sims measure the engine AS IMPLEMENTED — both sides share every engine
+bug, so win rates cannot detect "data/engine disagrees with the tooltip."
+Before tuning stats or AI weights in response to an underutilization finding:
+1. Rule out an engine defect first (trace the effect end-to-end in a unit test).
+2. tests/specConformance.test.ts must pass — it checks every ability's
+   description against its data (damage, durations, ranges, riders).
+3. Any "quirk" discovered in engine semantics gets a failing test + a fix, not
+   an AI model workaround. (The brain modeling the old tick-first quirk is how
+   a broken root became load-bearing.)
