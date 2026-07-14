@@ -74,14 +74,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'mace',
     name: 'Mace',
-    description: 'A heavy blow with a holy mace. Deals 10 damage.',
+    description: 'A heavy blow with a holy mace. Deals 12 damage.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: false,
-    effects: [{ type: 'damage', formula: 'flat', value: 10 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 12 }],
   },
   {
     slug: 'heal',
@@ -113,9 +113,9 @@ export const ABILITY_DEFS = [
   {
     slug: 'purify',
     name: 'Purify',
-    description: 'Cleanses frozen, rooted, and burning from an ally within 2 tiles, then heals them for 10.',
+    description: 'Cleanses frozen, rooted, and burning from an ally within 3 tiles, then heals them for 16.',
     targeting_type: 'single',
-    range: 2,
+    range: 3,
     area_radius: 0,
     cooldown_turns: 99,
     is_special: true,
@@ -124,7 +124,7 @@ export const ABILITY_DEFS = [
       { type: 'remove_status', statusSlug: 'frozen' },
       { type: 'remove_status', statusSlug: 'rooted' },
       { type: 'remove_status', statusSlug: 'burning' },
-      { type: 'heal', formula: 'flat', value: 10 },
+      { type: 'heal', formula: 'flat', value: 16 },
     ],
   },
 
@@ -188,7 +188,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'twin',
     name: 'Twin Strike',
-    description: 'Two rapid dagger strikes, 18 damage total.',
+    description: 'Two rapid dagger strikes, 16 damage total.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -196,8 +196,8 @@ export const ABILITY_DEFS = [
     is_special: false,
     is_unblockable: false,
     effects: [
-      { type: 'damage', formula: 'flat', value: 9 },
-      { type: 'damage', formula: 'flat', value: 9 },
+      { type: 'damage', formula: 'flat', value: 8 },
+      { type: 'damage', formula: 'flat', value: 8 },
     ],
   },
   {
@@ -309,14 +309,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'ffh',
     name: 'Firestorm',
-    description: 'Deals 13 unblockable damage to all units (including allies) in a 3×3 area centered on any tile within range 3.',
+    description: 'Deals 14 unblockable damage to all units (including allies) in a 3×3 area centered on any tile within range 4.',
     targeting_type: 'aoe',
-    range: 3,
+    range: 4,
     area_radius: 1,
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
-    effects: [{ type: 'damage', formula: 'flat', value: 13 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 14 }],
   },
   {
     slug: 'flame_jet',
@@ -431,15 +431,15 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Blizzard',
-    description: 'Deals 3 unblockable damage and freezes every unit (including allies) in a 3×3 area within 2 tiles for 1 turn.',
+    description: 'Deals 6 unblockable damage and freezes every unit (including allies) in a 3×3 area within 3 tiles for 1 turn.',
     targeting_type: 'aoe',
-    range: 2,
+    range: 3,
     area_radius: 1,
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 3 },
+      { type: 'damage', formula: 'flat', value: 6 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
@@ -497,9 +497,9 @@ const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Be
 
 const FIGHTER_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED1, IMMOVABLE];
 const BARBARIAN_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, IMMOVABLE];
-const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, WARDED];
+const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, VITALITY6];
 const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, IMMOVABLE, WARDED];
-const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, SWIFT];
+const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, SWIFT];
 const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
 const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];
 const SORCERER_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, WARDED];
@@ -509,7 +509,7 @@ export const UNIT_DEFS = [
   { slug: 'barbarian', name: 'Barbarian', max_health: 45, armor_class: 15, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: BARBARIAN_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
   { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 16, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing', 'pinning', 'longshot'],      passive_options: RANGER_PASSIVES,  unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
   { slug: 'rogue',     name: 'Rogue',     max_health: 35, armor_class: 13, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate', 'dagger_toss', 'expose'], passive_options: ROGUE_PASSIVES,  unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
-  { slug: 'cleric',    name: 'Cleric',    max_health: 40, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: CLERIC_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
+  { slug: 'cleric',    name: 'Cleric',    max_health: 44, armor_class: 16, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: CLERIC_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
   { slug: 'wizard',    name: 'Wizard',    max_health: 34, armor_class: 16, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze', 'blizzard', 'cold_snap'],      passive_options: WIZARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
   { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 34, armor_class: 14, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh', 'flame_jet', 'ignite'],           passive_options: SORCERER_PASSIVES,  unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
   { slug: 'warlock',   name: 'Warlock',   max_health: 32, armor_class: 15, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear', 'grasp', 'drain'],               passive_options: WARLOCK_PASSIVES,  unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
