@@ -1,0 +1,117 @@
+"use strict";
+/**
+ * placement.ts — Opening-placement planner for the AI brain.
+ *
+ * Placement is a real strategic layer, so the sim harness (and eventually
+ * Fable's PvE team setup) should not place randomly. The heuristic here is
+ * deliberately "moderately intelligent":
+ *
+ *  - Melee units go forward (x=2) near the vertical center; ranged units sit
+ *    in the middle column; healers/support hide in the back column.
+ *  - A defensive comp (no melee) naturally ends up hugging the backline.
+ *  - AoE denial: allies never start adjacent (Chebyshev 1 — a radius-1 blast
+ *    centered on either would clip both), and being within Chebyshev 2 is
+ *    mildly penalized (one blast placed between them can still hit both).
+ *
+ * The plan is deterministic for a given comp — game-to-game variance comes
+ * from the fortune meter's random phase, not from placement dice.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.planPlacement = planPlacement;
+exports.mirrorPlacement = mirrorPlacement;
+const matchState_js_1 = require("../types/matchState.js");
+const defaultData_js_1 = require("./defaultData.js");
+function classify(slug, abilityMap) {
+    const def = defaultData_js_1.DEFAULT_UNITS[slug];
+    if (!def)
+        return 'melee';
+    const abilities = def.abilities.map((s) => abilityMap.get(s)).filter(Boolean);
+    // Healer: any ability that heals someone other than the caster.
+    if (abilities.some((a) => a.targetingType !== 'self' && a.effects.some((e) => e.type === 'heal'))) {
+        return 'healer';
+    }
+    const basic = abilities.find((a) => !a.isSpecial) ?? abilities[0];
+    return (basic?.range ?? 1) <= 1 ? 'melee' : 'ranged';
+}
+/** All legal P1-zone tiles (x 0–2, four extreme corners excluded). */
+const ZONE = [];
+for (let x = 0; x <= 2; x++) {
+    for (let y = 0; y < matchState_js_1.BOARD_HEIGHT; y++) {
+        if ((x === 0 || x === matchState_js_1.BOARD_WIDTH - 1) && (y === 0 || y === matchState_js_1.BOARD_HEIGHT - 1))
+            continue;
+        ZONE.push({ x, y });
+    }
+}
+const COL_PREF = {
+    // score for x = 0, 1, 2
+    melee: [0, 15, 30],
+    ranged: [15, 20, -10],
+    // Heal is touch-range (1): the healer must START near its patients, one
+    // column behind the front — hiding in the back column wastes whole turns
+    // walking in. AoE-denial spacing (below) keeps it from hugging them.
+    healer: [10, 25, -5],
+};
+const CENTER_Y = (matchState_js_1.BOARD_HEIGHT - 1) / 2;
+function tileScore(role, tile, placed) {
+    let s = COL_PREF[role][tile.x];
+    // Melee want the center of the line (fastest to engage anywhere); ranged
+    // drift slightly toward the edges (harder to collapse on); healers stay
+    // central AND near already-placed allies — their patients.
+    const edgeDist = Math.abs(tile.y - CENTER_Y);
+    s += role === 'melee' ? -edgeDist * 2 : role === 'healer' ? -edgeDist * 1.5 : edgeDist * 1;
+    if (role === 'healer' && placed.length > 0) {
+        const nearest = Math.min(...placed.map((p) => Math.abs(p.x - tile.x) + Math.abs(p.y - tile.y)));
+        s -= nearest * 2;
+    }
+    // AoE denial: never adjacent to an already-placed ally; Chebyshev 2 is
+    // mildly discouraged too.
+    for (const p of placed) {
+        const cheb = Math.max(Math.abs(p.x - tile.x), Math.abs(p.y - tile.y));
+        if (cheb <= 1)
+            s -= 100;
+        else if (cheb === 2)
+            s -= 8;
+    }
+    return s;
+}
+/**
+ * Plan starting tiles for a team, in the P1 frame (x 0–2, parallel to
+ * `slugs`). Mirror with x → BOARD_WIDTH-1-x for the P2 side.
+ * `customizations` currently doesn't change roles (specials don't alter the
+ * basic attack) but is accepted so loadout-aware placement can evolve.
+ */
+function planPlacement(slugs, abilityMap, _customizations) {
+    const roles = slugs.map((s) => classify(s, abilityMap));
+    // Place melee first (they claim the contested forward tiles), then ranged,
+    // then healers; heavier melee first as a stable tie-break.
+    const order = slugs
+        .map((slug, i) => ({ i, role: roles[i], hp: defaultData_js_1.DEFAULT_UNITS[slug]?.maxHealth ?? 0 }))
+        .sort((a, b) => {
+        const rank = { melee: 0, ranged: 1, healer: 2 };
+        return rank[a.role] - rank[b.role] || b.hp - a.hp || a.i - b.i;
+    });
+    const placed = [];
+    const result = Array(slugs.length);
+    for (const { i, role } of order) {
+        let best = null;
+        let bestScore = -Infinity;
+        for (const tile of ZONE) {
+            if (placed.some((p) => p.x === tile.x && p.y === tile.y))
+                continue;
+            const s = tileScore(role, tile, placed);
+            if (s > bestScore) {
+                bestScore = s;
+                best = tile;
+            }
+        }
+        if (!best)
+            throw new Error('planPlacement: zone exhausted');
+        placed.push(best);
+        result[i] = best;
+    }
+    return result;
+}
+function mirrorPlacement(placement) {
+    return placement.map((p) => ({ x: matchState_js_1.BOARD_WIDTH - 1 - p.x, y: p.y }));
+}
+//# sourceMappingURL=placement.js.map

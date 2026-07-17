@@ -7,13 +7,7 @@ import { sendSuccess, Errors } from '../utils/response.js';
 export const matchRouter = Router();
 matchRouter.use(requireAuth);
 
-const BoardPositionSchema = z.object({ x: z.number().int().min(0).max(7), y: z.number().int().min(0).max(7) });
-const MoveActionSchema = z.object({ type: z.literal('MOVE'), unitInstanceId: z.string().uuid(), destination: BoardPositionSchema });
-const UseAbilityActionSchema = z.object({ type: z.literal('USE_ABILITY'), unitInstanceId: z.string().uuid(), abilitySlug: z.string().min(1), target: BoardPositionSchema });
-const EndTurnActionSchema = z.object({ type: z.literal('END_TURN') });
-const ChargeActionSchema = z.object({ type: z.literal('CHARGE'), unitInstanceId: z.string().uuid(), destination: BoardPositionSchema });
-const TurnActionSchema = z.discriminatedUnion('type', [MoveActionSchema, ChargeActionSchema, UseAbilityActionSchema, EndTurnActionSchema]);
-const SubmitTurnSchema = z.object({ actions: z.array(TurnActionSchema).min(1).max(10) });
+import { SubmitTurnSchema } from './turnActionSchema.js';
 
 matchRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   const matches = await matchService.getUserMatches(req.user!.id);
