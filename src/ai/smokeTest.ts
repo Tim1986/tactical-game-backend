@@ -195,7 +195,7 @@ function check(name: string, cond: boolean, detail?: string) {
 // V2 regression tests (FABLE_AI_FEEDBACK_V2)
 // ===========================================================================
 
-import { reachableTiles } from './geometry';
+import { reachableTiles, samePos } from './geometry';
 
 // --- Test 9 (Bug 3): enemies block movement — cornered unit cannot escape ---
 {
@@ -391,15 +391,23 @@ import { DEFAULT_ABILITIES } from './defaultData';
     JSON.stringify(actions));
 }
 
-// --- Test 24 (V4): rooted(>=2) melee with no target genuinely cannot commit ---
+// --- Test 24 (V4, updated for group 1b2): rooted(>=2) melee with no target
+// commits via a zero-distance "hold position" MOVE — legal while rooted (see
+// processMove) and strictly better than bare END_TURN (which relies on the
+// harness/server pre-flight) or burning a special into empty air.
 {
   const barb = mkUnit('barbarian', 'p1', { x: 0, y: 3 });
   barb.statusEffects.push({ slug: 'rooted', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'w' });
   const w1 = mkUnit('warlock', 'p2', { x: 6, y: 2 });
   const state = mkState([barb, w1], null, true);
   const actions = brain.selectActions(state, 'p1', map);
-  check('V4: rooted(2) melee w/o targets returns END_TURN (pre-flight case)',
-    actions.length === 1 && actions[0].type === 'END_TURN',
+  const holdMove = actions.find((a) => a.type === 'MOVE');
+  check('V4: rooted(2) melee w/o targets commits via zero-distance hold MOVE',
+    actions.length === 2 &&
+      holdMove?.type === 'MOVE' &&
+      holdMove.unitInstanceId === barb.instanceId &&
+      samePos(holdMove.destination, barb.position) &&
+      actions[1].type === 'END_TURN',
     JSON.stringify(actions));
 }
 

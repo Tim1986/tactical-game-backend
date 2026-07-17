@@ -178,6 +178,40 @@ export const WEIGHTS = {
   aoeClusterAvoidance: 0.3,
   /** How much the brain cares about standing in enemy threat range. */
   danger: 0.35,
+  /**
+   * FIRST-STRIKE MODEL (v8): extra danger multiplier on plans that end inside
+   * enemy threat range WITHOUT attacking (a gifted first hit).
+   *
+   * SHIPPED AT 1.0 (DORMANT) — A/B sims (240 games/cell, new-vs-old, mirror
+   * comps incl. 2rogue+2ranger, plus a turtle-proxy opponent) showed every
+   * value above 1 LOSES: 3.0 dropped mirror win rate to ~33% and even
+   * underperformed against the turtle. Caution at the reach boundary cedes
+   * board space and tempo; the aggressor picks where to concentrate. The
+   * anti-bait work is done by unsupportedDangerMult instead. Knob + round
+   * decay kept for future tuning against real human data.
+   */
+  firstStrikeDangerMult: 1.0,
+  /** Round at which the first-strike multiplier starts fading toward 1 —
+   *  someone has to blink or mirror matches stall forever. */
+  firstStrikeDecayStartRound: 8,
+  /** Round at which the first-strike multiplier reaches 1 (base danger). */
+  firstStrikeDecayEndRound: 14,
+  /**
+   * COORDINATED ADVANCE (v8): danger multiplier when NO living ally is within
+   * supportRadius of the evaluated tile. A lone unit inside enemy threat
+   * range is the overextension a waiting player collapses on ("let the AI
+   * come to you piecemeal" — the Gloomhaven bait). With a teammate in
+   * support range the same tile is a front line, at base danger.
+   *
+   * TUNING (A/B sims): us=2.0 + supportRadius 6 beats a turtle-proxy 66-88%
+   * across comps with NO regression vs the old aggressive brain (~50%
+   * mirrors). Radius 4 was too tight for melee trains (fighter engaging with
+   * backline 5-6 behind is supported in practice — allies arrive next turn)
+   * and cost 14 points in the physical mirror.
+   */
+  unsupportedDangerMult: 2.0,
+  /** Manhattan radius within which an ally counts as supporting a tile. */
+  supportRadius: 6,
   /** Danger multiplier when the incoming expected damage could kill us. */
   dangerLethalMult: 2.2,
   /** Pull toward closing the gap to attackable targets (per tile of gap). */
@@ -1188,6 +1222,17 @@ function dangerAt(
   return mx + (remaining.reduce((s, v) => s + v, 0) - mx) * WEIGHTS.dangerSecondary;
 }
 
+/** First-strike danger multiplier, fading to 1 late-game (see WEIGHTS). */
+function firstStrikeMultFor(state: MatchState): number {
+  const r = state.roundNumber;
+  const start = WEIGHTS.firstStrikeDecayStartRound;
+  const end = WEIGHTS.firstStrikeDecayEndRound;
+  const m = WEIGHTS.firstStrikeDangerMult;
+  if (r <= start) return m;
+  if (r >= end) return 1;
+  return 1 + ((m - 1) * (end - r)) / (end - start);
+}
+
 function positionScore(
   state: MatchState,
   unit: UnitInstance,
@@ -1195,6 +1240,9 @@ function positionScore(
   myPlayerId: string,
   map: Map<string, AbilityDefinition>,
   dangerScale = 1,
+  /** Does the plan being scored deal damage to an enemy this turn? Ending in
+   *  enemy reach without attacking is penalized as a gifted first strike. */
+  attacking = false,
 ): number {
   const enemies = state.units.filter(
     (u) => u.isAlive && u.ownerPlayerId !== myPlayerId,
@@ -1207,12 +1255,28 @@ function positionScore(
   // no reachable tile is meaningfully safer than any other).
   if (dangerScale > 0) {
     const danger = dangerAt(state, unit, pos, myPlayerId, map);
-    const lethal = danger >= unit.currentHealth;
-    s -=
-      dangerScale *
-      danger *
-      WEIGHTS.danger *
-      (lethal ? WEIGHTS.dangerLethalMult : 1);
+    if (danger > 0) {
+      const lethal = danger >= unit.currentHealth;
+      let mult = 1;
+      // FIRST-STRIKE (v8): in reach without swinging = the enemy hits first.
+      if (!attacking) mult *= firstStrikeMultFor(state);
+      // COORDINATED ADVANCE (v8): a lone unit in threat range is the
+      // overextension the enemy team collapses on.
+      const supported = state.units.some(
+        (u) =>
+          u.isAlive &&
+          u.instanceId !== unit.instanceId &&
+          u.ownerPlayerId === myPlayerId &&
+          manhattanDistance(u.position, pos) <= WEIGHTS.supportRadius,
+      );
+      if (!supported) mult *= WEIGHTS.unsupportedDangerMult;
+      s -=
+        dangerScale *
+        danger *
+        WEIGHTS.danger *
+        mult *
+        (lethal ? WEIGHTS.dangerLethalMult : 1);
+    }
   }
 
   // Approach: shrink the gap to the most attractive target for our basic
@@ -1324,8 +1388,17 @@ export function planBestTurn(
     if (hi - lo < WEIGHTS.corneredDangerSpread) dangerScale = 0;
   }
 
-  const pScore = (pos: BoardPosition) =>
-    positionScore(state, unit, pos, myPlayerId, map, dangerScale);
+  const pScore = (pos: BoardPosition, attacking = false) =>
+    positionScore(state, unit, pos, myPlayerId, map, dangerScale, attacking);
+
+  /** Does this candidate action deal damage to an enemy? (Heals/buffs from
+   *  inside enemy reach still gift the first strike — only real offense
+   *  earns the trade discount on danger.) */
+  const isOffensive = (a: TurnAction): boolean => {
+    if (a.type !== 'USE_ABILITY') return false;
+    const def = map.get(a.abilitySlug);
+    return !!def?.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+  };
 
   const END: TurnAction = { type: 'END_TURN' };
   let best: TurnPlan = { score: -Infinity, actions: [END] };
@@ -1346,14 +1419,23 @@ export function planBestTurn(
     ]);
   }
 
-  // Precompute the best retreat tile (for act-then-move / hit-and-run).
-  let bestRetreat: BoardPosition | null = null;
-  let bestRetreatScore = -Infinity;
+  // Precompute the best retreat tile (for act-then-move / hit-and-run), in
+  // both flavors: after an offensive act (base danger — we traded) and after
+  // a non-offensive one (first-strike danger still applies at the end tile).
+  let bestRetreatAtk: BoardPosition | null = null;
+  let bestRetreatAtkScore = -Infinity;
+  let bestRetreatIdle: BoardPosition | null = null;
+  let bestRetreatIdleScore = -Infinity;
   for (const pos of moveTiles) {
-    const ps = pScore(pos);
-    if (ps > bestRetreatScore) {
-      bestRetreatScore = ps;
-      bestRetreat = pos;
+    const psAtk = pScore(pos, true);
+    if (psAtk > bestRetreatAtkScore) {
+      bestRetreatAtkScore = psAtk;
+      bestRetreatAtk = pos;
+    }
+    const psIdle = pScore(pos, false);
+    if (psIdle > bestRetreatIdleScore) {
+      bestRetreatIdleScore = psIdle;
+      bestRetreatIdle = pos;
     }
   }
 
@@ -1368,15 +1450,16 @@ export function planBestTurn(
     enemyKillThreshold,
   };
   for (const cand of enumerateAbilityActions(ctxHere)) {
-    consider(cand.score + pScore(unit.position), [cand.action, END]);
+    const off = isOffensive(cand.action);
+    consider(cand.score + pScore(unit.position, off), [cand.action, END]);
 
     // Retreat after acting. If the ability DISPLACES a unit (push/pull —
     // Fear, Rescue), the board changes before our MOVE executes: the
     // displaced unit can occupy the precomputed retreat tile or block its
     // path (this produced real "Destination is not reachable" engine
     // rejections). Recompute the retreat against the post-ability board.
-    let retreat = bestRetreat;
-    let retreatScore = bestRetreatScore;
+    let retreat = off ? bestRetreatAtk : bestRetreatIdle;
+    let retreatScore = off ? bestRetreatAtkScore : bestRetreatIdleScore;
     const act = cand.action.type === 'USE_ABILITY' ? cand.action : null;
     const candDef = act ? map.get(act.abilitySlug) : undefined;
     const dispEffect = candDef?.effects.find(
@@ -1415,7 +1498,7 @@ export function planBestTurn(
         retreat = null;
         retreatScore = -Infinity;
         for (const pos of validTiles) {
-          const ps = pScore(pos);
+          const ps = pScore(pos, off);
           if (ps > retreatScore) { retreatScore = ps; retreat = pos; }
         }
       }
@@ -1431,7 +1514,8 @@ export function planBestTurn(
 
   // 4. Move, then act.
   for (const pos of moveTiles) {
-    const ps = pScore(pos) - WEIGHTS.moveTax;
+    const psAtk = pScore(pos, true) - WEIGHTS.moveTax;
+    const psIdle = pScore(pos, false) - WEIGHTS.moveTax;
     const ctx: ScoreCtx = {
       state,
       map,
@@ -1442,7 +1526,7 @@ export function planBestTurn(
       enemyKillThreshold,
     };
     for (const cand of enumerateAbilityActions(ctx)) {
-      consider(cand.score + ps, [
+      consider(cand.score + (isOffensive(cand.action) ? psAtk : psIdle), [
         { type: 'MOVE', unitInstanceId: unit.instanceId, destination: pos },
         cand.action,
         END,
