@@ -213,6 +213,9 @@ export function processTurn(
     }
   }
 
+  // Capture start-of-turn position for endgame drain comparison (round 11+)
+  const startPos = { ...actingUnit.position };
+
   // ── Process actions ──────────────────────────────────────────────────────
   let matchOver = false;
   let winnerId: string | null = null;
@@ -276,9 +279,27 @@ export function processTurn(
         ws.turnNumber += next.skippedSlots;
       }
 
+      const prevRound = ws.roundNumber;
       ws.turnNumber++;
       ws.roundNumber = roundFromTurn(ws.turnNumber);
       events.push({ type: 'TURN_ENDED' });
+
+      // ── Endgame: announce start of round 11, then apply drain ─────────────
+      if (ws.roundNumber >= 11 && prevRound < 11) {
+        events.push({ type: 'ENDGAME_STARTED', message: 'Endgame — units that end their turn farther from their nearest enemy take 1 damage.' });
+      }
+      if (ws.roundNumber >= 11 && !isRound1 && actingUnit.isAlive && !forcedCommit) {
+        const enemies = ws.units.filter((u) => u.isAlive && u.ownerPlayerId !== actingUnit!.ownerPlayerId);
+        if (enemies.length > 0) {
+          const distBefore = Math.min(...enemies.map((e) => manhattanDistance(startPos, e.position)));
+          const distAfter  = Math.min(...enemies.map((e) => manhattanDistance(actingUnit!.position, e.position)));
+          if (distAfter > distBefore) {
+            actingUnit.currentHealth = Math.max(0, actingUnit.currentHealth - 1);
+            if (actingUnit.currentHealth === 0) actingUnit.isAlive = false;
+            events.push({ type: 'ENDGAME_DRAIN', sourceUnitInstanceId: actingUnit.instanceId, targetUnitInstanceId: actingUnit.instanceId, value: 1, message: 'Retreated — 1 drain' });
+          }
+        }
+      }
 
       // A skipped slot's status tick (advanceSlot ticks frozen units, which
       // now includes burning DoT) can end the match without any MOVE/CHARGE/
@@ -320,7 +341,6 @@ function validateActionSequence(actions: TurnAction[]): void {
 
 function processCharge(state: MatchState, action: ChargeAction, playerId: string, events: GameEvent[]): void {
   const unit = findAndValidateUnit(state, action.unitInstanceId, playerId);
-  if ((state.roundNumber ?? 1) > 10) throw new TurnValidationError('Charge is only available in the first 10 rounds');
   if (unit.hasActedThisTurn) throw new TurnValidationError('Unit has already used its action this turn');
   if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   if (unit.statusEffects.some((se) => se.slug === 'rooted')) throw new TurnValidationError('Unit is rooted and cannot move');

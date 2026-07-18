@@ -44,7 +44,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'TRN-4', text: 'On its turn a unit may move once and use one ability, in either order. Both are optional.' },
       { id: 'TRN-5', text: 'A dead unit’s initiative slot is skipped.' },
       { id: 'TRN-6', text: 'A frozen unit’s initiative slot is skipped entirely — it neither moves nor acts. Burning damage and status durations still tick on the skipped turn.' },
-      { id: 'TRN-7', text: 'Charge: instead of using an ability, a unit may move a second time (up to its full movement). Charge follows all normal movement rules, can be used at most once per turn, and is only available during the first 10 rounds.' },
+      { id: 'TRN-7', text: 'Charge: instead of using an ability, a unit may move a second time (up to its full movement). Charge follows all normal movement rules and can be used at most once per turn.' },
     ],
   },
   {
@@ -106,6 +106,15 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'PAS-3', text: 'Swift: +1 movement.' },
       { id: 'PAS-4', text: 'Immovable: +6 maximum health, and the unit can never be pushed or pulled.' },
       { id: 'PAS-5', text: 'Warded: the unit starts the match with a shield that negates the first hit against it.' },
+    ],
+  },
+  {
+    id: 'END',
+    title: 'Endgame',
+    rules: [
+      { id: 'END-1', text: 'Starting in round 11, the match enters Endgame. A warning is announced at the start of round 11.' },
+      { id: 'END-2', text: 'In Endgame, any unit that ends its turn farther from its nearest enemy than when its turn started takes 1 damage. Holding position or advancing is safe; retreating costs HP.' },
+      { id: 'END-3', text: 'Distance is measured in Manhattan steps (orthogonal only). Diagonal movement that increases the Manhattan distance counts as retreating.' },
     ],
   },
   {

@@ -240,7 +240,7 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'TRN-7', name: 'charge is a second move as the action: once per turn, first 10 rounds only, normal movement rules',
+    rule: 'TRN-7', name: 'charge is a second move as the action: once per turn, normal movement rules, available all rounds',
     run: () => {
       const a = mkUnit(P1, 1, 1);
       const b = mkUnit(P2, 7, 6);
@@ -258,13 +258,15 @@ export const RULE_CHECKS: RuleCheck[] = [
         { type: 'END_TURN' },
       ], P1, P1, P2, new Map()), 'once', 'two charges in one turn must be rejected');
 
-      const late = mkLegacyState([mkUnit(P1, 1, 1), mkUnit(P2, 7, 6)]);
-      (late as { roundNumber: number }).roundNumber = 11;
-      const lateUnit = late.units[0];
-      assertThrows(() => processTurn(late, [
-        { type: 'CHARGE', unitInstanceId: lateUnit.instanceId, destination: { x: 2, y: 1 } },
+      // charge is available in round 11 (no longer restricted to first 10 rounds)
+      const a2 = mkUnit(P1, 1, 1); const b2 = mkUnit(P2, 7, 6);
+      const late = mkInitiativeState([a2, b2], [a2.instanceId, b2.instanceId], 0);
+      (late as any).roundNumber = 11; (late as any).turnNumber = 81;
+      const lateOk = processTurn(late, [
+        { type: 'CHARGE', unitInstanceId: a2.instanceId, destination: { x: 2, y: 1 } },
         { type: 'END_TURN' },
-      ], P1, P1, P2, new Map()), '10 rounds', 'charge after round 10 must be rejected');
+      ], P1, P1, P2, new Map());
+      assert(lateOk.updatedState.units.find(u => u.instanceId === a2.instanceId)!.position.x === 2, 'charge must be allowed in round 11');
 
       // charge respects enemy blocking like a normal move
       const walled = mkUnit(P1, 0, 3, { movementRange: 2 });
@@ -753,6 +755,73 @@ export const RULE_CHECKS: RuleCheck[] = [
   },
 
   // ── WIN ────────────────────────────────────────────────────────────────────
+  // ── END ───────────────────────────────────────────────────────────────────
+  {
+    rule: 'END-1', name: 'round 11 emits ENDGAME_STARTED announcement',
+    run: () => {
+      const a = mkUnit(P1, 1, 1); const b = mkUnit(P2, 7, 6);
+      // Set to last turn of round 10 so next END_TURN crosses into round 11
+      const state = mkInitiativeState([a, b], [a.instanceId, b.instanceId], 0);
+      (state as any).roundNumber = 10; (state as any).turnNumber = 80;
+      const r = processTurn(state, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
+      const announced = r.events.some((e) => e.type === 'ENDGAME_STARTED');
+      assert(announced, 'ENDGAME_STARTED must be emitted when round transitions to 11');
+      // Must not emit again on subsequent round-11 turns
+      const r2 = processTurn(r.updatedState, [{ type: 'END_TURN' }], P2, P1, P2, new Map());
+      assert(!r2.events.some((e) => e.type === 'ENDGAME_STARTED'), 'ENDGAME_STARTED must not repeat on subsequent turns');
+    },
+  },
+  {
+    rule: 'END-2', name: 'retreating in round 11+ costs 1 HP; holding or advancing is free',
+    run: () => {
+      // Attacker starts at (1,1), enemy at (7,1) — distance 6
+      const a = mkUnit(P1, 1, 1, { currentHealth: 20 }); const b = mkUnit(P2, 7, 1);
+      const state = mkInitiativeState([a, b], [a.instanceId, b.instanceId], 0);
+      (state as any).roundNumber = 11; (state as any).turnNumber = 81;
+
+      // Retreat (move away from enemy): (1,1) → (1,0), distance 7 > 6 → drain
+      const retreatState = JSON.parse(JSON.stringify(state));
+      const r = processTurn(retreatState, [
+        { type: 'MOVE', unitInstanceId: a.instanceId, destination: { x: 1, y: 0 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, new Map());
+      const afterRetreat = r.updatedState.units.find(u => u.instanceId === a.instanceId)!;
+      assert(afterRetreat.currentHealth === 19, 'retreating must cost 1 HP');
+      assert(r.events.some(e => e.type === 'ENDGAME_DRAIN'), 'ENDGAME_DRAIN event must be emitted');
+
+      // Advance (move toward enemy): (1,1) → (2,1), distance 5 < 6 → no drain
+      const advanceState = JSON.parse(JSON.stringify(state));
+      const r2 = processTurn(advanceState, [
+        { type: 'MOVE', unitInstanceId: a.instanceId, destination: { x: 2, y: 1 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, new Map());
+      const afterAdvance = r2.updatedState.units.find(u => u.instanceId === a.instanceId)!;
+      assert(afterAdvance.currentHealth === 20, 'advancing must not drain');
+
+      // Hold position (no move): distance unchanged → no drain
+      const holdState = JSON.parse(JSON.stringify(state));
+      const r3 = processTurn(holdState, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
+      const afterHold = r3.updatedState.units.find(u => u.instanceId === a.instanceId)!;
+      assert(afterHold.currentHealth === 20, 'holding position must not drain');
+    },
+  },
+  {
+    rule: 'END-3', name: 'drain uses Manhattan distance; no drain before round 11',
+    run: () => {
+      const a = mkUnit(P1, 1, 1, { currentHealth: 20 }); const b = mkUnit(P2, 7, 1);
+      const state = mkInitiativeState([a, b], [a.instanceId, b.instanceId], 0);
+      (state as any).roundNumber = 10; (state as any).turnNumber = 79;
+
+      // Move away in round 10 — must NOT drain
+      const r = processTurn(JSON.parse(JSON.stringify(state)), [
+        { type: 'MOVE', unitInstanceId: a.instanceId, destination: { x: 1, y: 0 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, new Map());
+      const after = r.updatedState.units.find(u => u.instanceId === a.instanceId)!;
+      assert(after.currentHealth === 20, 'drain must not apply before round 11');
+    },
+  },
+
   {
     rule: 'WIN-1', name: 'a player loses when all their units are defeated',
     run: () => {
