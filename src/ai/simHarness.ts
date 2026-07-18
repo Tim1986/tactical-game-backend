@@ -140,9 +140,11 @@ function buildMatchState(
   p2Customizations?: (UnitCustomization | undefined)[],
   rng?: () => number,
 ): MatchState {
-  // Fortune meters seed at a random phase (matches the live engine's
-  // Math.random() — see matchService.buildUnitInstance). A seeded rng keeps
-  // sim runs reproducible; rng omitted = phase 0 (legacy fully-deterministic).
+  // Fortune meters seed at a random phase. NOTE: the live engine now starts
+  // meters at 0 ("current dodge starts at base dodge"), making real matches
+  // deterministic — sims keep the random phase as a stand-in for the variance
+  // human play introduces. A seeded rng keeps runs reproducible; rng omitted
+  // = phase 0 (fully deterministic).
   const units: UnitInstance[] = [
     ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i], rng ? rng() : 0)),
     ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i], rng ? rng() : 0)),
@@ -302,6 +304,14 @@ export interface MatchOptions {
   rng?: () => number;
   /** Called on every recovered validation error (for logging/diagnosis). */
   onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
+  /**
+   * Fully custom initial state (campaign encounters: custom instances, uneven
+   * teams, absolute placements). When present, slugs/placements/customizations
+   * are ignored for state building (slugs still label stats) and the legal-comp
+   * check is skipped — campaign encounters aren't player-buildable teams.
+   * Must set round1FirstPlayerId to forceFirstPlayerId when provided.
+   */
+  stateFactory?: (forceFirstPlayerId?: string) => MatchState;
 }
 
 // ─── Placement sampling ───────────────────────────────────────────────────────
@@ -369,23 +379,27 @@ export function runMatch(
   brain2: AIBrain,
   options: MatchOptions = {},
 ): MatchResult {
-  assertLegalComp(p1Slugs, 'p1');
-  assertLegalComp(p2Slugs, 'p2');
+  if (!options.stateFactory) {
+    assertLegalComp(p1Slugs, 'p1');
+    assertLegalComp(p2Slugs, 'p2');
+  }
   const p1Id = options.p1Id ?? 'p1';
   const p2Id = options.p2Id ?? 'p2';
   abilityMap = normalizeAbilityMap(abilityMap);
-  let state = buildMatchState(
-    p1Id,
-    p2Id,
-    p1Slugs,
-    p2Slugs,
-    options.p1Placement ?? DEFAULT_P1_PLACEMENT,
-    options.p2Placement ?? DEFAULT_P2_PLACEMENT,
-    options.forceFirstPlayerId,
-    options.p1Customizations,
-    options.p2Customizations,
-    options.rng,
-  );
+  let state = options.stateFactory
+    ? options.stateFactory(options.forceFirstPlayerId)
+    : buildMatchState(
+      p1Id,
+      p2Id,
+      p1Slugs,
+      p2Slugs,
+      options.p1Placement ?? DEFAULT_P1_PLACEMENT,
+      options.p2Placement ?? DEFAULT_P2_PLACEMENT,
+      options.forceFirstPlayerId,
+      options.p1Customizations,
+      options.p2Customizations,
+      options.rng,
+    );
   const firstPlayerId = state.initiative.round1FirstPlayerId;
   let turns = 0;
   let validationErrors = 0;
