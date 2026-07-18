@@ -487,8 +487,8 @@ export interface PassiveOption {
 // classes, hence the +1/+2 hardened split.
 const VITALITY8: PassiveOption = { slug: 'vitality', name: 'Vitality', description: '+8 max health.', stat: 'maxHealth', value: 8 };
 const VITALITY6: PassiveOption = { slug: 'vitality', name: 'Vitality', description: '+6 max health.', stat: 'maxHealth', value: 6 };
-const HARDENED2: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+2 armor class.', stat: 'armorClass', value: 2 };
-const HARDENED1: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+1 armor class.', stat: 'armorClass', value: 1 };
+const HARDENED2: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+10% dodge chance.', stat: 'armorClass', value: 2 };
+const HARDENED1: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+5% dodge chance.', stat: 'armorClass', value: 1 };
 const SWIFT: PassiveOption = { slug: 'swift', name: 'Swift', description: '+1 movement range.', stat: 'movementRange', value: 1 };
 const IMMOVABLE: PassiveOption = { slug: 'immovable', name: 'Immovable', description: '+6 max health. Cannot be pushed or pulled.', stat: 'maxHealth', value: 6, passiveFlag: 'immovable' };
 // Warded: implemented at match build — units with the 'warded' flag start
