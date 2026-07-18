@@ -180,6 +180,63 @@ export function reachableFrom(
   return out;
 }
 
+/**
+ * Step-by-step path from `fromPos` to `to` under the SAME movement rules as
+ * reachableFrom (orthogonal steps; allies passable, enemies hard-block,
+ * corners/out-of-bounds block). Returns the tile sequence EXCLUDING the start
+ * tile, or null if no legal path exists. This is the one true path used for
+ * both validation-adjacent planning and the client's movement animation — the
+ * UI must never re-implement its own pathing.
+ */
+export function findPath(
+  fromPos: BoardPosition,
+  to: BoardPosition,
+  unit: UnitInstance,
+  allUnits: UnitInstance[],
+): BoardPosition[] | null {
+  if (samePos(fromPos, to)) return [];
+  const key = (p: BoardPosition) => p.x * BOARD_SIZE + p.y;
+  const visited = new Set<number>([key(fromPos)]);
+  const parent = new Map<number, BoardPosition>();
+  let frontier: BoardPosition[] = [fromPos];
+
+  while (frontier.length > 0) {
+    const next: BoardPosition[] = [];
+    for (const pos of frontier) {
+      for (const [dx, dy] of MOVE_DIRECTIONS) {
+        const n = { x: pos.x + dx, y: pos.y + dy };
+        if (!isInBounds(n)) continue;
+        const k = key(n);
+        if (visited.has(k)) continue;
+        visited.add(k);
+
+        const occupant = allUnits.find(
+          (u) =>
+            u.isAlive &&
+            u.instanceId !== unit.instanceId &&
+            samePos(u.position, n),
+        );
+        // Enemy tile: hard block — never on a path.
+        if (occupant && occupant.ownerPlayerId !== unit.ownerPlayerId) continue;
+
+        parent.set(k, pos);
+        if (samePos(n, to)) {
+          const path: BoardPosition[] = [];
+          let node: BoardPosition = n;
+          while (!samePos(node, fromPos)) {
+            path.unshift(node);
+            node = parent.get(key(node))!;
+          }
+          return path;
+        }
+        next.push(n);
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
 /** Reachable tiles from the unit's current position. */
 export function reachableTiles(
   unit: UnitInstance,
