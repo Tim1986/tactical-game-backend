@@ -7,7 +7,7 @@ import {
   LifestealEffect,
 } from '../types/index.js';
 import {
-  getUnitsInRadius, getLineTiles, calculatePushDestination,
+  getUnitsInRadius, getOrthogonalAdjacentUnits, getLineTiles, calculatePushDestination,
   calculatePullDestination, getUnitAtPosition, isInBounds,
 } from './boardUtils.js';
 
@@ -125,7 +125,9 @@ function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
     case 'self': return [caster];
     case 'aoe': {
       const center = ability.range === 0 ? caster.position : targetPosition;
-      let hits = getUnitsInRadius(center, ability.areaRadius, aliveUnits);
+      let hits = ability.areaShape === 'orthogonal'
+        ? getOrthogonalAdjacentUnits(center, aliveUnits)
+        : getUnitsInRadius(center, ability.areaRadius, aliveUnits);
       if (ability.range === 0) hits = hits.filter((u) => u.instanceId !== caster.instanceId);
       if (ability.excludeAllies) hits = hits.filter((u) => u.ownerPlayerId !== caster.ownerPlayerId);
       return hits;
@@ -162,9 +164,11 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;
   }
+  const isExecute = effect.healthThreshold !== undefined;
   const damage = weakenedAdjustedDamage(ctx, effect.value);
+  const actualDamage = Math.min(target.currentHealth, damage);
   target.currentHealth = Math.max(0, target.currentHealth - damage);
-  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
+  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actualDamage, message: isExecute ? 'Executed' : `${actualDamage} damage` });
   if (target.currentHealth <= 0) {
     target.isAlive = false;
     ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });

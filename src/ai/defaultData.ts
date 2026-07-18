@@ -16,7 +16,7 @@ export const DEFAULT_ABILITIES: AbilityDefinition[] = ABILITY_DEFS.map((a) => ({
   id:            a.slug,
   slug:          a.slug,
   name:          a.name,
-  description:   '',
+  description:   a.description,
   targetingType: a.targeting_type as AbilityDefinition['targetingType'],
   range:         a.range,
   areaRadius:    a.area_radius,
@@ -24,6 +24,7 @@ export const DEFAULT_ABILITIES: AbilityDefinition[] = ABILITY_DEFS.map((a) => ({
   isSpecial:     a.is_special,
   isUnblockable: a.is_unblockable,
   excludeAllies: (a as typeof a & { exclude_allies?: boolean }).exclude_allies ?? false,
+  areaShape:     (a as typeof a & { area_shape?: 'chebyshev' | 'orthogonal' }).area_shape ?? 'chebyshev',
   effects:       a.effects as unknown as AbilityDefinition['effects'],
 }));
 

@@ -33,6 +33,7 @@ export const ABILITY_DEFS = [
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
+    area_shape: 'orthogonal',
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: false,
@@ -45,6 +46,7 @@ export const ABILITY_DEFS = [
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
+    area_shape: 'orthogonal',
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
@@ -502,7 +504,7 @@ const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, VITALITY6];
 const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, SWIFT];
 const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, SWIFT];
 const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
-const WIZARD_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, IMMOVABLE];
+const WIZARD_PASSIVES: PassiveOption[] = [WARDED, HARDENED2, IMMOVABLE];
 const SORCERER_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, WARDED];
 
 export const UNIT_DEFS = [

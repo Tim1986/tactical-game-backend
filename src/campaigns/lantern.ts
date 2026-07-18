@@ -3,7 +3,7 @@
  *
  * Short teaser (5 encounters, 1 fork) demonstrating what campaigns are:
  * story, choices, progression from bare basics to specials, and encounter
- * design you can't get in the arena — a pincer ambush, a fast wolf swarm,
+ * design you can't get in the arena — a pincer ambush, a scrapper swarm,
  * a chokepoint brute, and a boss with a healer.
  */
 import { CampaignDefinition } from './types.js';

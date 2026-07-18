@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as authService from '../services/authService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sendSuccess, sendError, Errors } from '../utils/response.js';
+import { config } from '../config/index.js';
 
 export const authRouter = Router();
 
@@ -101,6 +102,18 @@ authRouter.post('/refresh', async (req: Request, res: Response): Promise<void> =
     }
     throw err;
   }
+});
+
+// ---------------------------------------------------------------
+// POST /auth/dev-login  (development only — no password required)
+// ---------------------------------------------------------------
+authRouter.post('/dev-login', async (req: Request, res: Response): Promise<void> => {
+  if (!config.isDevelopment) {
+    Errors.notFound(res);
+    return;
+  }
+  const result = await authService.devLogin();
+  sendSuccess(res, result);
 });
 
 // ---------------------------------------------------------------

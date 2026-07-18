@@ -279,6 +279,44 @@ export async function savePushToken(
 }
 
 // ---------------------------------------------------------------
+// Dev login (development only — upserts the claude_test account)
+// ---------------------------------------------------------------
+
+export async function devLogin(): Promise<LoginResult> {
+  const username = 'claude_test';
+  const email = 'claude@dungeon.local';
+
+  const fetchExisting = async (): Promise<LoginResult | null> => {
+    const existing = await query<{ id: string; username: string; email: string; elo: number; account_level: number; token_version: number }>(
+      'SELECT id, username, email, elo, account_level, token_version FROM users WHERE username = $1',
+      [username],
+    );
+    const row = existing.rows[0];
+    if (!row) return null;
+    await query('UPDATE users SET last_active_at = NOW() WHERE id = $1', [row.id]);
+    return {
+      user: { id: row.id, username: row.username, email: row.email, elo: row.elo, accountLevel: row.account_level },
+      tokens: issueTokenPair({ id: row.id, username: row.username, tokenVersion: row.token_version }),
+    };
+  };
+
+  const found = await fetchExisting();
+  if (found) return found;
+
+  // First time: register the account (also creates a default team). Two
+  // concurrent dev-logins can race past the SELECT — the loser of the
+  // unique-constraint race just reads the winner's row.
+  try {
+    const result = await register({ username, email, password: Math.random().toString(36) + Math.random().toString(36) });
+    return { user: result.user, tokens: result.tokens };
+  } catch {
+    const raced = await fetchExisting();
+    if (raced) return raced;
+    throw new AuthError('Dev login failed');
+  }
+}
+
+// ---------------------------------------------------------------
 // Custom error classes
 // ---------------------------------------------------------------
 

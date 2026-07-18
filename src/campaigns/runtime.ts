@@ -47,10 +47,10 @@ export function buildCampaignPlayerInstance(
   choice?: CampaignUnitChoice,
 ): UnitInstance {
   const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
-  const specialSlug = choice?.specialSlug ?? def.specialOptions[0];
-  const abilities = hasSpecialAtLevel(level) && specialSlug ? [basicSlug, specialSlug] : [basicSlug];
+  const specialSlug = choice?.specialSlug;
+  const abilities = specialSlug ? [basicSlug, specialSlug] : [basicSlug];
 
-  const passive = hasPassiveAtLevel(level) && choice?.passiveSlug
+  const passive = choice?.passiveSlug
     ? def.passiveOptions.find((p) => p.slug === choice.passiveSlug)
     : undefined;
   const maxHealth = Math.max(1, def.maxHealth + (PLAYER_HP_DELTA[level] ?? 0) + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0));

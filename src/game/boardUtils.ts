@@ -66,6 +66,10 @@ export function getUnitsInRadius(center: BoardPosition, radius: number, units: U
   return units.filter((u) => u.isAlive && chebyshevDistance(center, u.position) <= radius);
 }
 
+export function getOrthogonalAdjacentUnits(center: BoardPosition, units: UnitInstance[]): UnitInstance[] {
+  return units.filter((u) => u.isAlive && manhattanDistance(center, u.position) === 1);
+}
+
 export function calculatePushDestination(unitPos: BoardPosition, pusherPos: BoardPosition, distance: number): BoardPosition {
   const dx = unitPos.x - pusherPos.x;
   const dy = unitPos.y - pusherPos.y;
