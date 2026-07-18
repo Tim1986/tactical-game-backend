@@ -133,6 +133,8 @@ export interface AbilityDefinition {
   canTargetAlly?: boolean; // derived field for client: true if all effects are heals
   /** AOE abilities only: when true, allies are excluded from the blast (e.g. Roar). Default false — existing AOEs (Whirlwind, Firestorm, Piercing) hit allies unchanged. */
   excludeAllies?: boolean;
+  /** When true, each damage effect rolls the fortune meter independently (e.g. Twin Strike's two daggers). Shield still blocks the first hit and is consumed; subsequent hits resolve normally. */
+  isMultiHit?: boolean;
   effects: AbilityEffect[];
 }
 

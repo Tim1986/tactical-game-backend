@@ -188,13 +188,14 @@ export const ABILITY_DEFS = [
   {
     slug: 'twin',
     name: 'Twin Strike',
-    description: 'Two rapid dagger strikes, 17 damage total.',
+    description: 'Two rapid dagger strikes (9 + 8 damage). Each hit rolls the fortune meter independently.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
     cooldown_turns: 0,
     is_special: false,
     is_unblockable: false,
+    is_multi_hit: true,
     effects: [
       { type: 'damage', formula: 'flat', value: 9 },
       { type: 'damage', formula: 'flat', value: 8 },

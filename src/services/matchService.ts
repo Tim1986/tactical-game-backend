@@ -249,12 +249,12 @@ async function loadTeamUnitsWithPlacement(teamId: string): Promise<{ units: Unit
 }
 
 async function loadAbilityMapDirect(): Promise<Map<string, AbilityDefinition>> {
-  const result = await query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; effects: unknown[]; }>(
-    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects FROM ability_definitions'
+  const result = await query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; is_multi_hit: boolean; effects: unknown[]; }>(
+    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, is_multi_hit, effects FROM ability_definitions'
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'] });
   }
   return map;
 }
@@ -290,12 +290,12 @@ async function runFableTurns(
 }
 
 async function loadAbilityMap(client: import('pg').PoolClient): Promise<Map<string, AbilityDefinition>> {
-  const result = await client.query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; effects: unknown[]; }>(
-    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects FROM ability_definitions'
+  const result = await client.query<{ id: string; slug: string; name: string; description: string; targeting_type: string; range: number; area_radius: number; cooldown_turns: number; is_special: boolean; is_unblockable: boolean; exclude_allies: boolean; is_multi_hit: boolean; effects: unknown[]; }>(
+    'SELECT id, slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, is_multi_hit, effects FROM ability_definitions'
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'] });
   }
   return map;
 }

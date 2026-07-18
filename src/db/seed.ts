@@ -129,8 +129,8 @@ async function seed(): Promise<void> {
     for (const ab of ABILITIES) {
       await client.query(
         `INSERT INTO ability_definitions
-           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, is_multi_hit, effects)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (slug) DO UPDATE SET
            name           = EXCLUDED.name,
            description    = EXCLUDED.description,
@@ -141,11 +141,13 @@ async function seed(): Promise<void> {
            is_special     = EXCLUDED.is_special,
            is_unblockable = EXCLUDED.is_unblockable,
            exclude_allies = EXCLUDED.exclude_allies,
+           is_multi_hit   = EXCLUDED.is_multi_hit,
            effects        = EXCLUDED.effects`,
         [ab.slug, ab.name, ab.description, ab.targeting_type,
          ab.range, ab.area_radius, ab.cooldown_turns, ab.is_special,
          (ab as typeof ab & { is_unblockable?: boolean }).is_unblockable ?? false,
          (ab as typeof ab & { exclude_allies?: boolean }).exclude_allies ?? false,
+         (ab as typeof ab & { is_multi_hit?: boolean }).is_multi_hit ?? false,
          JSON.stringify(ab.effects)]
       );
     }

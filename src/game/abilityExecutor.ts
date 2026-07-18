@@ -37,33 +37,75 @@ export function executeAbility(ctx: ExecutionContext): void {
     && dealsDamage;
 
   for (const target of targets) {
-    // Shielded fully negates the next hit (including unblockable/execute
-    // effects) and is consumed entirely — checked before the hit roll so an
-    // unblockable ability never even reaches the fortune meter for this target.
-    if (dealsDamage && hasStatusEffect(target, 'shielded')) {
+    if (ctx.ability.isMultiHit) {
+      executeMultiHit(ctx, target, needsHitRoll);
+    } else {
+      executeSingleHit(ctx, target, dealsDamage, needsHitRoll);
+    }
+  }
+}
+
+function executeSingleHit(
+  ctx: ExecutionContext,
+  target: UnitInstance,
+  dealsDamage: boolean,
+  needsHitRoll: boolean,
+): void {
+  // Shielded fully negates the next hit (including unblockable/execute
+  // effects) and is consumed entirely — checked before the hit roll so an
+  // unblockable ability never even reaches the fortune meter for this target.
+  if (dealsDamage && hasStatusEffect(target, 'shielded')) {
+    consumeShield(ctx, target);
+    return;
+  }
+  if (needsHitRoll) {
+    // Exposed bypasses the fortune meter entirely — the attack always
+    // connects and the meter is left untouched (mirrors unblockable).
+    if (!hasStatusEffect(target, 'exposed')) {
+      // Pseudo-random distribution (Bresenham accumulator): each attack adds the
+      // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
+      // misses and the meter resets by 1. Outcomes converge exactly to the
+      // intended dodge rate with no streaks.
+      const missChance = Math.max(0, target.armorClass - 6) / 20;
+      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
+      if (target.fortuneMeter >= 1) {
+        target.fortuneMeter -= 1;
+        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
+        return;
+      }
+    }
+  }
+  for (const effect of ctx.ability.effects) {
+    applyEffect(ctx, target, effect);
+  }
+}
+
+/** Multi-hit: each damage/lifesteal effect gets its own shield check and fortune roll. */
+function executeMultiHit(
+  ctx: ExecutionContext,
+  target: UnitInstance,
+  needsHitRoll: boolean,
+): void {
+  for (const effect of ctx.ability.effects) {
+    if (effect.type !== 'damage' && effect.type !== 'lifesteal') {
+      applyEffect(ctx, target, effect);
+      continue;
+    }
+    // Shield absorbs the first damage hit and is consumed; subsequent hits resolve normally.
+    if (hasStatusEffect(target, 'shielded')) {
       consumeShield(ctx, target);
       continue;
     }
-    if (needsHitRoll) {
-      // Exposed bypasses the fortune meter entirely — the attack always
-      // connects and the meter is left untouched (mirrors unblockable).
-      if (!hasStatusEffect(target, 'exposed')) {
-        // Pseudo-random distribution (Bresenham accumulator): each attack adds the
-        // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
-        // misses and the meter resets by 1. Outcomes converge exactly to the
-        // intended dodge rate with no streaks.
-        const missChance = Math.max(0, target.armorClass - 6) / 20;
-        target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
-        if (target.fortuneMeter >= 1) {
-          target.fortuneMeter -= 1;
-          ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
-          continue;
-        }
+    if (needsHitRoll && !hasStatusEffect(target, 'exposed')) {
+      const missChance = Math.max(0, target.armorClass - 6) / 20;
+      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
+      if (target.fortuneMeter >= 1) {
+        target.fortuneMeter -= 1;
+        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
+        continue;
       }
     }
-    for (const effect of ctx.ability.effects) {
-      applyEffect(ctx, target, effect);
-    }
+    applyEffect(ctx, target, effect);
   }
 }
 

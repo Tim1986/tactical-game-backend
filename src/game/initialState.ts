@@ -56,7 +56,7 @@ export function buildUnitInstance(
     abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
-    fortuneMeter: Math.random(),
+    fortuneMeter: 0,
   };
 }
 
