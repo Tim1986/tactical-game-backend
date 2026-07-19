@@ -42,6 +42,8 @@ export interface CampaignEncounter {
   playerPlacement: BoardPosition[];
   /** Per-difficulty enemy HP multiplier override (default CAMPAIGN_HP_SCALE). */
   hpScaleOverride?: Partial<Record<CampaignDifficulty, number>>;
+  /** If true, enemies in this encounter fight with basic abilities only (no specials). */
+  noSpecials?: boolean;
 }
 
 export interface CampaignChoiceOption {

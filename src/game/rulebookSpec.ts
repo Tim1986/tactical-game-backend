@@ -975,6 +975,76 @@ export const RULE_CHECKS: RuleCheck[] = [
   },
 
   {
+    rule: 'DGE-5', name: 'fortune meter accumulates across turns and triggers a miss at exactly 1.0',
+    run: () => {
+      // AC 16 → missChance = (16-6)/20 = 0.5. Two attacks should dodge the second.
+      const attacker = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
+      const target   = mkUnit(P2, 2, 1, { armorClass: 16, fortuneMeter: 0 });
+      const amap = new Map([['test_hit', mkAbility()]]);
+      const s0 = mkInitiativeState([attacker, target], [attacker.instanceId], 0);
+
+      // First attack: meter 0 + 0.5 = 0.5 → HIT
+      const r1 = processTurn(JSON.parse(JSON.stringify(s0)), [
+        { type: 'USE_ABILITY', unitInstanceId: attacker.instanceId, abilitySlug: 'test_hit', target: target.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, amap);
+      const hit = r1.events.some(e => e.type === 'DAMAGE_DEALT');
+      const miss1 = r1.events.some(e => e.type === 'ATTACK_MISSED');
+      assert(hit && !miss1, 'first attack (meter 0.5) must hit');
+
+      // Second attack: meter 0.5 + 0.5 = 1.0 → MISS
+      const tgt1 = r1.updatedState.units.find(u => u.instanceId === target.instanceId)!;
+      assert(Math.abs((tgt1.fortuneMeter ?? 0) - 0.5) < 0.001, 'meter should be 0.5 after first hit');
+
+      const attacker2 = r1.updatedState.units.find(u => u.instanceId === attacker.instanceId)!;
+      const s1: MatchState = { ...r1.updatedState, activePlayerId: P1,
+        initiative: { order: [attacker2.instanceId], slot: 0, round1FirstPlayerId: P1, activeUnitId: attacker2.instanceId, isRound1: false } } as MatchState;
+      const r2 = processTurn(JSON.parse(JSON.stringify(s1)), [
+        { type: 'USE_ABILITY', unitInstanceId: attacker2.instanceId, abilitySlug: 'test_hit', target: tgt1.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, amap);
+      const miss2 = r2.events.some(e => e.type === 'ATTACK_MISSED');
+      assert(miss2, 'second attack (meter 0.5+0.5=1.0) must miss');
+
+      // After miss, meter resets to 0 (1.0 - 1.0)
+      const tgt2 = r2.updatedState.units.find(u => u.instanceId === target.instanceId)!;
+      assert(Math.abs((tgt2.fortuneMeter ?? 0)) < 0.001, 'meter should reset to 0 after miss');
+    },
+  },
+
+  {
+    rule: 'DGE-4', name: 'unblockable and exposed both bypass fortune meter — multi-turn verification',
+    run: () => {
+      const attacker = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
+      const target   = mkUnit(P2, 2, 1, { armorClass: 26, fortuneMeter: 0.99 }); // missChance=1.0, meter near 1
+      const amap = new Map([['test_hit', mkAbility({ isUnblockable: true })]]);
+      const s0 = mkInitiativeState([attacker, target], [attacker.instanceId], 0);
+
+      const r = processTurn(JSON.parse(JSON.stringify(s0)), [
+        { type: 'USE_ABILITY', unitInstanceId: attacker.instanceId, abilitySlug: 'test_hit', target: target.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, amap);
+      const hit = r.events.some(e => e.type === 'DAMAGE_DEALT');
+      assert(hit, 'unblockable must ignore the fortune meter and always hit');
+
+      // Exposed: blockable attack at full meter still hits
+      const attacker2 = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
+      const target2   = mkUnit(P2, 2, 1, {
+        armorClass: 26, fortuneMeter: 0.99,
+        statusEffects: [{ slug: 'exposed', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }],
+      });
+      const amap2 = new Map([['test_hit', mkAbility()]]);
+      const s2 = mkInitiativeState([attacker2, target2], [attacker2.instanceId], 0);
+      const r2 = processTurn(JSON.parse(JSON.stringify(s2)), [
+        { type: 'USE_ABILITY', unitInstanceId: attacker2.instanceId, abilitySlug: 'test_hit', target: target2.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, amap2);
+      const hit2 = r2.events.some(e => e.type === 'DAMAGE_DEALT');
+      assert(hit2, 'exposed must bypass fortune meter — blockable attack must hit');
+    },
+  },
+
+  {
     rule: 'WIN-1', name: 'a player loses when all their units are defeated',
     run: () => {
       const alive = mkUnit(P1, 1, 1);

@@ -69,6 +69,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_scrapper'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 1, y: 4 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
+      noSpecials: true,
       // Tutorial fight: green goblins, softer than their later appearances.
       // Nightmare note: scrapper HP sits on a Twin-Strike 2-hit breakpoint —
       // 1.05 lands ~45% (band top), the next HP step collapses to ~20%.

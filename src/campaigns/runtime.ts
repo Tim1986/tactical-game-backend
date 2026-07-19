@@ -80,12 +80,15 @@ export function buildCampaignEnemyInstance(
   position: BoardPosition,
   difficulty: CampaignDifficulty,
   hpScale: number,
+  noSpecials = false,
 ): UnitInstance {
   const def = DEFAULT_UNITS[enemy.baseClass];
   if (!def) throw new Error(`Campaign enemy baseClass not found: ${enemy.baseClass}`);
 
+  const BANNED_ENEMY_SPECIALS = new Set(['kill_shot', 'assassinate']);
   const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
-  const specialSlug = enemy.specialSlug ?? def.specialOptions[0];
+  const rawSpecialSlug = enemy.specialSlug ?? def.specialOptions[0];
+  const specialSlug = (noSpecials || BANNED_ENEMY_SPECIALS.has(rawSpecialSlug)) ? undefined : rawSpecialSlug;
   const abilities = specialSlug ? [basicSlug, specialSlug] : [basicSlug];
 
   const isNightmare = difficulty === 'nightmare';
@@ -169,7 +172,7 @@ export function buildEncounterState(
   const enemyUnits = enc.enemies.map((key, i) => {
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Unknown enemy key: ${key}`);
-    const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, enc.enemyPlacement[i], difficulty, hpScale);
+    const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, enc.enemyPlacement[i], difficulty, hpScale, enc.noSpecials);
     unitNames[inst.instanceId] = enemy.name;
     return inst;
   });
