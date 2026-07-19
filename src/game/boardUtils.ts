@@ -70,6 +70,17 @@ export function getOrthogonalAdjacentUnits(center: BoardPosition, units: UnitIns
   return units.filter((u) => u.isAlive && manhattanDistance(center, u.position) === 1);
 }
 
+/**
+ * SINGLE SOURCE OF TRUTH for AOE blast shape. Both the engine's resolveTargets
+ * and the AI brain's hit prediction MUST use this predicate — the whirlwind
+ * diagonal bug happened because the two sides each had their own geometry.
+ */
+export function isInAoe(center: BoardPosition, pos: BoardPosition, radius: number, shape?: 'chebyshev' | 'orthogonal'): boolean {
+  return shape === 'orthogonal'
+    ? manhattanDistance(center, pos) === 1
+    : chebyshevDistance(center, pos) <= radius;
+}
+
 export function calculatePushDestination(unitPos: BoardPosition, pusherPos: BoardPosition, distance: number): BoardPosition {
   const dx = unitPos.x - pusherPos.x;
   const dy = unitPos.y - pusherPos.y;

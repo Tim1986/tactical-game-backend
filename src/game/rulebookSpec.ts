@@ -27,7 +27,8 @@ import { checkWinCondition } from './winCondition.js';
 import { isInBounds, isCorner } from './boardUtils.js';
 import { reachableFrom, findPath, isCorner as geoIsCorner } from '../ai/geometry.js';
 import { buildUnitInstance } from './initialState.js';
-import { DEFAULT_UNITS } from '../ai/defaultData.js';
+import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
+import { isInAoe } from './boardUtils.js';
 
 // defaultData's UnitDefinition is the slim AI-facing shape; buildUnitInstance
 // wants the full one. The fields it reads all exist on both.
@@ -235,7 +236,7 @@ export const RULE_CHECKS: RuleCheck[] = [
       const r = processTurn(state, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
       const f = r.updatedState.units.find((u) => u.instanceId === frozen.instanceId)!;
       assert(r.updatedState.initiative!.activeUnitId === c.instanceId, 'frozen unit slot must be skipped');
-      assert(f.currentHealth === 95, `burning must tick on the skipped turn (got HP ${f.currentHealth})`);
+      assert(f.currentHealth === 93, `burning must tick on the skipped turn (got HP ${f.currentHealth})`);
       assert(!has(f, 'frozen'), 'frozen duration must tick down on the skipped turn');
     },
   },
@@ -614,6 +615,54 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
 
+  {
+    rule: 'ABL-8', name: 'AOE shape: default blasts include diagonals; orthogonal blasts never do (parity sweep over all real AOE abilities)',
+    run: () => {
+      // Generic behavior: orthogonal hits the cardinal neighbor, never the diagonal.
+      const orthoAb = mkAbility({ slug: 'test_ortho', targetingType: 'aoe', range: 0, areaRadius: 1, areaShape: 'orthogonal', isUnblockable: true });
+      const caster = mkUnit(P1, 3, 3);
+      const cardinal = mkUnit(P2, 3, 2);
+      const diagonal = mkUnit(P2, 4, 4);
+      const ev = cast(orthoAb, caster, caster, [caster, cardinal, diagonal]);
+      assert(ev.some((e) => e.targetUnitInstanceId === cardinal.instanceId), 'orthogonal AOE must hit the cardinal neighbor');
+      assert(!ev.some((e) => e.targetUnitInstanceId === diagonal.instanceId), 'orthogonal AOE must NOT hit the diagonal neighbor');
+
+      const chebAb = mkAbility({ slug: 'test_cheb', targetingType: 'aoe', range: 0, areaRadius: 1, isUnblockable: true });
+      const c2 = mkUnit(P1, 3, 3);
+      const card2 = mkUnit(P2, 3, 2);
+      const diag2 = mkUnit(P2, 4, 4);
+      const ev2 = cast(chebAb, c2, c2, [c2, card2, diag2]);
+      assert(ev2.some((e) => e.targetUnitInstanceId === card2.instanceId), 'default (chebyshev) AOE must hit the cardinal neighbor');
+      assert(ev2.some((e) => e.targetUnitInstanceId === diag2.instanceId), 'default (chebyshev) AOE must hit the diagonal neighbor');
+
+      // Data-level guard: the two orthogonal-by-design abilities must stay orthogonal.
+      for (const slug of ['whirlwind', 'shockwave']) {
+        const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
+        assert(def?.areaShape === 'orthogonal', `${slug} must have areaShape 'orthogonal' in game data`);
+      }
+
+      // PARITY SWEEP: for EVERY real AOE ability, the engine's resolved hit set
+      // must match the shared isInAoe predicate — this is the guard against the
+      // engine and AI brain (which uses the same predicate) drifting apart.
+      for (const def of DEFAULT_ABILITIES.filter((a) => a.targetingType === 'aoe')) {
+        const c = mkUnit(P1, 3, 3);
+        const near = mkUnit(P2, 3, 2);  // cardinal, dist 1
+        const diag = mkUnit(P2, 4, 4);  // diagonal, chebyshev 1
+        const center = { x: 3, y: 3 };
+        // Capture pre-cast positions — push effects mutate them during the cast.
+        const startPositions = new Map([near, diag].map((u) => [u.instanceId, { ...u.position }]));
+        const events = cast(def, c, c, [c, near, diag]);
+        for (const enemy of [near, diag]) {
+          const pos = startPositions.get(enemy.instanceId)!;
+          const predicted = isInAoe(center, pos, def.areaRadius, def.areaShape);
+          const actual = events.some((e) => e.targetUnitInstanceId === enemy.instanceId);
+          assert(predicted === actual,
+            `${def.slug}: engine hit=${actual} but isInAoe predicts ${predicted} for enemy at (${pos.x},${pos.y})`);
+        }
+      }
+    },
+  },
+
   // ── STA ────────────────────────────────────────────────────────────────────
   {
     rule: 'STA-1', name: 'a status lasting N turns is in force for N of the victim\'s turns and drops at end of the Nth',
@@ -628,11 +677,11 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'STA-2', name: 'burning deals 5 per stack at start of turn, stacks cap at 3, and can kill before acting',
+    rule: 'STA-2', name: 'burning deals 7 per stack at start of turn, stacks cap at 3, and can kill before acting',
     run: () => {
       const u = mkUnit(P1, 1, 1, { statusEffects: [{ slug: 'burning', turnsRemaining: 2, stacks: 2, sourceUnitInstanceId: 'x' }] });
       applyStartOfTurnStatusDamage(u, []);
-      assert(u.currentHealth === 90, '2 burning stacks must deal 10 at start of turn');
+      assert(u.currentHealth === 86, '2 burning stacks must deal 14 at start of turn');
       // stack cap via applyStatus (reapply path)
       const caster = mkUnit(P1, 1, 1);
       const t = mkUnit(P2, 2, 1);
@@ -640,7 +689,7 @@ export const RULE_CHECKS: RuleCheck[] = [
       cast(ignite, caster, t); cast(ignite, caster, t);
       assert(t.statusEffects.find((se) => se.slug === 'burning')!.stacks === 3, 'burning stacks must cap at 3');
       // lethal tick
-      const dying = mkUnit(P1, 1, 1, { currentHealth: 5, statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
+      const dying = mkUnit(P1, 1, 1, { currentHealth: 7, statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
       const ev: GameEvent[] = [];
       applyStartOfTurnStatusDamage(dying, ev);
       assert(!dying.isAlive && ev.some((e) => e.type === 'UNIT_DIED'), 'a unit can die to its own burn before acting');
@@ -706,51 +755,154 @@ export const RULE_CHECKS: RuleCheck[] = [
 
   // ── PAS ────────────────────────────────────────────────────────────────────
   {
-    rule: 'PAS-1', name: 'Vitality adds max health',
-    run: () => {
-      const base = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 });
-      const vit = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 }, { specialSlug: 'second_wind', passiveSlug: 'vitality' });
-      assert(vit.maxHealth > base.maxHealth && vit.currentHealth === vit.maxHealth, 'vitality must raise max health');
-    },
-  },
-  {
-    rule: 'PAS-2', name: 'Hardened adds armor class (dodge)',
+    rule: 'PAS-1', name: 'Swift adds 1 movement and is only offered to melee-basic classes',
     run: () => {
       const base = buildUnitInstance(defOf('rogue'), P1, { x: 1, y: 1 });
-      const hard = buildUnitInstance(defOf('rogue'), P1, { x: 1, y: 1 }, { specialSlug: 'assassinate', passiveSlug: 'hardened' });
-      assert(hard.armorClass > base.armorClass, 'hardened must raise AC');
-    },
-  },
-  {
-    rule: 'PAS-3', name: 'Swift adds 1 movement',
-    run: () => {
-      const base = buildUnitInstance(defOf('ranger'), P1, { x: 1, y: 1 });
-      const swift = buildUnitInstance(defOf('ranger'), P1, { x: 1, y: 1 }, { specialSlug: 'piercing', passiveSlug: 'swift' });
+      const swift = buildUnitInstance(defOf('rogue'), P1, { x: 1, y: 1 }, { specialSlug: 'assassinate', passiveSlug: 'swift' });
       assert(swift.movementRange === base.movementRange + 1, 'swift must add exactly 1 movement');
+      // Roster guard: Swift on ranged classes turns the endgame drain into a
+      // guaranteed kiting win — it must only appear on melee-basic classes.
+      for (const slug of ['ranger', 'wizard', 'sorcerer', 'warlock']) {
+        const def = DEFAULT_UNITS[slug];
+        assert(!def.passiveOptions.some((p) => p.slug === 'swift'), `${slug} (ranged basic) must not offer Swift`);
+      }
     },
   },
   {
-    rule: 'PAS-4', name: 'Immovable adds 6 max health and blocks push and pull',
+    rule: 'PAS-2', name: 'Anchor blocks push and pull with visible feedback, and adds no stats',
     run: () => {
       const base = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 });
-      const anchor = buildUnitInstance(defOf('fighter'), P2, { x: 3, y: 3 }, { specialSlug: 'second_wind', passiveSlug: 'immovable' });
-      assert(anchor.maxHealth === base.maxHealth + 6, 'immovable must add 6 max health');
-      assert(anchor.passives.includes('immovable'), 'immovable flag must be on the instance');
+      const anchor = buildUnitInstance(defOf('fighter'), P2, { x: 3, y: 3 }, { specialSlug: 'second_wind', passiveSlug: 'anchor' });
+      assert(anchor.maxHealth === base.maxHealth, 'anchor must NOT change max health (the old +6 rider made it strictly dominate)');
+      assert(anchor.passives.includes('immovable'), 'anchor must carry the immovable flag');
       const pusher = mkUnit(P1, 3, 1);
-      cast(mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-      assert(anchor.position.x === 3 && anchor.position.y === 3, 'immovable unit must not be pushed');
-      cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-      assert(anchor.position.x === 3 && anchor.position.y === 3, 'immovable unit must not be pulled');
+      const pushEvents = cast(mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
+      assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pushed');
+      assert(pushEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated push must emit PUSH_RESISTED so the player gets feedback');
+      const pullEvents = cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
+      assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pulled');
+      assert(pullEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated pull must emit PUSH_RESISTED so the player gets feedback');
     },
   },
   {
-    rule: 'PAS-5', name: 'Warded starts the match with a shield that negates the first hit',
+    rule: 'PAS-3', name: 'Warded starts the match with a shield that negates the first hit',
     run: () => {
-      const warded = buildUnitInstance(defOf('sorcerer'), P2, { x: 2, y: 1 }, { specialSlug: 'ffh', passiveSlug: 'warded' });
+      const warded = buildUnitInstance(defOf('cleric'), P2, { x: 2, y: 1 }, { specialSlug: 'heal', passiveSlug: 'warded' });
       assert(has(warded, 'shielded'), 'warded unit must begin shielded');
       const caster = mkUnit(P1, 1, 1);
       cast(mkAbility({ isUnblockable: true }), caster, warded);
       assert(warded.currentHealth === warded.maxHealth && !has(warded, 'shielded'), 'the starting shield must negate the first hit');
+    },
+  },
+  {
+    rule: 'PAS-4', name: 'Thorns deals 3 to adjacent attackers whose hit lands; never to ranged, allies, or missed hits',
+    run: () => {
+      const mkThorns = (x: number, y: number) => mkUnit(P2, x, y, { passives: ['thorns'] });
+      const hit = mkAbility({ isUnblockable: true }); // 10 damage
+      // adjacent attacker takes 3 back
+      let attacker = mkUnit(P1, 3, 2);
+      let thorny = mkThorns(3, 3);
+      const ev = cast(hit, attacker, thorny, [attacker, thorny]);
+      assert(attacker.currentHealth === attacker.maxHealth - 3, 'adjacent attacker must take 3 thorns damage');
+      assert(ev.some((e) => e.message === 'Thorns'), 'thorns retaliation must be a visible event');
+      // ranged (non-adjacent) attacker is safe
+      attacker = mkUnit(P1, 3, 0);
+      thorny = mkThorns(3, 3);
+      cast(hit, attacker, thorny, [attacker, thorny]);
+      assert(attacker.currentHealth === attacker.maxHealth, 'ranged attacker must not take thorns damage');
+      // diagonal attacker is safe (adjacent means the 4 cardinal tiles)
+      attacker = mkUnit(P1, 2, 2);
+      thorny = mkThorns(3, 3);
+      cast(hit, attacker, thorny, [attacker, thorny]);
+      assert(attacker.currentHealth === attacker.maxHealth, 'diagonal attacker must not take thorns damage');
+      // a dodged hit deals no thorns (shielded absorb: no damage landed either)
+      attacker = mkUnit(P1, 3, 2);
+      thorny = mkThorns(3, 3);
+      thorny.statusEffects.push({ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: thorny.instanceId });
+      cast(hit, attacker, thorny, [attacker, thorny]);
+      assert(attacker.currentHealth === attacker.maxHealth, 'an absorbed hit must not trigger thorns');
+      // an attacker killed by its own thorns retaliation mid-turn must not
+      // invalidate the rest of its queued turn (attack → move → end)
+      const frail = mkUnit(P1, 3, 2, { currentHealth: 2 });
+      const spiky = mkThorns(3, 3);
+      const st = mkInitiativeState([frail, spiky], [frail.instanceId, spiky.instanceId], 0);
+      const r = processTurn(st, [
+        { type: 'USE_ABILITY', unitInstanceId: frail.instanceId, abilitySlug: 'test_hit', target: { x: 3, y: 3 } },
+        { type: 'MOVE', unitInstanceId: frail.instanceId, destination: { x: 3, y: 1 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, new Map([['test_hit', hit]]));
+      const frailAfter = r.updatedState.units.find((u) => u.instanceId === frail.instanceId)!;
+      assert(!frailAfter.isAlive, 'the 2 HP attacker must die to thorns retaliation');
+      assert(frailAfter.position.x === 3 && frailAfter.position.y === 2, 'the dead unit must not execute its queued move');
+    },
+  },
+  {
+    rule: 'PAS-5', name: 'Undying survives the first lethal hit at 1 HP, once, from any damage source',
+    run: () => {
+      // survives a lethal ability hit at exactly 1 HP, flag consumed
+      let u = mkUnit(P2, 3, 3, { currentHealth: 5, passives: ['undying'] });
+      const caster = mkUnit(P1, 3, 2);
+      const ev = cast(mkAbility({ isUnblockable: true }), caster, u, [caster, u]);
+      assert(u.isAlive && u.currentHealth === 1, 'undying unit must survive the lethal hit at 1 HP');
+      assert(!u.passives.includes('undying'), 'undying must be consumed');
+      assert(ev.some((e) => e.type === 'UNDYING_TRIGGERED'), 'surviving must emit UNDYING_TRIGGERED');
+      // second lethal hit kills
+      cast(mkAbility({ isUnblockable: true }), caster, u, [caster, u]);
+      assert(!u.isAlive, 'a second lethal hit must kill — undying is once per match');
+      // works against executes
+      u = mkUnit(P2, 3, 3, { currentHealth: 5, passives: ['undying'] });
+      cast(mkAbility({ isUnblockable: true, effects: [{ type: 'damage', formula: 'flat', value: 9999, healthThreshold: 18 }] }), caster, u, [caster, u]);
+      assert(u.isAlive && u.currentHealth === 1, 'undying must survive an execute');
+      // works against the burning tick
+      u = mkUnit(P2, 3, 3, { currentHealth: 3, passives: ['undying'], statusEffects: [{ slug: 'burning', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'x' }] });
+      const tickEv: GameEvent[] = [];
+      applyStartOfTurnStatusDamage(u, tickEv);
+      assert(u.isAlive && u.currentHealth === 1, 'undying must survive a lethal burning tick');
+    },
+  },
+  {
+    rule: 'PAS-7', name: 'Vengeful deals +3 while at or below half health',
+    run: () => {
+      const hit = mkAbility({ isUnblockable: true }); // 10 damage
+      // above half: no bonus
+      let v = mkUnit(P1, 3, 2, { passives: ['vengeful'] });
+      let t = mkUnit(P2, 3, 3);
+      cast(hit, v, t, [v, t]);
+      assert(t.currentHealth === t.maxHealth - 10, 'no bonus above half health');
+      // at half: +3
+      v = mkUnit(P1, 3, 2, { passives: ['vengeful'] });
+      v.currentHealth = Math.floor(v.maxHealth / 2);
+      t = mkUnit(P2, 3, 3);
+      cast(hit, v, t, [v, t]);
+      assert(t.currentHealth === t.maxHealth - 13, 'vengeful must deal +3 at or below half health');
+    },
+  },
+  {
+    rule: 'PAS-8', name: 'Stalwart resists rooted/weakened/exposed with feedback; frozen still applies',
+    run: () => {
+      const caster = mkUnit(P1, 3, 2);
+      const stal = mkUnit(P2, 3, 3, { passives: ['stalwart'] });
+      for (const slug of ['rooted', 'weakened', 'exposed']) {
+        const ev = cast(mkAbility({ slug: `t_${slug}`, isUnblockable: true, effects: [{ type: 'apply_status', statusSlug: slug, stacks: 1, durationTurns: 2 }] }), caster, stal, [caster, stal]);
+        assert(!has(stal, slug), `stalwart must resist ${slug}`);
+        assert(ev.some((e) => e.type === 'STATUS_RESISTED'), `resisting ${slug} must emit STATUS_RESISTED feedback`);
+      }
+      cast(mkAbility({ slug: 't_frz', isUnblockable: true, effects: [{ type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 }] }), caster, stal, [caster, stal]);
+      assert(has(stal, 'frozen'), 'frozen must still apply through stalwart');
+    },
+  },
+  {
+    rule: 'PAS-6', name: 'Opportunist deals +4 against targets with any status effect',
+    run: () => {
+      const opp = mkUnit(P1, 3, 2, { passives: ['opportunist'] });
+      // clean target: base damage only
+      let t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), opp, t, [opp, t]);
+      assert(t.currentHealth === t.maxHealth - 10, 'no bonus against a clean target');
+      // statused target: +4
+      t = mkUnit(P2, 3, 3, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
+      cast(mkAbility({ isUnblockable: true }), opp, t, [opp, t]);
+      assert(t.currentHealth === t.maxHealth - 14, 'opportunist must deal +4 against a statused target');
     },
   },
 

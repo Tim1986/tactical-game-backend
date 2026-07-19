@@ -7,7 +7,7 @@ import {
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
 import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
-import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick } from './abilityExecutor.js';
+import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 
@@ -294,9 +294,9 @@ export function processTurn(
           const distBefore = Math.min(...enemies.map((e) => manhattanDistance(startPos, e.position)));
           const distAfter  = Math.min(...enemies.map((e) => manhattanDistance(actingUnit!.position, e.position)));
           if (distAfter > distBefore) {
-            actingUnit.currentHealth = Math.max(0, actingUnit.currentHealth - 1);
-            if (actingUnit.currentHealth === 0) actingUnit.isAlive = false;
-            events.push({ type: 'ENDGAME_DRAIN', sourceUnitInstanceId: actingUnit.instanceId, targetUnitInstanceId: actingUnit.instanceId, value: 1, message: 'Retreated — 1 drain' });
+            takeDamage(actingUnit, 1, events, actingUnit.instanceId, (actual) => {
+              events.push({ type: 'ENDGAME_DRAIN', sourceUnitInstanceId: actingUnit!.instanceId, targetUnitInstanceId: actingUnit!.instanceId, value: actual, message: 'Retreated — 1 drain' });
+            });
           }
         }
       }
@@ -311,6 +311,11 @@ export function processTurn(
       }
       break;
     }
+
+    // The acting unit can die MID-TURN (Thorns retaliation on its own attack).
+    // Skip its remaining queued actions instead of rejecting the whole turn —
+    // END_TURN above still runs so initiative advances normally.
+    if (!actingUnit.isAlive) continue;
 
     if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
     if (action.type === 'CHARGE') processCharge(ws, action, submittingPlayerId, events);

@@ -27,12 +27,13 @@ describe('buildCampaignPlayerInstance', () => {
     expect(buildCampaignPlayerInstance(fighter, 'h', pos, 4).maxHealth).toBe(fighter.maxHealth);
   });
 
-  it('ignores the passive below L3 and applies it from L3', () => {
-    const passiveSlug = fighter.passiveOptions.find((p) => p.stat === 'maxHealth')?.slug;
-    const l2 = buildCampaignPlayerInstance(fighter, 'h', pos, 2, { passiveSlug });
-    expect(l2.maxHealth).toBe(fighter.maxHealth + PLAYER_HP_DELTA[2]);
-    const l3 = buildCampaignPlayerInstance(fighter, 'h', pos, 3, { passiveSlug });
-    expect(l3.maxHealth).toBeGreaterThan(fighter.maxHealth + PLAYER_HP_DELTA[3]);
+  it('applies a chosen passive at any level (choices drive passives, not level gates)', () => {
+    const thorns = fighter.passiveOptions.find((p) => p.slug === 'thorns');
+    expect(thorns).toBeDefined();
+    const withPassive = buildCampaignPlayerInstance(fighter, 'h', pos, 2, { passiveSlug: 'thorns' });
+    expect(withPassive.passives).toContain('thorns');
+    const withoutChoice = buildCampaignPlayerInstance(fighter, 'h', pos, 2);
+    expect(withoutChoice.passives).not.toContain('thorns');
   });
 });
 

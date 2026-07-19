@@ -67,10 +67,10 @@ describe('ability descriptions match ability data', () => {
       // "N damage per turn for M turns" (burning)
       const burnM = d.match(/(\d+) damage per turn for (\d+) turns?/i);
       if (burnM) {
-        it(`burning: 5/stack × stacks = ${burnM[1]}, duration = ${burnM[2]}`, () => {
+        it(`burning: 7/stack × stacks = ${burnM[1]}, duration = ${burnM[2]}`, () => {
           const burn = statusOf(ab, 'burning');
           expect(burn).toBeDefined();
-          expect(5 * burn!.stacks).toBe(Number(burnM[1]));
+          expect(7 * burn!.stacks).toBe(Number(burnM[1]));
           expect(burn!.durationTurns).toBe(Number(burnM[2]));
         });
       }

@@ -135,6 +135,10 @@ export interface AbilityDefinition {
   excludeAllies?: boolean;
   /** AOE abilities: 'orthogonal' only hits the 4 cardinal neighbors (Manhattan ≤ 1). Default 'chebyshev' includes all 8 surrounding tiles. */
   areaShape?: 'chebyshev' | 'orthogonal';
+  /** Applied to the CASTER after the ability resolves (e.g. Blizzard's
+   * self-freeze). Note: a status applied during the caster's own turn is
+   * decremented at that turn's end, so durationTurns 2 skips exactly 1 turn. */
+  selfStatus?: { statusSlug: string; stacks: number; durationTurns: number };
   /** When true, each damage effect rolls the fortune meter independently (e.g. Twin Strike's two daggers). Shield still blocks the first hit and is consumed; subsequent hits resolve normally. */
   isMultiHit?: boolean;
   effects: AbilityEffect[];

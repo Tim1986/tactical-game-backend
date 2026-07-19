@@ -7,8 +7,8 @@ import {
   LifestealEffect,
 } from '../types/index.js';
 import {
-  getUnitsInRadius, getOrthogonalAdjacentUnits, getLineTiles, calculatePushDestination,
-  calculatePullDestination, getUnitAtPosition, isInBounds,
+  getUnitsInRadius, isInAoe, getLineTiles, calculatePushDestination,
+  calculatePullDestination, getUnitAtPosition, isInBounds, manhattanDistance,
 } from './boardUtils.js';
 
 export interface ExecutionContext {
@@ -22,8 +22,9 @@ export interface ExecutionContext {
 
 /** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
 const WEAKENED_DAMAGE_REDUCTION = 4;
-/** Flat damage-over-time dealt per stack of 'burning', once per stack per tick. */
-const BURNING_DAMAGE_PER_STACK = 5;
+/** Flat damage-over-time dealt per stack of 'burning', once per stack per tick.
+ * Exported so the AI brain scores burn with the SAME number (no drift). */
+export const BURNING_DAMAGE_PER_STACK = 7;
 
 function hasStatusEffect(unit: UnitInstance, slug: string): boolean {
   return unit.statusEffects.some((se) => se.slug === slug);
@@ -42,6 +43,23 @@ export function executeAbility(ctx: ExecutionContext): void {
     } else {
       executeSingleHit(ctx, target, dealsDamage, needsHitRoll);
     }
+  }
+
+  // Self-status cost (Blizzard's channeling self-freeze): applied to the
+  // caster after the ability resolves, unconditionally — no shield, dodge,
+  // or Stalwart check; it's a cost, not an attack.
+  if (ctx.ability.selfStatus && ctx.caster.isAlive) {
+    const sst = ctx.ability.selfStatus;
+    const existing = ctx.caster.statusEffects.find((se) => se.slug === sst.statusSlug);
+    if (existing) {
+      existing.turnsRemaining = Math.max(existing.turnsRemaining, sst.durationTurns);
+    } else {
+      ctx.caster.statusEffects.push({
+        slug: sst.statusSlug, turnsRemaining: sst.durationTurns,
+        stacks: sst.stacks, sourceUnitInstanceId: ctx.caster.instanceId,
+      });
+    }
+    ctx.events.push({ type: 'STATUS_APPLIED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: ctx.caster.instanceId, statusSlug: sst.statusSlug });
   }
 }
 
@@ -125,9 +143,7 @@ function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
     case 'self': return [caster];
     case 'aoe': {
       const center = ability.range === 0 ? caster.position : targetPosition;
-      let hits = ability.areaShape === 'orthogonal'
-        ? getOrthogonalAdjacentUnits(center, aliveUnits)
-        : getUnitsInRadius(center, ability.areaRadius, aliveUnits);
+      let hits = aliveUnits.filter((u) => isInAoe(center, u.position, ability.areaRadius, ability.areaShape));
       if (ability.range === 0) hits = hits.filter((u) => u.instanceId !== caster.instanceId);
       if (ability.excludeAllies) hits = hits.filter((u) => u.ownerPlayerId !== caster.ownerPlayerId);
       return hits;
@@ -159,30 +175,91 @@ function weakenedAdjustedDamage(ctx: ExecutionContext, rawValue: number): number
   return hasStatusEffect(ctx.caster, 'weakened') ? Math.max(0, rawValue - WEAKENED_DAMAGE_REDUCTION) : rawValue;
 }
 
+const THORNS_DAMAGE = 3;
+const OPPORTUNIST_BONUS = 4;
+const VENGEFUL_BONUS = 3;
+/** Statuses negated by the Stalwart passive. */
+const STALWART_IMMUNE = new Set(['rooted', 'weakened', 'exposed']);
+
+/**
+ * SINGLE damage sink: subtracts health and resolves death — including the
+ * Undying passive (first lethal hit each match leaves the unit at 1 HP; the
+ * flag is consumed). EVERY source of damage (abilities, thorns, burning,
+ * endgame drain) must route through here or Undying silently won't apply.
+ * Death/undying events are pushed AFTER the caller's own damage event via
+ * emitAfter, preserving the DAMAGE_DEALT → UNIT_DIED order the client
+ * replay depends on.
+ */
+export function takeDamage(
+  unit: UnitInstance, damage: number, events: GameEvent[],
+  sourceUnitInstanceId?: string,
+  emitAfter?: (actualDamage: number) => void,
+): number {
+  let actual = Math.min(unit.currentHealth, damage);
+  unit.currentHealth = Math.max(0, unit.currentHealth - damage);
+  let outcome: 'alive' | 'died' | 'undying' = 'alive';
+  if (unit.currentHealth <= 0) {
+    const undyingIdx = (unit.passives ?? []).indexOf('undying');
+    if (undyingIdx >= 0) {
+      unit.passives.splice(undyingIdx, 1); // once per match
+      unit.currentHealth = 1;
+      outcome = 'undying';
+      actual -= 1;
+    } else {
+      unit.isAlive = false;
+      outcome = 'died';
+    }
+  }
+  emitAfter?.(actual);
+  if (outcome === 'undying') {
+    events.push({ type: 'UNDYING_TRIGGERED', sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, message: 'Clings to life!' });
+  } else if (outcome === 'died') {
+    events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
+  }
+  return actual;
+}
+
+/** Opportunist: +4 damage when the target suffers any status effect. */
+function opportunistBonus(ctx: ExecutionContext, target: UnitInstance): number {
+  return hasPassive(ctx.caster, 'opportunist') && target.statusEffects.length > 0 ? OPPORTUNIST_BONUS : 0;
+}
+
+/** Vengeful: +3 damage while the caster is at or below half health. */
+function vengefulBonus(ctx: ExecutionContext): number {
+  return hasPassive(ctx.caster, 'vengeful') && ctx.caster.currentHealth * 2 <= ctx.caster.maxHealth
+    ? VENGEFUL_BONUS : 0;
+}
+
+/** Thorns: an adjacent attacker whose hit landed takes 3 damage back. */
+function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): void {
+  if (!hasPassive(target, 'thorns')) return;
+  if (target.ownerPlayerId === ctx.caster.ownerPlayerId) return;
+  if (!ctx.caster.isAlive) return;
+  if (manhattanDistance(ctx.caster.position, target.position) !== 1) return;
+  takeDamage(ctx.caster, THORNS_DAMAGE, ctx.events, target.instanceId, (actual) => {
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: target.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: actual, message: 'Thorns' });
+  });
+}
+
 function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: DamageEffect): void {
   if (effect.healthThreshold !== undefined && target.currentHealth > effect.healthThreshold) {
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;
   }
   const isExecute = effect.healthThreshold !== undefined;
-  const damage = weakenedAdjustedDamage(ctx, effect.value);
-  const actualDamage = Math.min(target.currentHealth, damage);
-  target.currentHealth = Math.max(0, target.currentHealth - damage);
-  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actualDamage, message: isExecute ? 'Executed' : `${actualDamage} damage` });
-  if (target.currentHealth <= 0) {
-    target.isAlive = false;
-    ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
-  }
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: isExecute ? 'Executed' : `${actual} damage` });
+  });
+  if (actualDamage > 0) applyThornsRetaliation(ctx, target);
 }
 
 function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
-  const damage = weakenedAdjustedDamage(ctx, effect.value);
-  target.currentHealth = Math.max(0, target.currentHealth - damage);
-  ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: damage, message: `${damage} damage` });
-  if (target.currentHealth <= 0) {
-    target.isAlive = false;
-    ctx.events.push({ type: 'UNIT_DIED', targetUnitInstanceId: target.instanceId });
-  }
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: `${actual} damage` });
+  });
+  if (actualDamage > 0) applyThornsRetaliation(ctx, target);
   if (ctx.caster.isAlive) {
     const healAmount = Math.min(effect.healValue, ctx.caster.maxHealth - ctx.caster.currentHealth);
     if (healAmount > 0) {
@@ -202,6 +279,10 @@ function applyHeal(ctx: ExecutionContext, target: UnitInstance, effect: HealEffe
 
 function applyStatus(ctx: ExecutionContext, target: UnitInstance, effect: ApplyStatusEffect): void {
   if (!target.isAlive) return;
+  if (hasPassive(target, 'stalwart') && STALWART_IMMUNE.has(effect.statusSlug)) {
+    ctx.events.push({ type: 'STATUS_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, statusSlug: effect.statusSlug, message: 'Resisted — Stalwart' });
+    return;
+  }
   const existing = target.statusEffects.find((se) => se.slug === effect.statusSlug);
   if (existing) {
     existing.turnsRemaining = Math.max(existing.turnsRemaining, effect.durationTurns);
@@ -225,7 +306,10 @@ function removeStatus(ctx: ExecutionContext, target: UnitInstance, effect: Remov
 
 function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffect): void {
   if (!target.isAlive) return;
-  if (hasPassive(target, 'immovable')) return;
+  if (hasPassive(target, 'immovable')) {
+    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
+    return;
+  }
   const idealDestination = ctx.pushDestination
     ?? calculatePushDestination(target.position, ctx.caster.position, effect.distance);
   const finalPos = findLastFreePosition(target.position, idealDestination, ctx.state.units, target.instanceId);
@@ -238,7 +322,10 @@ function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffe
 
 function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffect): void {
   if (!target.isAlive) return;
-  if (hasPassive(target, 'immovable')) return;
+  if (hasPassive(target, 'immovable')) {
+    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
+    return;
+  }
   const destination = calculatePullDestination(target.position, ctx.caster.position, effect.distance);
   const finalPos = findLastFreePosition(target.position, destination, ctx.state.units, target.instanceId);
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
@@ -286,12 +373,9 @@ export function applyStartOfTurnStatusDamage(unit: UnitInstance, events: GameEve
   const burning = unit.statusEffects.find((se) => se.slug === 'burning');
   if (burning) {
     const burnDamage = BURNING_DAMAGE_PER_STACK * burning.stacks;
-    unit.currentHealth = Math.max(0, unit.currentHealth - burnDamage);
-    events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: burning.sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, value: burnDamage, message: `${burnDamage} burning damage` });
-    if (unit.currentHealth <= 0 && unit.isAlive) {
-      unit.isAlive = false;
-      events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
-    }
+    takeDamage(unit, burnDamage, events, burning.sourceUnitInstanceId, (actual) => {
+      events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: burning.sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, value: actual, message: `${actual} burning damage` });
+    });
   }
 }
 
@@ -318,7 +402,8 @@ export function decrementStatusDurations(unit: UnitInstance, events: GameEvent[]
 /** True if this unit's own start-of-turn burning tick will kill it. */
 export function willDieToStartTick(unit: UnitInstance): boolean {
   const burning = unit.statusEffects.find((se) => se.slug === 'burning');
-  return !!burning && unit.currentHealth <= BURNING_DAMAGE_PER_STACK * burning.stacks;
+  if (!burning || (unit.passives ?? []).includes('undying')) return false;
+  return unit.currentHealth <= BURNING_DAMAGE_PER_STACK * burning.stacks;
 }
 
 /**

@@ -100,7 +100,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'ward',
     name: 'Ward',
-    description: 'Shields an ally within 2 tiles, healing them for 18 and fully negating the next hit against them (including unblockable attacks).',
+    description: 'Shields an ally within 2 tiles, healing them for 8 and fully negating the next hit against them (including unblockable attacks).',
     targeting_type: 'single',
     range: 2,
     area_radius: 0,
@@ -108,14 +108,14 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'heal', formula: 'flat', value: 18 },
+      { type: 'heal', formula: 'flat', value: 8 },
       { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
     ],
   },
   {
     slug: 'purify',
     name: 'Purify',
-    description: 'Cleanses frozen, rooted, and burning from an ally within 3 tiles, then heals them for 16.',
+    description: 'Cleanses frozen, rooted, and burning from an ally within 3 tiles, then heals them for 22.',
     targeting_type: 'single',
     range: 3,
     area_radius: 0,
@@ -126,7 +126,7 @@ export const ABILITY_DEFS = [
       { type: 'remove_status', statusSlug: 'frozen' },
       { type: 'remove_status', statusSlug: 'rooted' },
       { type: 'remove_status', statusSlug: 'burning' },
-      { type: 'heal', formula: 'flat', value: 16 },
+      { type: 'heal', formula: 'flat', value: 22 },
     ],
   },
 
@@ -166,7 +166,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 8 },
+      { type: 'damage', formula: 'flat', value: 14 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
@@ -230,7 +230,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'expose',
     name: 'Expose Weakness',
-    description: 'Deals 10 unblockable damage and exposes the target, causing attacks against them to always hit for 2 turns.',
+    description: 'Deals 16 unblockable damage and exposes the target, causing attacks against them to always hit for 3 turns.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -238,8 +238,8 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 10 },
-      { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 2 },
+      { type: 'damage', formula: 'flat', value: 16 },
+      { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 3 },
     ],
   },
 
@@ -336,7 +336,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'ignite',
     name: 'Ignite',
-    description: 'Deals 6 unblockable damage and sets the target ablaze, dealing 5 damage per turn for 3 turns.',
+    description: 'Deals 6 unblockable damage and sets the target ablaze, dealing 7 damage per turn for 3 turns.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -434,22 +434,22 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Blizzard',
-    description: 'Deals 6 unblockable damage and freezes every unit (including allies) in a 3×3 area within 2 tiles for 1 turn.',
+    description: 'Freezes every unit (including allies) in a 3×3 area within 2 tiles for 1 turn. Channeling the storm leaves the caster unable to move on their next turn.',
     targeting_type: 'aoe',
     range: 2,
     area_radius: 1,
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
+    self_status: { statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
     effects: [
-      { type: 'damage', formula: 'flat', value: 6 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
   {
     slug: 'cold_snap',
     name: 'Cold Snap',
-    description: 'Deals 11 unblockable damage from up to 5 tiles away and roots the target for 1 turn.',
+    description: 'Deals 10 unblockable damage from up to 5 tiles away and freezes the target for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -457,8 +457,8 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 11 },
-      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+      { type: 'damage', formula: 'flat', value: 10 },
+      { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
 ] as const;
@@ -482,30 +482,43 @@ export interface PassiveOption {
 }
 
 // Passive-option pool (mixed stat/behavioral design): frontline melee
-// classes (Fighter, Barbarian) get an 'immovable' behavioral option instead
-// of 'swift', since they don't rely on mobility as much as squishier classes.
-// Passive values are tuned PER CLASS (same slug can carry a different value
-// in different classes' option lists — the built instance reads its own
-// class's def). The fortune meter makes +AC vastly stronger on high-AC
-// classes, hence the +1/+2 hardened split.
-const VITALITY8: PassiveOption = { slug: 'vitality', name: 'Vitality', description: '+8 max health.', stat: 'maxHealth', value: 8 };
-const VITALITY6: PassiveOption = { slug: 'vitality', name: 'Vitality', description: '+6 max health.', stat: 'maxHealth', value: 6 };
-const HARDENED2: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+10% dodge chance.', stat: 'armorClass', value: 2 };
-const HARDENED1: PassiveOption = { slug: 'hardened', name: 'Hardened', description: '+5% dodge chance.', stat: 'armorClass', value: 1 };
+// BEHAVIORAL PASSIVES ONLY (2026-07 rework): every passive changes decisions,
+// none is a raw stat stick, so no option can strictly dominate another. Each
+// class's trio is a strategic fork, not a spreadsheet answer. Swift is
+// restricted to melee-basic classes (Barbarian, Rogue) — on ranged classes it
+// turned the endgame drain rule into a guaranteed kiting win condition.
+// Shelved-but-liked future options: Vengeful (+3 dmg below half HP),
+// Stalwart (immune to rooted/weakened/exposed).
 const SWIFT: PassiveOption = { slug: 'swift', name: 'Swift', description: '+1 movement range.', stat: 'movementRange', value: 1 };
-const IMMOVABLE: PassiveOption = { slug: 'immovable', name: 'Immovable', description: '+6 max health. Cannot be pushed or pulled.', stat: 'maxHealth', value: 6, passiveFlag: 'immovable' };
+// Anchor: the old Immovable minus its +6 HP rider (the rider made it strictly
+// dominate Vitality). Flag string stays 'immovable' — engine + campaign
+// content already key on it.
+const ANCHOR: PassiveOption = { slug: 'anchor', name: 'Anchor', description: 'Cannot be pushed or pulled.', passiveFlag: 'immovable' };
 // Warded: implemented at match build — units with the 'warded' flag start
 // with a long-lived 'shielded' status (consumed by the first hit as usual).
 const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Begin the match with a shield that negates the first hit against you.', passiveFlag: 'warded' };
+const THORNS: PassiveOption = { slug: 'thorns', name: 'Thorns', description: 'When an adjacent enemy hits you, they take 3 damage.', passiveFlag: 'thorns' };
+const UNDYING: PassiveOption = { slug: 'undying', name: 'Undying', description: 'The first time you would die each match, survive at 1 health instead.', passiveFlag: 'undying' };
+const OPPORTUNIST: PassiveOption = { slug: 'opportunist', name: 'Opportunist', description: '+4 damage against targets suffering any status effect.', passiveFlag: 'opportunist' };
+const VENGEFUL: PassiveOption = { slug: 'vengeful', name: 'Vengeful', description: '+3 damage while at or below half health.', passiveFlag: 'vengeful' };
+const STALWART: PassiveOption = { slug: 'stalwart', name: 'Stalwart', description: 'Immune to Rooted, Weakened, and Exposed.', passiveFlag: 'stalwart' };
 
-const FIGHTER_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED1, IMMOVABLE];
-const BARBARIAN_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, IMMOVABLE];
-const RANGER_PASSIVES: PassiveOption[] = [HARDENED1, SWIFT, VITALITY6];
-const ROGUE_PASSIVES: PassiveOption[] = [VITALITY8, HARDENED2, SWIFT];
-const WARLOCK_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, SWIFT];
-const CLERIC_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED1, IMMOVABLE];
-const WIZARD_PASSIVES: PassiveOption[] = [WARDED, HARDENED2, IMMOVABLE];
-const SORCERER_PASSIVES: PassiveOption[] = [VITALITY6, HARDENED2, WARDED];
+// Arena duel sims (2026-07): Warded dominated every ranged trio (87–100% vs
+// siblings — one negated hit ≈ 45% of a squishy's HP) and Swift dominated
+// barbarian's (74–76% — whirlwind delivery). Warded stays only on Cleric,
+// where 46 HP keeps it honest; Stalwart replaces it on the ranged classes;
+// Vengeful replaces barbarian's Swift.
+const FIGHTER_PASSIVES: PassiveOption[] = [ANCHOR, THORNS, UNDYING];
+const BARBARIAN_PASSIVES: PassiveOption[] = [VENGEFUL, THORNS, ANCHOR];
+// Rogue's Undying dueled 71–77% over its siblings (a diving assassin that
+// survives the counter-kill is too good) — Vengeful keeps the dive theme
+// without the free life.
+const ROGUE_PASSIVES: PassiveOption[] = [SWIFT, OPPORTUNIST, VENGEFUL];
+const RANGER_PASSIVES: PassiveOption[] = [STALWART, THORNS, OPPORTUNIST];
+const CLERIC_PASSIVES: PassiveOption[] = [ANCHOR, WARDED, UNDYING];
+const WIZARD_PASSIVES: PassiveOption[] = [STALWART, OPPORTUNIST, ANCHOR];
+const SORCERER_PASSIVES: PassiveOption[] = [STALWART, OPPORTUNIST, UNDYING];
+const WARLOCK_PASSIVES: PassiveOption[] = [STALWART, OPPORTUNIST, ANCHOR];
 
 export const UNIT_DEFS = [
   { slug: 'fighter',   name: 'Fighter',   max_health: 45, armor_class: 17, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind', 'concussive', 'shield_bash'], passive_options: FIGHTER_PASSIVES, unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },

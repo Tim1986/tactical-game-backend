@@ -67,6 +67,10 @@ import {
   pushDestination,
   pullDestination,
 } from './geometry';
+// Shared AOE shape predicate — the engine's resolveTargets uses the SAME
+// function, so brain hit prediction can never diverge from engine resolution.
+import { isInAoe } from '../game/boardUtils.js';
+import { BURNING_DAMAGE_PER_STACK } from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
 // Public interface (matches the sim harness spec)
@@ -248,13 +252,17 @@ export const WEIGHTS = {
   moveTax: 0.01,
   /** Assumed AC when estimating a unit's generic threat output. */
   referenceAC: 15,
+
+  /**
+   * ENDGAME (round 11+): ending a turn farther (Manhattan) from the nearest
+   * enemy than it started costs the unit 1 HP (engine drain rule). The real
+   * cost is 1, but the penalty is slightly higher because the drain is
+   * deterministic while most danger the brain weighs against it is
+   * probabilistic — a certain loss should outweigh an equal expected loss.
+   */
+  endgameDrainPenalty: 2,
 };
 
-/**
- * GAME RULE (not a heuristic): Charge is only legal during rounds 1-10.
- * After round 10 the AI must not generate Charge candidates.
- */
-export const CHARGE_MAX_ROUND = 10;
 
 // ---------------------------------------------------------------------------
 // Small shared helpers
@@ -349,7 +357,7 @@ export function willBlockOwnAction(u: UnitInstance, slug: string): boolean {
 export function willDieToOwnTick(u: UnitInstance): boolean {
   const burning = u.statusEffects.find((e) => e.slug === 'burning');
   if (!burning) return false;
-  return u.currentHealth <= 5 * burning.stacks;
+  return u.currentHealth <= BURNING_DAMAGE_PER_STACK * burning.stacks;
 }
 
 function abilityReady(u: UnitInstance, slug: string): boolean {
@@ -530,6 +538,29 @@ function scoreEffectsOnTarget(
   // ability use to the first damage/lifesteal effect (matches the engine's
   // weakenedAdjustedDamage hook in abilityExecutor.ts).
   let weakenRemaining = hasStatus(caster, 'weakened') ? 4 : 0;
+  // Opportunist passive: engine adds +4 per damage/lifesteal effect against a
+  // target with ANY status effect (added after the weaken cut, not reduced by it).
+  const opportunistBonus =
+    ((caster.passives ?? []).includes('opportunist') && target.statusEffects.length > 0 ? 4 : 0)
+    // Vengeful passive: +3 while the caster sits at or below half health.
+    + ((caster.passives ?? []).includes('vengeful') && caster.currentHealth * 2 <= caster.maxHealth ? 3 : 0);
+  const targetUndying = (target.passives ?? []).includes('undying');
+  const targetThorns = isEnemy && (target.passives ?? []).includes('thorns');
+  // Thorns passive: each damage/lifesteal effect that lands from an adjacent
+  // (cardinal) tile costs the caster 3 HP back. Charged per effect, matching
+  // the engine (multi-hit = multiple procs) — the lethality check is
+  // CUMULATIVE across procs (twin strike = 6 back; a 5 HP attacker dies).
+  let thornsTaken = 0;
+  const thornsCost = (targetPos: BoardPosition): number => {
+    if (!targetThorns || manhattanDistance(ctx.casterPos, targetPos) !== 1) return 0;
+    thornsTaken += 3;
+    let cost = 3 * WEIGHTS.selfDamage;
+    // A retaliation that would kill the caster is close to never worth it.
+    if (caster.currentHealth <= thornsTaken && !(caster.passives ?? []).includes('undying')) {
+      cost += WEIGHTS.allyDeathPenalty;
+    }
+    return cost;
+  };
   // Effects apply in sequence: a push moves the target BEFORE a subsequent
   // root lands (Fear = push, then root). Track the projected position so
   // position-sensitive effects evaluate where the target will actually be,
@@ -548,7 +579,12 @@ function scoreEffectsOnTarget(
         // Execute effect (Kill Shot): only worth anything at/below threshold.
         if (eff.healthThreshold !== undefined) {
           if (isEnemy && target.currentHealth <= eff.healthThreshold) {
-            s += killValue(target, map);
+            // Undying eats the execute (target survives at 1, flag consumed):
+            // still valuable — near-full damage + the safety net stripped —
+            // but NOT a kill.
+            s += targetUndying
+              ? (target.currentHealth - 1) * WEIGHTS.damage
+              : killValue(target, map);
           }
           break;
         }
@@ -559,10 +595,14 @@ function scoreEffectsOnTarget(
           raw -= cut;
           weakenRemaining -= cut;
         }
+        raw += opportunistBonus;
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
           s += effective * WEIGHTS.damage;
-          if (raw >= target.currentHealth) {
+          if (effective > 0) s -= thornsCost(projectedPos);
+          if (raw >= target.currentHealth && targetUndying) {
+            // Lethal damage on an Undying target leaves it at 1 — no kill credit.
+          } else if (raw >= target.currentHealth) {
             s += killValue(target, map); // guaranteed kill this action
           } else if (
             ctx.killThreshold > 0 &&
@@ -596,10 +636,14 @@ function scoreEffectsOnTarget(
           raw -= cut;
           weakenRemaining -= cut;
         }
+        raw += opportunistBonus;
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
           s += effective * WEIGHTS.damage;
-          if (raw >= target.currentHealth) {
+          if (effective > 0) s -= thornsCost(projectedPos);
+          if (raw >= target.currentHealth && targetUndying) {
+            // Lethal damage on an Undying target leaves it at 1 — no kill credit.
+          } else if (raw >= target.currentHealth) {
             s += killValue(target, map);
           } else if (
             ctx.killThreshold > 0 &&
@@ -642,6 +686,14 @@ function scoreEffectsOnTarget(
       }
 
       case 'apply_status': {
+        // Stalwart passive: rooted/weakened/exposed are negated outright —
+        // the status is worth nothing against this target (engine skips it).
+        if (
+          (target.passives ?? []).includes('stalwart') &&
+          (eff.statusSlug === 'rooted' || eff.statusSlug === 'weakened' || eff.statusSlug === 'exposed')
+        ) {
+          break;
+        }
         // Beneficial statuses (Ward's shielded) are FOR allies.
         if (eff.statusSlug === 'shielded') {
           if (isEnemy) { s -= WEIGHTS.statusOnAllyPenalty; break; }
@@ -681,7 +733,7 @@ function scoreEffectsOnTarget(
           // 5 damage at the start of each of the target's turns. Attrition
           // value discounted slightly (they may die/heal first), capped by
           // remaining HP.
-          const dot = Math.min(5 * eff.durationTurns, target.currentHealth);
+          const dot = Math.min(BURNING_DAMAGE_PER_STACK * eff.durationTurns, target.currentHealth);
           s += dot * WEIGHTS.burningFactor;
           if (hasStatus(target, 'burning')) s *= WEIGHTS.redundantStatusFactor;
           break;
@@ -861,7 +913,7 @@ function scoreEffectsOnTarget(
         } else if (eff.statusSlug === 'rooted') {
           s += rem * (isMelee(target, map) ? threatPerTurn(target, map) : 4);
         } else if (eff.statusSlug === 'burning') {
-          s += Math.min(5 * rem, target.currentHealth) * WEIGHTS.burningFactor;
+          s += Math.min(BURNING_DAMAGE_PER_STACK * rem, target.currentHealth) * WEIGHTS.burningFactor;
         } else if (eff.statusSlug === 'weakened') {
           s += 4 * rem;
         }
@@ -947,7 +999,16 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
     if (!abilityReady(caster, slug)) continue;
     const def = map.get(slug);
     if (!def) continue;
-    const reserve = def.isSpecial ? specialReserveFor(state) : 0;
+    // Self-status cost (Blizzard's channeling self-freeze): losing our own
+    // next turn is worth roughly what denying an enemy turn is worth —
+    // the caster's threat per turn plus the flat stun baseline.
+    const selfStatusCost =
+      def.selfStatus?.statusSlug === 'frozen'
+        ? threatPerTurn(caster, map) * WEIGHTS.stunThreatFactor + WEIGHTS.stunFlat
+        : def.selfStatus?.statusSlug === 'rooted'
+          ? WEIGHTS.stunFlat // mobility denial only — the caster still acts
+          : 0;
+    const reserve = (def.isSpecial ? specialReserveFor(state) : 0) + selfStatusCost;
 
     switch (def.targetingType) {
       case 'self': {
@@ -1038,7 +1099,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             if (!t.isAlive) continue;
             // Self-centered AOE (Whirlwind) hits everything adjacent but not the caster.
             if (def.range === 0 && t.instanceId === caster.instanceId) continue;
-            if (chebyshevDistance(c, effPos(ctx, t)) > def.areaRadius) continue;
+            if (!isInAoe(c, effPos(ctx, t), def.areaRadius, def.areaShape)) continue;
             // AOE ally exclusion (e.g. Roar): filter allies out entirely
             // before any scoring, matching the engine's resolveTargets.
             if (def.excludeAllies && t.ownerPlayerId === caster.ownerPlayerId) continue;
@@ -1056,15 +1117,18 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             if (t.ownerPlayerId !== caster.ownerPlayerId && hits) {
               enemiesHit++;
               // Lethal check for the gate bypass below: raw AOE damage
-              // covers the target's remaining HP (execute effects excluded).
-              for (const ef of def.effects) {
-                if (
-                  (ef.type === 'damage' &&
-                    ef.healthThreshold === undefined &&
-                    ef.value >= t.currentHealth) ||
-                  (ef.type === 'lifesteal' && ef.value >= t.currentHealth)
-                ) {
-                  expectsKill = true;
+              // covers the target's remaining HP (execute effects excluded;
+              // an Undying target survives at 1 — not a kill).
+              if (!(t.passives ?? []).includes('undying')) {
+                for (const ef of def.effects) {
+                  if (
+                    (ef.type === 'damage' &&
+                      ef.healthThreshold === undefined &&
+                      ef.value >= t.currentHealth) ||
+                    (ef.type === 'lifesteal' && ef.value >= t.currentHealth)
+                  ) {
+                    expectsKill = true;
+                  }
                 }
               }
             }
@@ -1402,8 +1466,27 @@ export function planBestTurn(
 
   const END: TurnAction = { type: 'END_TURN' };
   let best: TurnPlan = { score: -Infinity, actions: [END] };
+
+  // ENDGAME DRAIN (round 11+): engine applies it when the post-END_TURN round
+  // is >= 11 (roundFromTurn(turnNumber + 1) = floor(turnNumber / 8) + 1), so
+  // the last turn of round 10 already drains. Penalize any candidate whose
+  // FINAL position is farther (Manhattan) from the nearest enemy than start.
+  const drainApplies = Math.floor(state.turnNumber / 8) + 1 >= 11;
+  const nearestEnemyDist = (pos: BoardPosition) =>
+    enemies.length ? Math.min(...enemies.map((e) => manhattanDistance(pos, e.position))) : 0;
+  const startEnemyDist = nearestEnemyDist(unit.position);
+  const drainPenalty = (actions: TurnAction[]): number => {
+    if (!drainApplies || enemies.length === 0) return 0;
+    let finalPos = unit.position;
+    for (const a of actions) {
+      if (a.type === 'MOVE' || a.type === 'CHARGE') finalPos = a.destination;
+    }
+    return nearestEnemyDist(finalPos) > startEnemyDist ? WEIGHTS.endgameDrainPenalty : 0;
+  };
+
   const consider = (score: number, actions: TurnAction[]) => {
-    if (score > best.score) best = { score, actions };
+    const adjusted = score - drainPenalty(actions);
+    if (adjusted > best.score) best = { score: adjusted, actions };
   };
 
   // 1. Do nothing.
@@ -1536,17 +1619,16 @@ export function planBestTurn(
 
   // 5. Move + Charge (double move). Pure repositioning — competes on position
   //    score alone, so it only wins when no ability use is worth anything.
-  //    GAME RULE: Charge is only legal during rounds 1-10.
-  if (state.roundNumber <= CHARGE_MAX_ROUND) {
-    for (const posA of moveTiles) {
-      const fromA = reachableFrom(posA, unit, state.units, unit.movementRange);
-      for (const posB of fromA) {
-        consider(pScore(posB) - 2 * WEIGHTS.moveTax, [
-          { type: 'MOVE', unitInstanceId: unit.instanceId, destination: posA },
-          { type: 'CHARGE', unitInstanceId: unit.instanceId, destination: posB },
-          END,
-        ]);
-      }
+  //    Charge is legal in every round (the 10-round cap was removed with the
+  //    endgame drain rule).
+  for (const posA of moveTiles) {
+    const fromA = reachableFrom(posA, unit, state.units, unit.movementRange);
+    for (const posB of fromA) {
+      consider(pScore(posB) - 2 * WEIGHTS.moveTax, [
+        { type: 'MOVE', unitInstanceId: unit.instanceId, destination: posA },
+        { type: 'CHARGE', unitInstanceId: unit.instanceId, destination: posB },
+        END,
+      ]);
     }
   }
 

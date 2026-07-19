@@ -25,6 +25,7 @@ export const DEFAULT_ABILITIES: AbilityDefinition[] = ABILITY_DEFS.map((a) => ({
   isUnblockable: a.is_unblockable,
   excludeAllies: (a as typeof a & { exclude_allies?: boolean }).exclude_allies ?? false,
   areaShape:     (a as typeof a & { area_shape?: 'chebyshev' | 'orthogonal' }).area_shape ?? 'chebyshev',
+  selfStatus:    (a as typeof a & { self_status?: { statusSlug: string; stacks: number; durationTurns: number } }).self_status,
   effects:       a.effects as unknown as AbilityDefinition['effects'],
 }));
 

@@ -83,6 +83,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'ABL-5', text: 'Healing cannot raise a unit above its maximum health. Life-stealing attacks heal the attacker by a fixed amount, also capped at maximum health.' },
       { id: 'ABL-6', text: 'Execute-style abilities (like Kill Shot / Assassinate) only work if the target’s health is at or below the stated threshold; otherwise they fail and do nothing.' },
       { id: 'ABL-7', text: 'Pushes and pulls slide the target in a straight line, tile by tile. The slide stops early at the board edge, a removed corner, or an occupied tile.' },
+      { id: 'ABL-8', text: 'Area abilities hit every unit within their radius, including diagonals (a radius-1 blast covers a full 3×3 square). Orthogonal area abilities — Whirlwind and Shockwave — hit only the 4 tiles directly adjacent to the caster, never diagonals.' },
     ],
   },
   {
@@ -90,7 +91,7 @@ export const RULEBOOK: RuleSection[] = [
     title: 'Status Effects',
     rules: [
       { id: 'STA-1', text: 'A status lasting "N turns" is in force for N of the affected unit’s own turns. It wears off at the end of that unit’s Nth turn — so a 1-turn debuff still affects that whole turn.' },
-      { id: 'STA-2', text: 'BURNING deals 5 damage per stack at the START of the burning unit’s turn (before it acts). Burning stacks up to 3 times. A unit can die to its own burn before it gets to act.' },
+      { id: 'STA-2', text: 'BURNING deals 7 damage per stack at the START of the burning unit’s turn (before it acts). Burning stacks up to 3 times. A unit can die to its own burn before it gets to act.' },
       { id: 'STA-3', text: 'ROOTED: cannot move or Charge; can still use abilities.' },
       { id: 'STA-4', text: 'FROZEN: the unit’s turns are skipped completely while frozen.' },
       { id: 'STA-5', text: 'WEAKENED: the unit’s outgoing damage is reduced by 4 (never below 0).' },
@@ -101,11 +102,14 @@ export const RULEBOOK: RuleSection[] = [
     id: 'PAS',
     title: 'Passives',
     rules: [
-      { id: 'PAS-1', text: 'Vitality: bonus maximum health (amount varies by class).' },
-      { id: 'PAS-2', text: 'Hardened: bonus dodge chance (+5% or +10% by class).' },
-      { id: 'PAS-3', text: 'Swift: +1 movement.' },
-      { id: 'PAS-4', text: 'Immovable: +6 maximum health, and the unit can never be pushed or pulled.' },
-      { id: 'PAS-5', text: 'Warded: the unit starts the match with a shield that negates the first hit against it.' },
+      { id: 'PAS-1', text: 'Swift: +1 movement. Only offered to classes with a melee basic attack.' },
+      { id: 'PAS-2', text: 'Anchor: the unit can never be pushed or pulled. A negated push or pull is announced as "Resisted".' },
+      { id: 'PAS-3', text: 'Warded: the unit starts the match with a shield that negates the first hit against it.' },
+      { id: 'PAS-4', text: 'Thorns: when an enemy on a directly adjacent tile (not diagonal) lands a hit on this unit, the attacker takes 3 damage.' },
+      { id: 'PAS-5', text: 'Undying: the first time this unit would die each match, it survives at 1 health instead. Works against any damage, including executes, burning, and endgame drain. Once per match.' },
+      { id: 'PAS-6', text: 'Opportunist: this unit deals +4 damage against targets suffering any status effect.' },
+      { id: 'PAS-7', text: 'Vengeful: this unit deals +3 damage while at or below half of its maximum health.' },
+      { id: 'PAS-8', text: 'Stalwart: this unit is immune to Rooted, Weakened, and Exposed. A negated status is announced as "Resisted". Frozen and Burning still apply normally.' },
     ],
   },
   {

@@ -48,14 +48,22 @@ const PARTY_FLOOR: Record<CampaignDifficulty, number> = {
   easy: 0.60, medium: 0.40, hard: 0.15, nightmare: 0.0,
 };
 
-/** Default per-unit choices for simmed parties: first passive + first special. */
-function defaultChoices(partySlugs: string[]): CampaignUnitChoice[] {
-  return partySlugs.map((slug) => {
+/**
+ * Per-unit choices matching the live level-up schedule: L2 = main + first
+ * companion get specials, L3 = those two get passives, L4 = remaining two get
+ * specials, L5 = remaining two get passives. Defaults to each class's first
+ * option; passiveOverrides (from --passives) replaces the passive picks for
+ * balance comparisons.
+ */
+function choicesForLevel(partySlugs: string[], level: number, passiveOverrides?: (string | undefined)[]): CampaignUnitChoice[] {
+  return partySlugs.map((slug, i) => {
     const def = DEFAULT_UNITS[slug];
-    return {
-      passiveSlug: def?.passiveOptions[0]?.slug,
-      specialSlug: def?.specialOptions[0],
-    };
+    const early = i <= 1; // main + first companion level up first
+    const specialSlug = level >= (early ? 2 : 4) ? def?.specialOptions[0] : undefined;
+    const passiveSlug = level >= (early ? 3 : 5)
+      ? (passiveOverrides?.[i] ?? def?.passiveOptions[0]?.slug)
+      : undefined;
+    return { specialSlug, passiveSlug };
   });
 }
 
@@ -79,7 +87,7 @@ export function simEncounterCell(
   difficulty: CampaignDifficulty,
   partyName: string,
   partySlugs: string[],
-  options: { games?: number; level?: number; seed?: number } = {},
+  options: { games?: number; level?: number; seed?: number; passives?: (string | undefined)[] } = {},
 ): CampaignCellResult {
   const campaign = CAMPAIGNS[campaignSlug];
   if (!campaign) throw new Error(`Unknown campaign: ${campaignSlug}`);
@@ -88,7 +96,7 @@ export function simEncounterCell(
   const games = options.games ?? 100;
   const level = options.level ?? enc.level;
   const rng = makeRng(options.seed ?? 1);
-  const choices = defaultChoices(partySlugs);
+  const choices = choicesForLevel(partySlugs, level, options.passives);
   const abilityMap = buildAbilityMap();
   const brain1 = new OptimalBrain();
   const brain2 = new OptimalBrain();
@@ -163,6 +171,7 @@ if (isMain) {
       for (const [pname, pslugs] of Object.entries(parties)) {
         const r = simEncounterCell(campaignSlug, encId, diff, pname, pslugs, {
           games, level: levelArg ? parseInt(levelArg, 10) : undefined,
+          passives: getArg('--passives')?.split(',').map((s) => s === '' ? undefined : s),
         });
         cells.push(r);
         const [lo, hi] = TARGET_BANDS[diff];
