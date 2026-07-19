@@ -32,6 +32,7 @@ export interface UnitInstance {
   movementRange: number;
   abilities: string[];
   passives: string[];
+  passiveSlug?: string;
   isAlive: boolean;
   hasMovedThisTurn: boolean;
   hasActedThisTurn: boolean;

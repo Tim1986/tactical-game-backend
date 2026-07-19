@@ -54,6 +54,7 @@ export function buildUnitInstance(
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange,
     abilities, passives,
+    passiveSlug: customization?.passiveSlug ?? undefined,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
     fortuneMeter: 0,
