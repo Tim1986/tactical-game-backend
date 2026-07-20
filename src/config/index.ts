@@ -60,5 +60,8 @@ export const config = {
     matchmakingIntervalSeconds: optionalEnvInt('MATCHMAKING_INTERVAL_SECONDS', 30),
     matchmakingInitialRange: optionalEnvInt('MATCHMAKING_INITIAL_RANGE', 100),
     matchmakingRangeIncrement: optionalEnvInt('MATCHMAKING_RANGE_INCREMENT', 25),
+    // If set, all gameplay routes reject clients not on this exact version (426).
+    // Leave unset in dev to skip the gate.
+    requiredAppVersion: process.env.REQUIRED_APP_VERSION ?? null,
   },
 } as const;

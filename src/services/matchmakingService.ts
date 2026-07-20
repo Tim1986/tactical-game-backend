@@ -10,23 +10,26 @@ export class ActiveMatchExistsError extends Error { constructor() { super('You a
 export class TeamNotFoundError extends Error { constructor() { super('Team not found'); this.name = 'TeamNotFoundError'; } }
 export class ChallengeError extends Error { constructor(message: string) { super(message); this.name = 'ChallengeError'; } }
 
-interface QueueRow { id: string; user_id: string; team_id: string; elo: number; elo_search_range: number; entered_at: string; }
+interface QueueRow { id: string; user_id: string; team_id: string; elo: number; elo_search_range: number; entered_at: string; app_version: string | null; }
 
-export async function enterQueue(userId: string, teamId: string): Promise<{ position: number }> {
+export async function enterQueue(userId: string, teamId: string, appVersion?: string): Promise<{ position: number }> {
   const teamResult = await query<{ id: string }>('SELECT id FROM teams WHERE id = $1 AND user_id = $2 AND is_active = TRUE', [teamId, userId]);
   if (!teamResult.rows[0]) throw new TeamNotFoundError();
   // Multiple simultaneous async games are allowed — no active-match restriction
   const userResult = await query<{ elo: number }>('SELECT elo FROM users WHERE id = $1', [userId]);
   const elo = userResult.rows[0]?.elo ?? 1200;
   try {
-    await query('INSERT INTO matchmaking_queue (user_id, team_id, elo, elo_search_range) VALUES ($1, $2, $3, $4)', [userId, teamId, elo, config.game.matchmakingInitialRange]);
+    await query(
+      'INSERT INTO matchmaking_queue (user_id, team_id, elo, elo_search_range, app_version) VALUES ($1, $2, $3, $4, $5)',
+      [userId, teamId, elo, config.game.matchmakingInitialRange, appVersion ?? null]
+    );
   } catch (err: unknown) {
     if (err instanceof Error && 'code' in err && (err as { code?: string }).code === '23505') throw new AlreadyInQueueError();
     throw err;
   }
   const posResult = await query<{ count: string }>('SELECT COUNT(*) as count FROM matchmaking_queue WHERE elo BETWEEN $1 AND $2', [elo - 200, elo + 200]);
   const position = parseInt(posResult.rows[0].count, 10);
-  logger.info({ userId, teamId, elo }, 'Player entered matchmaking queue');
+  logger.info({ userId, teamId, elo, appVersion }, 'Player entered matchmaking queue');
   return { position };
 }
 
@@ -72,7 +75,8 @@ export async function runMatchmakingJob(): Promise<void> {
         if (matched.has(p2.user_id)) continue;
         const p1Min = p1.elo - p1.elo_search_range; const p1Max = p1.elo + p1.elo_search_range;
         const p2Min = p2.elo - p2.elo_search_range; const p2Max = p2.elo + p2.elo_search_range;
-        if (p1Min <= p2Max && p2Min <= p1Max) {
+        const versionMatch = p1.app_version === p2.app_version;
+        if (p1Min <= p2Max && p2Min <= p1Max && versionMatch) {
           try {
             const { matchId } = await createMatch(p1.user_id, p2.user_id, p1.team_id, p2.team_id, config.game.turnDeadlineHours);
             await client.query('DELETE FROM matchmaking_queue WHERE user_id = ANY($1)', [[p1.user_id, p2.user_id]]);

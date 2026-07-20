@@ -37,6 +37,9 @@ export const Errors = {
   validation: (res: Response, message: string, details?: unknown): void =>
     sendError(res, 422, 'VALIDATION_ERROR', message, details),
 
+  upgradeRequired: (res: Response, requiredVersion: string): void =>
+    sendError(res, 426, 'VERSION_MISMATCH', `App update required. Please update to version ${requiredVersion}.`),
+
   internal: (res: Response): void =>
     sendError(res, 500, 'INTERNAL_ERROR', 'An unexpected error occurred'),
 };

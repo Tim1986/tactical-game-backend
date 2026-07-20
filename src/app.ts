@@ -13,6 +13,7 @@ import { challengeRouter } from './routes/challenges.js';
 import { achievementRouter } from './routes/achievements.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { requireAppVersion } from './middleware/versionCheck.js';
 import { sendSuccess } from './utils/response.js';
 
 export function createApp(): express.Application {
@@ -21,7 +22,7 @@ export function createApp(): express.Application {
   app.use(helmet());
   // CORS allowlist: only browser-based clients (web) are restricted by this; native iOS/Android apps are unaffected.
   // Add your production web domain here when you deploy a web build, e.g. 'https://yourapp.com'
-  app.use(cors({ origin: ['http://localhost:8081'], methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+  app.use(cors({ origin: ['http://localhost:8081'], methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-App-Version'] }));
   app.use(express.json({ limit: '100kb' }));
   const authLimiter = rateLimit({ windowMs: config.rateLimit.auth.windowMs, max: config.rateLimit.auth.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
   const apiLimiter = rateLimit({ windowMs: config.rateLimit.api.windowMs, max: config.rateLimit.api.max, standardHeaders: true, legacyHeaders: false, message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } } });
@@ -30,9 +31,9 @@ export function createApp(): express.Application {
   app.use('/users', apiLimiter, userRouter);
   app.use('/units', apiLimiter, unitRouter);
   app.use('/teams', apiLimiter, teamRouter);
-  app.use('/matches', apiLimiter, matchRouter);
-  app.use('/matchmaking', apiLimiter, matchmakingRouter);
-  app.use('/challenges', apiLimiter, challengeRouter);
+  app.use('/matches', apiLimiter, requireAppVersion, matchRouter);
+  app.use('/matchmaking', apiLimiter, requireAppVersion, matchmakingRouter);
+  app.use('/challenges', apiLimiter, requireAppVersion, challengeRouter);
   app.use('/achievements', apiLimiter, achievementRouter);
   app.use('/leaderboard', apiLimiter, leaderboardRouter);
   app.use(notFoundHandler);

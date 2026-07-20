@@ -7,14 +7,14 @@ import { sendSuccess, Errors } from '../utils/response.js';
 export const matchmakingRouter = Router();
 matchmakingRouter.use(requireAuth);
 
-const EnterQueueSchema = z.object({ teamId: z.string().uuid('Invalid team ID') });
+const EnterQueueSchema = z.object({ teamId: z.string().uuid('Invalid team ID'), appVersion: z.string().optional() });
 const ChallengeSchema = z.object({ teamId: z.string().uuid('Invalid team ID'), opponentId: z.string().uuid('Invalid opponent ID') });
 
 matchmakingRouter.post('/queue', async (req: Request, res: Response): Promise<void> => {
   const parsed = EnterQueueSchema.safeParse(req.body);
   if (!parsed.success) { Errors.validation(res, 'Invalid queue data', parsed.error.flatten()); return; }
   try {
-    const result = await matchmakingService.enterQueue(req.user!.id, parsed.data.teamId);
+    const result = await matchmakingService.enterQueue(req.user!.id, parsed.data.teamId, parsed.data.appVersion);
     sendSuccess(res, { message: 'Entered matchmaking queue', position: result.position }, 201);
   } catch (err) {
     if (err instanceof matchmakingService.AlreadyInQueueError) { Errors.conflict(res, err.message); return; }
