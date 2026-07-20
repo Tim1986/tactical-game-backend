@@ -69,7 +69,7 @@ function mkUnit(owner: string, x: number, y: number, over: Partial<UnitInstance>
     armorClass: 6, // dodge 0% — checks opt into dodge explicitly
     movementRange: 3, abilities: ['test_hit'], passives: [],
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    cooldowns: { test_hit: 0 }, statusEffects: [], fortuneMeter: 0,
+    cooldowns: { test_hit: 0 }, statusEffects: [],
     ...over,
   };
 }
@@ -359,65 +359,43 @@ export const RULE_CHECKS: RuleCheck[] = [
 
   // ── DGE ────────────────────────────────────────────────────────────────────
   {
-    rule: 'DGE-1', name: 'dodge chance = (AC − 6) × 5%: AC 6 never dodges, AC 26 always dodges',
+    rule: 'DGE-1', name: 'blockable attacks always hit regardless of AC (no dodge mechanic)',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
-      const never = mkUnit(P2, 2, 1, { armorClass: 6 });
-      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, never);
-      assert(never.currentHealth === 50, 'AC 6 (0% dodge) must be hit every time');
-      const always = mkUnit(P2, 2, 1, { armorClass: 26 });
-      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, always);
-      assert(always.currentHealth === 100, 'AC 26 (100% dodge) must dodge every time');
+      const low = mkUnit(P2, 2, 1, { armorClass: 6 });
+      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, low);
+      assert(low.currentHealth === 50, 'AC 6 target must be hit every time');
+      const high = mkUnit(P2, 2, 1, { armorClass: 26 });
+      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, high);
+      assert(high.currentHealth === 50, 'AC 26 target must also be hit every time');
     },
   },
   {
-    rule: 'DGE-2', name: 'fortune meter accumulates dodge chance; at 100% the attack misses and the meter drops by 100',
+    rule: 'DGE-2', name: 'unblockable abilities always hit',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
-      const t = mkUnit(P2, 2, 1, { armorClass: 16 }); // 50% dodge
-      cast(mkAbility(), caster, t);
-      assert(t.currentHealth === 90 && Math.abs(t.fortuneMeter - 0.5) < 1e-9, 'first attack hits, meter 0.5');
-      const ev = cast(mkAbility(), caster, t);
-      assert(t.currentHealth === 90, 'second attack must miss when meter reaches 1.0');
-      assert(ev.some((e) => e.type === 'ATTACK_MISSED'), 'miss must emit ATTACK_MISSED');
-      assert(Math.abs(t.fortuneMeter) < 1e-9, 'meter must drop by 100 after the miss');
-    },
-  },
-  {
-    rule: 'DGE-3', name: 'the meter starts empty — a fresh unit\'s meter is 0',
-    run: () => {
-      const inst = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 });
-      assert(inst.fortuneMeter === 0, 'buildUnitInstance must start the fortune meter at 0');
-    },
-  },
-  {
-    rule: 'DGE-4', name: 'unblockable abilities always hit and never touch the meter',
-    run: () => {
-      const caster = mkUnit(P1, 1, 1);
-      const t = mkUnit(P2, 2, 1, { armorClass: 26, fortuneMeter: 0.4 });
+      const t = mkUnit(P2, 2, 1, { armorClass: 26 });
       cast(mkAbility({ isUnblockable: true }), caster, t);
-      assert(t.currentHealth === 90, 'unblockable must hit a 100%-dodge target');
-      assert(Math.abs(t.fortuneMeter - 0.4) < 1e-9, 'unblockable must not change the meter');
+      assert(t.currentHealth === 90, 'unblockable must hit even maximum-AC target');
     },
   },
   {
-    rule: 'DGE-5', name: 'attacks on an exposed unit always hit, meter untouched',
+    rule: 'DGE-3', name: 'attacks on an exposed unit always hit',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
       const t = mkUnit(P2, 2, 1, {
-        armorClass: 26, fortuneMeter: 0.4,
+        armorClass: 26,
         statusEffects: [{ slug: 'exposed', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'x' }],
       });
       cast(mkAbility(), caster, t);
       assert(t.currentHealth === 90, 'exposed target must always be hit');
-      assert(Math.abs(t.fortuneMeter - 0.4) < 1e-9, 'exposed hit must not change the meter');
     },
   },
   {
-    rule: 'DGE-6', name: 'multi-hit rolls each hit separately — one can hit while the other misses',
+    rule: 'DGE-4', name: 'multi-hit applies each damage effect independently',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
-      const t = mkUnit(P2, 2, 1, { armorClass: 16 }); // 50%: hit1 lands (meter .5), hit2 misses (meter 0)
+      const t = mkUnit(P2, 2, 1);
       const twin = mkAbility({
         isMultiHit: true,
         effects: [
@@ -425,25 +403,21 @@ export const RULE_CHECKS: RuleCheck[] = [
           { type: 'damage', formula: 'flat', value: 8 },
         ],
       });
-      const ev = cast(twin, caster, t);
-      assert(t.currentHealth === 91, `first hit lands, second misses (got HP ${t.currentHealth})`);
-      assert(ev.some((e) => e.type === 'ATTACK_MISSED'), 'the missed hit must emit ATTACK_MISSED');
-      assert(Math.abs(t.fortuneMeter) < 1e-9, 'meter resets after the missing hit');
+      cast(twin, caster, t);
+      assert(t.currentHealth === 83, `both hits must land (got HP ${t.currentHealth})`);
     },
   },
   {
-    rule: 'DGE-7', name: 'a shield negates the next hit (even unblockable) and is consumed; multi-hit loses only its first hit',
+    rule: 'DGE-5', name: 'a shield negates the next hit (even unblockable) and is consumed; multi-hit loses only its first hit',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
       const shielded = () => mkUnit(P2, 2, 1, {
         statusEffects: [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: 'x' }],
-        fortuneMeter: 0.25,
       });
       let t = shielded();
       const ev = cast(mkAbility({ isUnblockable: true }), caster, t);
       assert(t.currentHealth === 100 && !has(t, 'shielded'), 'shield must absorb an unblockable hit and be consumed');
       assert(ev.some((e) => e.type === 'SHIELD_ABSORBED'), 'absorption must emit SHIELD_ABSORBED');
-      assert(Math.abs(t.fortuneMeter - 0.25) < 1e-9, 'shielded hit must not touch the meter');
       t = shielded();
       cast(mkAbility({
         isMultiHit: true, isUnblockable: true,
@@ -456,14 +430,13 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'DGE-8', name: 'non-damaging abilities never miss',
+    rule: 'DGE-6', name: 'non-damaging abilities always land',
     run: () => {
       const caster = mkUnit(P1, 1, 1);
-      const t = mkUnit(P2, 2, 1, { armorClass: 26, currentHealth: 50, fortuneMeter: 0.9 });
+      const t = mkUnit(P2, 2, 1, { armorClass: 26, currentHealth: 50 });
       const ev = cast(mkAbility({ effects: [{ type: 'heal', formula: 'flat', value: 20 }] }), caster, t);
-      assert(t.currentHealth === 70, 'heal must land on a 100%-dodge target');
+      assert(t.currentHealth === 70, 'heal must land on a max-AC target');
       assert(!ev.some((e) => e.type === 'ATTACK_MISSED'), 'no miss event for a non-damaging ability');
-      assert(Math.abs(t.fortuneMeter - 0.9) < 1e-9, 'non-damaging ability must not touch the meter');
     },
   },
 
@@ -971,76 +944,6 @@ export const RULE_CHECKS: RuleCheck[] = [
       ], P1, P1, P2, new Map());
       const after = r.updatedState.units.find(u => u.instanceId === a.instanceId)!;
       assert(after.currentHealth === 20, 'drain must not apply before round 11');
-    },
-  },
-
-  {
-    rule: 'DGE-5', name: 'fortune meter accumulates across turns and triggers a miss at exactly 1.0',
-    run: () => {
-      // AC 16 → missChance = (16-6)/20 = 0.5. Two attacks should dodge the second.
-      const attacker = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
-      const target   = mkUnit(P2, 2, 1, { armorClass: 16, fortuneMeter: 0 });
-      const amap = new Map([['test_hit', mkAbility()]]);
-      const s0 = mkInitiativeState([attacker, target], [attacker.instanceId], 0);
-
-      // First attack: meter 0 + 0.5 = 0.5 → HIT
-      const r1 = processTurn(JSON.parse(JSON.stringify(s0)), [
-        { type: 'USE_ABILITY', unitInstanceId: attacker.instanceId, abilitySlug: 'test_hit', target: target.position },
-        { type: 'END_TURN' },
-      ], P1, P1, P2, amap);
-      const hit = r1.events.some(e => e.type === 'DAMAGE_DEALT');
-      const miss1 = r1.events.some(e => e.type === 'ATTACK_MISSED');
-      assert(hit && !miss1, 'first attack (meter 0.5) must hit');
-
-      // Second attack: meter 0.5 + 0.5 = 1.0 → MISS
-      const tgt1 = r1.updatedState.units.find(u => u.instanceId === target.instanceId)!;
-      assert(Math.abs((tgt1.fortuneMeter ?? 0) - 0.5) < 0.001, 'meter should be 0.5 after first hit');
-
-      const attacker2 = r1.updatedState.units.find(u => u.instanceId === attacker.instanceId)!;
-      const s1: MatchState = { ...r1.updatedState, activePlayerId: P1,
-        initiative: { order: [attacker2.instanceId], slot: 0, round1FirstPlayerId: P1, activeUnitId: attacker2.instanceId, isRound1: false } } as MatchState;
-      const r2 = processTurn(JSON.parse(JSON.stringify(s1)), [
-        { type: 'USE_ABILITY', unitInstanceId: attacker2.instanceId, abilitySlug: 'test_hit', target: tgt1.position },
-        { type: 'END_TURN' },
-      ], P1, P1, P2, amap);
-      const miss2 = r2.events.some(e => e.type === 'ATTACK_MISSED');
-      assert(miss2, 'second attack (meter 0.5+0.5=1.0) must miss');
-
-      // After miss, meter resets to 0 (1.0 - 1.0)
-      const tgt2 = r2.updatedState.units.find(u => u.instanceId === target.instanceId)!;
-      assert(Math.abs((tgt2.fortuneMeter ?? 0)) < 0.001, 'meter should reset to 0 after miss');
-    },
-  },
-
-  {
-    rule: 'DGE-4', name: 'unblockable and exposed both bypass fortune meter — multi-turn verification',
-    run: () => {
-      const attacker = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
-      const target   = mkUnit(P2, 2, 1, { armorClass: 26, fortuneMeter: 0.99 }); // missChance=1.0, meter near 1
-      const amap = new Map([['test_hit', mkAbility({ isUnblockable: true })]]);
-      const s0 = mkInitiativeState([attacker, target], [attacker.instanceId], 0);
-
-      const r = processTurn(JSON.parse(JSON.stringify(s0)), [
-        { type: 'USE_ABILITY', unitInstanceId: attacker.instanceId, abilitySlug: 'test_hit', target: target.position },
-        { type: 'END_TURN' },
-      ], P1, P1, P2, amap);
-      const hit = r.events.some(e => e.type === 'DAMAGE_DEALT');
-      assert(hit, 'unblockable must ignore the fortune meter and always hit');
-
-      // Exposed: blockable attack at full meter still hits
-      const attacker2 = mkUnit(P1, 1, 1, { abilities: ['test_hit'] });
-      const target2   = mkUnit(P2, 2, 1, {
-        armorClass: 26, fortuneMeter: 0.99,
-        statusEffects: [{ slug: 'exposed', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }],
-      });
-      const amap2 = new Map([['test_hit', mkAbility()]]);
-      const s2 = mkInitiativeState([attacker2, target2], [attacker2.instanceId], 0);
-      const r2 = processTurn(JSON.parse(JSON.stringify(s2)), [
-        { type: 'USE_ABILITY', unitInstanceId: attacker2.instanceId, abilitySlug: 'test_hit', target: target2.position },
-        { type: 'END_TURN' },
-      ], P1, P1, P2, amap2);
-      const hit2 = r2.events.some(e => e.type === 'DAMAGE_DEALT');
-      assert(hit2, 'exposed must bypass fortune meter — blockable attack must hit');
     },
   },
 

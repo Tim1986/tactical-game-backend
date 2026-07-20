@@ -78,49 +78,16 @@ const FREEZE: AbilityDefinition = {
 
 afterEach(() => { vi.restoreAllMocks(); });
 
-// ─── AC Roll ──────────────────────────────────────────────────────────────────
+// ─── Hit resolution ───────────────────────────────────────────────────────────
 
-describe('AC roll', () => {
-  it('hits when the fortune meter has not yet accumulated enough miss chance', () => {
-    // Deterministic fortune meter, not a d20 roll: a fresh unit starts at
-    // fortuneMeter 0, and a single hit's missChance (max realistic AC) never
-    // reaches 1.0 on its own, so the very first attack always connects.
-    const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 15 });
-    const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
-    executeAbility(ctx);
-    expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
-    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(false);
-  });
-
-  it('misses when its fortune meter tips over from accumulated miss chance', () => {
-    // Deterministic fortune meter (not a d20 roll): missChance = max(0, AC-6)/20.
-    // AC 15 -> missChance 0.45. Pre-seed the meter so this hit crosses 1.0.
-    const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 15, fortuneMeter: 0.6 });
-    const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
-    executeAbility(ctx);
-    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);
-    expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(false);
-    // Target takes no damage
-    expect(target.currentHealth).toBe(40);
-  });
-
-  it('high-AC unit (fighter AC 20) still hits on a fresh (zero) fortune meter', () => {
+describe('hit resolution', () => {
+  it('blockable attack always hits (no fortune meter)', () => {
     const caster = makeUnit('u1', 'p1', 0, 0);
     const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
     executeAbility(ctx);
     expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
-  });
-
-  it('high-AC unit (fighter AC 20) misses when its fortune meter tips over', () => {
-    // AC 20 -> missChance 0.7. A modest pre-seeded meter is enough to cross 1.0.
-    const caster = makeUnit('u1', 'p1', 0, 0);
-    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20, fortuneMeter: 0.35 });
-    const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
-    executeAbility(ctx);
-    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);
+    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(false);
   });
 });
 
@@ -200,14 +167,13 @@ describe('Piercing Shot', () => {
     expect(t2.currentHealth).toBe(25);
   });
 
-  it('misses a unit in line when its fortune meter tips over', () => {
-    // AC 15 -> missChance 0.45. Pre-seed the meter so this hit crosses 1.0.
+  it('hits a unit in line when not shielded', () => {
     const caster = makeUnit('u1', 'p1', 0, 3);
-    const t1 = makeUnit('u2', 'p2', 2, 3, { armorClass: 15, fortuneMeter: 0.6 });
+    const t1 = makeUnit('u2', 'p2', 2, 3, { armorClass: 15 });
     const ctx = makeCtx(caster, { x: 6, y: 3 }, PIERCING_SHOT, makeState([caster, t1]));
     executeAbility(ctx);
-    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(true);
-    expect(t1.currentHealth).toBe(40);
+    expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
+    expect(t1.currentHealth).toBe(25); // 40 - 15
   });
 });
 

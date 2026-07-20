@@ -31,8 +31,7 @@ function mkUnit(
     hasActedThisTurn: false,
     cooldowns: {},
     statusEffects: [],
-    fortuneMeter: 0,
-  };
+    };
 }
 
 function mkState(
@@ -467,93 +466,17 @@ import { DEFAULT_ABILITIES } from './defaultData';
 }
 
 // ===========================================================================
-// V6/V7 tests: fortune meter, customization, new statuses/specials
+// V6/V7 tests: customization, new statuses/specials
 // ===========================================================================
-import { willHit, wouldDodgeNext, explainTurn } from './aiBrain';
+import { explainTurn } from './aiBrain';
 import { runSim } from './simHarness';
 
-/** Like mkUnit, but also sets a starting fortune meter (for dodge-math tests). */
-function mkUnitWithFortune(slug: string, owner: string, pos: BoardPosition, hp: number, fortune: number): UnitInstance {
-  const u = mkUnit(slug, owner, pos, hp);
-  u.fortuneMeter = fortune;
-  return u;
-}
-
-// --- Test 28: willHit matches the engine's deterministic formula exactly ---
-{
-  const fighter = mkUnit('fighter', 'p2', { x: 5, y: 3 }); // AC 17 -> miss 0.55
-  const sword = map.get('sword')!;
-  fighter.fortuneMeter = 0.40;
-  check('willHit: meter 0.40 + miss 0.55 = 0.95 < 1 -> HIT', willHit(fighter, sword));
-  fighter.fortuneMeter = 0.50;
-  check('willHit: meter 0.50 + miss 0.55 = 1.05 >= 1 -> DODGE', !willHit(fighter, sword));
-  check('wouldDodgeNext agrees with willHit', wouldDodgeNext(fighter));
-  check('unblockable ignores the meter', willHit(fighter, map.get('eldritch')!));
-}
-
-// --- Test 29: a once-per-game special NEVER fires into a guaranteed dodge ---
-{
-  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
-  const dodger = mkUnitWithFortune('barbarian', 'p2', { x: 4, y: 3 }, 40, 0.60); // AC15 miss .45 -> dodges
-  const other = mkUnitWithFortune('wizard', 'p2', { x: 3, y: 4 }, 30, 0); // will be hit
-  const state = mkState([rogue, dodger, other], rogue.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  const target = actions.find((a) => a.type === 'USE_ABILITY');
-  check('brain attacks the target who will actually be HIT, not the guaranteed dodger',
-    target?.type === 'USE_ABILITY' && target.target.x === other.position.x && target.target.y === other.position.y,
-    JSON.stringify(actions));
-}
-{
-  // Unblockable execute (assassinate) fires through a full dodge meter.
-  const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
-  const weakDodger = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 15, 0.90);
-  const state = mkState([rogue, weakDodger], rogue.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  check('unblockable assassinate fires through a guaranteed dodge',
-    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'assassinate'),
-    JSON.stringify(actions));
-}
-{
-  // Blockable special (whirlwind) vs a lone guaranteed-dodge enemy: held.
-  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
-  const dodger = mkUnitWithFortune('rogue', 'p2', { x: 4, y: 3 }, 10, 0.70); // whirlwind would kill BUT dodges
-  const state = mkState([barb, dodger], barb.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  check('blockable special is HELD when the only target will dodge',
-    !actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'whirlwind'),
-    JSON.stringify(actions));
-}
-
-// --- Test 30: dodge-burn — a basic attack is still thrown into a guaranteed dodge ---
-{
-  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
-  const dodger = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 42, 0.60);
-  const state = mkState([barb, dodger], barb.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  check('basic attack burns a guaranteed dodge to set up the next attacker',
-    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'strike'),
-    JSON.stringify(actions));
-}
-
-// --- Test 31: AOE per-target fortune — a clipped ally who will dodge is safe ---
-{
-  const barb = mkUnit('barbarian', 'p1', { x: 3, y: 3 });
-  const fragileAlly = mkUnitWithFortune('rogue', 'p1', { x: 2, y: 3 }, 10, 0.70); // would die BUT dodges
-  const e1 = mkUnitWithFortune('fighter', 'p2', { x: 4, y: 3 }, 20, 0);
-  const e2 = mkUnitWithFortune('wizard', 'p2', { x: 4, y: 4 }, 20, 0);
-  const state = mkState([barb, fragileAlly, e1, e2], barb.instanceId);
-  const actions = brain.selectActions(state, 'p1', map);
-  check('whirlwind allowed when the clipped fragile ally is meter-guaranteed to dodge',
-    actions.some((a) => a.type === 'USE_ABILITY' && a.abilitySlug === 'whirlwind'),
-    JSON.stringify(actions) + ' | ' + explainTurn(state, barb.instanceId, 'p1', map).split('\n').slice(-3).join(' / '));
-}
-
-// --- Test 32: shielded — Ward eats Assassinate (specials gate on shields) ---
+// --- Test 28: shielded — Ward eats Assassinate (specials gate on shields) ---
 {
   const rogue = mkUnit('rogue', 'p1', { x: 3, y: 3 });
   const warded = mkUnit('sorcerer', 'p2', { x: 4, y: 3 }, 12); // execute window, but shielded
   warded.statusEffects.push({ slug: 'shielded', turnsRemaining: 3, stacks: 1, sourceUnitInstanceId: 'x' });
-  const other = mkUnitWithFortune('fighter', 'p2', { x: 3, y: 4 }, 42, 0);
+  const other = mkUnit('fighter', 'p2', { x: 3, y: 4 }, 42);
   const state = mkState([rogue, warded, other], rogue.instanceId);
   const actions = brain.selectActions(state, 'p1', map);
   check('assassinate NOT thrown into a shielded target',

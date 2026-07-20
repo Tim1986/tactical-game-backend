@@ -48,7 +48,6 @@ export function buildPuzzleState(def: PuzzleDefinition): {
         sourceUnitInstanceId: inst.instanceId,
       }));
     }
-    inst.fortuneMeter = spec.fortuneMeter ?? 0;
     instanceIdBySpecId[spec.id] = inst.instanceId;
     return inst;
   });

@@ -76,23 +76,6 @@ function executeSingleHit(
     consumeShield(ctx, target);
     return;
   }
-  if (needsHitRoll) {
-    // Exposed bypasses the fortune meter entirely — the attack always
-    // connects and the meter is left untouched (mirrors unblockable).
-    if (!hasStatusEffect(target, 'exposed')) {
-      // Pseudo-random distribution (Bresenham accumulator): each attack adds the
-      // unit's miss chance to its fortune meter; when it crosses 1.0, the attack
-      // misses and the meter resets by 1. Outcomes converge exactly to the
-      // intended dodge rate with no streaks.
-      const missChance = Math.max(0, target.armorClass - 6) / 20;
-      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
-      if (target.fortuneMeter >= 1) {
-        target.fortuneMeter -= 1;
-        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
-        return;
-      }
-    }
-  }
   for (const effect of ctx.ability.effects) {
     applyEffect(ctx, target, effect);
   }
@@ -113,15 +96,6 @@ function executeMultiHit(
     if (hasStatusEffect(target, 'shielded')) {
       consumeShield(ctx, target);
       continue;
-    }
-    if (needsHitRoll && !hasStatusEffect(target, 'exposed')) {
-      const missChance = Math.max(0, target.armorClass - 6) / 20;
-      target.fortuneMeter = (target.fortuneMeter ?? 0) + missChance;
-      if (target.fortuneMeter >= 1) {
-        target.fortuneMeter -= 1;
-        ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Attack missed' });
-        continue;
-      }
     }
     applyEffect(ctx, target, effect);
   }

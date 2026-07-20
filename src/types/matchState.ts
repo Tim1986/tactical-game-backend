@@ -38,7 +38,6 @@ export interface UnitInstance {
   hasActedThisTurn: boolean;
   cooldowns: Record<string, number>;
   statusEffects: ActiveStatusEffect[];
-  fortuneMeter: number;
 }
 
 export type MatchPhase = 'action';

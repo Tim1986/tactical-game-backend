@@ -69,7 +69,7 @@ export function buildCampaignPlayerInstance(
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange, abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    cooldowns, statusEffects: initialStatuses, fortuneMeter: 0,
+    cooldowns, statusEffects: initialStatuses,
   };
 }
 
@@ -113,7 +113,7 @@ export function buildCampaignEnemyInstance(
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange, abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
-    cooldowns, statusEffects: initialStatuses, fortuneMeter: 0,
+    cooldowns, statusEffects: initialStatuses,
   };
 }
 

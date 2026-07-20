@@ -57,7 +57,6 @@ export function buildUnitInstance(
     passiveSlug: customization?.passiveSlug ?? undefined,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
-    fortuneMeter: 0,
   };
 }
 

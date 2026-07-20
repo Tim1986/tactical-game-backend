@@ -84,7 +84,6 @@ function buildUnitInstance(
   ownerId: string,
   position: BoardPosition,
   customization?: UnitCustomization,
-  initialFortune = 0,
 ): UnitInstance {
   const def = UNIT_DEFS[slug];
   if (!def) throw new Error(`Unknown unit slug: ${slug}`);
@@ -124,7 +123,6 @@ function buildUnitInstance(
     hasActedThisTurn: false,
     cooldowns,
     statusEffects: initialStatuses,
-    fortuneMeter: initialFortune,
   };
 }
 
@@ -140,14 +138,9 @@ function buildMatchState(
   p2Customizations?: (UnitCustomization | undefined)[],
   rng?: () => number,
 ): MatchState {
-  // Fortune meters seed at a random phase. NOTE: the live engine now starts
-  // meters at 0 ("current dodge starts at base dodge"), making real matches
-  // deterministic — sims keep the random phase as a stand-in for the variance
-  // human play introduces. A seeded rng keeps runs reproducible; rng omitted
-  // = phase 0 (fully deterministic).
   const units: UnitInstance[] = [
-    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i], rng ? rng() : 0)),
-    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i], rng ? rng() : 0)),
+    ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i])),
+    ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i])),
   ];
   const firstPlayer =
     forceFirstPlayerId ?? (Math.random() < 0.5 ? p1Id : p2Id);
@@ -300,7 +293,7 @@ export interface MatchOptions {
   /** Starting tiles (parallel to slugs). Omit for the fixed default pattern. */
   p1Placement?: BoardPosition[];
   p2Placement?: BoardPosition[];
-  /** RNG for fortune-meter phase seeding. Omit for phase 0 (deterministic). */
+  /** RNG for random placement generation. Omit for fixed default placement. */
   rng?: () => number;
   /** Called on every recovered validation error (for logging/diagnosis). */
   onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
@@ -315,10 +308,8 @@ export interface MatchOptions {
 }
 
 // ─── Placement sampling ───────────────────────────────────────────────────────
-// The engine is fully deterministic since the fortune meter replaced the d20:
-// with fixed placements, a matchup has exactly TWO distinct games (P1-first /
-// P2-first) and every additional "game" is a replay — win rates quantize to
-// {0, 50, 100}%. Randomized placements restore a meaningful sample space (it
+// With fixed placements, a matchup has exactly TWO distinct games (P1-first /
+// P2-first). Randomized placements restore a meaningful sample space (it
 // is also the variance real games have: players choose their placements).
 
 /** Deterministic LCG so sim runs are reproducible for a given seed. */
@@ -623,13 +614,12 @@ export function runSim(
     /**
      * 'brain' (default): the placement planner picks starting tiles per comp
      * (melee forward-center, ranged mid, healers backline, AoE-denial
-     * spacing) — deterministic per comp; game variance comes from the
-     * fortune meters' random phase. 'fixed': the historical fixed pattern.
+     * spacing) — deterministic per comp. 'fixed': the historical fixed pattern.
      * 'random': each game draws fresh placements per side (both from the
      * seeded rng) — placement-space stress testing, not realistic play.
      */
     placementMode?: 'fixed' | 'random' | 'brain';
-    /** RNG seed for fortune-meter phases and 'random' placements (default 1). Same seed → same games. */
+    /** RNG seed for 'random' placements (default 1). Same seed → same games. */
     seed?: number;
   } = {},
 ): SimResult {

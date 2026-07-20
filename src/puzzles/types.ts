@@ -29,7 +29,6 @@ export interface PuzzleUnitSpec {
   /** Pre-applied statuses (burns with 1 turn left are great material). */
   statusEffects?: Array<Pick<ActiveStatusEffect, 'slug' | 'turnsRemaining' | 'stacks'>>;
   /** Pinned fortune meter, 0–0.99. Default 0. Design lever for planned dodges. */
-  fortuneMeter?: number;
 }
 
 export interface PuzzleDefinition {

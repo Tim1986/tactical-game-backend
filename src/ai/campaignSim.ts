@@ -10,12 +10,6 @@
  *   npx tsx src/ai/campaignSim.ts lantern --difficulty nightmare --party fighter,barbarian,rogue,cleric
  *   ... --games 200 --level 4
  *
- * Variance note: live campaign matches start every fortune meter at 0 (the
- * displayed "current dodge" = base dodge from turn one), which makes the
- * engine fully deterministic. Sims would collapse to ONE distinct game per
- * cell, so the sim (and only the sim) seeds fortune phases from the run's
- * RNG — a stand-in for the timing variance real humans introduce.
- *
  * Win-rate targets (player side): easy 80–95, medium 65–80, hard 45–65,
  * nightmare 25–45.
  */
@@ -111,8 +105,6 @@ export function simEncounterCell(
       const { state } = buildEncounterState(
         campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY,
       );
-      // Sim-only fortune phase variance (see file header).
-      for (const u of state.units) u.fortuneMeter = rng();
       return state;
     };
     const r = runMatch(partySlugs, enc.enemies, abilityMap, brain1, brain2, {

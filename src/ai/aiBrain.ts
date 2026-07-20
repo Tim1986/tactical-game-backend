@@ -1,9 +1,5 @@
 /**
  * aiBrain.ts (v7) — AI decision-making for DungeonCombat, updated for:
- *  - FORTUNE METER (V5): deterministic hit prediction via willHit();
- *    per-(ability,target) gating (twin's two hits land or miss together);
- *    dodge-burn scoring for basics; specials NEVER fire into a known miss;
- *    deterministic next-attack danger model.
  *  - 8x8 CROSS BOARD: all board loops use BOARD_SIZE (see geometry.ts —
  *    BOARD_WIDTH=10 was a pre-existing engine bug, now fixed; this brain
  *    always used the correct 8x8 board and never needed BOARD_WIDTH/HEIGHT).
@@ -224,10 +220,6 @@ export const WEIGHTS = {
   approachHpBias: 0.08,
   /** Bonus for chipping an enemy into an ally's execute (Kill Shot) threshold. */
   killShotSetup: 12,
-  // ── Fortune-meter & new-status weights (v6) ──
-  /** Value of an intentional basic attack into a guaranteed dodge — it
-   *  resets the meter, guaranteeing the NEXT attacker lands. */
-  dodgeBurn: 6,
   /** Value of burning an enemy's shielded status with a cheap attack. */
   shieldBurn: 5,
   /** Penalty for friendly-fire AOE consuming an ally's shield. */
@@ -240,8 +232,6 @@ export const WEIGHTS = {
   burningFactor: 0.85,
   /** Base value of exposing a target (focus mark). */
   exposedBase: 5,
-  /** Extra when exposing a target whose meter is about to dodge. */
-  exposedDodgeSteal: 8,
   /** Value per tile an enemy is dragged toward us. */
   pullPerTile: 3,
   /** Fraction of our reachable melee threat credited to a hostile pull. */
@@ -268,46 +258,11 @@ export const WEIGHTS = {
 // Small shared helpers
 // ---------------------------------------------------------------------------
 
-/**
- * LONG-RUN hit rate for a blockable ability — kept ONLY for generic threat
- * estimates (threatPerTurn vs referenceAC, killValue), where the fortune
- * meter's long-run average equals the old d20 rate: (26-AC)/20 = 1-(AC-6)/20.
- * NEVER use this for scoring a specific attack — use willHit().
- */
+/** Long-run hit rate for a blockable ability: (26-AC)/20. Used for generic threat estimates. */
 export function hitChance(armorClass: number): number {
   return Math.min(1, Math.max(0, (26 - armorClass) / 20));
 }
 
-/** Fortune meter increment per blockable attack (engine formula, V5). */
-export function missChanceOf(target: UnitInstance): number {
-  return Math.max(0, target.armorClass - 6) / 20;
-}
-
-/** Does this ability go through the fortune meter at all? Mirrors the
- *  engine's needsHitRoll exactly (damage OR lifesteal effects gate it). */
-export function abilityUsesFortune(def: AbilityDefinition): boolean {
-  return (
-    !def.isUnblockable &&
-    def.targetingType !== 'self' &&
-    def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal')
-  );
-}
-
-/**
- * DETERMINISTIC hit prediction (V5): the next fortune-gated attack on this
- * target hits iff meter + missChance stays below 1. 'exposed' targets are
- * always hit (attacks bypass the meter while the status is active).
- */
-export function willHit(target: UnitInstance, def: AbilityDefinition): boolean {
-  if (!abilityUsesFortune(def)) return true;
-  if (hasStatus(target, 'exposed')) return true;
-  return ((target.fortuneMeter ?? 0) + missChanceOf(target)) < 1.0;
-}
-
-/** Would this unit dodge the next fortune-gated attack against it? */
-export function wouldDodgeNext(unit: UnitInstance): boolean {
-  return ((unit.fortuneMeter ?? 0) + missChanceOf(unit)) >= 1.0;
-}
 
 function hasStatus(u: UnitInstance, slug: string): boolean {
   // NOTE: no turnsRemaining filter — the engine's validators don't filter
@@ -498,9 +453,6 @@ function scoreEffectsOnTarget(
   ctx: ScoreCtx,
   def: AbilityDefinition,
   target: UnitInstance,
-  /** Precomputed willHit for this (ability,target) — AOE loops pass it per
-   *  target; single-target callers may omit (computed here). */
-  hitsParam?: boolean,
 ): number {
   const { caster, map } = ctx;
   const isSelf = target.instanceId === caster.instanceId;
@@ -508,29 +460,12 @@ function scoreEffectsOnTarget(
   const isEnemy = !isAllyTarget;
   let s = 0;
 
-  // ── DETERMINISTIC NEGATION GATE (fortune meter + shielded) ──
-  // The engine gates ALL of a damaging ability's effects behind ONE fortune
-  // check per target (twin's two hits land or miss together; a blockable
-  // damage+status ability loses its status on a dodge too). 'shielded'
-  // negates the next hit entirely — including unblockable damage; that is
-  // Ward's whole job vs Assassinate.
+  // ── NEGATION GATE (shielded) ──
+  // 'shielded' negates the next hit entirely — including unblockable damage.
   const isDamaging = def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
   if (isDamaging && !isSelf) {
     if (hasStatus(target, 'shielded')) {
-      // Attack eaten by the shield. Burning an ENEMY's shield with a cheap
-      // attack opens them up for the follow-up; clipping an ALLY's shield
-      // with friendly-fire AOE wastes it.
       return isEnemy ? WEIGHTS.shieldBurn : -WEIGHTS.shieldWastePenalty;
-    }
-    if (abilityUsesFortune(def)) {
-      const hits = hitsParam ?? willHit(target, def);
-      if (!hits) {
-        // Guaranteed dodge: engine skips ALL effects. Burning the dodge
-        // resets the meter low, so the NEXT attacker lands — a cheap basic
-        // into a full meter is a real play. (Specials are hard-gated at the
-        // candidate level and never reach this branch.)
-        return isEnemy ? WEIGHTS.dodgeBurn : 0;
-      }
     }
   }
 
@@ -747,12 +682,7 @@ function scoreEffectsOnTarget(
           break;
         }
         if (eff.statusSlug === 'exposed') {
-          // Attacks vs the target bypass the fortune meter: converts their
-          // upcoming dodges into hits and marks the focus target. Worth more
-          // the closer their meter is to a dodge and the higher their AC.
-          const denied = missChanceOf(target) * 20; // ~AC-derived dodge rate
-          const meterBonus = wouldDodgeNext(target) ? WEIGHTS.exposedDodgeSteal : 0;
-          s += WEIGHTS.exposedBase + denied * 0.6 * eff.durationTurns + meterBonus;
+          s += WEIGHTS.exposedBase * eff.durationTurns;
           if (hasStatus(target, 'exposed')) s *= WEIGHTS.redundantStatusFactor;
           break;
         }
@@ -1056,7 +986,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             def.isSpecial &&
             damaging &&
             t.ownerPlayerId !== caster.ownerPlayerId &&
-            (hasStatus(t, 'shielded') || !willHit(t, def))
+            hasStatus(t, 'shielded')
           ) {
             continue;
           }
@@ -1103,12 +1033,8 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             // AOE ally exclusion (e.g. Roar): filter allies out entirely
             // before any scoring, matching the engine's resolveTargets.
             if (def.excludeAllies && t.ownerPlayerId === caster.ownerPlayerId) continue;
-            // FORTUNE (V5): each blast target checks its OWN meter. A target
-            // whose meter guarantees a dodge takes nothing from this cast —
-            // including allies, so a clipped ally who will dodge is SAFE.
-            const hits = willHit(t, def) && !hasStatus(t, 'shielded');
-            // HARD VETO: never place an AOE where it could kill a teammate —
-            // but only a hit that actually LANDS can kill.
+            const hits = !hasStatus(t, 'shielded');
+            // HARD VETO: never place an AOE where it could kill a teammate.
             if (hits && wouldKillTeammate(def, caster, t)) {
               vetoed = true;
               break;
@@ -1132,7 +1058,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
                 }
               }
             }
-            score += scoreEffectsOnTarget(ctx, def, t, hits);
+            score += scoreEffectsOnTarget(ctx, def, t);
           }
           // THREAT-HOLDING: a once-per-game AOE only fires on a real cluster.
           // Spent on a single target it's a wasted zoning threat — unless
@@ -1180,16 +1106,13 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
                 samePos(effPos(ctx, u), p),
             );
             if (t) {
-              // FORTUNE (V5): each unit along the ray checks its own meter.
-              const hits = willHit(t, def) && !hasStatus(t, 'shielded');
-              // HARD VETO: never fire a line that could kill a teammate —
-              // but only a landing hit can kill (a dodging ally is safe).
+              const hits = !hasStatus(t, 'shielded');
               if (hits && wouldKillTeammate(def, caster, t)) {
                 vetoed = true;
                 break;
               }
               hitAny = true;
-              score += scoreEffectsOnTarget(ctx, def, t, hits);
+              score += scoreEffectsOnTarget(ctx, def, t);
             }
           }
           if (!vetoed && hitAny && score > 0 && lastInBounds) {
@@ -1233,14 +1156,7 @@ function dangerAt(
   myPlayerId: string,
   map: Map<string, AbilityDefinition>,
 ): number {
-  // FORTUNE-AWARE (V5): our meter is knowable, so the next incoming
-  // blockable attack is a known hit or a known dodge. One dodge covers ONE
-  // attacker — a smart opponent burns it with their CHEAPEST blockable
-  // attack — so when multiple blockable attackers threaten this tile, the
-  // smallest blockable contribution is the one the dodge erases.
-  const blockable: number[] = [];
-  const guaranteed: number[] = []; // unblockable, or target Exposed
-  const exposed = hasStatus(unit, 'exposed');
+  const guaranteed: number[] = [];
   for (const e of state.units) {
     if (!e.isAlive || e.ownerPlayerId === myPlayerId) continue;
     if (isFrozen(e)) continue;
@@ -1260,30 +1176,18 @@ function dangerAt(
     }
     if (hasStatus(e, 'weakened')) raw = Math.max(0, raw - 4);
     if (raw <= 0) continue;
-    if (b.isUnblockable || exposed || !abilityUsesFortune(b)) guaranteed.push(raw);
-    else blockable.push(raw);
+    guaranteed.push(raw);
   }
-  // Shielded: the next single hit is negated outright — it eats the
-  // BIGGEST incoming hit (the opponent can't avoid feeding it something,
-  // but we credit the best case for the shield conservatively as the
-  // smallest, matching how a smart opponent burns it).
-  const all = [...guaranteed, ...blockable];
-  if (all.length === 0) return 0;
-  const dodging = wouldDodgeNext(unit) && !exposed;
-  if (dodging && blockable.length > 0) {
-    blockable.splice(blockable.indexOf(Math.min(...blockable)), 1);
-  }
+  if (guaranteed.length === 0) return 0;
   if (hasStatus(unit, 'shielded')) {
-    const rest = [...guaranteed, ...blockable];
+    const rest = [...guaranteed];
     if (rest.length > 0) rest.splice(rest.indexOf(Math.min(...rest)), 1);
     if (rest.length === 0) return 0;
     const mx = Math.max(...rest);
     return mx + (rest.reduce((s, v) => s + v, 0) - mx) * WEIGHTS.dangerSecondary;
   }
-  const remaining = [...guaranteed, ...blockable];
-  if (remaining.length === 0) return 0;
-  const mx = Math.max(...remaining);
-  return mx + (remaining.reduce((s, v) => s + v, 0) - mx) * WEIGHTS.dangerSecondary;
+  const mx = Math.max(...guaranteed);
+  return mx + (guaranteed.reduce((s, v) => s + v, 0) - mx) * WEIGHTS.dangerSecondary;
 }
 
 /** First-strike danger multiplier, fading to 1 late-game (see WEIGHTS). */
@@ -1723,11 +1627,6 @@ export function explainTurn(
   lines.push(
     `unit ${unit.definitionSlug} @(${unit.position.x},${unit.position.y}) ` +
       `hp ${unit.currentHealth}/${unit.maxHealth} round ${state.roundNumber}`,
-  );
-  lines.push(
-    `  fortune ${(unit.fortuneMeter ?? 0).toFixed(2)} ` +
-      `(missChance ${missChanceOf(unit).toFixed(2)}, ` +
-      `next incoming blockable: ${wouldDodgeNext(unit) ? 'DODGE' : 'HIT'})`,
   );
   for (const e of unit.statusEffects) {
     lines.push(
