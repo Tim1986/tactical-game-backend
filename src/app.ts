@@ -12,6 +12,7 @@ import { matchmakingRouter } from './routes/matchmaking.js';
 import { challengeRouter } from './routes/challenges.js';
 import { achievementRouter } from './routes/achievements.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
+import { versionRouter } from './routes/version.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requireAppVersion } from './middleware/versionCheck.js';
 import { sendSuccess } from './utils/response.js';
@@ -36,6 +37,7 @@ export function createApp(): express.Application {
   app.use('/challenges', apiLimiter, requireAppVersion, challengeRouter);
   app.use('/achievements', apiLimiter, achievementRouter);
   app.use('/leaderboard', apiLimiter, leaderboardRouter);
+  app.use('/version', apiLimiter, versionRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
