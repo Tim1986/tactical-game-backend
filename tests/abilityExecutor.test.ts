@@ -81,13 +81,23 @@ afterEach(() => { vi.restoreAllMocks(); });
 // ─── Hit resolution ───────────────────────────────────────────────────────────
 
 describe('hit resolution', () => {
-  it('blockable attack always hits (no fortune meter)', () => {
+  it('blockable attack hits when roll beats dodge chance', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999); // roll = 0.999, always hits
     const caster = makeUnit('u1', 'p1', 0, 0);
     const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 });
     const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
     executeAbility(ctx);
     expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
-    expect(ctx.events.some((e) => e.type === 'ATTACK_MISSED')).toBe(false);
+  });
+
+  it('blockable attack dodged when roll is under dodge chance', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0); // roll = 0, always dodges if dodge > 0
+    const caster = makeUnit('u1', 'p1', 0, 0);
+    const target = makeUnit('u2', 'p2', 1, 0, { armorClass: 20 }); // 70% dodge
+    const ctx = makeCtx(caster, { x: 1, y: 0 }, PHYSICAL_STRIKE, makeState([caster, target]));
+    executeAbility(ctx);
+    expect(ctx.events.some((e) => e.type === 'DODGED')).toBe(true);
+    expect(ctx.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(false);
   });
 });
 
@@ -168,6 +178,7 @@ describe('Piercing Shot', () => {
   });
 
   it('hits a unit in line when not shielded', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999); // ensure hit
     const caster = makeUnit('u1', 'p1', 0, 3);
     const t1 = makeUnit('u2', 'p2', 2, 3, { armorClass: 15 });
     const ctx = makeCtx(caster, { x: 6, y: 3 }, PIERCING_SHOT, makeState([caster, t1]));

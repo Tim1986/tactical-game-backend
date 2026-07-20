@@ -66,7 +66,7 @@ import {
 // Shared AOE shape predicate — the engine's resolveTargets uses the SAME
 // function, so brain hit prediction can never diverge from engine resolution.
 import { isInAoe } from '../game/boardUtils.js';
-import { BURNING_DAMAGE_PER_STACK } from '../game/abilityExecutor.js';
+import { BURNING_DAMAGE_PER_STACK, missChanceOf } from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
 // Public interface (matches the sim harness spec)
@@ -258,9 +258,9 @@ export const WEIGHTS = {
 // Small shared helpers
 // ---------------------------------------------------------------------------
 
-/** Long-run hit rate for a blockable ability: (26-AC)/20. Used for generic threat estimates. */
+/** Long-run hit rate for a blockable ability. Complement of missChanceOf. */
 export function hitChance(armorClass: number): number {
-  return Math.min(1, Math.max(0, (26 - armorClass) / 20));
+  return 1 - missChanceOf(armorClass);
 }
 
 

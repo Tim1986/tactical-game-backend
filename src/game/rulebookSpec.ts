@@ -359,15 +359,17 @@ export const RULE_CHECKS: RuleCheck[] = [
 
   // ── DGE ────────────────────────────────────────────────────────────────────
   {
-    rule: 'DGE-1', name: 'blockable attacks always hit regardless of AC (no dodge mechanic)',
+    rule: 'DGE-1', name: 'dodge chance is 5% per AC point above 6; each attack rolls fresh',
     run: () => {
+      // AC 6 → 0% dodge: must always hit
       const caster = mkUnit(P1, 1, 1);
-      const low = mkUnit(P2, 2, 1, { armorClass: 6 });
-      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, low);
-      assert(low.currentHealth === 50, 'AC 6 target must be hit every time');
-      const high = mkUnit(P2, 2, 1, { armorClass: 26 });
-      for (let i = 0; i < 5; i++) cast(mkAbility(), caster, high);
-      assert(high.currentHealth === 50, 'AC 26 target must also be hit every time');
+      const noAc = mkUnit(P2, 2, 1, { armorClass: 6 });
+      for (let i = 0; i < 20; i++) cast(mkAbility(), caster, noAc);
+      assert(noAc.currentHealth === Math.max(0, 100 - 20 * 10), 'AC 6 target (0% dodge) must be hit every time');
+      // AC 26 → 100% dodge: must never be hit over many attacks
+      const fullAc = mkUnit(P2, 2, 1, { armorClass: 26 });
+      for (let i = 0; i < 20; i++) cast(mkAbility(), caster, fullAc);
+      assert(fullAc.currentHealth === 100, 'AC 26 target (100% dodge) must never be hit');
     },
   },
   {

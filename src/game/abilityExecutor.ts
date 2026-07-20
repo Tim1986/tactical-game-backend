@@ -22,6 +22,11 @@ export interface ExecutionContext {
 
 /** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
 const WEAKENED_DAMAGE_REDUCTION = 4;
+
+/** Per-attack dodge chance: 5% per AC point above 6, capped at 1.0. */
+export function missChanceOf(ac: number): number {
+  return Math.min(1, Math.max(0, (ac - 6) * 0.05));
+}
 /** Flat damage-over-time dealt per stack of 'burning', once per stack per tick.
  * Exported so the AI brain scores burn with the SAME number (no drift). */
 export const BURNING_DAMAGE_PER_STACK = 7;
@@ -69,24 +74,30 @@ function executeSingleHit(
   dealsDamage: boolean,
   needsHitRoll: boolean,
 ): void {
-  // Shielded fully negates the next hit (including unblockable/execute
-  // effects) and is consumed entirely — checked before the hit roll so an
-  // unblockable ability never even reaches the fortune meter for this target.
   if (dealsDamage && hasStatusEffect(target, 'shielded')) {
     consumeShield(ctx, target);
     return;
+  }
+  // Per-attack dodge roll: exposed units never dodge; unblockable skips roll (needsHitRoll=false).
+  if (needsHitRoll && !hasStatusEffect(target, 'exposed')) {
+    const dodge = missChanceOf(target.armorClass ?? 6);
+    if (dodge > 0 && Math.random() < dodge) {
+      ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
+      return;
+    }
   }
   for (const effect of ctx.ability.effects) {
     applyEffect(ctx, target, effect);
   }
 }
 
-/** Multi-hit: each damage/lifesteal effect gets its own shield check and fortune roll. */
+/** Multi-hit: each damage/lifesteal effect gets its own shield check and dodge roll. */
 function executeMultiHit(
   ctx: ExecutionContext,
   target: UnitInstance,
   needsHitRoll: boolean,
 ): void {
+  const dodge = (needsHitRoll && !hasStatusEffect(target, 'exposed')) ? missChanceOf(target.armorClass ?? 6) : 0;
   for (const effect of ctx.ability.effects) {
     if (effect.type !== 'damage' && effect.type !== 'lifesteal') {
       applyEffect(ctx, target, effect);
@@ -95,6 +106,10 @@ function executeMultiHit(
     // Shield absorbs the first damage hit and is consumed; subsequent hits resolve normally.
     if (hasStatusEffect(target, 'shielded')) {
       consumeShield(ctx, target);
+      continue;
+    }
+    if (dodge > 0 && Math.random() < dodge) {
+      ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
       continue;
     }
     applyEffect(ctx, target, effect);

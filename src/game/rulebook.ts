@@ -62,9 +62,9 @@ export const RULEBOOK: RuleSection[] = [
     id: 'DGE',
     title: 'Hit Resolution',
     rules: [
-      { id: 'DGE-1', text: "Blockable attacks always hit — there is no dodge mechanic. Armor Class (AC) affects damage taken through other passive effects, not hit chance." },
-      { id: 'DGE-2', text: "Unblockable abilities always hit regardless of any status effects on the target." },
-      { id: 'DGE-3', text: "Attacks against an EXPOSED unit always hit." },
+      { id: 'DGE-1', text: "Each unit has a dodge chance of 5% per point of Armor Class above 6. Example: AC 16 → 50% dodge. Each attack rolls fresh — there is no memory between attacks." },
+      { id: 'DGE-2', text: "Unblockable abilities always hit regardless of dodge chance or any status effects on the target." },
+      { id: 'DGE-3', text: "Attacks against an EXPOSED unit always hit — their dodge chance is ignored." },
       { id: 'DGE-4', text: "Multi-hit abilities (like Twin Strike) apply each damage effect independently." },
       { id: 'DGE-5', text: "A SHIELD negates the next damaging hit completely — even an unblockable one — and is then used up. Against a multi-hit ability, the shield absorbs only the first hit." },
       { id: 'DGE-6', text: "Abilities that deal no damage (heals, buffs, pushes without damage) always land." },
