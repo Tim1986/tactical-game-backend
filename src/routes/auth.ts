@@ -38,6 +38,19 @@ const PushTokenSchema = z.object({
   platform: z.enum(['ios', 'android']),
 });
 
+const ForgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+const ResetPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  code: z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password must be at most 128 characters'),
+});
+
 // ---------------------------------------------------------------
 // POST /auth/register
 // ---------------------------------------------------------------
@@ -98,6 +111,42 @@ authRouter.post('/refresh', async (req: Request, res: Response): Promise<void> =
   } catch (err) {
     if (err instanceof authService.AuthError) {
       Errors.unauthorized(res);
+      return;
+    }
+    throw err;
+  }
+});
+
+// ---------------------------------------------------------------
+// POST /auth/forgot-password
+// Always 200 — never reveals whether the email has an account.
+// ---------------------------------------------------------------
+authRouter.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
+  const parsed = ForgotPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    Errors.validation(res, 'Invalid email address');
+    return;
+  }
+  await authService.requestPasswordReset(parsed.data.email);
+  sendSuccess(res, { message: 'If that email has an account, a reset code is on its way.' });
+});
+
+// ---------------------------------------------------------------
+// POST /auth/reset-password
+// ---------------------------------------------------------------
+authRouter.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
+  const parsed = ResetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    Errors.validation(res, 'Invalid reset data', parsed.error.flatten());
+    return;
+  }
+  try {
+    const { email, code, newPassword } = parsed.data;
+    await authService.resetPassword(email, code, newPassword);
+    sendSuccess(res, { message: 'Password updated. You can now log in.' });
+  } catch (err) {
+    if (err instanceof authService.AuthError) {
+      sendError(res, 400, 'INVALID_RESET_CODE', err.message);
       return;
     }
     throw err;

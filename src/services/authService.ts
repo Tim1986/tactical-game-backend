@@ -1,9 +1,11 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { query, withTransaction } from '../db/pool.js';
 import { config } from '../config/index.js';
 import { TokenPair, User, Team } from '../types/index.js';
 import { getUnitBySlug } from './unitService.js';
+import { sendPasswordResetEmail } from './emailService.js';
 
 const BCRYPT_ROUNDS = 12;
 const DEFAULT_TEAM_UNIT_SLUGS = ['fighter', 'barbarian', 'ranger', 'rogue'] as const;
@@ -253,6 +255,89 @@ export async function logoutAll(userId: string): Promise<void> {
 export async function logout(_userId: string): Promise<void> {
   // Access tokens are short-lived (15m) so no server-side action needed.
   // The client must discard both tokens on logout.
+}
+
+// ---------------------------------------------------------------
+// Password reset
+// ---------------------------------------------------------------
+
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const RESET_MAX_ATTEMPTS = 5;
+
+function generateResetCode(): string {
+  // 6-digit numeric code, cryptographically random, no leading-zero loss
+  const buf = crypto.randomBytes(4);
+  return String(buf.readUInt32BE(0) % 1_000_000).padStart(6, '0');
+}
+
+/**
+ * Start a password reset. ALWAYS resolves without revealing whether the email
+ * has an account (prevents enumeration). If the account exists, a 6-digit
+ * code is stored (hashed) and emailed.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  const result = await query<{ id: string; email: string }>(
+    'SELECT id, email FROM users WHERE email = $1',
+    [email]
+  );
+  const user = result.rows[0];
+  if (!user) return; // silent — do not leak account existence
+
+  const code = generateResetCode();
+  const codeHash = await bcrypt.hash(code, BCRYPT_ROUNDS);
+  await query(
+    `INSERT INTO password_reset_codes (user_id, code_hash, expires_at, attempts)
+     VALUES ($1, $2, NOW() + INTERVAL '15 minutes', 0)
+     ON CONFLICT (user_id) DO UPDATE
+       SET code_hash = EXCLUDED.code_hash,
+           expires_at = EXCLUDED.expires_at,
+           attempts = 0,
+           created_at = NOW()`,
+    [user.id, codeHash]
+  );
+  await sendPasswordResetEmail(user.email, code);
+}
+
+/**
+ * Complete a password reset: verify the emailed code, set the new password,
+ * and revoke every existing session (token_version bump).
+ */
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  const result = await query<{
+    user_id: string;
+    code_hash: string;
+    expires_at: Date;
+    attempts: number;
+  }>(
+    `SELECT r.user_id, r.code_hash, r.expires_at, r.attempts
+     FROM password_reset_codes r JOIN users u ON u.id = r.user_id
+     WHERE u.email = $1`,
+    [email]
+  );
+  const row = result.rows[0];
+  // Same message for every failure mode — no oracle for attackers.
+  const fail = () => new AuthError('Invalid or expired reset code');
+
+  if (!row) throw fail();
+  if (new Date(row.expires_at).getTime() < Date.now() || row.attempts >= RESET_MAX_ATTEMPTS) {
+    await query('DELETE FROM password_reset_codes WHERE user_id = $1', [row.user_id]);
+    throw fail();
+  }
+
+  const ok = await bcrypt.compare(code, row.code_hash);
+  if (!ok) {
+    await query('UPDATE password_reset_codes SET attempts = attempts + 1 WHERE user_id = $1', [row.user_id]);
+    throw fail();
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+  await withTransaction(async (client) => {
+    await client.query(
+      'UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2',
+      [passwordHash, row.user_id]
+    );
+    await client.query('DELETE FROM password_reset_codes WHERE user_id = $1', [row.user_id]);
+  });
 }
 
 // ---------------------------------------------------------------
