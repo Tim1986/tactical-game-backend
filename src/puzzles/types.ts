@@ -28,7 +28,12 @@ export interface PuzzleUnitSpec {
   cooldowns?: Record<string, number>;
   /** Pre-applied statuses (burns with 1 turn left are great material). */
   statusEffects?: Array<Pick<ActiveStatusEffect, 'slug' | 'turnsRemaining' | 'stacks'>>;
-  /** Pinned fortune meter, 0–0.99. Default 0. Design lever for planned dodges. */
+  /**
+   * Player units only: specials the player may pick from on the intro screen
+   * (obscures the "obvious special = the solution" tell). `specialSlug` is the
+   * default selection and MUST be included in the list.
+   */
+  specialChoices?: string[];
 }
 
 export interface PuzzleDefinition {
@@ -45,4 +50,18 @@ export interface PuzzleDefinition {
   units: PuzzleUnitSpec[];
   /** PuzzleUnitSpec ids in initiative order. Must start with a player unit. */
   initiativeOrder: string[];
+  /**
+   * Scripted outcomes for blockable dodge rolls, consumed in order — one entry
+   * per roll attempt (multi-hit attacks consume one per hit; unblockable and
+   * exposed-target attacks consume none). Exhausted script = deterministic
+   * HIT: script misses explicitly. This replaces the removed fortune meter as
+   * the determinism mechanism — live combat rolls randomly, puzzles do not.
+   */
+  rollScript: Array<'hit' | 'miss'>;
+  /**
+   * Player-facing disclosure of the script, shown on the intro screen and the
+   * in-match banner (e.g. "Fate is sealed: your next two attacks will land —
+   * a third would go wide."). Never hide the script — fairness depends on it.
+   */
+  fateText: string;
 }

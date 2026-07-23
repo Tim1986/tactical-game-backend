@@ -232,8 +232,13 @@ function planIdeaKey(plan: TurnAction[]): string {
   return 'pass';
 }
 
-export function solvePuzzle(def: PuzzleDefinition, randomTrials = 200): SolverReport {
-  const { state: initial, instanceIdBySpecId: ids } = buildPuzzleState(def);
+export function solvePuzzle(
+  def: PuzzleDefinition,
+  randomTrials = 200,
+  /** Player special selections (from specialChoices) to solve under. */
+  specialOverrides?: Record<string, string>,
+): SolverReport {
+  const { state: initial, instanceIdBySpecId: ids } = buildPuzzleState(def, specialOverrides);
 
   // 1+2. Exhaustive: which first moves lead to a win?
   const firstPlans = enumeratePlayerTurns(initial);
@@ -316,16 +321,74 @@ if (isMain) {
     console.error(`No puzzle matching '${only}'. Registered: ${Object.keys(PUZZLES).join(', ')}`);
     process.exit(1);
   }
+  /** All combinations of offered specials across player units with choices. */
+  function specialCombos(def: PuzzleDefinition): Array<Record<string, string>> {
+    const choosers = def.units.filter((u) => u.side === 'player' && (u.specialChoices?.length ?? 0) > 0);
+    let combos: Array<Record<string, string>> = [{}];
+    for (const u of choosers) {
+      combos = combos.flatMap((c) => u.specialChoices!.map((slug) => ({ ...c, [u.id]: slug })));
+    }
+    return combos;
+  }
+
   for (const def of defs) {
-    const t0 = Date.now();
-    const r = solvePuzzle(def);
-    console.log(`\n═══ ${def.id} — "${def.title}" (${((Date.now() - t0) / 1000).toFixed(1)}s) ═══`);
-    console.log(`  solvable:            ${r.solvable ? '✓' : '✗'}`);
-    console.log(`  legal first moves:   ${r.legalFirstMoves}`);
-    console.log(`  winning first moves: ${r.winningFirstMoves} raw → ${r.winningFirstIdeas} distinct ideas`);
-    for (const d of r.winningFirstMoveDescriptions.slice(0, 5)) console.log(`      · ${d}`);
-    console.log(`  greedy line wins:    ${r.greedyWins ? '✗ (too obvious)' : 'no ✓'}`);
-    console.log(`  random win rate:     ${(r.randomWinRate * 100).toFixed(1)}% over ${r.randomTrials} trials`);
-    console.log(`  VERDICT: ${r.passes ? 'PASS ✓' : 'FAIL — ' + r.failures.join('; ')}`);
+    const combos = specialCombos(def);
+    const hasChoices = combos.length > 1;
+    const defaults: Record<string, string> = {};
+    for (const u of def.units) {
+      if (u.side === 'player' && u.specialChoices?.length) defaults[u.id] = u.specialSlug ?? u.specialChoices[0];
+    }
+    console.log(`\n═══ ${def.id} — "${def.title}" — ${combos.length} special combo(s) ═══`);
+    console.log(`  fate: ${def.fateText}  script: [${def.rollScript.join(', ')}]`);
+    const results: Array<{ combo: Record<string, string>; isDefault: boolean; r: SolverReport }> = [];
+    for (const combo of combos) {
+      const t0 = Date.now();
+      const r = solvePuzzle(def, 200, combo);
+      const label = Object.keys(combo).length
+        ? Object.entries(combo).map(([k, v]) => `${k}=${v}`).join(', ')
+        : '(no choices)';
+      const isDefault = !hasChoices || JSON.stringify(combo) === JSON.stringify(defaults);
+      results.push({ combo, isDefault, r });
+      console.log(`\n  ── combo: ${label}${hasChoices && isDefault ? '  ← DEFAULT' : ''} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+      console.log(`    solvable:            ${r.solvable ? '✓' : '✗'}`);
+      console.log(`    winning first moves: ${r.winningFirstMoves} raw → ${r.winningFirstIdeas} distinct ideas`);
+      for (const d of r.winningFirstMoveDescriptions.slice(0, 4)) console.log(`        · ${d}`);
+      console.log(`    greedy line wins:    ${r.greedyWins ? '✗' : 'no ✓'}`);
+      console.log(`    random win rate:     ${(r.randomWinRate * 100).toFixed(1)}%`);
+    }
+    // ── Overall verdict ──
+    // No-choice puzzles: the classic bar on the single combo.
+    // Choice puzzles come in two sanctioned shapes:
+    //   TOOL-CHOICE — at most half the combos solve; the puzzle is picking
+    //     the right special. The DEFAULT combo's greedy line must not win
+    //     (a non-thinking player keeping defaults fails).
+    //   CAMOUFLAGE — EVERY combo solves and every combo passes the classic
+    //     bar on its own (ideas ≤2, greedy fails, random <5%); the picker
+    //     exists purely so the loadout stops telegraphing the solution.
+    // Anything in between (most-but-not-all combos solve) is muddy — fail.
+    const failures: string[] = [];
+    if (!hasChoices) {
+      failures.push(...results[0].r.failures);
+    } else {
+      const solvableCombos = results.filter((x) => x.r.solvable);
+      const dflt = results.find((x) => x.isDefault)!;
+      for (const x of solvableCombos) {
+        if (x.r.randomWinRate >= 0.05) failures.push(`degenerate combo ${JSON.stringify(x.combo)}: random wins ${(x.r.randomWinRate * 100).toFixed(1)}%`);
+      }
+      if (solvableCombos.length === combos.length) {
+        // CAMOUFLAGE shape: every combo must independently pass the classic bar.
+        for (const x of results) {
+          if (!x.r.passes) failures.push(`camouflage combo ${JSON.stringify(x.combo)} fails classic bar: ${x.r.failures.join('; ')}`);
+        }
+      } else if (solvableCombos.length * 2 <= combos.length) {
+        // TOOL-CHOICE shape.
+        const goodCombos = solvableCombos.filter((x) => x.r.winningFirstIdeas <= 2);
+        if (goodCombos.length === 0) failures.push('no combo is solvable within ≤2 distinct ideas');
+        if (dflt.r.solvable && dflt.r.greedyWins) failures.push('too obvious: default-loadout greedy line wins');
+      } else {
+        failures.push(`muddy: ${solvableCombos.length}/${combos.length} combos solvable (must be all, or ≤ half)`);
+      }
+    }
+    console.log(`\n  OVERALL VERDICT: ${failures.length === 0 ? 'PASS ✓' : 'FAIL — ' + failures.join('; ')}`);
   }
 }

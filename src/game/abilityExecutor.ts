@@ -23,6 +23,20 @@ export interface ExecutionContext {
 /** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
 const WEAKENED_DAMAGE_REDUCTION = 4;
 
+/**
+ * Resolve one blockable dodge roll. Normal matches roll fresh randomness per
+ * attack; puzzle matches carry a pre-scripted outcome queue (MatchState.rollScript)
+ * so the whole fight is deterministic — the script is disclosed to the player.
+ */
+function rollMisses(state: MatchState, missChance: number): boolean {
+  if (state.rollScript) {
+    const i = state.rollIndex ?? 0;
+    state.rollIndex = i + 1;
+    return state.rollScript[i] === 'miss';
+  }
+  return Math.random() < missChance;
+}
+
 /** Per-attack dodge chance: 5% per AC point above 6, capped at 1.0. */
 export function missChanceOf(ac: number): number {
   return Math.min(1, Math.max(0, (ac - 6) * 0.05));
@@ -81,7 +95,7 @@ function executeSingleHit(
   // Per-attack dodge roll: exposed units never dodge; unblockable skips roll (needsHitRoll=false).
   if (needsHitRoll && !hasStatusEffect(target, 'exposed')) {
     const dodge = missChanceOf(target.armorClass ?? 6);
-    if (dodge > 0 && Math.random() < dodge) {
+    if (dodge > 0 && rollMisses(ctx.state, dodge)) {
       ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
       return;
     }
@@ -108,7 +122,7 @@ function executeMultiHit(
       consumeShield(ctx, target);
       continue;
     }
-    if (dodge > 0 && Math.random() < dodge) {
+    if (dodge > 0 && rollMisses(ctx.state, dodge)) {
       ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
       continue;
     }

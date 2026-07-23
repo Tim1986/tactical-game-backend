@@ -64,6 +64,16 @@ export interface MatchState {
   activePlayerId: UUID;
   phase: MatchPhase;
   initiative: InitiativeState;
+  /**
+   * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
+   * order (one entry per roll attempt; multi-hit attacks consume one entry per
+   * hit). When the script is exhausted, further rolls HIT deterministically —
+   * authors script misses explicitly. Absent in normal matches (random rolls).
+   * The script is disclosed to the player as "fate" text on the puzzle intro.
+   */
+  rollScript?: Array<'hit' | 'miss'>;
+  /** Index of the next rollScript entry to consume. */
+  rollIndex?: number;
 }
 
 export interface MoveAction {

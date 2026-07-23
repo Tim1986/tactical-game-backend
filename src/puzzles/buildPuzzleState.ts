@@ -6,7 +6,9 @@
  * in round 2+ form (isRound1: false), so the first thing the player does
  * is act with the designated active unit.
  *
- * No randomness anywhere: fortune meters are pinned by the definition.
+ * No randomness anywhere: dodge rolls are pre-scripted by the definition's
+ * rollScript (consumed by the engine's rollMisses) and disclosed to the
+ * player as fate text.
  */
 
 import type { MatchState, UnitInstance } from '../types/matchState.js';
@@ -23,7 +25,11 @@ export const PUZZLE_ENEMY_ID = '00000000-0000-0000-0000-000000000001'; // Fable 
  * from PuzzleUnitSpec ids to generated instanceIds (needed for
  * targetUnitId checks and initiative order).
  */
-export function buildPuzzleState(def: PuzzleDefinition): {
+export function buildPuzzleState(
+  def: PuzzleDefinition,
+  /** Player-chosen specials by spec id (from specialChoices pickers). */
+  specialOverrides?: Record<string, string>,
+): {
   state: MatchState;
   instanceIdBySpecId: Record<string, string>;
 } {
@@ -32,8 +38,12 @@ export function buildPuzzleState(def: PuzzleDefinition): {
     const unitDef = DEFAULT_UNITS[spec.slug] as unknown as UnitDefinition;
     if (!unitDef) throw new Error(`Puzzle ${def.id}: unknown unit slug '${spec.slug}'`);
     const ownerId = spec.side === 'player' ? PUZZLE_PLAYER_ID : PUZZLE_ENEMY_ID;
+    const override = specialOverrides?.[spec.id];
+    if (override && !(spec.specialChoices ?? []).includes(override)) {
+      throw new Error(`Puzzle ${def.id}: special '${override}' is not an offered choice for '${spec.id}'`);
+    }
     const inst = buildUnitInstance(unitDef, ownerId, spec.position, {
-      specialSlug: spec.specialSlug ?? unitDef.specialOptions[0],
+      specialSlug: override ?? spec.specialSlug ?? unitDef.specialOptions[0],
       passiveSlug: spec.passiveSlug ?? null,
     });
     if (spec.currentHealth !== undefined) {
@@ -68,6 +78,8 @@ export function buildPuzzleState(def: PuzzleDefinition): {
   const state: MatchState = {
     board: { width: 8, height: 8 },
     units,
+    rollScript: def.rollScript ?? [],
+    rollIndex: 0,
     turnNumber: 1,
     roundNumber: 2, // past round 1: fixed-order initiative, Charge still available
     activePlayerId: PUZZLE_PLAYER_ID,

@@ -6,10 +6,12 @@
  */
 import type { PuzzleDefinition } from './types.js';
 import { PUZZLE_001 } from './puzzles/puzzle-001.js';
+import { PUZZLE_002 } from './puzzles/puzzle-002.js';
 
 export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_001.id]: PUZZLE_001,
+  [PUZZLE_002.id]: PUZZLE_002,
 };
 
 /** The puzzle currently featured on the home page (daily rotation later). */
-export const CURRENT_PUZZLE: PuzzleDefinition = PUZZLE_001;
+export const CURRENT_PUZZLE: PuzzleDefinition = PUZZLE_002;
