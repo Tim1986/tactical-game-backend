@@ -54,7 +54,7 @@ describe('buildCampaignEnemyInstance', () => {
   });
 
   it('applies passive flags (immovable bruiser)', () => {
-    const bruiser = buildCampaignEnemyInstance(lantern.enemies['hobgoblin_bruiser'], 'e', pos, 'medium', 1);
+    const bruiser = buildCampaignEnemyInstance(lantern.enemies['orc_bruiser'], 'e', pos, 'medium', 1);
     expect(bruiser.passives).toContain('immovable');
   });
 });
