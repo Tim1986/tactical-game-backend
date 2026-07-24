@@ -94,7 +94,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 7, y: 1 }, { x: 7, y: 3 }, { x: 7, y: 6 }, { x: 4, y: 0 }],
       // Nightmare sits ~47% — a breakpoint cliff between 1.35 and 1.45 collapses
       // it to ~24%, so we take the nearest band edge (2026-07 rebalance).
-      hpScaleOverride: { easy: 0.55, medium: 0.95, hard: 1.25, nightmare: 1.35 },
+      hpScaleOverride: { easy: 0.68, medium: 1.08, hard: 1.32, nightmare: 1.55 },
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
     },
     // e4 — The Cave Mouth: an unmovable orc bruiser blocks the path, scrappers flank.

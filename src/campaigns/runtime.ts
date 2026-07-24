@@ -22,8 +22,11 @@ export const CAMPAIGN_HP_SCALE: Record<CampaignDifficulty, number> = {
  */
 export const PLAYER_HP_DELTA: Record<number, number> = { 1: -8, 2: -4, 3: -4, 4: 0, 5: 0, 6: 0 };
 
-export const hasPassiveAtLevel = (level: number): boolean => level >= 3;
-export const hasSpecialAtLevel = (level: number): boolean => level >= 5;
+// Level-up schedule (specials front-loaded) is implemented per-unit in the mobile
+// level-up UI (levelUpKind) and mirrored in campaignSim's choicesForLevel:
+//   L2 main + 1 companion special · L3 other two special · L4/L5 passives · L6 recharge.
+// The player build path honors whatever specialSlug/passiveSlug the party has chosen,
+// so there is no level gate here beyond the double-special perk below.
 export const hasDoubleSpecialAtLevel = (level: number): boolean => level >= 6;
 
 /** Cooldown given to once-per-game specials under the L6 "Special ×2" perk. */

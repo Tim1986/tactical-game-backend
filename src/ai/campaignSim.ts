@@ -43,18 +43,18 @@ const PARTY_FLOOR: Record<CampaignDifficulty, number> = {
 };
 
 /**
- * Per-unit choices matching the live level-up schedule: L2 = main + first
- * companion get specials, L3 = those two get passives, L4 = remaining two get
- * specials, L5 = remaining two get passives. Defaults to each class's first
- * option; passiveOverrides (from --passives) replaces the passive picks for
- * balance comparisons.
+ * Per-unit choices matching the live level-up schedule (specials front-loaded):
+ * L2 = main + first companion get specials; L3 = remaining two get specials
+ * (all four specialed by fight 2); L4 = main + first companion get passives;
+ * L5 = remaining two get passives. Defaults to each class's first option;
+ * passiveOverrides (from --passives) replaces the passive picks for comparisons.
  */
 function choicesForLevel(partySlugs: string[], level: number, passiveOverrides?: (string | undefined)[]): CampaignUnitChoice[] {
   return partySlugs.map((slug, i) => {
     const def = DEFAULT_UNITS[slug];
     const early = i <= 1; // main + first companion level up first
-    const specialSlug = level >= (early ? 2 : 4) ? def?.specialOptions[0] : undefined;
-    const passiveSlug = level >= (early ? 3 : 5)
+    const specialSlug = level >= (early ? 2 : 3) ? def?.specialOptions[0] : undefined;
+    const passiveSlug = level >= (early ? 4 : 5)
       ? (passiveOverrides?.[i] ?? def?.passiveOptions[0]?.slug)
       : undefined;
     return { specialSlug, passiveSlug };

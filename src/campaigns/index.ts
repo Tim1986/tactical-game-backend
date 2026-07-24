@@ -4,7 +4,11 @@
  */
 import { CampaignDefinition } from './types.js';
 import { lanternCampaign } from './lantern.js';
+import { goblinopolisCampaign } from './goblinopolis.js';
+import { moonberryCampaign } from './moonberry.js';
 
 export const CAMPAIGNS: Record<string, CampaignDefinition> = {
   [lanternCampaign.slug]: lanternCampaign,
+  [goblinopolisCampaign.slug]: goblinopolisCampaign,
+  [moonberryCampaign.slug]: moonberryCampaign,
 };
