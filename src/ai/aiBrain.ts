@@ -210,8 +210,23 @@ export const WEIGHTS = {
    * and cost 14 points in the physical mirror.
    */
   unsupportedDangerMult: 2.0,
-  /** Manhattan radius within which an ally counts as supporting a tile. */
+  /** Manhattan radius within which an ally counts as supporting a tile (legacy
+   *  fallback, used when supportProjection is 0). */
   supportRadius: 6,
+  /**
+   * PROJECTION-BASED SUPPORT (v9): 1 = an ally supports a tile only if it
+   * could attack an enemy ADJACENT to that tile next turn (its move + basic
+   * range + 1). 0 = legacy flat supportRadius.
+   *
+   * Motivation (exploit battery, SpongeBaitBot): with the flat radius, a
+   * lone fighter round-1 charging into the enemy corner counted a cleric six
+   * tiles behind as "support" — a move-3 melee ally at distance 6 cannot
+   * project any force there next turn, and the corner wall collapsed on the
+   * charger piecemeal (48% bot wins on the melee mirror). Projection makes
+   * melee support tighter (5) and ranged support LONGER (9-10) than the old
+   * radius — support now means "can actually help", not "is near-ish".
+   */
+  supportProjection: 1,
   /** Danger multiplier when the incoming expected damage could kill us. */
   dangerLethalMult: 2.2,
   /** Pull toward closing the gap to attackable targets (per tile of gap). */
@@ -1229,14 +1244,29 @@ function positionScore(
       // FIRST-STRIKE (v8): in reach without swinging = the enemy hits first.
       if (!attacking) mult *= firstStrikeMultFor(state);
       // COORDINATED ADVANCE (v8): a lone unit in threat range is the
-      // overextension the enemy team collapses on.
-      const supported = state.units.some(
-        (u) =>
-          u.isAlive &&
-          u.instanceId !== unit.instanceId &&
-          u.ownerPlayerId === myPlayerId &&
-          manhattanDistance(u.position, pos) <= WEIGHTS.supportRadius,
-      );
+      // overextension the enemy team collapses on. v9: "support" means the
+      // ally can PROJECT FORCE next turn — it could attack an enemy adjacent
+      // to this tile (move + basic range + 1). A melee ally six tiles back
+      // is scenery; a ranged ally eight tiles back is cover.
+      const supported = state.units.some((u) => {
+        if (
+          !u.isAlive ||
+          u.instanceId === unit.instanceId ||
+          u.ownerPlayerId !== myPlayerId ||
+          isFrozen(u)
+        ) {
+          return false;
+        }
+        if (!WEIGHTS.supportProjection) {
+          return manhattanDistance(u.position, pos) <= WEIGHTS.supportRadius;
+        }
+        const ab = basicDef(u, map);
+        const reach =
+          (willBlockOwnAction(u, 'rooted') ? 0 : u.movementRange) +
+          (ab?.range ?? 1) +
+          1;
+        return manhattanDistance(u.position, pos) <= reach;
+      });
       if (!supported) mult *= WEIGHTS.unsupportedDangerMult;
       s -=
         dangerScale *
