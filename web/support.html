@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Support — Dungeon Combat: Duel</title>
+  <meta name="description" content="Get help with Dungeon Combat: Duel. Report a bug, ask a question, or contact the team." />
+  <link rel="icon" href="/assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="/assets/icon.png" alt="Dungeon Combat logo" />
+        <span class="name">Dungeon Combat<span>: Duel</span></span>
+      </a>
+      <nav class="navlinks">
+        <a href="/#features">Features</a>
+        <a href="/support.html">Support</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/#get">Get the Game</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="wrap">
+      <div class="prose" style="text-align:center; margin-bottom:34px;">
+        <h1>Support</h1>
+        <p class="lede" style="margin:0 auto;">Hit a bug, have a question, or want to reach the team? Send us a note and we'll get back to you.</p>
+      </div>
+
+      <form class="form-card" id="support-form" novalidate>
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" autocomplete="name" maxlength="120" required />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" maxlength="200" required />
+          <div class="form-note">So we can reply — we never share it.</div>
+        </div>
+        <div class="field">
+          <label for="topic">Topic</label>
+          <select id="topic" name="topic">
+            <option>General question</option>
+            <option>Bug report</option>
+            <option>Account or login</option>
+            <option>Purchase or billing</option>
+            <option>Feedback / idea</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" maxlength="4000" required placeholder="Tell us what's going on. For bugs, include your device and what you were doing."></textarea>
+        </div>
+        <button type="submit" class="btn" id="support-submit">Send Message</button>
+        <div class="form-status" id="support-status" role="status" aria-live="polite"></div>
+      </form>
+
+      <p class="direct-contact">
+        Prefer email? Write us directly at
+        <a data-support-email href="#">our support address</a>.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-brand">
+        <img src="/assets/icon.png" alt="" />
+        Dungeon Combat: Duel
+      </div>
+      <nav>
+        <a href="/support.html">Support</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms of Service</a>
+      </nav>
+      <div class="copy">© <span data-year></span> Dungeon Combat.</div>
+    </div>
+  </footer>
+
+  <script src="/site-config.js"></script>
+  <script src="/site.js"></script>
+</body>
+</html>
