@@ -3,8 +3,11 @@
 // (see the `deploy` npm script) so the deployed server can report exactly
 // which commit it is running via GET /version.
 //
-// railway up uploads this file (it is excluded from git via .gitignore but
-// NOT from .railwayignore, so it ships to Railway while keeping git clean).
+// buildInfo.json is tracked in git so it is always present in the build
+// context. `railway up` archives the working tree (including this file's
+// freshly-stamped, possibly-uncommitted contents) and the Dockerfile COPYs it
+// into the image, where config/index.ts reads it at startup. Ignored files are
+// stripped from the upload, which is why this must NOT be gitignored.
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
