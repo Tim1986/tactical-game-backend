@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seed.ts",
+    "stamp": "node scripts/stamp-build.mjs",
+    "deploy": "npm run stamp && railway up",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
   },

@@ -1,6 +1,27 @@
 import dotenv from 'dotenv';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 dotenv.config();
+
+// Build stamp written by scripts/stamp-build.mjs at deploy time (see the
+// `deploy` npm script). Absent in dev/tests — falls back gracefully so
+// GET /version still responds.
+function loadBuildInfo(): { commit: string; commitFull: string; branch: string; dirty: boolean; builtAt: string | null } {
+  try {
+    const raw = readFileSync(join(process.cwd(), 'buildInfo.json'), 'utf8');
+    const p = JSON.parse(raw);
+    return {
+      commit: String(p.commit ?? 'unknown'),
+      commitFull: String(p.commitFull ?? 'unknown'),
+      branch: String(p.branch ?? 'unknown'),
+      dirty: Boolean(p.dirty),
+      builtAt: p.builtAt ?? null,
+    };
+  } catch {
+    return { commit: 'dev', commitFull: 'dev', branch: 'dev', dirty: false, builtAt: null };
+  }
+}
 
 function requireEnv(key: string): string {
   const value = process.env[key];
@@ -28,6 +49,8 @@ export const config = {
   nodeEnv: optionalEnv('NODE_ENV', 'development'),
   port: optionalEnvInt('PORT', 3000),
   isDevelopment: optionalEnv('NODE_ENV', 'development') === 'development',
+
+  build: loadBuildInfo(),
 
   db: {
     url: requireEnv('DATABASE_URL'),
