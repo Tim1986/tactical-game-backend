@@ -175,7 +175,7 @@ export async function login(input: LoginInput): Promise<LoginResult> {
   }>(
     `SELECT id, username, email, password_hash, elo, account_level, token_version
      FROM users
-     WHERE username = $1 OR email = $1
+     WHERE (username = $1 OR email = $1) AND deleted_at IS NULL
      LIMIT 1`,
     [usernameOrEmail]
   );
@@ -277,7 +277,7 @@ function generateResetCode(): string {
  */
 export async function requestPasswordReset(email: string): Promise<void> {
   const result = await query<{ id: string; email: string }>(
-    'SELECT id, email FROM users WHERE email = $1',
+    'SELECT id, email FROM users WHERE email = $1 AND deleted_at IS NULL',
     [email]
   );
   const user = result.rows[0];
