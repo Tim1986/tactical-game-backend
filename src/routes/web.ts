@@ -122,6 +122,11 @@ webRouter.get('/l/:kind/:token', (req: Request, res: Response): void => {
     'Content-Security-Policy',
     `default-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; base-uri 'none'`
   );
+  const isInvite = kind.scheme === 'invite';
+  const inviteCodeHtml = isInvite
+    ? `<div style="margin:16px 0;padding:12px 20px;background:#e9dcb4;border:1px solid #cdbb8a;border-radius:8px;font-family:monospace;font-size:22px;letter-spacing:3px;color:#2e2013">${esc(token)}</div>
+       <p style="font-size:13px;color:#7a6c50">Already installed? Open the app and tap <strong>Have an invite code?</strong> on the home screen, then enter the code above.</p>`
+    : '';
   res.type('html').send(`<!doctype html>
 <html lang="en">
 <head>
@@ -149,6 +154,7 @@ webRouter.get('/l/:kind/:token', (req: Request, res: Response): void => {
 <div class="box">
   <img src="/assets/icon.png" alt="Dungeon Combat" />
   <h1>${esc(title)}</h1>
+  ${inviteCodeHtml}
   <p id="msg">Opening Dungeon Combat…</p>
   <a class="btn" id="fallback" href="${esc(store)}">Get the Game</a>
 </div>

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import * as challengeService from '../services/challengeService.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -6,6 +7,8 @@ import { sendSuccess, Errors } from '../utils/response.js';
 
 export const challengeRouter = Router();
 challengeRouter.use(requireAuth);
+
+const inviteLimiter = rateLimit({ windowMs: 24 * 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, keyGenerator: (req) => req.user?.id ?? req.ip ?? 'unknown' });
 
 const IssueChallengeSchema = z.object({
   opponentUsername: z.string().min(3).max(20),
@@ -16,9 +19,9 @@ const AcceptChallengeSchema = z.object({
   teamId: z.string().uuid(),
 });
 
-// GET /challenges — get pending received + recent sent challenges
+// GET /challenges — get pending received + recent sent challenges + open sent invites
 challengeRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-  const { received, sent } = await challengeService.getChallenges(req.user!.id);
+  const { received, sent, sentInvites } = await challengeService.getChallenges(req.user!.id);
   sendSuccess(res, {
     challenges: received.map((c) => ({
       id: c.id,
@@ -37,6 +40,13 @@ challengeRouter.get('/', async (req: Request, res: Response): Promise<void> => {
       status: c.status,
       matchId: c.match_id,
       createdAt: c.created_at,
+    })),
+    sentInvites: sentInvites.map((inv) => ({
+      token: inv.token,
+      status: inv.status,
+      matchId: inv.match_id,
+      expiresAt: inv.expires_at,
+      createdAt: inv.created_at,
     })),
   });
 });
@@ -82,6 +92,49 @@ challengeRouter.post('/:id/decline', async (req: Request, res: Response): Promis
     if (err instanceof challengeService.ChallengeNotFoundError) { Errors.notFound(res, 'Challenge'); return; }
     if (err instanceof challengeService.ChallengeAccessError) { Errors.forbidden(res); return; }
     if (err instanceof challengeService.ChallengeError) { Errors.conflict(res, err.message); return; }
+    throw err;
+  }
+});
+
+// ── Invite (open-token) routes ────────────────────────────────────────────────
+
+const InviteCreateSchema = z.object({ teamId: z.string().uuid() });
+const InviteClaimSchema = z.object({ teamId: z.string().uuid() });
+
+// POST /challenges/invite — create an open challenge invite link
+challengeRouter.post('/invite', inviteLimiter, async (req: Request, res: Response): Promise<void> => {
+  const parsed = InviteCreateSchema.safeParse(req.body);
+  if (!parsed.success) { Errors.validation(res, 'teamId required', parsed.error.flatten()); return; }
+  try {
+    const result = await challengeService.createInvite(req.user!.id, parsed.data.teamId);
+    sendSuccess(res, result);
+  } catch (err) {
+    if (err instanceof challengeService.InviteError) { Errors.conflict(res, err.message); return; }
+    throw err;
+  }
+});
+
+// GET /challenges/invite/:token — public metadata (challenger username + status)
+challengeRouter.get('/invite/:token', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const info = await challengeService.getInviteInfo(req.params.token);
+    sendSuccess(res, info);
+  } catch (err) {
+    if (err instanceof challengeService.InviteNotFoundError) { Errors.notFound(res, 'Invite'); return; }
+    throw err;
+  }
+});
+
+// POST /challenges/invite/:token/claim — authenticated; first claimer wins
+challengeRouter.post('/invite/:token/claim', async (req: Request, res: Response): Promise<void> => {
+  const parsed = InviteClaimSchema.safeParse(req.body);
+  if (!parsed.success) { Errors.validation(res, 'teamId required', parsed.error.flatten()); return; }
+  try {
+    const result = await challengeService.claimInvite(req.params.token, req.user!.id, parsed.data.teamId);
+    sendSuccess(res, result);
+  } catch (err) {
+    if (err instanceof challengeService.InviteNotFoundError) { Errors.notFound(res, 'Invite'); return; }
+    if (err instanceof challengeService.InviteError) { Errors.conflict(res, err.message); return; }
     throw err;
   }
 });
