@@ -12,3 +12,10 @@ const EndTurnActionSchema = z.object({ type: z.literal('END_TURN') });
 const ChargeActionSchema = z.object({ type: z.literal('CHARGE'), unitInstanceId: InstanceIdSchema, destination: BoardPositionSchema });
 export const TurnActionSchema = z.discriminatedUnion('type', [MoveActionSchema, ChargeActionSchema, UseAbilityActionSchema, EndTurnActionSchema]);
 export const SubmitTurnSchema = z.object({ actions: z.array(TurnActionSchema).min(1).max(10) });
+
+// ROD3: single-action endpoint schema
+const RodActionSchema = z.discriminatedUnion('type', [MoveActionSchema, ChargeActionSchema, UseAbilityActionSchema]);
+export const SubmitRodActionSchema = z.object({
+  action: RodActionSchema,
+  seq: z.number().int().min(0),
+});

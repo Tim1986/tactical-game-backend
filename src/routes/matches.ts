@@ -2,12 +2,14 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as matchService from '../services/matchService.js';
 import { requireAuth } from '../middleware/auth.js';
-import { sendSuccess, Errors } from '../utils/response.js';
+import { sendSuccess, sendError, Errors } from '../utils/response.js';
 
 export const matchRouter = Router();
 matchRouter.use(requireAuth);
 
-import { SubmitTurnSchema } from './turnActionSchema.js';
+import { SubmitTurnSchema, SubmitRodActionSchema } from './turnActionSchema.js';
+
+const ROD_ONLINE_ENABLED = process.env.ROD_ONLINE_ENABLED === 'true';
 
 matchRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   const matches = await matchService.getUserMatches(req.user!.id);
@@ -36,6 +38,39 @@ matchRouter.post('/:id/turn', async (req: Request, res: Response): Promise<void>
     if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
     if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
     if (err instanceof matchService.MatchNotActiveError) { Errors.conflict(res, 'This match is no longer active'); return; }
+    if (err instanceof matchService.TurnValidationError) { Errors.validation(res, err.message); return; }
+    throw err;
+  }
+});
+
+matchRouter.post('/:id/action', async (req: Request, res: Response): Promise<void> => {
+  if (!ROD_ONLINE_ENABLED) { sendError(res, 501, 'NOT_IMPLEMENTED', 'Roll-on-demand is not enabled'); return; }
+  const parsed = SubmitRodActionSchema.safeParse(req.body);
+  if (!parsed.success) { Errors.validation(res, 'Invalid action data', parsed.error.flatten()); return; }
+  try {
+    const r = await matchService.submitRodAction(req.params.id, req.user!.id, parsed.data.action, parsed.data.seq);
+    sendSuccess(res, r);
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    if (err instanceof matchService.MatchNotActiveError) { Errors.conflict(res, 'This match is no longer active'); return; }
+    if (err instanceof matchService.NotYourTurnError) { Errors.forbidden(res); return; }
+    if (err instanceof matchService.SeqMismatchError) { Errors.conflict(res, err.message); return; }
+    if (err instanceof matchService.TurnValidationError) { Errors.validation(res, err.message); return; }
+    throw err;
+  }
+});
+
+matchRouter.post('/:id/end-turn', async (req: Request, res: Response): Promise<void> => {
+  if (!ROD_ONLINE_ENABLED) { sendError(res, 501, 'NOT_IMPLEMENTED', 'Roll-on-demand is not enabled'); return; }
+  try {
+    const r = await matchService.submitRodEndTurn(req.params.id, req.user!.id);
+    sendSuccess(res, r);
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    if (err instanceof matchService.MatchNotActiveError) { Errors.conflict(res, 'This match is no longer active'); return; }
+    if (err instanceof matchService.NotYourTurnError) { Errors.forbidden(res); return; }
     if (err instanceof matchService.TurnValidationError) { Errors.validation(res, err.message); return; }
     throw err;
   }

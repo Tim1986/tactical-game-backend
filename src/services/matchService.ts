@@ -1,7 +1,7 @@
 import { query, withTransaction } from '../db/pool.js';
-import { MatchState, TurnAction, UnitInstance, BoardPosition } from '../types/matchState.js';
+import { MatchState, TurnAction, UnitInstance, BoardPosition, GameEvent, MoveAction, ChargeAction, UseAbilityAction } from '../types/matchState.js';
 import { AbilityDefinition, UnitDefinition } from '../types/index.js';
-import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
+import { processTurn, beginTurn, applyAction, endTurn, TurnValidationError } from '../game/turnProcessor.js';
 import { buildInitialState, buildUnitInstance, FABLE_PLAYER_ID, FABLE_HP_SCALE } from '../game/initialState.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
 import { logger } from '../utils/logger.js';
@@ -14,6 +14,8 @@ export { FABLE_PLAYER_ID };
 export class MatchNotFoundError extends Error { constructor() { super('Match not found'); this.name = 'MatchNotFoundError'; } }
 export class MatchAccessError extends Error { constructor() { super('You are not a participant in this match'); this.name = 'MatchAccessError'; } }
 export class MatchNotActiveError extends Error { constructor() { super('This match is no longer active'); this.name = 'MatchNotActiveError'; } }
+export class NotYourTurnError extends Error { constructor() { super('It is not your turn'); this.name = 'NotYourTurnError'; } }
+export class SeqMismatchError extends Error { constructor(expected: number, got: number) { super(`Expected seq ${expected}, got ${got}`); this.name = 'SeqMismatchError'; } }
 export { TurnValidationError };
 
 interface MatchRow {
@@ -148,6 +150,136 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
     }
     const updatedResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]);
     return { result, match: updatedResult.rows[0] };
+  });
+}
+
+export async function submitRodAction(
+  matchId: string,
+  submittingPlayerId: string,
+  action: MoveAction | ChargeAction | UseAbilityAction,
+  seq: number,
+): Promise<{ events: GameEvent[]; updatedState: MatchState; matchOver: boolean; winnerId: string | null }> {
+  return withTransaction(async (client) => {
+    const matchResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1 FOR UPDATE', [matchId]);
+    const match = matchResult.rows[0];
+    if (!match) throw new MatchNotFoundError();
+    if (match.player_one_id !== submittingPlayerId && match.player_two_id !== submittingPlayerId) throw new MatchAccessError();
+    if (match.status !== 'active') throw new MatchNotActiveError();
+
+    const state: MatchState = match.match_state;
+
+    // IDOR: only the active player may submit actions
+    if (state.activePlayerId !== submittingPlayerId) throw new NotYourTurnError();
+
+    const tc = state.turnContext;
+    const expectedSeq = (tc?.seq ?? -1) + 1;
+
+    // Idempotent replay: client re-sent an already-applied action
+    if (tc && seq === tc.seq) {
+      return { events: [], updatedState: state, matchOver: false, winnerId: null };
+    }
+
+    if (seq !== expectedSeq) throw new SeqMismatchError(expectedSeq, seq);
+
+    const abilityMap = await loadAbilityMap(client);
+    const p1 = match.player_one_id;
+    const p2 = match.player_two_id;
+    const allEvents: GameEvent[] = [];
+
+    let currentState = state;
+
+    // First action of the turn: open the turn via beginTurn
+    if (!tc) {
+      const begun = beginTurn(currentState, action, submittingPlayerId, p1, p2);
+      allEvents.push(...begun.events);
+      if (begun.matchOver) {
+        await finalizeMatch(client, match, begun.winnerId);
+        return { events: allEvents, updatedState: begun.updatedState, matchOver: true, winnerId: begun.winnerId };
+      }
+      currentState = begun.updatedState;
+    }
+
+    const applied = applyAction(currentState, action, submittingPlayerId, p1, p2, abilityMap);
+    allEvents.push(...applied.events);
+
+    // Stamp the seq onto the persisted turnContext
+    applied.updatedState.turnContext!.seq = seq;
+
+    if (applied.matchOver) {
+      await finalizeMatch(client, match, applied.winnerId);
+      return { events: allEvents, updatedState: applied.updatedState, matchOver: true, winnerId: applied.winnerId };
+    }
+
+    await client.query(
+      'UPDATE matches SET match_state = $1 WHERE id = $2',
+      [JSON.stringify(applied.updatedState), matchId],
+    );
+    return { events: allEvents, updatedState: applied.updatedState, matchOver: false, winnerId: null };
+  });
+}
+
+export async function submitRodEndTurn(
+  matchId: string,
+  submittingPlayerId: string,
+): Promise<{ events: GameEvent[]; updatedState: MatchState; matchOver: boolean; winnerId: string | null }> {
+  return withTransaction(async (client) => {
+    const matchResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1 FOR UPDATE', [matchId]);
+    const match = matchResult.rows[0];
+    if (!match) throw new MatchNotFoundError();
+    if (match.player_one_id !== submittingPlayerId && match.player_two_id !== submittingPlayerId) throw new MatchAccessError();
+    if (match.status !== 'active') throw new MatchNotActiveError();
+
+    const state: MatchState = match.match_state;
+    if (state.activePlayerId !== submittingPlayerId) throw new NotYourTurnError();
+    if (!state.turnContext) throw new TurnValidationError('No turn in progress — submit at least one action first');
+
+    const p1 = match.player_one_id;
+    const p2 = match.player_two_id;
+    const allEvents: GameEvent[] = [];
+
+    const finalized = endTurn(state, submittingPlayerId, p1, p2);
+    allEvents.push(...finalized.events);
+
+    if (finalized.matchOver) {
+      await finalizeMatch(client, match, finalized.winnerId);
+      return { events: allEvents, updatedState: finalized.updatedState, matchOver: true, winnerId: finalized.winnerId };
+    }
+
+    // Record turn history (actions not tracked per-ROD-call; log empty list)
+    await client.query(
+      'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
+      [matchId, submittingPlayerId, match.turn_number, JSON.stringify([]), JSON.stringify(finalized.updatedState)],
+    );
+
+    let result = finalized;
+    let postFableEvents: GameEvent[] = [];
+
+    // PvE: auto-process Fable turns
+    if (match.is_pve && finalized.updatedState.activePlayerId === FABLE_PLAYER_ID) {
+      const fablePlayerId = p1 === submittingPlayerId ? p2 : p1;
+      const abilityMap = await loadAbilityMap(client);
+      const fableResult = await runFableTurns(matchId, finalized.updatedState, submittingPlayerId, fablePlayerId, abilityMap, client);
+      postFableEvents = fableResult.events as GameEvent[];
+      result = { ...result, updatedState: fableResult.state, matchOver: fableResult.matchOver, winnerId: fableResult.winnerId };
+
+      if (fableResult.matchOver) {
+        await finalizeMatch(client, match, fableResult.winnerId);
+        return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: true, winnerId: result.winnerId };
+      }
+    }
+
+    const newDeadline = new Date();
+    newDeadline.setHours(newDeadline.getHours() + 72);
+    await client.query(
+      'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4, last_turn_events = $5 WHERE id = $6',
+      [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify([...allEvents, ...postFableEvents]), matchId],
+    );
+
+    if (!match.is_pve) {
+      setImmediate(() => { void notifyUser(result.updatedState.activePlayerId, 'YOUR_TURN', { matchId }); });
+    }
+
+    return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: false, winnerId: null };
   });
 }
 
