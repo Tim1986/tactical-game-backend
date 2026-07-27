@@ -359,7 +359,7 @@ export const RULE_CHECKS: RuleCheck[] = [
 
   // ── DGE ────────────────────────────────────────────────────────────────────
   {
-    rule: 'DGE-1', name: 'dodge chance is 5% per AC point above 6; each attack rolls fresh',
+    rule: 'DGE-1', name: 'AC-based hit chance: d20+5 vs AC; each attack rolls fresh',
     run: () => {
       // AC 6 → 0% dodge: must always hit
       const caster = mkUnit(P1, 1, 1);

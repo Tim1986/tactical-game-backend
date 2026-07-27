@@ -62,7 +62,7 @@ export const RULEBOOK: RuleSection[] = [
     id: 'DGE',
     title: 'Hit Resolution',
     rules: [
-      { id: 'DGE-1', text: "Each unit has a dodge chance of 5% per point of Armor Class above 6. Example: AC 16 → 50% dodge. Each attack rolls fresh — there is no memory between attacks." },
+      { id: 'DGE-1', text: "Each unit has an Armor Class (AC) between 13 and 17. Attacks roll a d20 +5 — a result equal to or above the target's AC is a hit; below is a Miss. Each attack rolls fresh — there is no memory between attacks." },
       { id: 'DGE-2', text: "Unblockable abilities always hit regardless of dodge chance or any status effects on the target." },
       { id: 'DGE-3', text: "Attacks against an EXPOSED unit always hit — their dodge chance is ignored." },
       { id: 'DGE-4', text: "Multi-hit abilities (like Twin Strike) apply each damage effect independently." },
