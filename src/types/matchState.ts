@@ -74,6 +74,13 @@ export interface MatchState {
   rollScript?: Array<'hit' | 'miss'>;
   /** Index of the next rollScript entry to consume. */
   rollIndex?: number;
+  /**
+   * When present, every dodge roll (random OR scripted) appends its result here
+   * in order. The offline client sets this to `[]` before a dry-run so it can
+   * capture exactly what the engine rolled and replay it at End Turn. Never set
+   * server-side, so it has no effect on online play.
+   */
+  rollLog?: Array<'hit' | 'miss'>;
 }
 
 export interface MoveAction {

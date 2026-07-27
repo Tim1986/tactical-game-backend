@@ -29,12 +29,17 @@ const WEAKENED_DAMAGE_REDUCTION = 4;
  * so the whole fight is deterministic — the script is disclosed to the player.
  */
 function rollMisses(state: MatchState, missChance: number): boolean {
+  let missed: boolean;
   if (state.rollScript) {
     const i = state.rollIndex ?? 0;
     state.rollIndex = i + 1;
-    return state.rollScript[i] === 'miss';
+    missed = state.rollScript[i] === 'miss';
+  } else {
+    missed = Math.random() < missChance;
   }
-  return Math.random() < missChance;
+  // Record for the offline client's dry-run capture (see MatchState.rollLog).
+  if (state.rollLog) state.rollLog.push(missed ? 'miss' : 'hit');
+  return missed;
 }
 
 /** Per-attack dodge chance: 5% per AC point above 6, capped at 1.0. */
