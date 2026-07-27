@@ -178,6 +178,20 @@ webRouter.get('/l/:kind/:token', (req: Request, res: Response): void => {
 // ── Universal Links / App Links association files ──────────────────────────
 // Served only when the corresponding env values are set; otherwise 404 so the
 // platforms treat the domain as not-yet-associated (safe default).
+// ── Static SEO / crawl files ─────────────────────────────────────────────────
+webRouter.get('/robots.txt', (_req: Request, res: Response): void => {
+  res.type('text/plain').sendFile(path.join(WEB_ROOT, 'robots.txt'));
+});
+
+webRouter.get('/sitemap.xml', (_req: Request, res: Response): void => {
+  res.type('application/xml').sendFile(path.join(WEB_ROOT, 'sitemap.xml'));
+});
+
+// OG card template — owner screenshots at 1200×630 to produce og-image.png.
+webRouter.get('/og-template', (_req: Request, res: Response): void => {
+  res.type('html').sendFile(path.join(WEB_ROOT, 'og-template.html'));
+});
+
 webRouter.get('/.well-known/apple-app-site-association', (_req: Request, res: Response): void => {
   if (!config.web.iosAppId) { res.status(404).end(); return; }
   res.type('application/json').json({
@@ -201,3 +215,8 @@ webRouter.get('/.well-known/assetlinks.json', (_req: Request, res: Response): vo
     },
   ]);
 });
+
+/** Serve the branded 404 page — call this from app.ts AFTER all API routers. */
+export function webNotFound(_req: Request, res: Response): void {
+  res.status(404).type('html').sendFile(path.join(WEB_ROOT, '404.html'));
+}

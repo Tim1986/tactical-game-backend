@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  OG Image Template — owner screenshots this at exactly 1200×630px,
+  saves as og-image.png, and drops it in web/assets/.
+  Requires U9 app icon art. Open in a browser, set viewport to 1200×630,
+  screenshot, then run: optipng -o2 og-image.png
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1200px; height: 630px; overflow: hidden;
+      background: #1a1008;
+      font-family: Georgia, 'Times New Roman', serif;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    /* Parchment gradient bg */
+    .bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, #2e1c08 0%, #1a1008 70%);
+    }
+    /* Stone border frame */
+    .frame {
+      position: absolute; inset: 0;
+      border: 6px solid #8a6a1f;
+      box-shadow: inset 0 0 60px rgba(184,137,46,0.15);
+    }
+    .corner {
+      position: absolute; width: 40px; height: 40px;
+      border: 3px solid #b8892e;
+    }
+    .tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+    .tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+    .bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+    .br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+    .left {
+      position: relative; z-index: 1;
+      padding: 60px 0 60px 80px;
+      flex: 1;
+    }
+    .eyebrow {
+      font-size: 20px; letter-spacing: 6px; text-transform: uppercase;
+      color: #b8892e; margin-bottom: 20px;
+    }
+    .title {
+      font-size: 72px; line-height: 1.05; font-weight: bold;
+      color: #f1e7c9; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 28px; color: #b8892e; margin-bottom: 32px;
+    }
+    .tagline {
+      font-size: 20px; color: #a89876; line-height: 1.5; max-width: 460px;
+    }
+    .store-row {
+      margin-top: 40px; display: flex; gap: 20px; align-items: center;
+    }
+    .badge {
+      background: #b8892e; color: #2e2013; padding: 10px 24px;
+      border-radius: 6px; font-size: 16px; font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .right {
+      position: relative; z-index: 1;
+      width: 420px; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* Placeholder for app icon — owner replaces with real art after U9 */
+    .icon-placeholder {
+      width: 280px; height: 280px; border-radius: 56px;
+      background: #2e1c08; border: 4px solid #8a6a1f;
+      display: flex; align-items: center; justify-content: center;
+      color: #5c4520; font-size: 14px; text-align: center; padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="frame"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <div class="left">
+    <div class="eyebrow">Turn-Based Strategy</div>
+    <div class="title">Dungeon<br>Combat</div>
+    <div class="subtitle">Duel</div>
+    <div class="tagline">Build your party. Read the board. Outwit your opponent.</div>
+    <div class="store-row">
+      <div class="badge">App Store</div>
+      <div class="badge">Google Play</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <!-- Replace with: <img src="/assets/icon.png" width="280" height="280" style="border-radius:56px"> after U9 -->
+    <div class="icon-placeholder">App icon<br>(add after U9)</div>
+  </div>
+</body>
+</html>

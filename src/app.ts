@@ -13,7 +13,7 @@ import { challengeRouter } from './routes/challenges.js';
 import { achievementRouter } from './routes/achievements.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { versionRouter } from './routes/version.js';
-import { webRouter, WEB_ROOT } from './routes/web.js';
+import { webRouter, WEB_ROOT, webNotFound } from './routes/web.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requireAppVersion } from './middleware/versionCheck.js';
 import { sendSuccess } from './utils/response.js';
@@ -66,7 +66,12 @@ export function createApp(): express.Application {
   app.use('/achievements', apiLimiter, achievementRouter);
   app.use('/leaderboard', apiLimiter, leaderboardRouter);
   app.use('/version', apiLimiter, versionRouter);
-  app.use(notFoundHandler);
+  // API paths get a JSON 404; everything else gets the branded web 404.
+  const API_PREFIXES = ['/auth', '/users', '/units', '/teams', '/matches', '/matchmaking', '/challenges', '/achievements', '/leaderboard', '/version'];
+  app.use((req, res, next) => {
+    if (API_PREFIXES.some(p => req.path.startsWith(p))) return notFoundHandler(req, res);
+    webNotFound(req, res);
+  });
   app.use(errorHandler);
   return app;
 }

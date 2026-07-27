@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Page Not Found — Dungeon Combat</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .err-wrap { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    .err-code { font-family: var(--font-heading, serif); font-size: 5rem; color: var(--gold); line-height: 1; margin-bottom: 0.5rem; }
+    .err-title { font-family: var(--font-heading, serif); font-size: 1.6rem; color: var(--ink); margin-bottom: 1rem; }
+    .err-body { color: var(--ink-soft); max-width: 380px; margin-bottom: 2rem; line-height: 1.6; }
+    .err-home { display: inline-block; padding: 0.65rem 1.75rem; background: var(--gold); color: var(--ink); border-radius: var(--radius-md); font-weight: 700; text-decoration: none; font-family: var(--font-heading, serif); }
+    .err-home:hover { background: var(--gold-dark); color: #fff; }
+  </style>
+</head>
+<body>
+  <script src="/site-config.js"></script>
+  <header class="site-header" id="site-header"></header>
+
+  <main>
+    <div class="err-wrap">
+      <div class="err-code">404</div>
+      <div class="err-title">The dungeon has no door here.</div>
+      <p class="err-body">This page doesn't exist — maybe the link was mistyped, or the scroll crumbled to dust.</p>
+      <a href="/" class="err-home">Back to Safety</a>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+  <script src="/site.js"></script>
+</body>
+</html>
