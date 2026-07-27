@@ -48,11 +48,20 @@ run('git push standalone master');
 console.log('\n▶ npm run stamp');
 run('npm run stamp');
 
-// 3) Deploy (streams the Railway build).
+// 3) Bust the Docker build cache with the commit SHA. The Dockerfile's
+// `ARG CACHE_BUST` is fed by this Railway service variable; if it never
+// changes, Railway reuses the cached `COPY . . / npm run build` layers and
+// re-serves the OLD binary even though the deploy reports SUCCESS. Setting it
+// to the commit makes it unique per deploy, so a stale build can't happen.
+// --skip-deploys: just update the value; the `railway up` below is the deploy.
+console.log(`\n▶ Setting CACHE_BUST=${head} (forces a clean rebuild)`);
+run(`railway variables --set "CACHE_BUST=${head}" --skip-deploys`);
+
+// 4) Deploy (streams the Railway build).
 console.log('\n▶ railway up');
 run('railway up');
 
-// 4) VERIFY the running server actually flipped to our commit.
+// 5) VERIFY the running server actually flipped to our commit.
 console.log(`\n▶ Verifying — polling ${URL_BASE}/version for commit ${head} (up to 10 min)...`);
 const deadline = Date.now() + VERIFY_TIMEOUT_MS;
 let lastSeen = '(unreachable)';
