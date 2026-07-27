@@ -13,7 +13,7 @@ interface AchievementDefinition {
 }
 
 interface AchievementCondition {
-  type: 'match_count' | 'win_count' | 'elo_reached' | 'pve_difficulty_clear' | 'leaderboard_top_n';
+  type: 'match_count' | 'win_count' | 'win_count_pvp' | 'win_streak' | 'elo_reached' | 'pve_difficulty_clear' | 'leaderboard_top_n';
   threshold?: number;
   n?: number;
   difficulty?: 'easy' | 'hard' | 'nightmare';
@@ -62,7 +62,7 @@ export async function getAchievementsForUser(userId: string): Promise<UserAchiev
 // ---------------------------------------------------------------
 export async function evaluateAchievements(userId: string): Promise<string[]> {
   // Load all definitions and already-earned slugs in parallel
-  const [defsResult, earnedResult, statsResult] = await Promise.all([
+  const [defsResult, earnedResult, statsResult, streakResult] = await Promise.all([
     query<{ slug: string; name: string; condition: AchievementCondition }>(
       `SELECT slug, name, condition FROM achievement_definitions`
     ),
@@ -70,11 +70,12 @@ export async function evaluateAchievements(userId: string): Promise<string[]> {
       `SELECT achievement_slug FROM user_achievements WHERE user_id = $1`,
       [userId]
     ),
-    query<{ elo: number; match_count: string; win_count: string }>(
+    query<{ elo: number; match_count: string; win_count: string; pvp_win_count: string }>(
       `SELECT
          u.elo,
-         COUNT(m.id)                                          AS match_count,
-         COUNT(m.id) FILTER (WHERE m.winner_id = $1)         AS win_count
+         COUNT(m.id)                                                          AS match_count,
+         COUNT(m.id) FILTER (WHERE m.winner_id = $1)                         AS win_count,
+         COUNT(m.id) FILTER (WHERE m.winner_id = $1 AND m.is_pve = FALSE)    AS pvp_win_count
        FROM users u
        LEFT JOIN matches m
          ON (m.player_one_id = $1 OR m.player_two_id = $1) AND m.status = 'completed'
@@ -82,13 +83,35 @@ export async function evaluateAchievements(userId: string): Promise<string[]> {
        GROUP BY u.elo`,
       [userId]
     ),
+    // Last 5 completed PvP matches in order — used to compute win streaks
+    query<{ winner_id: string | null }>(
+      `SELECT winner_id
+       FROM matches
+       WHERE (player_one_id = $1 OR player_two_id = $1)
+         AND status = 'completed'
+         AND is_pve = FALSE
+       ORDER BY completed_at DESC
+       LIMIT 5`,
+      [userId]
+    ),
   ]);
 
   const earnedSlugs = new Set(earnedResult.rows.map((r) => r.achievement_slug));
-  const stats = statsResult.rows[0] ?? { elo: 1200, match_count: '0', win_count: '0' };
-  const matchCount = parseInt(stats.match_count, 10);
-  const winCount = parseInt(stats.win_count, 10);
-  const elo = stats.elo;
+  const stats = statsResult.rows[0] ?? { elo: 1200, match_count: '0', win_count: '0', pvp_win_count: '0' };
+  const matchCount   = parseInt(stats.match_count, 10);
+  const winCount     = parseInt(stats.win_count, 10);
+  const pvpWinCount  = parseInt(stats.pvp_win_count, 10);
+  const elo          = stats.elo;
+
+  // Compute streak lengths from the ordered result (DESC = most recent first)
+  const recentPvp = streakResult.rows;
+  function pvpStreakAtLeast(n: number): boolean {
+    if (recentPvp.length < n) return false;
+    for (let i = 0; i < n; i++) {
+      if (recentPvp[i].winner_id !== userId) return false;
+    }
+    return true;
+  }
 
   const newlyUnlocked: string[] = [];
 
@@ -102,10 +125,14 @@ export async function evaluateAchievements(userId: string): Promise<string[]> {
       qualifies = matchCount >= cond.threshold;
     } else if (cond.type === 'win_count' && cond.threshold !== undefined) {
       qualifies = winCount >= cond.threshold;
+    } else if (cond.type === 'win_count_pvp' && cond.threshold !== undefined) {
+      qualifies = pvpWinCount >= cond.threshold;
+    } else if (cond.type === 'win_streak' && cond.threshold !== undefined) {
+      qualifies = pvpStreakAtLeast(cond.threshold);
     } else if (cond.type === 'elo_reached' && cond.threshold !== undefined) {
       qualifies = elo >= cond.threshold;
     } else if (cond.type === 'pve_difficulty_clear') {
-      qualifies = false; // PvE system pending
+      qualifies = false;
     } else if (cond.type === 'leaderboard_top_n' && cond.n !== undefined) {
       qualifies = await isUserInTopN(userId, cond.n);
     }

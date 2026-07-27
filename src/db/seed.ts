@@ -69,29 +69,31 @@ const UNITS = UNIT_DEFS;
 // =============================================================
 // ACHIEVEMENTS
 // condition types:
-//   { type: 'match_count', threshold: N }  — completed N matches
-//   { type: 'win_count',   threshold: N }  — won N matches
-//   { type: 'elo_reached', threshold: N }  — reached ELO ≥ N
-//   { type: 'pve_difficulty_clear', difficulty: 'easy'|'hard'|'nightmare' }  — future
+//   { type: 'match_count',   threshold: N }  — completed N matches (Fable OK)
+//   { type: 'win_count',     threshold: N }  — won N matches (Fable OK; only first_win)
+//   { type: 'win_count_pvp', threshold: N }  — won N matches vs humans (is_pve=false)
+//   { type: 'win_streak',    threshold: N }  — won last N PvP matches in a row
+//   { type: 'elo_reached',   threshold: N }  — reached ELO ≥ N
+//   { type: 'leaderboard_top_n', n: N }      — in top N on daily leaderboard
 // =============================================================
 const ACHIEVEMENTS = [
-  // PvP — participation
-  { slug: 'first_match',      name: 'First Blood',        description: 'Complete your first match.',             icon_key: 'ach_sword',    condition: { type: 'match_count', threshold: 1  }, sort_order: 10 },
-  { slug: 'first_win',        name: 'Victory!',           description: 'Win your first match.',                  icon_key: 'ach_trophy',   condition: { type: 'win_count',   threshold: 1  }, sort_order: 20 },
-  { slug: 'wins_10',          name: 'Seasoned Warrior',   description: 'Win 10 matches.',                        icon_key: 'ach_shield',   condition: { type: 'win_count',   threshold: 10 }, sort_order: 30 },
-  { slug: 'wins_50',          name: 'Veteran',            description: 'Win 50 matches.',                        icon_key: 'ach_crown',    condition: { type: 'win_count',   threshold: 50 }, sort_order: 40 },
+  // PvP — participation & wins
+  { slug: 'first_match',    name: 'First Steps',       description: 'Play your first match.',                          icon_key: 'ach_sword',  condition: { type: 'match_count',   threshold: 1  }, sort_order: 10 },
+  { slug: 'first_win',      name: 'Victory!',          description: 'Win any match.',                                  icon_key: 'ach_trophy', condition: { type: 'win_count',     threshold: 1  }, sort_order: 20 },
+  { slug: 'first_pvp_win',  name: 'Real Competition',  description: 'Win any match against a human.',                  icon_key: 'ach_sword',  condition: { type: 'win_count_pvp', threshold: 1  }, sort_order: 25 },
+  { slug: 'wins_10',        name: 'Seasoned Warrior',  description: 'Win 10 matches against human opponents.',         icon_key: 'ach_shield', condition: { type: 'win_count_pvp', threshold: 10 }, sort_order: 30 },
+  { slug: 'wins_50',        name: 'Veteran',           description: 'Win 50 matches against human opponents.',         icon_key: 'ach_crown',  condition: { type: 'win_count_pvp', threshold: 50 }, sort_order: 40 },
+  { slug: 'win_streak_3',   name: 'On a Roll',         description: 'Win 3 matches in a row against human opponents.', icon_key: 'ach_flame',  condition: { type: 'win_streak',    threshold: 3  }, sort_order: 45 },
+  { slug: 'win_streak_5',   name: 'Unstoppable',       description: 'Win 5 matches in a row against human opponents.', icon_key: 'ach_star',   condition: { type: 'win_streak',    threshold: 5  }, sort_order: 46 },
   // PvP — ladder
-  { slug: 'elo_1300',         name: 'Rising Threat',      description: 'Reach 1300 ELO.',                        icon_key: 'ach_flame',    condition: { type: 'elo_reached', threshold: 1300 }, sort_order: 50 },
-  { slug: 'elo_1500',         name: 'Elite Commander',    description: 'Reach 1500 ELO.',                        icon_key: 'ach_star',     condition: { type: 'elo_reached', threshold: 1500 }, sort_order: 60 },
-  { slug: 'elo_1700',         name: 'Dungeon Legend',     description: 'Reach 1700 ELO.',                        icon_key: 'ach_legend',   condition: { type: 'elo_reached', threshold: 1700 }, sort_order: 70 },
+  { slug: 'elo_1300',       name: 'Rising Threat',     description: 'Reach 1300 ELO.',                                icon_key: 'ach_flame',  condition: { type: 'elo_reached',   threshold: 1300 }, sort_order: 50 },
+  { slug: 'elo_1500',       name: 'Elite Commander',   description: 'Reach 1500 ELO.',                                icon_key: 'ach_star',   condition: { type: 'elo_reached',   threshold: 1500 }, sort_order: 60 },
+  { slug: 'elo_1700',       name: 'Dungeon Legend',    description: 'Reach 1700 ELO.',                                icon_key: 'ach_legend', condition: { type: 'elo_reached',   threshold: 1700 }, sort_order: 70 },
   // Leaderboard
-  { slug: 'leaderboard_top10', name: 'Top 10',            description: 'Appear in the top 10 on the daily leaderboard.', icon_key: 'ach_board',  condition: { type: 'leaderboard_top_n', n: 10 }, sort_order: 80 },
-  { slug: 'leaderboard_top3',  name: 'Podium',            description: 'Reach the top 3 on the daily leaderboard.',      icon_key: 'ach_podium', condition: { type: 'leaderboard_top_n', n: 3  }, sort_order: 85 },
-  { slug: 'leaderboard_top1',  name: '#1',                description: 'Reach #1 on the daily leaderboard.',             icon_key: 'ach_crown',  condition: { type: 'leaderboard_top_n', n: 1  }, sort_order: 90 },
-  // PvE — placeholder until PvE is built
-  { slug: 'pve_easy',         name: 'Dungeon Delver',     description: 'Clear all Easy encounters.',             icon_key: 'ach_door',     condition: { type: 'pve_difficulty_clear', difficulty: 'easy'      }, sort_order: 110 },
-  { slug: 'pve_hard',         name: 'Monster Slayer',     description: 'Clear all Hard encounters.',             icon_key: 'ach_axe',      condition: { type: 'pve_difficulty_clear', difficulty: 'hard'      }, sort_order: 120 },
-  { slug: 'pve_nightmare',    name: 'Nightmare Cleared',  description: 'Clear all Nightmare encounters. Few have.', icon_key: 'ach_skull', condition: { type: 'pve_difficulty_clear', difficulty: 'nightmare' }, sort_order: 130 },
+  { slug: 'leaderboard_top10', name: 'Top 10',         description: 'Appear in the top 10 on the daily leaderboard.', icon_key: 'ach_board',  condition: { type: 'leaderboard_top_n', n: 10 }, sort_order: 80 },
+  { slug: 'leaderboard_top3',  name: 'Podium',         description: 'Reach the top 3 on the daily leaderboard.',      icon_key: 'ach_podium', condition: { type: 'leaderboard_top_n', n: 3  }, sort_order: 85 },
+  { slug: 'leaderboard_top1',  name: '#1',             description: 'Reach #1 on the daily leaderboard.',             icon_key: 'ach_crown',  condition: { type: 'leaderboard_top_n', n: 1  }, sort_order: 90 },
+  // pve_easy / pve_hard / pve_nightmare removed — see migration 0022
 ];
 
 // =============================================================
