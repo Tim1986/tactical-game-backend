@@ -28,7 +28,7 @@ export const moonberryCampaign: CampaignDefinition = {
     { slug: 'complete_easy',      name: 'Lantern Lighter',   description: 'Complete The Moonberry Masquerade on Easy.' },
     { slug: 'complete_medium',    name: 'Keeper of the Revel', description: 'Complete The Moonberry Masquerade on Medium.' },
     { slug: 'complete_hard',      name: 'Midnight Investigator', description: 'Complete The Moonberry Masquerade on Hard.' },
-    { slug: 'complete_nightmare', name: 'Guest of the Impossible Ball', description: 'Complete The Moonberry Masquerade on Nightmare.' },
+    { slug: 'complete_nightmare', name: 'Guest of the Impossible Ball', description: 'Complete The Moonberry Masquerade on Nightmare — unlocks the Moonberry Masquer skin.' },
     { slug: 'confetti_detective', name: 'A Very Sparkly Trail', description: 'Follow the silver confetti left by the lantern thieves.' },
     { slug: 'dragon_interviewer', name: 'Question the Dragon', description: 'Interview the parade dragon as an official witness.' },
     { slug: 'lantern_lifeguard',  name: 'Barge to the Rescue', description: 'Save the festival lantern barge from drifting downriver.' },

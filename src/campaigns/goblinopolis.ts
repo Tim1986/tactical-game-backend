@@ -26,7 +26,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     { slug: 'complete_easy',      name: 'Bell-Road Beginner', description: 'Complete The Bell of Goblinopolis on Easy.' },
     { slug: 'complete_medium',    name: 'Buckbridge Deputy',   description: 'Complete The Bell of Goblinopolis on Medium.' },
     { slug: 'complete_hard',      name: 'Goblinopolis Envoy',  description: 'Complete The Bell of Goblinopolis on Hard.' },
-    { slug: 'complete_nightmare', name: 'Ringer of the Impossible Bell', description: 'Complete The Bell of Goblinopolis on Nightmare.' },
+    { slug: 'complete_nightmare', name: 'Ringer of the Impossible Bell', description: 'Complete The Bell of Goblinopolis on Nightmare — unlocks the Bluecap Pathfinder skin.' },
     { slug: 'ribbon_reader',  name: 'Follow the Blue',    description: 'Track the goblin band by its carefully tied blue ribbons.' },
     { slug: 'polite_pursuit', name: 'Properly Announced', description: 'Begin a goblin pursuit with excellent manners and impressive volume.' },
     { slug: 'cart_before_horse', name: 'Cart Before Horse', description: 'Stop to rescue Dave Tanner\'s runaway supply cart.' },

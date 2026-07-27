@@ -22,7 +22,7 @@ export const lanternCampaign: CampaignDefinition = {
     { slug: 'complete_easy',      name: 'Lantern Lit',       description: 'Complete The Lantern of Elmsworth on Easy.' },
     { slug: 'complete_medium',    name: 'Lantern Blazing',   description: 'Complete The Lantern of Elmsworth on Medium.' },
     { slug: 'complete_hard',      name: 'Festival Hero',     description: 'Complete The Lantern of Elmsworth on Hard.' },
-    { slug: 'complete_nightmare', name: 'Light in the Dark', description: 'Complete The Lantern of Elmsworth on Nightmare.' },
+    { slug: 'complete_nightmare', name: 'Light in the Dark', description: 'Complete The Lantern of Elmsworth on Nightmare — unlocks the Goblin King skin.' },
     { slug: 'friend_of_the_mill', name: 'Friend of the Mill', description: 'Defend the miller\'s cart.' },
     { slug: 'swift_justice',      name: 'Swift Justice',      description: 'Run down the goblin scouts.' },
   ],
