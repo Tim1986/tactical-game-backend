@@ -22,7 +22,7 @@ interface MatchRow {
   active_player_id: string; turn_number: number; turn_deadline: string | null;
   winner_id: string | null; match_state: MatchState; last_turn_events: unknown[];
   elo_delta_p1: number | null; elo_delta_p2: number | null;
-  created_at: string; updated_at: string; completed_at: string | null; is_pve: boolean;
+  created_at: string; updated_at: string; completed_at: string | null; is_pve: boolean; is_ranked: boolean;
 }
 
 const fableBrain = new OptimalBrain();
@@ -53,17 +53,20 @@ export async function createPveMatch(
   return { matchId, state: initialState };
 }
 
-export async function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number): Promise<{ matchId: string; state: MatchState }> {
+// isRanked: only matchmaking (random ladder) matches are ranked and affect ELO.
+// Challenge/invite matches are between chosen opponents and are trivially gameable,
+// so they default to unranked. Fail-closed: callers must opt in to ranked.
+export async function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number, isRanked = false): Promise<{ matchId: string; state: MatchState }> {
   const [p1Result, p2Result] = await Promise.all([loadTeamUnitsWithPlacement(playerOneTeamId), loadTeamUnitsWithPlacement(playerTwoTeamId)]);
   const initialState = buildInitialState(playerOneId, playerTwoId, p1Result.units, p2Result.units, p1Result.placement, p2Result.placement, undefined, p1Result.customizations, p2Result.customizations);
   const deadline = new Date();
   deadline.setHours(deadline.getHours() + turnDeadlineHours);
   const result = await query<{ id: string }>(
-    'INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state) VALUES ($1, $2, $3, $4, ' + "'active'" + ', $5, 1, $6, $7) RETURNING id',
-    [playerOneId, playerTwoId, playerOneTeamId, playerTwoTeamId, initialState.activePlayerId, deadline.toISOString(), JSON.stringify(initialState)]
+    'INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state, is_ranked) VALUES ($1, $2, $3, $4, ' + "'active'" + ', $5, 1, $6, $7, $8) RETURNING id',
+    [playerOneId, playerTwoId, playerOneTeamId, playerTwoTeamId, initialState.activePlayerId, deadline.toISOString(), JSON.stringify(initialState), isRanked]
   );
   const matchId = result.rows[0].id;
-  logger.info({ matchId, playerOneId, playerTwoId }, 'Match created');
+  logger.info({ matchId, playerOneId, playerTwoId, isRanked }, 'Match created');
   return { matchId, state: initialState };
 }
 
@@ -163,7 +166,9 @@ export async function forfeitMatch(matchId: string, forfeitingPlayerId: string):
 async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, winnerId: string | null): Promise<void> {
   const loserId = winnerId === match.player_one_id ? match.player_two_id : match.player_one_id;
   let eloDeltaP1 = 0; let eloDeltaP2 = 0;
-  if (winnerId && !match.is_pve) {
+  // ELO moves only on ranked (matchmaking) matches. PvE and friendly
+  // challenge/invite matches never touch the ladder.
+  if (winnerId && !match.is_pve && match.is_ranked) {
     const eloResult = await client.query<{ id: string; elo: number }>('SELECT id, elo FROM users WHERE id = ANY($1)', [[match.player_one_id, match.player_two_id]]);
     const eloMap = new Map(eloResult.rows.map((r) => [r.id, r.elo]));
     const p1Elo = eloMap.get(match.player_one_id) ?? 1200;

@@ -78,7 +78,7 @@ export async function runMatchmakingJob(): Promise<void> {
         const versionMatch = p1.app_version === p2.app_version;
         if (p1Min <= p2Max && p2Min <= p1Max && versionMatch) {
           try {
-            const { matchId } = await createMatch(p1.user_id, p2.user_id, p1.team_id, p2.team_id, config.game.turnDeadlineHours);
+            const { matchId } = await createMatch(p1.user_id, p2.user_id, p1.team_id, p2.team_id, config.game.turnDeadlineHours, /* isRanked */ true);
             await client.query('DELETE FROM matchmaking_queue WHERE user_id = ANY($1)', [[p1.user_id, p2.user_id]]);
             matched.add(p1.user_id); matched.add(p2.user_id); matchesCreated++;
             logger.info({ matchId, p1: p1.user_id, p2: p2.user_id }, 'Match created by matchmaking');
