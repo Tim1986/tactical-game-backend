@@ -55,7 +55,7 @@ matchRouter.get('/:id/history', async (req: Request, res: Response): Promise<voi
 const CreatePveMatchSchema = z.object({
   myTeamId: z.string().uuid(),
   fableTeamId: z.string().uuid(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard', 'nightmare']).optional(),
 });
 
 matchRouter.post('/pve', async (req: Request, res: Response): Promise<void> => {

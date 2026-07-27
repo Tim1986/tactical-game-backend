@@ -13,7 +13,7 @@ import {
 import { UnitDefinition, UnitCustomization } from '../types/index.js';
 
 export const FABLE_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
-export const FABLE_HP_SCALE = { easy: 0.8, medium: 0.9, hard: 1.0 } as const;
+export const FABLE_HP_SCALE = { easy: 0.8, medium: 0.9, hard: 1.0, nightmare: 1.1 } as const;
 export type FableDifficulty = keyof typeof FABLE_HP_SCALE;
 
 // Simple ID generator — no external dependency so this file is RN-compatible.
