@@ -166,7 +166,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 14 },
+      { type: 'damage', formula: 'flat', value: 8 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },

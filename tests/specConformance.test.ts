@@ -75,8 +75,10 @@ describe('ability descriptions match ability data', () => {
         });
       }
 
-      // "Deals N ... damage" — first damage claim vs damage/lifesteal value.
-      const dmgM = d.match(/deals (\d+)(?:\s+\w+)* damage/i);
+      // "Deals N ... damage" / "dealing N ... damage" — first damage claim vs
+      // damage/lifesteal value. The negative lookahead skips burn phrasing
+      // ("dealing 7 damage per turn"), which the burnM check handles instead.
+      const dmgM = d.match(/deal(?:s|ing) (\d+)(?:\s+\w+)* damage(?! per turn)/i);
       if (dmgM) {
         it(`damage value = ${dmgM[1]}`, () => {
           const vals = [...byType(ab, 'damage'), ...byType(ab, 'lifesteal')].map((e) => e.value);
