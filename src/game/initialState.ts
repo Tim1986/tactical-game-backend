@@ -82,8 +82,8 @@ export function buildInitialState(
     ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),
     ...p2Units.map((def, i) => {
       const inst = buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i]);
-      if (playerTwoId === FABLE_PLAYER_ID && fableHpScale < 1) {
-        const scaled = Math.max(1, Math.floor(inst.maxHealth * fableHpScale));
+      if (playerTwoId === FABLE_PLAYER_ID && fableHpScale !== 1) {
+        const scaled = Math.max(1, Math.round(inst.maxHealth * fableHpScale));
         inst.maxHealth = scaled;
         inst.currentHealth = scaled;
       }
