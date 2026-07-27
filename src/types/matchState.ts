@@ -81,6 +81,24 @@ export interface MatchState {
    * server-side, so it has no effect on online play.
    */
   rollLog?: Array<'hit' | 'miss'>;
+  /**
+   * Roll-on-demand (online): mid-turn scaffolding that must survive between the
+   * separate HTTP calls that resolve one action at a time. Set by `beginTurn`,
+   * read by `applyAction`/`endTurn`, CLEARED by `endTurn`. The single-shot
+   * `processTurn` sets and clears it within one call, so it never appears in
+   * that path's output (offline/puzzles/legacy never persist it). Absent means
+   * "no turn in progress".
+   */
+  turnContext?: {
+    /** unit committed to act this turn */
+    actingUnitId: UUID;
+    /** its position at the start of the turn (for the round-11+ drain check) */
+    startPos: BoardPosition;
+    /** round-1 bare-END_TURN forced commit: skips start/end-of-turn ticks */
+    forcedCommit: boolean;
+    /** last applied action sequence number (ROD3 idempotency); -1 before any action */
+    seq: number;
+  };
 }
 
 export interface MoveAction {
