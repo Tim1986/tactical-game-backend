@@ -12,7 +12,9 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seed.ts",
     "stamp": "node scripts/stamp-build.mjs",
-    "deploy": "node scripts/deploy.mjs",
+    "ship": "node scripts/ship.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "deploy": "node scripts/ship.mjs",
     "deploy:raw": "npm run stamp && railway up",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
