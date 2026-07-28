@@ -153,6 +153,57 @@ describe('ROD6 replay/abuse: the same action cannot re-roll or act out of turn',
     expect(incoming === tcSeq).toBe(false); // not a duplicate either ⇒ mismatch path
   });
 
+  // ROD7 regression: the client MUST send MOVE/CHARGE through the per-action
+  // endpoint before an ability. This proves the engine contract both ways: an
+  // attack after a committed move resolves range from the MOVED position, and
+  // the same attack without the move is rejected — the exact "wizard attacks
+  // 4 squares away → Target out of range" bug when moves were kept client-only.
+  it('move-then-attack: range is resolved from the moved position (and fails from the stale one)', () => {
+    const mkState = (): MatchState => {
+      const s = buildInitialState(
+        P1, P2,
+        [DEFAULT_UNITS['wizard']], [DEFAULT_UNITS['wizard']],
+        [{ x: 0, y: 3 }], [{ x: 7, y: 3 }],
+        P1,
+        [{ specialSlug: 'freeze', passiveSlug: null }],
+        [{ specialSlug: 'freeze', passiveSlug: null }],
+      );
+      s.units.find((u) => u.ownerPlayerId === P1)!.position = { x: 0, y: 3 };
+      s.units.find((u) => u.ownerPlayerId === P2)!.position = { x: 7, y: 3 };
+      return s;
+    };
+    vi.spyOn(Math, 'random').mockReturnValue(0.9); // force hit
+
+    // Ice Blast (missile): range 5 Manhattan. Target at distance 7 — out of
+    // range from the start position; distance 4 after moving to (3,3).
+    // (Each mkState() mints fresh instanceIds, so derive actions per state.)
+    const mkActions = (s: MatchState) => {
+      const wizId = s.units.find((u) => u.ownerPlayerId === P1)!.instanceId;
+      return {
+        attack: { type: 'USE_ABILITY', unitInstanceId: wizId, abilitySlug: 'missile', target: { x: 7, y: 3 } } as UseAbilityAction,
+        move: { type: 'MOVE' as const, unitInstanceId: wizId, destination: { x: 3, y: 3 } },
+        wizId,
+      };
+    };
+
+    // Without the move (client kept it local): server rejects — the user-visible bug.
+    const stale = mkState();
+    const s1 = mkActions(stale);
+    const b1 = beginTurn(stale, s1.attack, P1, P1, P2);
+    expect(() => applyAction(b1.updatedState, s1.attack, P1, P1, P2, abilityMap)).toThrow(/out of range/i);
+
+    // With the move committed first (the fix): attack resolves from (3,3), hits.
+    const fresh = mkState();
+    const s2 = mkActions(fresh);
+    const b2 = beginTurn(fresh, s2.move, P1, P1, P2);
+    const m2 = applyAction(b2.updatedState, s2.move, P1, P1, P2, abilityMap);
+    expect(m2.updatedState.units.find((u) => u.instanceId === s2.wizId)!.position).toEqual({ x: 3, y: 3 });
+    const a2 = applyAction(m2.updatedState, s2.attack, P1, P1, P2, abilityMap);
+    const tgt = a2.updatedState.units.find((u) => u.ownerPlayerId === P2)!;
+    expect(tgt.currentHealth).toBeLessThan(tgt.maxHealth);
+    expect(a2.events.some((e) => e.type === 'DAMAGE_DEALT')).toBe(true);
+  });
+
   it('applyAction rejects an action for a unit that is not the active initiative unit', () => {
     const state = duelState();
     const attacker = state.units.find((u) => u.ownerPlayerId === P1)!;
