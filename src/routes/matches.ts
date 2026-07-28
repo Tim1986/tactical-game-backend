@@ -65,7 +65,7 @@ matchRouter.post('/:id/end-turn', async (req: Request, res: Response): Promise<v
   if (!ROD_ONLINE_ENABLED) { sendError(res, 501, 'NOT_IMPLEMENTED', 'Roll-on-demand is not enabled'); return; }
   try {
     const r = await matchService.submitRodEndTurn(req.params.id, req.user!.id);
-    sendSuccess(res, r);
+    sendSuccess(res, { events: r.events, matchOver: r.matchOver, winnerId: r.winnerId, updatedState: r.updatedState, match: { id: r.match.id, status: r.match.status, activePlayerId: r.match.active_player_id, turnNumber: r.match.turn_number, turnDeadline: r.match.turn_deadline, winnerId: r.match.winner_id, isPve: r.match.is_pve ?? false } });
   } catch (err) {
     if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
     if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }

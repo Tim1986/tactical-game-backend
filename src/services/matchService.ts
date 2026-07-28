@@ -221,7 +221,7 @@ export async function submitRodAction(
 export async function submitRodEndTurn(
   matchId: string,
   submittingPlayerId: string,
-): Promise<{ events: GameEvent[]; updatedState: MatchState; matchOver: boolean; winnerId: string | null }> {
+): Promise<{ events: GameEvent[]; updatedState: MatchState; matchOver: boolean; winnerId: string | null; match: MatchRow }> {
   return withTransaction(async (client) => {
     const matchResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1 FOR UPDATE', [matchId]);
     const match = matchResult.rows[0];
@@ -240,9 +240,11 @@ export async function submitRodEndTurn(
     const finalized = endTurn(state, submittingPlayerId, p1, p2);
     allEvents.push(...finalized.events);
 
+    const fetchMatch = () => client.query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]).then(r => r.rows[0]);
+
     if (finalized.matchOver) {
       await finalizeMatch(client, match, finalized.winnerId);
-      return { events: allEvents, updatedState: finalized.updatedState, matchOver: true, winnerId: finalized.winnerId };
+      return { events: allEvents, updatedState: finalized.updatedState, matchOver: true, winnerId: finalized.winnerId, match: await fetchMatch() };
     }
 
     // Record turn history (actions not tracked per-ROD-call; log empty list)
@@ -264,7 +266,7 @@ export async function submitRodEndTurn(
 
       if (fableResult.matchOver) {
         await finalizeMatch(client, match, fableResult.winnerId);
-        return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: true, winnerId: result.winnerId };
+        return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: true, winnerId: result.winnerId, match: await fetchMatch() };
       }
     }
 
@@ -279,7 +281,7 @@ export async function submitRodEndTurn(
       setImmediate(() => { void notifyUser(result.updatedState.activePlayerId, 'YOUR_TURN', { matchId }); });
     }
 
-    return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: false, winnerId: null };
+    return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: false, winnerId: null, match: await fetchMatch() };
   });
 }
 
