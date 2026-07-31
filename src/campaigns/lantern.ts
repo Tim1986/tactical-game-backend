@@ -12,6 +12,7 @@ export const lanternCampaign: CampaignDefinition = {
   slug: 'lantern',
   title: 'The Lantern of Elmsworth',
   blurb: 'Goblins have stolen the Harvest Lantern on the eve of the festival. Bring back the light.',
+  enemyFactionName: 'Goblins',
   free: true,
   startNode: 'intro',
   // TODO(skins): no skin system exists yet — unlock is recorded in campaign
@@ -149,7 +150,7 @@ export const lanternCampaign: CampaignDefinition = {
     lv3: { kind: 'levelup', level: 3, next: 'dusk' },
     dusk: {
       kind: 'story',
-      text: '{if helpedMiller}The grateful miller presses warm bread into your hands and points east: "They went toward the Howling Hollow."{else}Between bites of recovered pastry, a scout squeals the way: "The Howling Hollow! Please don\'t tell the King!"{/if}\n\nDusk falls as you reach the hollow. From the treeline comes a long, wobbly howl — enthusiastic, but not very wolf-like. The goblins\' hunting pack has your scent, {mainName}.',
+      text: '{if helpedMiller}The grateful miller presses warm bread into your hands and points east: "They went toward the Howling Hollow."{else}Between bites of recovered pastry, a scout squeals the way: "The Howling Hollow! Please don\'t tell the King!"{/if}\n\nDusk falls as you reach the hollow. From the treeline comes a long, wobbly howl — enthusiastic, but not very wolf-like. A second joins in, badly out of tune. Something down there has spotted your lantern, {mainName}.',
       next: 'e3_pre',
     },
     e3_pre: {

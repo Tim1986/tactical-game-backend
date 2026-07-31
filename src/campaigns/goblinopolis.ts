@@ -17,6 +17,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
   slug: 'goblinopolis',
   title: 'The Bell of Goblinopolis',
   blurb: 'A stolen town bell, a trail of blue ribbons, and a goblin city that insists the theft was perfectly legal.',
+  enemyFactionName: 'Bluecaps',
   free: true,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.

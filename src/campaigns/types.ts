@@ -76,6 +76,13 @@ export interface CampaignDefinition {
   slug: string;
   title: string;
   blurb: string;
+  /**
+   * Player-facing name for the opposing side ("Goblins"), shown wherever a
+   * campaign match needs an opponent NAME — combat log actor lines, turn
+   * headers, the versus label. Without it those fall back to a truncated
+   * player id, which rendered as "00000000".
+   */
+  enemyFactionName: string;
   /** Free campaigns are playable without purchase (the teaser). */
   free: boolean;
   startNode: string;

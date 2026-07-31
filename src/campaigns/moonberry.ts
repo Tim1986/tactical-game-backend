@@ -19,6 +19,7 @@ export const moonberryCampaign: CampaignDefinition = {
   slug: 'moonberry',
   title: 'The Moonberry Masquerade',
   blurb: 'On the brightest night of the year, every festival lantern vanishes — and the thieves leave invitations behind.',
+  enemyFactionName: 'Masquers',
   free: true,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
