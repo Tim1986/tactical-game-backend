@@ -204,6 +204,11 @@ export async function submitRodAction(
 
     // Stamp the seq onto the persisted turnContext
     applied.updatedState.turnContext!.seq = seq;
+    // Accumulate this call's events (beginTurn's included) onto the turnContext.
+    // last_turn_events is only written at end-turn — without carrying these
+    // between calls, the opponent's poll would get a turn with no action events
+    // and their combat log/replay would silently drop everything the turn did.
+    applied.updatedState.turnContext!.events = [...(state.turnContext?.events ?? []), ...allEvents];
 
     if (applied.matchOver) {
       await finalizeMatch(client, match, applied.winnerId);
@@ -236,6 +241,13 @@ export async function submitRodEndTurn(
     const p1 = match.player_one_id;
     const p2 = match.player_two_id;
     const allEvents: GameEvent[] = [];
+
+    // The per-action events accumulated across this turn's /action calls
+    // (endTurn deletes the turnContext, so read them before finalizing).
+    // They belong in last_turn_events but NOT in this response's `events` —
+    // the acting client already displayed them per-action and splices its own
+    // copy in front of this response; returning them again would double them.
+    const actionEvents: GameEvent[] = state.turnContext.events ?? [];
 
     const finalized = endTurn(state, submittingPlayerId, p1, p2);
     allEvents.push(...finalized.events);
@@ -274,7 +286,7 @@ export async function submitRodEndTurn(
     newDeadline.setHours(newDeadline.getHours() + 72);
     await client.query(
       'UPDATE matches SET match_state = $1, active_player_id = $2, turn_number = $3, turn_deadline = $4, last_turn_events = $5 WHERE id = $6',
-      [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify([...allEvents, ...postFableEvents]), matchId],
+      [JSON.stringify(result.updatedState), result.updatedState.activePlayerId, result.updatedState.turnNumber, newDeadline.toISOString(), JSON.stringify([...actionEvents, ...allEvents, ...postFableEvents]), matchId],
     );
 
     if (!match.is_pve) {

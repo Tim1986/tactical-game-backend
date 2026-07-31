@@ -98,6 +98,15 @@ export interface MatchState {
     forcedCommit: boolean;
     /** last applied action sequence number (ROD3 idempotency); -1 before any action */
     seq: number;
+    /**
+     * Every event emitted by this turn's beginTurn/applyAction calls, in order.
+     * Accumulated by the ROD service layer so end-turn can persist the FULL
+     * turn's events to last_turn_events — without this, the opponent's poll
+     * sees only the end-turn residue (ticks, TURN_ENDED) and their combat log
+     * and replay silently drop the turn's moves/abilities/pushes/statuses.
+     * Dies with the turnContext when endTurn clears it.
+     */
+    events?: GameEvent[];
   };
 }
 
