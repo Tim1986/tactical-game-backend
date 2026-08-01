@@ -261,3 +261,16 @@ only "no good context exists" and "best context oppressive" as defects.
 4. Tool: optimized-loadout reference parties for Stage E.
 5. Then the dedicated specials/passives pass under the contextual-balance
    philosophy.
+
+## Pass 6 Stage A @ 150 games/pair (HP revert to 56/54; else = pass 5)
+
+wizard 65▲, warlock 51, barbarian 50, sorcerer 50, ranger 47, rogue 44,
+fighter 44, cleric 43. avg turns 59.2, 0 errors.
+
+High-precision verdict: seven classes in a tight 43–51 band — the revert
+restored the front line as predicted. **Wizard 65 is REAL, not noise**
+(pass-4's 58 was the noisy read). cold_snap −3 was not enough; unblockable
+turn-denial delivered at range is simply the premium mechanic of the
+high-hit-rate game. Candidate knobs (owner to choose): make cold_snap
+blockable; missile 11→10; freeze the "significant specials rework" (owner
+foresaw it); or accept ~60-65 wizard as the price of the freeze fantasy.

@@ -137,6 +137,19 @@ const PRESETS: Record<string, Preset> = {
     statusDur: {},
     pullDist: { grasp: -1 },
   },
+  // Pass 6 (owner-confirmed, 2026-08-01): revert the pass-5 fighter/barb HP
+  // trim (back to 56/54 — pass-4's band was the healthiest state and the trim
+  // sank the whole front line while inflating casters via weakened Stage-A
+  // fills). Everything else held from pass 5 (grasp pull 2, ffh 15).
+  pass6: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1, ignite: -2, grasp: 5, cold_snap: -3, ffh: 1 },
+    range: { freeze: -1 },
+    heal: { second_wind: 2 },
+    statusDur: {},
+    pullDist: { grasp: -1 },
+  },
 };
 
 function applyDelta(delta: number): void {
