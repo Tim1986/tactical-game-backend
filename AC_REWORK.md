@@ -127,3 +127,42 @@ Marginals (pass2, duel%|ref%): standout imbalances within classes —
    extension.) Or accept 65 for now and fix in specials pass?
 4. Within-class fixes (blizzard/ffh/grasp floors, ignite/concussive/cold_snap
    ceilings) — fold into pass 3 or defer to a dedicated specials pass 4?
+
+## Pass 3 (owner calls): eldritch 11; arrow stays 10; freeze range 4→3;
+## ignite upfront 6→4; grasp root 1→2; First Aid 14→16
+
+Class matrix: wizard 67▲, barbarian 56, sorcerer 49, warlock 49, fighter 47,
+ranger 43, cleric 43, rogue 41. Comps 40–61 (bruiser-wall 61 top).
+avg turns 58.9, 0 validation errors.
+
+What landed:
+- Eldritch 11 holds warlock at 49 ✓. Grasp fixed: 30→51 duel (root-2 works;
+  drain's duel share dropped to 39 — watch, its ref is 76 so likely fine).
+- First Aid 42|59 (was 40|48) — modest, acceptable.
+- Ranger 43 with arrow 10 — owner accepts weak-side ranger (anti-2-ranger-meta).
+- Ignite dented but still top intra-class (69▲ duel, ref crashed to 39);
+  ffh still dead (26▼) — data keeps insisting Firestorm is bad even as its
+  competition weakens.
+
+What didn't:
+- **Freeze range 4→3 was a NO-OP: wizard 65→67.** The AI repositions freely;
+  range 3 is still easy delivery. The wizard package is cold_snap (66▲ duel,
+  77 ref — the class's real carry) + freeze both being turn-denial at high
+  hit rates. Next candidate knobs: cold_snap damage 10→7 (it currently does
+  near-basic damage AND denies a turn), or cold_snap blockable, or freeze
+  range harder cut (4→2). Blizzard still dead (25▼ — the 2-turn self-root
+  prices it out; candidate self-root 2→1).
+
+## Pass 4 — OPEN QUESTIONS FOR OWNER
+
+1. Wizard: cold_snap damage 10→7? (my lead recommendation — keeps both
+   freezes, prices the damage rider out of "free basic attack + freeze")
+2. Blizzard revival: self-root 2→1 alongside? (Both changes together risk
+   overshooting wizard downward; could stage them.)
+3. ffh (Firestorm): buff now (damage 12→14? radius?) or accept the sims may
+   undervalue AoE and let playtest decide?
+4. Rogue drifted 53→47→41 across passes with no rogue changes — inside noise
+   bands (±7 at 60 games/pair) but worth a high-games confirm run before
+   shipping.
+5. Passive outliers (sorc/undying 66▲, barb/thorns 64▲, barb+cleric/anchor
+   34–37▼) — fold into pass 4 or dedicated pass 5?

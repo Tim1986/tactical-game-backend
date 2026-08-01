@@ -54,6 +54,12 @@ interface Preset {
   /** Ability-slug → delta applied to EVERY 'damage' effect of that ability
    * (twin has two — a +1 here is +1 per dagger). */
   dmg?: Record<string, number>;
+  /** Ability-slug → delta applied to the ability's range. */
+  range?: Record<string, number>;
+  /** Ability-slug → delta applied to every 'heal' effect value. */
+  heal?: Record<string, number>;
+  /** Ability-slug → delta applied to every apply_status durationTurns. */
+  statusDur?: Record<string, number>;
 }
 
 const PRESETS: Record<string, Preset> = {
@@ -87,6 +93,20 @@ const PRESETS: Record<string, Preset> = {
     hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
     dmg: { eldritch: 2, twin: 1, arrow: -1 },
   },
+  // Pass 3 (owner calls, 2026-08-01): pass2b base (eldritch 11) + freeze range
+  // 4→3 (wizard steps into danger to deny a turn; duration sacredly 2) + ignite
+  // upfront 6→4 (tick untouched — it's the GLOBAL burning constant and Firestorm
+  // (26%▼) would eat the splash) + grasp root 1→2 turns (the big knob: 30%▼
+  // needed real help; pull-3-into-my-team-and-hold-2 is an identity Fear lacks)
+  // + First Aid 14→16.
+  pass3: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1, ignite: -2 },
+    range: { freeze: -1 },
+    heal: { second_wind: 2 },
+    statusDur: { grasp: 1 },
+  },
 };
 
 function applyDelta(delta: number): void {
@@ -98,12 +118,26 @@ function applyDelta(delta: number): void {
   }
 }
 
-// Snapshot pristine damage values per ability (ordered list of its damage
-// effects) so presets can be applied repeatedly without compounding.
+// Snapshot pristine values per ability so presets can be applied repeatedly
+// without compounding.
+type Eff = { type: string; value?: number; durationTurns?: number };
 const BASE_DMG: Record<string, number[]> = Object.fromEntries(
   DEFAULT_ABILITIES.map((a) => [
     a.slug,
-    (a.effects as Array<{ type: string; value?: number }>).filter((e) => e.type === 'damage').map((e) => e.value ?? 0),
+    (a.effects as Eff[]).filter((e) => e.type === 'damage').map((e) => e.value ?? 0),
+  ]),
+);
+const BASE_RANGE: Record<string, number> = Object.fromEntries(DEFAULT_ABILITIES.map((a) => [a.slug, a.range]));
+const BASE_HEAL: Record<string, number[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as Eff[]).filter((e) => e.type === 'heal').map((e) => e.value ?? 0),
+  ]),
+);
+const BASE_SDUR: Record<string, number[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as Eff[]).filter((e) => e.type === 'apply_status').map((e) => e.durationTurns ?? 0),
   ]),
 );
 
@@ -113,10 +147,15 @@ function applyPreset(p: Preset): void {
     DEFAULT_UNITS[c].maxHealth = BASE_HP[c] + (p.hp[c] ?? 0);
   }
   for (const a of DEFAULT_ABILITIES) {
-    const delta = p.dmg?.[a.slug] ?? 0;
-    let i = 0;
-    for (const e of a.effects as Array<{ type: string; value?: number }>) {
-      if (e.type === 'damage') { e.value = BASE_DMG[a.slug][i] + delta; i++; }
+    const dDmg = p.dmg?.[a.slug] ?? 0;
+    const dHeal = p.heal?.[a.slug] ?? 0;
+    const dDur = p.statusDur?.[a.slug] ?? 0;
+    (a as { range: number }).range = BASE_RANGE[a.slug] + (p.range?.[a.slug] ?? 0);
+    let i = 0, h = 0, d = 0;
+    for (const e of a.effects as Eff[]) {
+      if (e.type === 'damage') { e.value = BASE_DMG[a.slug][i] + dDmg; i++; }
+      if (e.type === 'heal') { e.value = BASE_HEAL[a.slug][h] + dHeal; h++; }
+      if (e.type === 'apply_status') { e.durationTurns = BASE_SDUR[a.slug][d] + dDur; d++; }
     }
   }
 }
@@ -257,4 +296,4 @@ if (presetName) {
   }
 }
 // Restore pristine values (matters only if this module is ever imported).
-applyPreset({ ac: {}, hp: {} });
+applyPreset({ ac: {}, hp: {} }); // dmg/range/heal/statusDur omitted → restored to BASE_* inside
