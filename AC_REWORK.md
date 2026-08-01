@@ -166,3 +166,21 @@ What didn't:
    shipping.
 5. Passive outliers (sorc/undying 66▲, barb/thorns 64▲, barb+cleric/anchor
    34–37▼) — fold into pass 4 or dedicated pass 5?
+
+## Pass 3 addendum — owner's grasp-synergy comps (new battery members)
+
+Owner asked whether the battery tests warlock×2+bruiser×2 pulls. It didn't —
+added `grasp-spin` (warlock:grasp ×2 + barbarian ×2) and `grasp-wall`
+(warlock:grasp ×2 + fighter ×2) with new "class:special" forced-loadout comp
+syntax (defaults would have given the warlocks Fear).
+
+Result under pass3: **grasp-spin 77% ▲ — top of the whole battery** (snipe 57,
+grasp-wall 56, control 55). The engine of it is pull-into-WHIRLWIND
+specifically (fighters convert the same pull at only 56%): root-2 victims eat
+multiple 18-dmg AoE turns with no escape. The root-2 buff is fair intra-class
+(51%) but oppressive with an AoE payoff — the exact blind spot of mirror
+duels; owner's tactical instinct caught it.
+
+Pass-4 candidates on the table: (1) grasp root→1 + damage 4→9 [recommended],
+(2) keep root 2 + pull 3→2, (3) accept as power comp [advised against at 77%].
+Plus cold_snap 10→7 for the wizard outlier. Blizzard/ffh staged to pass 5.

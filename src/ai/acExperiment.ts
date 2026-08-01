@@ -209,14 +209,33 @@ function stageB(delta: number, games: number): void {
     ['control',      ['wizard', 'wizard', 'warlock', 'warlock']],
     ['snipe',        ['ranger', 'ranger', 'wizard', 'wizard']],
     ['rogue-heal',   ['rogue', 'rogue', 'cleric', 'cleric']],
+    // Owner-requested (2026-08-01): grasp-synergy comps — warlocks drag
+    // targets into bruiser range (and, with placement, into Whirlwinds).
+    // Slug syntax "class:special" forces that special (default loadouts would
+    // give these warlocks FEAR, which defeats the test).
+    ['grasp-spin',   ['warlock:grasp', 'warlock:grasp', 'barbarian', 'barbarian']],
+    ['grasp-wall',   ['warlock:grasp', 'warlock:grasp', 'fighter', 'fighter']],
   ];
+  // Parse "class:special" into slugs + customizations for runSim.
+  const parseComp = (team: string[]) => {
+    const slugs = team.map((t) => t.split(':')[0]);
+    const custs = team.map((t) => {
+      const special = t.split(':')[1];
+      return special ? { specialSlug: special, passiveSlug: null } : undefined;
+    });
+    return { slugs, custs: custs.some(Boolean) ? custs : undefined };
+  };
   const wins: Record<string, { w: number; g: number }> = {};
   for (const [n] of COMPS) wins[n] = { w: 0, g: 0 };
   let errors = 0;
   for (let i = 0; i < COMPS.length; i++) {
     for (let j = i + 1; j < COMPS.length; j++) {
       const [an, a] = COMPS[i], [bn, b] = COMPS[j];
-      const r = runSim(a, b, { games, seed: 40000 + (delta + 10) * 977 + i * 31 + j });
+      const pa = parseComp(a), pb = parseComp(b);
+      const r = runSim(pa.slugs, pb.slugs, {
+        games, seed: 40000 + (delta + 10) * 977 + i * 31 + j,
+        p1Customizations: pa.custs, p2Customizations: pb.custs,
+      });
       errors += r.totalValidationErrors;
       wins[an].w += r.p1Wins; wins[an].g += r.games;
       wins[bn].w += r.p2Wins; wins[bn].g += r.games;
