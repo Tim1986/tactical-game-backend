@@ -83,3 +83,47 @@ Process note: every pass = edit preset in acExperiment.ts → run → record her
 The exploit battery + campaign sims must be re-run before any approved values
 ship (campaign hpScaleOverrides were tuned against current ACs and WILL need
 retuning — see CAMPAIGNS.md difficulty bands).
+
+## Pass 2 (owner calls): −5 locked; fighter 56 HP; eldritch 9→10; twin +1/dagger; arrow 11→10
+
+Class matrix: wizard 67▲, rogue 53, sorcerer 53, barbarian 53, cleric 47,
+ranger 42, warlock 40, fighter 40. Comps all within 37–60 (snipe tamed to 56).
+
+## Pass 2b (identical but eldritch 9→11)
+
+Class matrix: wizard 65▲, sorcerer 50, warlock 50, rogue 47, barbarian 47,
+cleric 46, fighter 45, ranger 43. Comps 34–62 (control 62 = wizard-driven).
+**Every class except wizard inside the 43–53 band.**
+
+Readings:
+- Twin +1/dagger fixed rogue exactly (37→53 pass2, 47 pass2b).
+- Eldritch +1 → warlock 40; +2 → 50. The +2 (11, tying sword/mace) exits the
+  letter of "low end" but is what balances; alternative is +1 with a fear or
+  grasp buff on top.
+- **Arrow −1 shows extreme elasticity: ranger 63→42 from one damage point.**
+  Likely kill-breakpoint crossing. Candidate: revert to 11 and trim RANGE
+  (6→5) instead if ranger needs a brake — or accept ~43 and watch.
+- Wizard is the sole remaining outlier (65–67) regardless of variant.
+  Marginals show BOTH freeze (58|64) and cold_snap (66▲) strong — turn-denial
+  itself is the power. Candidate: freeze range 4→3 (wizard must step closer).
+  Duration stays 2 (owner: 1-turn guts it).
+
+Marginals (pass2, duel%|ref%): standout imbalances within classes —
+- DEAD specials: blizzard 23▼ (wizard), ffh 26▼ (sorcerer), grasp 30▼
+  (warlock). DOMINANT: ignite 72▲ (sorcerer), concussive 62▲ (fighter),
+  cold_snap 66▲ (wizard).
+- Passive outliers: sorcerer/undying 65▲, barbarian/thorns 63▲,
+  barbarian/anchor 34▼.
+- Method note: cleric ref% columns (23–36) reflect the 4-cleric-stack
+  methodology (no kill pressure), not cleric weakness — read cleric loadouts
+  from the duel column.
+
+## Pass 3 — OPEN QUESTIONS FOR OWNER
+
+1. Adopt eldritch 11 (pass2b, warlock 50) or keep 10 + buff fear/grasp?
+2. Arrow: revert to 11 (ranger 63 problem returns?) / keep 10 (ranger 42) /
+   revert to 11 AND cut range 6→5?
+3. Wizard brake: freeze range 4→3? (Tool needs an ability-range knob — small
+   extension.) Or accept 65 for now and fix in specials pass?
+4. Within-class fixes (blizzard/ffh/grasp floors, ignite/concussive/cold_snap
+   ceilings) — fold into pass 3 or defer to a dedicated specials pass 4?

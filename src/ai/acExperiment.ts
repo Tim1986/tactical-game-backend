@@ -15,7 +15,8 @@
  *      npx tsx src/ai/acExperiment.ts --sweep             (0, -3, -4, -5)
  */
 import { runSim } from './simHarness.js';
-import { DEFAULT_UNITS } from './defaultData.js';
+import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
+import { loadoutsFor, runDuelMatrix, runReferenceMatrix } from './loadoutMatrix.js';
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | null => {
@@ -47,7 +48,15 @@ const BASE_HP: Record<string, number> = Object.fromEntries(
  * Run: npx tsx src/ai/acExperiment.ts --preset <name>
  * Edit freely between passes — this table IS the working document.
  */
-const PRESETS: Record<string, { ac: Record<string, number>; hp: Record<string, number> }> = {
+interface Preset {
+  ac: Record<string, number>;
+  hp: Record<string, number>;
+  /** Ability-slug → delta applied to EVERY 'damage' effect of that ability
+   * (twin has two — a +1 here is +1 per dagger). */
+  dmg?: Record<string, number>;
+}
+
+const PRESETS: Record<string, Preset> = {
   // Pass 1 draft, informed by the flat sweep (scratchpad ac_sweep.log,
   // 2026-08-01): the sweep's dominant distortion is RANGED vs MELEE, not
   // tank vs squishy — closing distance now costs real HP (approach turns eat
@@ -61,6 +70,23 @@ const PRESETS: Record<string, { ac: Record<string, number>; hp: Record<string, n
     ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
     hp: { fighter: 13, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
   },
+  // Pass 2 (owner calls, 2026-08-01): −5 locked; fighter trimmed 2 HP from
+  // pass 1 (58→56); eldritch +1 (9→10 — boosted but still bottom-tier, only
+  // bolt below it; unblockable + guaranteed-finisher value priced in); twin
+  // +1 per dagger (9+8→10+9); arrow −1 (11→10). Freeze untouched (2-turn
+  // duration stays; 1-turn would gut it per owner).
+  pass2: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 1, twin: 1, arrow: -1 },
+  },
+  // Comparison variant: eldritch +2 (9→11, ties sword/mace) — for the owner to
+  // see whether +1 is enough for warlock or +2 overshoots "low end".
+  pass2b: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1 },
+  },
 };
 
 function applyDelta(delta: number): void {
@@ -72,10 +98,26 @@ function applyDelta(delta: number): void {
   }
 }
 
-function applyPreset(p: { ac: Record<string, number>; hp: Record<string, number> }): void {
+// Snapshot pristine damage values per ability (ordered list of its damage
+// effects) so presets can be applied repeatedly without compounding.
+const BASE_DMG: Record<string, number[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as Array<{ type: string; value?: number }>).filter((e) => e.type === 'damage').map((e) => e.value ?? 0),
+  ]),
+);
+
+function applyPreset(p: Preset): void {
   for (const c of ALL_CLASSES) {
     DEFAULT_UNITS[c].armorClass = Math.max(7, BASE_AC[c] + (p.ac[c] ?? 0));
     DEFAULT_UNITS[c].maxHealth = BASE_HP[c] + (p.hp[c] ?? 0);
+  }
+  for (const a of DEFAULT_ABILITIES) {
+    const delta = p.dmg?.[a.slug] ?? 0;
+    let i = 0;
+    for (const e of a.effects as Array<{ type: string; value?: number }>) {
+      if (e.type === 'damage') { e.value = BASE_DMG[a.slug][i] + delta; i++; }
+    }
   }
 }
 
@@ -149,6 +191,51 @@ function stageB(delta: number, games: number): void {
   }
 }
 
+/** Stage C+D: specials/passives marginals under the active preset (duel =
+ * intra-class loadout round-robin; ref = each loadout's 4-stack vs the classic
+ * party). This is the within-class balance view the owner asked for in pass 2. */
+function stageMarginals(duelGames: number, refGames: number): void {
+  console.log(`\n──── Stage C+D: loadout marginals (duel ${duelGames}, ref ${refGames} games) ────`);
+  interface M { w: number; g: number }
+  const sd: Record<string, M> = {}, pd: Record<string, M> = {};
+  const sr: Record<string, M> = {}, pr: Record<string, M> = {};
+  const add = (m: Record<string, M>, k: string, w: number, g: number) => {
+    m[k] = m[k] ?? { w: 0, g: 0 }; m[k].w += w; m[k].g += g;
+  };
+  for (const c of ALL_CLASSES) {
+    const d = runDuelMatrix(c, duelGames, () => {});
+    for (const s of d.scores) {
+      add(sd, `${c}/${s.loadout.specialSlug}`, s.wins, s.games);
+      add(pd, `${c}/${s.loadout.passiveSlug ?? 'none'}`, s.wins, s.games);
+    }
+    const r = runReferenceMatrix(c, refGames, () => {});
+    for (const s of r.scores) {
+      add(sr, `${c}/${s.loadout.specialSlug}`, s.wins, s.games);
+      add(pr, `${c}/${s.loadout.passiveSlug ?? 'none'}`, s.wins, s.games);
+    }
+    console.log(`  ${c}: done`);
+  }
+  const wr = (m: M | undefined) => (m && m.g > 0 ? m.w / m.g : NaN);
+  console.log('\n  SPECIALS (intra-class duel% | vs-classic%)  ▲≥62 ▼≤38 on duel:');
+  for (const c of ALL_CLASSES) {
+    const specials = loadoutsFor(c).map((l) => l.specialSlug).filter((v, i, a) => a.indexOf(v) === i);
+    for (const s of specials) {
+      const d = wr(sd[`${c}/${s}`]), r = wr(sr[`${c}/${s}`]);
+      const mark = d >= 0.62 ? ' ▲' : d <= 0.38 ? ' ▼' : '';
+      console.log(`    ${c.padEnd(10)} ${s.padEnd(14)} ${pct(d)} | ${pct(r)}${mark}`);
+    }
+  }
+  console.log('\n  PASSIVES (intra-class duel% | vs-classic%):');
+  for (const c of ALL_CLASSES) {
+    const passives = loadoutsFor(c).map((l) => l.passiveSlug ?? 'none').filter((v, i, a) => a.indexOf(v) === i);
+    for (const p of passives) {
+      const d = wr(pd[`${c}/${p}`]), r = wr(pr[`${c}/${p}`]);
+      const mark = d >= 0.62 ? ' ▲' : d <= 0.38 ? ' ▼' : '';
+      console.log(`    ${c.padEnd(10)} ${p.padEnd(14)} ${pct(d)} | ${pct(r)}${mark}`);
+    }
+  }
+}
+
 const presetName = flag('preset');
 if (presetName) {
   const preset = PRESETS[presetName];
@@ -160,6 +247,7 @@ if (presetName) {
   header(`PRESET ${presetName}`);
   if (STAGE === 'a' || STAGE === 'all') stageA(1, GAMES);
   if (STAGE === 'b' || STAGE === 'all') stageB(1, GAMES);
+  if (STAGE === 'c' || args.includes('--marginals')) stageMarginals(16, 40);
 } else {
   for (const delta of DELTAS) {
     applyDelta(delta);
@@ -169,4 +257,4 @@ if (presetName) {
   }
 }
 // Restore pristine values (matters only if this module is ever imported).
-applyDelta(0);
+applyPreset({ ac: {}, hp: {} });
