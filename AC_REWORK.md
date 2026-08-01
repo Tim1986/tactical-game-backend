@@ -221,3 +221,43 @@ overcorrect when doubled up. Bottom: ranger²/sorcerer² 41, ranger²/wizard² 4
 3. Stage E yardstick: adopt median-of-3 references (classic + snipe + a
    caster comp)?
 4. blizzard (32▼)/ffh (28▼) floors + ignite (71▲) ceiling — now or later?
+
+## Pass 5 (owner calls): grasp pull 3→2; fighter/barb −2 HP (54/52); ffh 14→15
+
+Class matrix: wizard 65▲, sorcerer 54, warlock 54, barbarian 50, ranger 46,
+cleric 46, fighter 40, rogue 39. Stage B: grasp-spin 74▲ still top; field
+mean sank (classic 41, heal-tank 38, bruiser-wall 46).
+
+Honest read — attribution is getting muddy:
+- **Grasp pull-2 worked where it was aimed**: within barb²/warlock², the
+  grasp premium over fear halved (+21 → +9; grasp 82 / fear 73 / drain 76).
+  What remains strong is the warlock+barb PAIR generally (70% mean) — closer
+  to the owner's "skill comp, fine" than the 98–100% cells of pass 4.
+- **Fighter/barb −2 HP overshot**: fighter 47→40, rogue dragged to 39, all
+  front-line comps sank, and wizard rebounded 58→65 (Stage A fills use
+  fighter/barb — weakening fills amplifies casters; plus ±7 noise at 60
+  games). Recommend REVERTING the trim (fighter 56/barb 54) — pass-4's
+  Stage A was the healthiest state yet (43–58 band).
+- **Median-of-3 refs did NOT deflate the grid** (mean still ~63, 1351/2268
+  flagged). Root cause found: refs play DEFAULT loadouts while grid cells
+  sweep optimized ones — a structural handicap no ref-party choice fixes.
+  Tool fix for next iteration: give each reference party its best-known
+  loadout from the marginals (or z-score cells against the grid's own mean).
+- ffh 15: intra-class still weak (see log); the 3×3 ally-hitting AoE needs
+  the contextual-balance analysis (owner philosophy, below) more than +1s.
+
+OWNER PHILOSOPHY (recorded for the dedicated specials/passives pass):
+contextual balance. A build-around special being weak comp-agnostic is FINE.
+Balance each special at its BEST context: every special/passive must have at
+least one comp where it is solid; no context may be overwhelming. Stage E's
+per-cell grid is the instrument — rank specials by best-context cells, flag
+only "no good context exists" and "best context oppressive" as defects.
+
+## Pass 6 — RECOMMENDATION
+
+1. Revert fighter/barb HP trim (back to 56/54) — restores pass-4's band.
+2. Keep: grasp pull 2, ffh 15, everything else.
+3. Re-run Stage A at 150 games/pair for stable attribution (token-cheap).
+4. Tool: optimized-loadout reference parties for Stage E.
+5. Then the dedicated specials/passives pass under the contextual-balance
+   philosophy.

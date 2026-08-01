@@ -60,6 +60,8 @@ interface Preset {
   heal?: Record<string, number>;
   /** Ability-slug → delta applied to every apply_status durationTurns. */
   statusDur?: Record<string, number>;
+  /** Ability-slug → delta applied to every push/pull effect distance. */
+  pullDist?: Record<string, number>;
 }
 
 const PRESETS: Record<string, Preset> = {
@@ -120,6 +122,21 @@ const PRESETS: Record<string, Preset> = {
     heal: { second_wind: 2 },
     statusDur: {},
   },
+  // Pass 5 (owner calls, 2026-08-01): grasp PULL 3→2 (interpreting "grasp
+  // range to 2" as the pull-distance knob proposed — synergy stays playable,
+  // the one-cast delivery into double-Whirlwind shortens); fighter & barbarian
+  // −2 HP each (54/52 — "high but not too high"); Firestorm 14→15 (small
+  // knob first). Owner accepts strong-but-not-98% grasp/whirlwind as a skill
+  // comp.
+  pass5: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 9, barbarian: 7, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1, ignite: -2, grasp: 5, cold_snap: -3, ffh: 1 },
+    range: { freeze: -1 },
+    heal: { second_wind: 2 },
+    statusDur: {},
+    pullDist: { grasp: -1 },
+  },
 };
 
 function applyDelta(delta: number): void {
@@ -153,6 +170,13 @@ const BASE_SDUR: Record<string, number[]> = Object.fromEntries(
     (a.effects as Eff[]).filter((e) => e.type === 'apply_status').map((e) => e.durationTurns ?? 0),
   ]),
 );
+type PPEff = { type: string; distance?: number };
+const BASE_PP: Record<string, number[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as PPEff[]).filter((e) => e.type === 'push' || e.type === 'pull').map((e) => e.distance ?? 0),
+  ]),
+);
 
 function applyPreset(p: Preset): void {
   for (const c of ALL_CLASSES) {
@@ -164,11 +188,13 @@ function applyPreset(p: Preset): void {
     const dHeal = p.heal?.[a.slug] ?? 0;
     const dDur = p.statusDur?.[a.slug] ?? 0;
     (a as { range: number }).range = BASE_RANGE[a.slug] + (p.range?.[a.slug] ?? 0);
-    let i = 0, h = 0, d = 0;
-    for (const e of a.effects as Eff[]) {
+    const dPP = p.pullDist?.[a.slug] ?? 0;
+    let i = 0, h = 0, d = 0, pp = 0;
+    for (const e of a.effects as (Eff & PPEff)[]) {
       if (e.type === 'damage') { e.value = BASE_DMG[a.slug][i] + dDmg; i++; }
       if (e.type === 'heal') { e.value = BASE_HEAL[a.slug][h] + dHeal; h++; }
       if (e.type === 'apply_status') { e.durationTurns = BASE_SDUR[a.slug][d] + dDur; d++; }
+      if (e.type === 'push' || e.type === 'pull') { e.distance = BASE_PP[a.slug][pp] + dPP; pp++; }
     }
   }
 }
@@ -316,7 +342,17 @@ function stageMarginals(duelGames: number, refGames: number): void {
  */
 function stagePairComps(games: number): void {
   console.log(`\n──── Stage E: all pair-comps × full loadout grid (${games} games/cell) ────`);
-  const REF = ['barbarian', 'fighter', 'ranger', 'cleric'];
+  // Three maximally-distinct reference parties from the 45–55% band of the
+  // pass-4 Stage B battery (owner call): melee HP (bruiser-wall 50%), ranged
+  // dps (snipe 54%), caster turn-denial (control 47%). Each cell's score is
+  // the MEDIAN of its win rates vs the three — a comp must beat unlike
+  // opposition styles to flag, and no single yardstick's weakness inflates
+  // the grid (the old classic-only yardstick sat ~13 points below average).
+  const REFS: [string, string[]][] = [
+    ['bruiser', ['fighter', 'fighter', 'barbarian', 'barbarian']],
+    ['snipe',   ['ranger', 'ranger', 'wizard', 'wizard']],
+    ['control', ['wizard', 'wizard', 'warlock', 'warlock']],
+  ];
   interface Cell { pair: string; lx: string; ly: string; wr: number }
   const cells: Cell[] = [];
   const pairAgg: Record<string, { w: number; g: number }> = {};
@@ -335,18 +371,25 @@ function stagePairComps(games: number): void {
             { specialSlug: ly.specialSlug, passiveSlug: ly.passiveSlug },
             { specialSlug: ly.specialSlug, passiveSlug: ly.passiveSlug },
           ];
-          const r = runSim([X, X, Y, Y], REF, {
-            games,
-            seed: 70000 + i * 3131 + j * 97 + lxs.indexOf(lx) * 13 + lys.indexOf(ly),
-            p1Customizations: custs,
-          });
-          errors += r.totalValidationErrors;
-          cells.push({ pair, lx: lx.label, ly: ly.label, wr: r.p1WinRate });
-          pairAgg[pair].w += r.p1Wins; pairAgg[pair].g += r.games;
+          const wrs: number[] = [];
+          let wSum = 0, gSum = 0;
+          for (let k = 0; k < REFS.length; k++) {
+            const r = runSim([X, X, Y, Y], REFS[k][1], {
+              games,
+              seed: 70000 + i * 3131 + j * 97 + lxs.indexOf(lx) * 13 + lys.indexOf(ly) + k * 51341,
+              p1Customizations: custs,
+            });
+            errors += r.totalValidationErrors;
+            wrs.push(r.p1WinRate);
+            wSum += r.p1Wins; gSum += r.games;
+          }
+          wrs.sort((a, b) => a - b);
+          cells.push({ pair, lx: lx.label, ly: ly.label, wr: wrs[1] });
+          pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
         }
       }
       const agg = pairAgg[pair];
-      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells done)`);
+      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells x 3 refs done)`);
     }
   }
   console.log(`\n  validation errors: ${errors}`);
