@@ -184,3 +184,40 @@ duels; owner's tactical instinct caught it.
 Pass-4 candidates on the table: (1) grasp root→1 + damage 4→9 [recommended],
 (2) keep root 2 + pull 3→2, (3) accept as power comp [advised against at 77%].
 Plus cold_snap 10→7 for the wizard outlier. Blizzard/ffh staged to pass 5.
+
+## Pass 4 (owner-approved): grasp root→1 + dmg 4→9; cold_snap 10→7
+
+Class matrix: wizard 58, barbarian 54, sorcerer 54, warlock 50, fighter 47,
+ranger 46, cleric 43, rogue 43. **ALL EIGHT INSIDE 43–58 — the class ladder
+is band-healthy for the first time.** avg turns 58.6, 0 errors.
+
+- cold_snap −3 tamed wizard (67→58) without killing the special (61 duel).
+- Grasp mirror-duel fell to 37▼ BUT stays the engine of the bruiser comp:
+  grasp-spin still 76% in Stage B, and Stage E isolates it — within
+  barb²/warlock², grasp cells mean 91% (fear 70, drain 81), with
+  whirlwind+grasp cells at 98–100% vs classic. Root duration was never the
+  knob: THE 3-TILE PULL IS. Pass-5 candidate: pull 3→2 (keeps dmg-9 solo
+  value, shortens the delivery into double-Whirlwind range).
+- Persisting within-class outliers: ignite 71▲, blizzard 32▼, ffh 28▼,
+  sorc/undying 66▲, barb/thorns 65▲, barb+fighter/anchor 33–37▼.
+
+## Stage E (new battery): 28 pair-comps × 81 loadout combos, 40 games/cell
+
+Methodology finding first: **the classic reference party is BELOW AVERAGE
+under pass-4 values** — grand mean vs-classic ≈ 63%, so absolute numbers are
+inflated ~+13 and 1425/2268 cells flag as "outliers". Read RELATIVE ranking
+only; next tool iteration should use a mid-band reference (or median of 3).
+
+Pair ranking (top): fighter²/barb² 80, barb²/rogue² 79, fighter²/warlock² 76,
+fighter²/rogue² 76, barb²/warlock² 74 — the ENTIRE top tier is melee-pair
+comps, echoing that pass-1's melee HP compensation may now slightly
+overcorrect when doubled up. Bottom: ranger²/sorcerer² 41, ranger²/wizard² 46.
+
+## Pass 5 — OPEN QUESTIONS FOR OWNER
+
+1. Grasp pull 3→2 (the synergy knob; dmg 9 + root 1 kept)?
+2. Melee-pair tier: trim fighter/barb HP comp by 2 each, or wait for the
+   grasp fix + better yardstick before judging?
+3. Stage E yardstick: adopt median-of-3 references (classic + snipe + a
+   caster comp)?
+4. blizzard (32▼)/ffh (28▼) floors + ignite (71▲) ceiling — now or later?

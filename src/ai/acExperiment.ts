@@ -107,6 +107,19 @@ const PRESETS: Record<string, Preset> = {
     heal: { second_wind: 2 },
     statusDur: { grasp: 1 },
   },
+  // Pass 4 (owner-approved bundle, 2026-08-01): grasp back to root 1 but
+  // damage 4→9 (root-2 + pull feeding Whirlwind made grasp-spin 77% — the
+  // smaller knob it is); cold_snap 10→7 (was a free basic attack with a
+  // 1-turn freeze stapled on — the wizard outlier's real carry). Everything
+  // else held from pass 3.
+  pass4: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1, ignite: -2, grasp: 5, cold_snap: -3 },
+    range: { freeze: -1 },
+    heal: { second_wind: 2 },
+    statusDur: {},
+  },
 };
 
 function applyDelta(delta: number): void {
@@ -294,6 +307,63 @@ function stageMarginals(duelGames: number, refGames: number): void {
   }
 }
 
+/**
+ * Stage E — systematic pair-comp scan (owner directive after grasp-spin was
+ * caught only by a hand-added comp): EVERY class pair X²Y² (28), EVERY
+ * specials×passives loadout combination for both classes (9×9 = 81 per pair),
+ * measured vs the classic reference party. ~91k games at 40/cell — run in
+ * background. Prints per-pair aggregates and flags cells ≥65% / ≤35%.
+ */
+function stagePairComps(games: number): void {
+  console.log(`\n──── Stage E: all pair-comps × full loadout grid (${games} games/cell) ────`);
+  const REF = ['barbarian', 'fighter', 'ranger', 'cleric'];
+  interface Cell { pair: string; lx: string; ly: string; wr: number }
+  const cells: Cell[] = [];
+  const pairAgg: Record<string, { w: number; g: number }> = {};
+  let errors = 0;
+  for (let i = 0; i < ALL_CLASSES.length; i++) {
+    for (let j = i + 1; j < ALL_CLASSES.length; j++) {
+      const X = ALL_CLASSES[i], Y = ALL_CLASSES[j];
+      const pair = `${X}²/${Y}²`;
+      pairAgg[pair] = { w: 0, g: 0 };
+      const lxs = loadoutsFor(X), lys = loadoutsFor(Y);
+      for (const lx of lxs) {
+        for (const ly of lys) {
+          const custs = [
+            { specialSlug: lx.specialSlug, passiveSlug: lx.passiveSlug },
+            { specialSlug: lx.specialSlug, passiveSlug: lx.passiveSlug },
+            { specialSlug: ly.specialSlug, passiveSlug: ly.passiveSlug },
+            { specialSlug: ly.specialSlug, passiveSlug: ly.passiveSlug },
+          ];
+          const r = runSim([X, X, Y, Y], REF, {
+            games,
+            seed: 70000 + i * 3131 + j * 97 + lxs.indexOf(lx) * 13 + lys.indexOf(ly),
+            p1Customizations: custs,
+          });
+          errors += r.totalValidationErrors;
+          cells.push({ pair, lx: lx.label, ly: ly.label, wr: r.p1WinRate });
+          pairAgg[pair].w += r.p1Wins; pairAgg[pair].g += r.games;
+        }
+      }
+      const agg = pairAgg[pair];
+      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells done)`);
+    }
+  }
+  console.log(`\n  validation errors: ${errors}`);
+  console.log('\n  PAIR-COMP RANKING (mean over all 81 loadout cells, vs classic):');
+  const rank = Object.entries(pairAgg).map(([p2, m]) => ({ p2, wr: m.w / m.g })).sort((a, b) => b.wr - a.wr);
+  for (const { p2, wr } of rank) {
+    const mark = wr >= 0.62 ? '  ▲ STRONG' : wr <= 0.38 ? '  ▼ WEAK' : '';
+    console.log(`    ${p2.padEnd(22)} ${pct(wr)}${mark}`);
+  }
+  console.log('\n  OUTLIER CELLS (specific loadout combos ≥65% or ≤35%):');
+  const outliers = cells.filter((c) => c.wr >= 0.65 || c.wr <= 0.35).sort((a, b) => b.wr - a.wr);
+  for (const c of outliers) {
+    console.log(`    ${pct(c.wr)}  ${c.pair.padEnd(22)} ${c.lx.padEnd(24)} + ${c.ly}`);
+  }
+  console.log(`  (${outliers.length} outlier cells of ${cells.length})`);
+}
+
 const presetName = flag('preset');
 if (presetName) {
   const preset = PRESETS[presetName];
@@ -306,6 +376,7 @@ if (presetName) {
   if (STAGE === 'a' || STAGE === 'all') stageA(1, GAMES);
   if (STAGE === 'b' || STAGE === 'all') stageB(1, GAMES);
   if (STAGE === 'c' || args.includes('--marginals')) stageMarginals(16, 40);
+  if (STAGE === 'e' || args.includes('--paircomps')) stagePairComps(Number(flag('cellgames') ?? 40));
 } else {
   for (const delta of DELTAS) {
     applyDelta(delta);
