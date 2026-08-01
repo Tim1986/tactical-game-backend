@@ -211,6 +211,25 @@ function beginTurnInternal(
       events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
       return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
     }
+  } else if (actingUnit.statusEffects.some((se) => se.slug === 'frozen')) {
+    // A forced commit of a FROZEN unit is that unit's round-1 slot being skipped
+    // by the freeze, so it ticks exactly like any other skipped frozen slot
+    // (rulebook TRN-6: "status durations still tick on the skipped turn").
+    // Without this the round-1 skip is free and a 2-turn freeze costs the unit
+    // THREE turns — the round-1 slot plus two more ticked by advanceSlot.
+    // (Other forced-commit causes — doomed-to-burn, dead — are not skipped
+    // turns: those units still take a real turn later and tick then.)
+    tickUnitStatusEffects(actingUnit, events);
+    events.push({
+      type: 'TURN_SKIPPED',
+      sourceUnitInstanceId: actingUnit.instanceId,
+      message: `${actingUnit.definitionSlug} is frozen — turn skipped`,
+    });
+    const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
+    if (afterTickWin.isOver) {
+      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
+      return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
+    }
   }
 
   // Capture start-of-turn position for endgame drain comparison (round 11+) and

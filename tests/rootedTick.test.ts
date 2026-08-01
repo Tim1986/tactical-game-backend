@@ -37,9 +37,34 @@ describe('round-1 forced commit when no unit can legally act', () => {
     const state = { board: { width: 8, height: 8 }, units: [other, frozen], turnNumber: 2, activePlayerId: P2, phase: 'action', initiative } as MatchState;
     const result = processTurn(state, [{ type: 'END_TURN' }], P2, P1, P2, abilityMap);
     expect(result.updatedState.initiative!.order).toContain('u2');
-    // Frozen duration untouched — advanceSlot handles its skipped slots later.
+    // The forced commit IS this unit's round-1 slot, skipped by the freeze, so
+    // the freeze ticks here exactly as it would in advanceSlot (rulebook TRN-6).
+    // This assertion used to expect 2 (no tick), which made a 2-turn freeze cost
+    // the victim THREE turns: the free round-1 skip plus two ticked slots
+    // (COMBAT_AUDIT C22b item 5 — owner-reported).
     const after = result.updatedState.units.find((u) => u.instanceId === 'u2')!;
-    expect(after.statusEffects.find((se) => se.slug === 'frozen')?.turnsRemaining).toBe(2);
+    expect(after.statusEffects.find((se) => se.slug === 'frozen')?.turnsRemaining).toBe(1);
+    expect(result.events.some((e) => e.type === 'TURN_SKIPPED' && e.sourceUnitInstanceId === 'u2')).toBe(true);
+  });
+
+  it('a 2-turn freeze on an uncommitted round-1 unit costs exactly 2 skipped turns', () => {
+    // End-to-end duration count for the owner-reported bug: round-1 forced
+    // commit (skip 1) → next slot ticks to 0 and skips (skip 2) → then free.
+    const frozen = makeUnit('u2', P2, 4, 4, { statusEffects: [{ slug: 'frozen', turnsRemaining: 2, stacks: 1, sourceUnitInstanceId: 'u1' }] });
+    const other = makeUnit('u1', P1, 0, 0);
+    const initiative = { order: ['u1'], slot: -1, round1FirstPlayerId: P1, activeUnitId: null, isRound1: true } as unknown as InitiativeState;
+    const state = { board: { width: 8, height: 8 }, units: [other, frozen], turnNumber: 2, activePlayerId: P2, phase: 'action', initiative } as MatchState;
+
+    const r1 = processTurn(state, [{ type: 'END_TURN' }], P2, P1, P2, abilityMap);
+    const afterCommit = r1.updatedState.units.find((u) => u.instanceId === 'u2')!;
+    expect(afterCommit.statusEffects.find((se) => se.slug === 'frozen')?.turnsRemaining).toBe(1);
+
+    // u1 takes its round-2 turn; advancing past u2's slot ticks the last point off.
+    const s2 = r1.updatedState;
+    s2.activePlayerId = P1;
+    const r2 = processTurn(s2, [{ type: 'END_TURN' }], P1, P1, P2, abilityMap);
+    const afterSecond = r2.updatedState.units.find((u) => u.instanceId === 'u2')!;
+    expect(afterSecond.statusEffects.some((se) => se.slug === 'frozen')).toBe(false);
   });
 
   it('bare END_TURN still throws when a unit could legally commit', () => {

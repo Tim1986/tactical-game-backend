@@ -28,7 +28,7 @@ import { isInBounds, isCorner } from './boardUtils.js';
 import { reachableFrom, findPath, isCorner as geoIsCorner } from '../ai/geometry.js';
 import { buildUnitInstance } from './initialState.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
-import { isInAoe } from './boardUtils.js';
+import { isInAoe, getLineTiles } from './boardUtils.js';
 
 // defaultData's UnitDefinition is the slim AI-facing shape; buildUnitInstance
 // wants the full one. The fields it reads all exist on both.
@@ -634,6 +634,71 @@ export const RULE_CHECKS: RuleCheck[] = [
           assert(predicted === actual,
             `${def.slug}: engine hit=${actual} but isInAoe predicts ${predicted} for enemy at (${pos.x},${pos.y})`);
         }
+      }
+    },
+  },
+
+  {
+    rule: 'ABL-9', name: 'line abilities sweep the FULL range past the tapped tile, stopping only at the board edge',
+    run: () => {
+      // Owner repro (C22b item 11): 5 units queued in a row, tap the 2nd — all
+      // 5 must be hit. The ray used to stop at the tapped tile, hitting only 2.
+      const caster = mkUnit(P1, 0, 3);
+      const line = [1, 2, 3, 4, 5].map((x) => mkUnit(P2, x, 3));
+      const ab = mkAbility({ slug: 'test_line', targetingType: 'line', range: 6, isUnblockable: true });
+      const ev = cast(ab, caster, line[1], [caster, ...line]); // tap the SECOND unit
+      for (const u of line) {
+        assert(ev.some((e) => e.type === 'DAMAGE_DEALT' && e.targetUnitInstanceId === u.instanceId),
+          `line ability must hit the unit at (${u.position.x},${u.position.y}) — the ray does not stop at the tapped tile`);
+      }
+
+      // Direction only: the ray extends the ability's full range from the caster.
+      const tiles = getLineTiles({ x: 0, y: 3 }, { x: 1, y: 3 }, 6);
+      assert(tiles.length === 6, `full-range ray must be 6 tiles, got ${tiles.length}`);
+      assert(at(tiles, 6, 3), 'ray must reach the 6th tile even though the tap was at distance 1');
+
+      // Stops at the board edge rather than running off it.
+      const edge = getLineTiles({ x: 5, y: 3 }, { x: 6, y: 3 }, 6);
+      assert(edge.every((t) => t.x <= 7), 'ray must not leave the board');
+      assert(edge.length === 2, `ray from x=5 must stop at the edge (2 tiles), got ${edge.length}`);
+
+      // Data guard: Piercing Shot stays a full-range line ability.
+      const piercing = DEFAULT_ABILITIES.find((a) => a.slug === 'piercing');
+      assert(piercing?.targetingType === 'line', 'piercing must stay targetingType line');
+      assert(piercing!.range === 6, 'piercing must keep its 6-tile range');
+    },
+  },
+  {
+    rule: 'ABL-10', name: 'area and line abilities hit allies; a self-centred blast never hits its own caster',
+    run: () => {
+      // Whirlwind: hits the caster's ALLY standing cardinally adjacent.
+      const wwDef = DEFAULT_ABILITIES.find((a) => a.slug === 'whirlwind')!;
+      const caster = mkUnit(P1, 3, 3);
+      const ally = mkUnit(P1, 3, 2);       // cardinal ally — must be hit
+      const enemy = mkUnit(P2, 2, 3);      // cardinal enemy — must be hit
+      const ev = cast(wwDef, caster, caster, [caster, ally, enemy]);
+      assert(ev.some((e) => e.targetUnitInstanceId === ally.instanceId),
+        'Whirlwind must hit the caster\'s own adjacent ally');
+      assert(ev.some((e) => e.targetUnitInstanceId === enemy.instanceId),
+        'Whirlwind must hit the adjacent enemy');
+      assert(!ev.some((e) => e.targetUnitInstanceId === caster.instanceId),
+        'a self-centred blast must never hit its own caster');
+
+      // Piercing Shot: an ally standing in the ray takes the hit too.
+      const shooter = mkUnit(P1, 0, 5);
+      const allyInLine = mkUnit(P1, 1, 5);
+      const foeBehind = mkUnit(P2, 2, 5);
+      const lineAb = mkAbility({ slug: 'test_line2', targetingType: 'line', range: 6, isUnblockable: true });
+      const ev2 = cast(lineAb, shooter, foeBehind, [shooter, allyInLine, foeBehind]);
+      assert(ev2.some((e) => e.targetUnitInstanceId === allyInLine.instanceId),
+        'a line ability must hit an ally standing in the ray');
+      assert(ev2.some((e) => e.targetUnitInstanceId === foeBehind.instanceId),
+        'a line ability must hit the enemy behind the ally (the ray does not stop at the first unit)');
+
+      // Data guard: none of these may quietly gain excludeAllies.
+      for (const slug of ['whirlwind', 'shockwave', 'piercing']) {
+        const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
+        assert(!def?.excludeAllies, `${slug} must keep hitting allies (excludeAllies must stay falsy)`);
       }
     },
   },

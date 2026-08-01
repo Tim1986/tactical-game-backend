@@ -103,17 +103,24 @@ export function calculatePullDestination(unitPos: BoardPosition, pullerPos: Boar
   return { x: Math.round(newX), y: Math.round(newY) };
 }
 
+/**
+ * Tiles swept by a line ability: a full-length ray from `from` toward `to`,
+ * one of the 8 grid directions, extending the ability's ENTIRE range and
+ * stopping only at the board edge or a removed corner.
+ *
+ * The ray must NOT stop at the tapped tile. Piercing Shot is "damage to every
+ * unit in a straight line, up to 6 tiles" — bounding the loop by the distance
+ * to the target meant tapping the 2nd unit in a queue of 5 hit only 2 of them
+ * (COMBAT_AUDIT C22b item 11). The target tile only picks the DIRECTION.
+ */
 export function getLineTiles(from: BoardPosition, to: BoardPosition, maxRange: number): BoardPosition[] {
   const tiles: BoardPosition[] = [];
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const steps = Math.max(Math.abs(dx), Math.abs(dy));
-  if (steps === 0) return tiles;
-  const normX = dx / steps;
-  const normY = dy / steps;
-  for (let i = 1; i <= Math.min(steps, maxRange); i++) {
-    const x = Math.round(from.x + normX * i);
-    const y = Math.round(from.y + normY * i);
+  const stepX = Math.sign(to.x - from.x);
+  const stepY = Math.sign(to.y - from.y);
+  if (stepX === 0 && stepY === 0) return tiles;
+  for (let i = 1; i <= maxRange; i++) {
+    const x = from.x + stepX * i;
+    const y = from.y + stepY * i;
     if (!isInBounds({ x, y })) break;
     tiles.push({ x, y });
   }

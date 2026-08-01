@@ -82,6 +82,8 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'ABL-6', text: "Execute-style abilities (like Kill Shot / Assassinate) only work if the target's health is at or below the stated threshold; otherwise they fail and do nothing." },
       { id: 'ABL-7', text: "Pushes and pulls slide the target in a straight line, tile by tile. The slide stops early at the board edge, a removed corner, or an occupied tile." },
       { id: 'ABL-8', text: "Area abilities hit every unit within their radius, including diagonals (a radius-1 blast covers a full 3×3 square). Orthogonal area abilities — Whirlwind and Shockwave — hit only the 4 tiles directly adjacent to the caster, never diagonals." },
+      { id: 'ABL-9', text: "Line abilities (Piercing Shot) fire a ray in one of the 8 directions and hit EVERY unit along it — friend and foe — for the ability's full range. The tile you tap only chooses the direction: the ray does not stop at it, nor at the first unit it hits. It stops only at the board edge or a removed corner." },
+      { id: 'ABL-10', text: "Area and line abilities that do not state otherwise hit allies caught in them, including the caster's own teammates. Whirlwind, Shockwave and Piercing Shot all hit allies; the caster itself is never hit by its own self-centred blast." },
     ],
   },
   {
