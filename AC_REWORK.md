@@ -422,3 +422,18 @@ Two structural lessons:
 - HOLD everything else including grasp-spin (owner to ruling: accept at
   ~80% or schedule a whirlwind/drain look post-ship).
 - If A@150 lands 43–57: SHIP pass9 into gameData per handoff checklist.
+
+## Grid CSV/Excel format (owner's analysis export — reuse on request)
+
+`npx tsx src/ai/acExperiment.ts --preset <p> --stage e --cellgames 40 --csv <path>`
+dumps every grid cell, then convert to .xlsx (openpyxl). Columns:
+  A Team Combination — "Barbarian/Warlock" (classes alphabetical)
+  B Class 1 Special / C Class 1 Passive   (alphabetical-first class)
+  D Class 2 Special / E Class 2 Passive
+  F Median Win % (vs 6 refs) — the score used in all reports/outliers
+  G Mean Win % (vs 6 refs)
+  H–M Win % vs each named reference comp (bruisers, snipers, classic+,
+      spellstorm, grasp-spin, blade-rush) — shows WHICH style a comp beats
+2268 rows (28 pairs × 81 loadout combos). The "91|86"-style numbers in the
+BEST-CONTEXT tables are per-SPECIAL aggregates over these cells: max cell |
+mean of its top-5 cells.

@@ -14,6 +14,7 @@
  *      npx tsx src/ai/acExperiment.ts --baseline          (delta 0)
  *      npx tsx src/ai/acExperiment.ts --sweep             (0, -3, -4, -5)
  */
+import { writeFileSync } from 'node:fs';
 import { runSim } from './simHarness.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
 import { loadoutsFor, runDuelMatrix, runReferenceMatrix } from './loadoutMatrix.js';
@@ -408,6 +409,11 @@ function stagePairComps(games: number): void {
   ];
   interface Cell { pair: string; lx: string; ly: string; wr: number }
   const cells: Cell[] = [];
+  // --csv <path>: dump EVERY cell (owner's analysis format — see AC_REWORK.md
+  // "Grid CSV format"): alphabetical pair, first class special/passive, second
+  // class special/passive, median + mean vs the 6 refs, then per-ref win%.
+  const csvPath = flag('csv');
+  const csvRows: string[] = [];
   const pairAgg: Record<string, { w: number; g: number }> = {};
   let errors = 0;
   const distinctErrors = new Set<string>();
@@ -442,11 +448,25 @@ function stagePairComps(games: number): void {
             wrs.push(r.p1WinRate);
             wSum += r.p1Wins; gSum += r.games;
           }
+          // Per-ref results in REFS order, THEN sort a copy for the median.
+          const perRef = [...wrs];
           wrs.sort((a, b) => a - b);
           // Median of 6 = mean of the middle two.
           const median = (wrs[2] + wrs[3]) / 2;
           cells.push({ pair, lx: lx.label, ly: ly.label, wr: median });
           pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
+          if (csvPath) {
+            const cap = (c: string) => c.charAt(0).toUpperCase() + c.slice(1);
+            // Alphabetical pair order; swap loadout columns to match.
+            const [c1, l1, c2, l2] = X.localeCompare(Y) <= 0 ? [X, lx, Y, ly] : [Y, ly, X, lx];
+            csvRows.push([
+              `${cap(c1)}/${cap(c2)}`,
+              l1.specialSlug, l1.passiveSlug ?? 'none',
+              l2.specialSlug, l2.passiveSlug ?? 'none',
+              (median * 100).toFixed(1), ((wSum / gSum) * 100).toFixed(1),
+              ...perRef.map((w) => (w * 100).toFixed(1)),
+            ].join(','));
+          }
         }
       }
       const agg = pairAgg[pair];
@@ -470,6 +490,15 @@ function stagePairComps(games: number): void {
     console.log(`    ${pct(c.wr)}  ${c.pair.padEnd(22)} ${c.lx.padEnd(24)} + ${c.ly}`);
   }
   console.log(`  (${outliers.length} outlier cells of ${cells.length})`);
+  if (csvPath) {
+    const header = [
+      'Team Combination', 'Class 1 Special', 'Class 1 Passive', 'Class 2 Special', 'Class 2 Passive',
+      'Median Win % (vs 6 refs)', 'Mean Win % (vs 6 refs)',
+      ...REFS.map(([n]) => `Win % vs ${n}`),
+    ].join(',');
+    writeFileSync(csvPath, header + '\n' + csvRows.join('\n') + '\n');
+    console.log(`  CSV written: ${csvPath} (${csvRows.length} rows)`);
+  }
 
   // Per-special best-context report (owner's contextual-balance frame):
   // for each class/special, its best cell, top-5 mean, and cell count.
