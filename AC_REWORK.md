@@ -395,3 +395,30 @@ Do NOT eyeball-nerf it without sims.
 8. Full history: this file top-to-bottom + scratchpad ac_*.log files
    (scratchpad dies with the session — the tables that matter are inline
    above).
+
+## Pass 8 results (candidate ship values run)
+
+A@150: ranger 60, warlock 56, cleric 51, wizard 50, barbarian 49, rogue 45,
+fighter 43, sorcerer 39. B: grasp-spin 80▲ (SIX configs, never moves),
+rest 40–57. Grid: 0 errors. Best-context: compressed further — top
+second_wind 91|86, floor ward 64|55; every special alive.
+
+Two structural lessons:
+1. **Arrow is a 20-point knob**: 10↔11 swings ranger 38↔60 (both directions
+   now confirmed at 150 games). Damage points cross kill-breakpoints; the
+   FINER ranger levers are range (6→5) or piercing (now 86|81).
+2. **Grasp-spin is NOT about grasp**: comp held 74-80% while grasp's own
+   best-context fell 91→75 and root/pull/cast-range were each nerfed. The
+   warlock²+barb² PAIRING is inherently strong (drain sustain + whirlwind
+   AoE + pull utility). Stop knobbing grasp. Either accept the comp as the
+   meta's top skill comp, or address whirlwind/drain — NOT grasp.
+
+## Pass 9 recommendation (likely final before ship)
+
+- arrow stays 11; ranger brake via RANGE 6→5 (the finer lever; owner
+  himself called range "so significant tactically").
+- ignite upfront back to 4 (sorcerer 39 needs the give-back; ignite fell to
+  80|... mid-pack after the field moved).
+- HOLD everything else including grasp-spin (owner to ruling: accept at
+  ~80% or schedule a whirlwind/drain look post-ship).
+- If A@150 lands 43–57: SHIP pass9 into gameData per handoff checklist.
