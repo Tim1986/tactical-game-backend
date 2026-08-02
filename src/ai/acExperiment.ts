@@ -361,18 +361,35 @@ function stagePairComps(games: number): void {
   // the MEDIAN of its win rates vs the three — a comp must beat unlike
   // opposition styles to flag, and no single yardstick's weakness inflates
   // the grid (the old classic-only yardstick sat ~13 points below average).
-  const REFS: [string, string[]][] = [
-    ['bruiser', ['fighter', 'fighter', 'barbarian', 'barbarian']],
-    ['snipe',   ['ranger', 'ranger', 'wizard', 'wizard']],
-    ['control', ['wizard', 'wizard', 'warlock', 'warlock']],
+  // Six owner-approved references (2026-08-01), each with its best-known
+  // loadout from the marginals (default-loadout refs were the source of the
+  // grid-wide inflation). All 8 classes appear at least once. Cell score =
+  // MEDIAN of the six — a comp must handle at least three distinct styles.
+  type Ref = [string, string[], { specialSlug: string; passiveSlug: string | null }[]];
+  const L = (specialSlug: string, passiveSlug: string | null) => ({ specialSlug, passiveSlug });
+  const FTR = L('concussive', 'undying'), BRB = L('whirlwind', 'thorns');
+  const RGR = L('pinning', 'opportunist'), WIZ = L('cold_snap', 'opportunist');
+  const SRC = L('ignite', 'undying'), WLK_D = L('drain', 'anchor'), WLK_G = L('grasp', 'anchor');
+  const RGE = L('expose', 'opportunist'), CLR = L('heal', 'undying');
+  const REFS: Ref[] = [
+    ['bruisers',   ['fighter', 'fighter', 'barbarian', 'barbarian'], [FTR, FTR, BRB, BRB]],
+    ['snipers',    ['ranger', 'ranger', 'wizard', 'wizard'],         [RGR, RGR, WIZ, WIZ]],
+    ['classic+',   ['fighter', 'barbarian', 'ranger', 'cleric'],     [FTR, BRB, RGR, CLR]],
+    ['spellstorm', ['sorcerer', 'sorcerer', 'warlock', 'warlock'],   [SRC, SRC, WLK_D, WLK_D]],
+    ['grasp-spin', ['warlock', 'warlock', 'barbarian', 'barbarian'], [WLK_G, WLK_G, BRB, BRB]],
+    ['blade-rush', ['rogue', 'rogue', 'sorcerer', 'sorcerer'],       [RGE, RGE, SRC, SRC]],
   ];
   interface Cell { pair: string; lx: string; ly: string; wr: number }
   const cells: Cell[] = [];
   const pairAgg: Record<string, { w: number; g: number }> = {};
   let errors = 0;
+  const distinctErrors = new Set<string>();
+  // --pair fighter,warlock limits the scan to one class pair (debug/deep-dive).
+  const onlyPair = flag('pair')?.split(',');
   for (let i = 0; i < ALL_CLASSES.length; i++) {
     for (let j = i + 1; j < ALL_CLASSES.length; j++) {
       const X = ALL_CLASSES[i], Y = ALL_CLASSES[j];
+      if (onlyPair && !(onlyPair.includes(X) && onlyPair.includes(Y))) continue;
       const pair = `${X}²/${Y}²`;
       pairAgg[pair] = { w: 0, g: 0 };
       const lxs = loadoutsFor(X), lys = loadoutsFor(Y);
@@ -391,21 +408,29 @@ function stagePairComps(games: number): void {
               games,
               seed: 70000 + i * 3131 + j * 97 + lxs.indexOf(lx) * 13 + lys.indexOf(ly) + k * 51341,
               p1Customizations: custs,
+              p2Customizations: REFS[k][2],
             });
             errors += r.totalValidationErrors;
+            for (const e of r.sampleErrors) distinctErrors.add(`[vs ${REFS[k][0]}] ${e}`);
             wrs.push(r.p1WinRate);
             wSum += r.p1Wins; gSum += r.games;
           }
           wrs.sort((a, b) => a - b);
-          cells.push({ pair, lx: lx.label, ly: ly.label, wr: wrs[1] });
+          // Median of 6 = mean of the middle two.
+          const median = (wrs[2] + wrs[3]) / 2;
+          cells.push({ pair, lx: lx.label, ly: ly.label, wr: median });
           pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
         }
       }
       const agg = pairAgg[pair];
-      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells x 3 refs done)`);
+      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells x 6 refs done)`);
     }
   }
   console.log(`\n  validation errors: ${errors}`);
+  if (distinctErrors.size > 0) {
+    console.log('  DISTINCT ERROR SAMPLES:');
+    for (const e of [...distinctErrors].slice(0, 20)) console.log(`    ${e}`);
+  }
   console.log('\n  PAIR-COMP RANKING (mean over all 81 loadout cells, vs classic):');
   const rank = Object.entries(pairAgg).map(([p2, m]) => ({ p2, wr: m.w / m.g })).sort((a, b) => b.wr - a.wr);
   for (const { p2, wr } of rank) {

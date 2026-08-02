@@ -274,3 +274,16 @@ turn-denial delivered at range is simply the premium mechanic of the
 high-hit-rate game. Candidate knobs (owner to choose): make cold_snap
 blockable; missile 11→10; freeze the "significant specials rework" (owner
 foresaw it); or accept ~60-65 wizard as the price of the freeze fantasy.
+
+## AI-brain bug found via grid validation errors (2026-08-01): Blizzard self-root
+
+The pass-6 grid's 3,659 validation errors ("Unit is rooted and cannot move",
+wizard pairs only) exposed a real brain bug: the hit-and-run planner queued
+[cast Blizzard, MOVE retreat], but Blizzard's selfStatus roots the caster AT
+THE CAST — the queued retreat throws and forfeits the action. This has
+silently sabotaged Blizzard in EVERY battery ever run (its perpetual 23–32%▼
+is partly the AI throwing turns, not the ability being weak) — the owner's
+"something is fishy" instinct was right twice (Purify measurement blindness +
+this). Fix: planBestTurn skips act-then-move candidates for self-rooting/
+freezing casts. Verified: wizard-pair cells now 0 errors; 298 tests green.
+Grid re-run required (previous pass-6 grid data is tainted for wizard cells).

@@ -1479,6 +1479,14 @@ export function planBestTurn(
     let retreatScore = off ? bestRetreatAtkScore : bestRetreatIdleScore;
     const act = cand.action.type === 'USE_ABILITY' ? cand.action : null;
     const candDef = act ? map.get(act.abilitySlug) : undefined;
+    // A self-rooting/self-freezing cast (Blizzard's channel) makes any queued
+    // retreat ILLEGAL — the engine applies selfStatus at the cast, so the
+    // planned MOVE throws "Unit is rooted and cannot move" and forfeits the
+    // action (C22-era grid runs: 3.6k validation errors, all this shape; it
+    // also silently tanked Blizzard's marginals in every prior battery).
+    if (candDef?.selfStatus && ['rooted', 'frozen'].includes(candDef.selfStatus.statusSlug)) {
+      continue; // cast-then-stay was already considered above
+    }
     const dispEffect = candDef?.effects.find(
       (e) => e.type === 'push' || e.type === 'pull',
     );
