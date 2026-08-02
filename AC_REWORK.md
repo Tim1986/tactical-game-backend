@@ -348,3 +348,50 @@ ffh alive. New/remaining issues for pass 8:
    earlier: strong-but-not-98% ok — is 79 ok?) or take the cast-range knob
    (grasp range 5→4).
 3. Concussive 91|87 is now the hottest special context. Watch.
+
+## Pass 8 (owner-approved, candidate ship values): arrow→11, grasp cast
+## range→4, concussive→6, ward rider→14, ffh damage→14 (range 5 kept)
+
+Undying: owner "very concerned" — PENDING tool work (passive constants are
+not preset-able; engine refactor needed to knob them). Nerf directions to
+test once the knob exists: survivor loses next action, or −3 max HP tax.
+Do NOT eyeball-nerf it without sims.
+
+## HANDOFF NOTES (Fable → Opus 5, 2026-08-02) — read before continuing
+
+1. **Process**: NO gameData changes until the owner approves shipping. The
+   presets in src/ai/acExperiment.ts are the working values — pass8 is the
+   candidate. Owner speaks into EVERY pass; give recommendations, wait.
+2. **Shipping checklist when approved**: translate the preset into
+   src/config/gameData.ts (stats + ability values + DESCRIPTIONS — every
+   description states its numbers and must be updated to match); check
+   rulebook.ts/rulebookSpec.ts for encoded numbers; npm test; sync-engine in
+   mobile before any build; then re-run campaignSim and retune every
+   campaign's hpScaleOverride bands (CAMPAIGNS.md difficulty rules — they
+   were tuned against OLD ACs and WILL be wrong; e.g. lantern e3's band
+   cliff comment).
+3. **Methodology (hard-won)**: duel/ref marginals are CONTEXT-BLIND — never
+   judge a special on them alone (Purify, Firestorm, and Roar all looked
+   dead/mid while being great; the fixes were measurement, not balance).
+   The Stage E grid + BEST-CONTEXT tables are the owner's chosen instrument
+   (philosophy: every special/passive solid somewhere; no context
+   overwhelming). Grid ABSOLUTE numbers are yardstick-relative — read
+   relative rankings and best-context, not raw win%.
+4. **Validation errors are gold**: the count exposed the Blizzard self-root
+   brain bug that had silently sabotaged every earlier battery. Bar is 0;
+   any nonzero = investigate BEFORE trusting the data (add --pair X,Y for
+   cheap repro; sampleErrors prints distinct messages).
+5. **Noise bands**: ±7 at 60 games/pair, ±4 at 150. Stage A fills are
+   fighter/cleric/barbarian/ranger — nerfing those classes distorts the
+   whole matrix (pass-5 lesson; fills weakened → casters inflated).
+6. **Sim mechanics**: token-cheap, CPU-heavy — run big batteries in
+   background; cwd RESETS in background shells (cd inside the command);
+   owner's Mac sleeps after 1 MINUTE idle — pin `caffeinate -i -w <simpid>`
+   or a `-t` window alongside every long run. Owner: never drive the iOS
+   simulator for verification; hand them a test checklist.
+7. **Wrong-spec trap**: tests can encode bugs (rootedTick asserted the buggy
+   freeze duration). When a principled fix reds a test, judge from
+   rulebook.ts, not the test.
+8. Full history: this file top-to-bottom + scratchpad ac_*.log files
+   (scratchpad dies with the session — the tables that matter are inline
+   above).

@@ -163,6 +163,20 @@ const PRESETS: Record<string, Preset> = {
     statusDur: { roar: -1 },
     pullDist: { grasp: -1 },
   },
+  // Pass 8 (owner-approved, 2026-08-02): arrow back to 11 (field now prices
+  // the 2-ranger fear); grasp CAST range 5→4 (last knob on the 79% comp);
+  // concussive 8→6 (hottest special context+breadth); ward rider 12→14;
+  // ffh damage reverted to 14 (range 5 was the real fix — keep it).
+  // If green, THESE ARE THE CANDIDATE SHIP VALUES.
+  pass8: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, ignite: -3, grasp: 5, cold_snap: -3, shockwave: 3, longshot: 1, missile: -1, concussive: -2 },
+    range: { freeze: -1, heal: 1, ffh: 1, grasp: -1 },
+    heal: { second_wind: 4, heal: 4, ward: 6 },
+    statusDur: { roar: -1 },
+    pullDist: { grasp: -1 },
+  },
 };
 
 function applyDelta(delta: number): void {
