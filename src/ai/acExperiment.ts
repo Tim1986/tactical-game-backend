@@ -150,6 +150,19 @@ const PRESETS: Record<string, Preset> = {
     statusDur: {},
     pullDist: { grasp: -1 },
   },
+
+  // Pass 7 (owner-approved batch, 2026-08-02): floors — heal range 2 & 28HP,
+  // ward rider 12, ffh range 5, shockwave 11, longshot 13, first aid 18;
+  // ceilings — roar weaken 2→1 turns, ignite upfront 3, missile 10.
+  pass7: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, arrow: -1, ignite: -3, grasp: 5, cold_snap: -3, ffh: 1, shockwave: 3, longshot: 1, missile: -1 },
+    range: { freeze: -1, heal: 1, ffh: 1 },
+    heal: { second_wind: 4, heal: 4, ward: 4 },
+    statusDur: { roar: -1 },
+    pullDist: { grasp: -1 },
+  },
 };
 
 function applyDelta(delta: number): void {
@@ -443,6 +456,26 @@ function stagePairComps(games: number): void {
     console.log(`    ${pct(c.wr)}  ${c.pair.padEnd(22)} ${c.lx.padEnd(24)} + ${c.ly}`);
   }
   console.log(`  (${outliers.length} outlier cells of ${cells.length})`);
+
+  // Per-special best-context report (owner's contextual-balance frame):
+  // for each class/special, its best cell, top-5 mean, and cell count.
+  console.log('\n  BEST-CONTEXT BY SPECIAL (max | top-5 mean | cells):');
+  const bySpecial: Record<string, number[]> = {};
+  for (const c of cells) {
+    const [pairX, pairY] = c.pair.replace(/²/g, '').split('/');
+    bySpecial[`${pairX}/${c.lx.split('+')[0]}`] ??= [];
+    bySpecial[`${pairX}/${c.lx.split('+')[0]}`].push(c.wr);
+    bySpecial[`${pairY}/${c.ly.split('+')[0]}`] ??= [];
+    bySpecial[`${pairY}/${c.ly.split('+')[0]}`].push(c.wr);
+  }
+  const rows = Object.entries(bySpecial).map(([k, wrs]) => {
+    wrs.sort((a, b) => b - a);
+    const top5 = wrs.slice(0, 5);
+    return { k, max: wrs[0], top5: top5.reduce((x, y) => x + y, 0) / top5.length, n: wrs.length };
+  }).sort((a, b) => b.top5 - a.top5);
+  for (const r of rows) {
+    console.log(`    ${r.k.padEnd(24)} ${pct(r.max)} | ${pct(r.top5)} | ${r.n}`);
+  }
 }
 
 const presetName = flag('preset');
