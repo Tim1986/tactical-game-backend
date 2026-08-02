@@ -478,3 +478,45 @@ matchup near-deterministic. NEEDS DIAGNOSIS, not knobs.
 first. Stage A's "ranger 60" was a passive-blind artifact. Owner is right
 that Ranger is not the strongest unit — DROP the proposed arrow-range nerf
 (owner: range is core to the class identity and must not be cut).
+
+## Pass 9 results — THE UNDYING PASS (first run with passives in Stage A/B)
+
+Ladder @150 (now passive-aware, NOT comparable to passes 1-8):
+  fighter 57, ranger 55, sorcerer 47, cleric 47, rogue 45, warlock 44,
+  wizard 44, **barbarian 33▼**. avg turns 65.3.
+Comps: classic 69▲, bruiser-wall 69▲, heal-tank 63 … grasp-spin 41 (!),
+grasp-wall 27▼. Grid: 0 errors.
+
+**Undying tax worked.** Delta vs that class's other passives:
+  Fighter +11.4 → **+4.0**   Cleric +8.7 → +7.8   Sorcerer +15.9 → +10.7
+Fighter in top-36 cells: 33/36 → **24/36**. Chassis spread compressed from
+14.0 pts (44.8-30.8) to **8.8** (Fighter 43.5 … Cleric 34.7).
+Remaining: sorcerer/cleric undying still ahead of their alternatives
+(+10.7/+7.8) — a second, smaller tax increment is justified (sorcerer -6,
+cleric -4) OR accept as "best passive but not mandatory".
+
+**Buffs landed** (no-Fighter, no-undying view):
+  Ward 23.5 → 28.5 (still last for cleric; range helped, more needed)
+  Drain 29.3 → **42.2 — now warlock's BEST special** (was last). The heal
+  6→9 overshot slightly; drain 42.2 > grasp 40.6 > fear 35.3. Consider
+  heal 9→8 next pass.
+
+**Grasp-spin finally broke**: 80% → 41%. Not from grasp nerfs (those did
+nothing across 5 passes) but from the passive fix — the comp's dominance
+was partly an artifact of references playing passive-less units.
+
+**Barbarian 33▼ is the new problem.** He has no undying access, no
+opportunist, and lost roar's 2-turn weaken in pass 7. Prime suspect: the
+pass-7 roar nerf plus every other class gaining a passive in the ladder.
+Candidate: roar weaken back to 2 turns, or barbarian HP/damage.
+
+**SWINGINESS DIAGNOSIS — alpha-strike hypothesis REJECTED.**
+  cells spread>70pts: 950, avg turns 47.4
+  cells spread<=40pts: 225, avg turns 47.6
+Blowout cells and balanced cells finish in the SAME number of turns, so
+swings are NOT snowball/alpha-strike. The cause is matchup structure
+(rock-paper-scissors between fixed comps), not tempo. To reduce swing you
+must reduce hard counters (e.g. AoE vs clumped melee, reach vs no-reach),
+not game speed. Recommend treating this as a design property to bound, not
+a bug to fix: the 6 references are FIXED optimized comps, so extremes are
+partly an artifact of measuring against a small fixed panel.
