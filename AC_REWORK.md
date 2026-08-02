@@ -437,3 +437,44 @@ dumps every grid cell, then convert to .xlsx (openpyxl). Columns:
 2268 rows (28 pairs × 81 loadout combos). The "91|86"-style numbers in the
 BEST-CONTEXT tables are per-SPECIAL aggregates over these cells: max cell |
 mean of its top-5 cells.
+
+## Owner's grid analysis (2026-08-02, Opus) — THREE FINDINGS
+
+Owner filtered the pass-8 xlsx on column F and found 33-34 of the top 36 cells
+contain Fighter, concluding the Fighter CHASSIS (not its specials) is the
+problem. Verified and extended:
+
+**1. METHODOLOGY BUG — Stage A and Stage B run with NO PASSIVES AT ALL.**
+`simHarness.buildUnitInstance` only applies a passive when a customization
+supplies `passiveSlug`; Stage A/B pass no customizations. So every "class
+ladder" number in this ledger (all 8 passes) measured a passive-less game.
+Only Stage E (the grid) sweeps passives. This is why Stage A ranks Fighter
+7th (43%) while the grid ranks his chassis 1st — they are different games.
+FIX BEFORE PASS 9. All prior ladder numbers must be re-baselined.
+
+**2. Fighter's chassis is only MILDLY ahead; UNDYING is the real dominator.**
+Grid means over all 567 cells containing each class:
+  Fighter 44.8 | Barbarian 37.5 | Ranger 37.1 | Wizard 35.6 | Sorcerer 35.3
+  | Warlock 34.6 | Rogue 34.6 | Cleric 30.8
+Fighter split BY ITS OWN PASSIVE: undying 55.9 / thorns 44.5 / anchor 33.9.
+**Fighter without undying = 39.2 vs Barbarian 37.5 — a 1.7-point edge, i.e.
+noise.** Undying delta by class: Sorcerer +17.7, Fighter +16.7, Cleric +10.5.
+Mechanism: Undying's value scales with EHP (a free extra life buys more turns
+on a unit that takes more hits to kill), so it compounds hardest on the
+tankiest chassis — Fighter EHP 80 vs Barbarian 68, Sorcerer 40.
+Only fighter/cleric/sorcerer can take it; it is the best passive for all 3.
+
+**3. Swinginess is SYSTEMIC, not a Fighter artifact.** Spread between each
+cell's best and worst reference matchup: mean 67 points, median 68. 43% of
+cells spread >70; 1422 of 13608 individual matchups are near-total blowouts
+(>=97.5% or <=2.5%). Worst offenders are melee pairs: 0% vs bruisers and
+100% vs spellstorm in the SAME cell. Owner's target is ~70-80% on a good
+matchup. Cause not yet established — leading hypothesis is alpha-strike
+dominance in the post-AC-cut game (everything hits, so the side that lands
+the first full sequence snowballs) plus fixed reference comps making each
+matchup near-deterministic. NEEDS DIAGNOSIS, not knobs.
+
+**Ranger correction:** the grid puts Ranger 3rd by chassis (37.1), NOT
+first. Stage A's "ranger 60" was a passive-blind artifact. Owner is right
+that Ranger is not the strongest unit — DROP the proposed arrow-range nerf
+(owner: range is core to the class identity and must not be cut).
