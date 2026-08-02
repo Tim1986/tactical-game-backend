@@ -63,6 +63,13 @@ interface Preset {
   statusDur?: Record<string, number>;
   /** Ability-slug → delta applied to every push/pull effect distance. */
   pullDist?: Record<string, number>;
+  /** class → passive-slug → maxHealth delta (the Undying tax: a passive can
+   * carry a stat cost alongside its flag; PassiveOption already supports it,
+   * so this is data-only, no engine change). */
+  passiveHp?: Record<string, Record<string, number>>;
+  /** Ability-slug → {dmg, heal} deltas for LIFESTEAL effects (drain), which
+   * the plain dmg/heal knobs don't reach (different effect type). */
+  lifesteal?: Record<string, { dmg?: number; heal?: number }>;
 }
 
 const PRESETS: Record<string, Preset> = {
@@ -178,7 +185,56 @@ const PRESETS: Record<string, Preset> = {
     statusDur: { roar: -1 },
     pullDist: { grasp: -1 },
   },
+  // Pass 9 (owner-approved, 2026-08-02). THE UNDYING PASS.
+  //  - Undying now carries a per-class maxHealth tax (owner: -5 not -10;
+  //    "-10 obviously makes it unplayable"). Sized per class by how much the
+  //    passive is actually worth there (grid gap vs that class's next-best
+  //    passive): sorcerer +15.9 > fighter +11.4 > cleric +8.7 — but sorcerer
+  //    has the least HP to give, so proportionally: fighter -5 (-8.9% HP),
+  //    sorcerer -4 (-11.8%), cleric -3 (-6%).
+  //  - NO Fighter chassis nerf yet (owner: don't over-react; undying first).
+  //  - NO ranger nerf — the grid puts ranger 3rd by chassis; the arrow-range
+  //    idea is dead (owner: range is core class identity).
+  //  - Small buffs to the two weakest picks in the owner's filtered view:
+  //    ward range 2->3 (delivery, the lever that fixed Firestorm and Heal),
+  //    drain heal 6->9 (its sustain identity; damage untouched).
+  pass9: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, twin: 1, ignite: -3, grasp: 5, cold_snap: -3, shockwave: 3, longshot: 1, missile: -1, concussive: -2 },
+    range: { freeze: -1, heal: 1, ffh: 1, grasp: -1, ward: 1 },
+    heal: { second_wind: 4, heal: 4, ward: 6 },
+    statusDur: { roar: -1 },
+    pullDist: { grasp: -1 },
+    passiveHp: {
+      fighter:  { undying: -5 },
+      sorcerer: { undying: -4 },
+      cleric:   { undying: -3 },
+    },
+    lifesteal: { drain: { heal: 3 } },
+  },
 };
+
+/**
+ * Best-known loadout per class, derived from the pass-8 grid (highest mean
+ * over that class's 189 cells). Stage A/B previously ran with NO passives at
+ * all (simHarness only applies one when a customization supplies it), so the
+ * class ladder measured a passive-less game for 8 passes — which is why it
+ * ranked Fighter 7th while the grid ranked his chassis 1st. Ladder stages now
+ * play each class at its best, which is the right competitive-balance frame.
+ * REDERIVE after any pass that meaningfully moves loadout rankings.
+ */
+const BEST_LOADOUT: Record<string, { specialSlug: string; passiveSlug: string | null }> = {
+  fighter:   { specialSlug: 'concussive',  passiveSlug: 'undying' },
+  barbarian: { specialSlug: 'roar',        passiveSlug: 'vengeful' },
+  ranger:    { specialSlug: 'pinning',     passiveSlug: 'thorns' },
+  rogue:     { specialSlug: 'dagger_toss', passiveSlug: 'vengeful' },
+  cleric:    { specialSlug: 'purify',      passiveSlug: 'undying' },
+  wizard:    { specialSlug: 'freeze',      passiveSlug: 'opportunist' },
+  sorcerer:  { specialSlug: 'ffh',         passiveSlug: 'undying' },
+  warlock:   { specialSlug: 'grasp',       passiveSlug: 'opportunist' },
+};
+const bestCusts = (slugs: string[]) => slugs.map((s2) => BEST_LOADOUT[s2]);
 
 function applyDelta(delta: number): void {
   for (const c of ALL_CLASSES) {
@@ -211,6 +267,20 @@ const BASE_SDUR: Record<string, number[]> = Object.fromEntries(
     (a.effects as Eff[]).filter((e) => e.type === 'apply_status').map((e) => e.durationTurns ?? 0),
   ]),
 );
+type LSEff = { type: string; value?: number; healValue?: number };
+const BASE_LS: Record<string, { v: number; h: number }[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as LSEff[]).filter((e) => e.type === 'lifesteal').map((e) => ({ v: e.value ?? 0, h: e.healValue ?? 0 })),
+  ]),
+);
+// Deep copy: the UNDYING PassiveOption object is SHARED by reference across
+// fighter/cleric/sorcerer, so a per-class tax must replace the entry, not
+// mutate the shared const.
+type PassiveOpt = (typeof DEFAULT_UNITS)[string]['passiveOptions'][number];
+const BASE_PASSIVES: Record<string, PassiveOpt[]> = Object.fromEntries(
+  ALL_CLASSES.map((c) => [c, DEFAULT_UNITS[c].passiveOptions.map((po) => ({ ...po }))]),
+);
 type PPEff = { type: string; distance?: number };
 const BASE_PP: Record<string, number[]> = Object.fromEntries(
   DEFAULT_ABILITIES.map((a) => [
@@ -223,6 +293,17 @@ function applyPreset(p: Preset): void {
   for (const c of ALL_CLASSES) {
     DEFAULT_UNITS[c].armorClass = Math.max(7, BASE_AC[c] + (p.ac[c] ?? 0));
     DEFAULT_UNITS[c].maxHealth = BASE_HP[c] + (p.hp[c] ?? 0);
+  }
+  for (const c of ALL_CLASSES) {
+    const taxes = p.passiveHp?.[c];
+    DEFAULT_UNITS[c].passiveOptions = BASE_PASSIVES[c].map((po) => {
+      const d = taxes?.[po.slug] ?? 0;
+      if (!d) return { ...po };
+      // Only safe for flag-passives / maxHealth passives (never clobber
+      // movementRange or armorClass stat passives like Swift).
+      const cur = po.stat === 'maxHealth' ? (po.value ?? 0) : 0;
+      return { ...po, stat: 'maxHealth' as const, value: cur + d };
+    });
   }
   for (const a of DEFAULT_ABILITIES) {
     const dDmg = p.dmg?.[a.slug] ?? 0;
@@ -237,6 +318,15 @@ function applyPreset(p: Preset): void {
       if (e.type === 'apply_status') { e.durationTurns = BASE_SDUR[a.slug][d] + dDur; d++; }
       if (e.type === 'push' || e.type === 'pull') { e.distance = BASE_PP[a.slug][pp] + dPP; pp++; }
     }
+    const ls = p.lifesteal?.[a.slug];
+    let li = 0;
+    for (const e of a.effects as LSEff[]) {
+      if (e.type === 'lifesteal') {
+        e.value = BASE_LS[a.slug][li].v + (ls?.dmg ?? 0);
+        e.healValue = BASE_LS[a.slug][li].h + (ls?.heal ?? 0);
+        li++;
+      }
+    }
   }
 }
 
@@ -247,7 +337,12 @@ function header(label: string): void {
     const ac = DEFAULT_UNITS[c].armorClass;
     const hp = DEFAULT_UNITS[c].maxHealth;
     const ehp = hp / hit(ac);
-    console.log(`  ${c.padEnd(10)} ${String(ac).padStart(2)}  ${pct(hit(ac))}  ${String(hp).padStart(3)}  ${ehp.toFixed(0).padStart(4)}`);
+    // Show any passive stat tax actually in force (Undying's HP cost).
+    const taxed = DEFAULT_UNITS[c].passiveOptions
+      .filter((po) => po.stat === 'maxHealth' && (po.value ?? 0) !== 0)
+      .map((po) => `${po.slug}${po.value! > 0 ? '+' : ''}${po.value} → ${hp + po.value!}hp`)
+      .join(' ');
+    console.log(`  ${c.padEnd(10)} ${String(ac).padStart(2)}  ${pct(hit(ac))}  ${String(hp).padStart(3)}  ${ehp.toFixed(0).padStart(4)}  ${taxed}`);
   }
 }
 
@@ -262,7 +357,11 @@ function stageA(delta: number, games: number): void {
       const fill = ['fighter', 'cleric', 'barbarian', 'ranger']
         .filter((c) => c !== a && c !== b).slice(0, 2);
       // Seed offset by delta so variants don't share RNG streams.
-      const r = runSim([a, a, ...fill], [b, b, ...fill], { games, seed: 9000 + (delta + 10) * 971 + i * 31 + j });
+      const t1 = [a, a, ...fill], t2 = [b, b, ...fill];
+      const r = runSim(t1, t2, {
+        games, seed: 9000 + (delta + 10) * 971 + i * 31 + j,
+        p1Customizations: bestCusts(t1), p2Customizations: bestCusts(t2),
+      });
       errors += r.totalValidationErrors;
       turnsSum += r.avgTurns; cells++;
       wins[a].w += r.p1Wins; wins[a].g += r.games;
@@ -312,9 +411,12 @@ function stageB(delta: number, games: number): void {
     for (let j = i + 1; j < COMPS.length; j++) {
       const [an, a] = COMPS[i], [bn, b] = COMPS[j];
       const pa = parseComp(a), pb = parseComp(b);
+      // Forced-special comps keep their override; everything else plays its
+      // best-known loadout (Stage B was passive-blind too).
       const r = runSim(pa.slugs, pb.slugs, {
         games, seed: 40000 + (delta + 10) * 977 + i * 31 + j,
-        p1Customizations: pa.custs, p2Customizations: pb.custs,
+        p1Customizations: pa.custs ?? bestCusts(pa.slugs),
+        p2Customizations: pb.custs ?? bestCusts(pb.slugs),
       });
       errors += r.totalValidationErrors;
       wins[an].w += r.p1Wins; wins[an].g += r.games;
@@ -407,7 +509,7 @@ function stagePairComps(games: number): void {
     ['grasp-spin', ['warlock', 'warlock', 'barbarian', 'barbarian'], [WLK_G, WLK_G, BRB, BRB]],
     ['blade-rush', ['rogue', 'rogue', 'sorcerer', 'sorcerer'],       [RGE, RGE, SRC, SRC]],
   ];
-  interface Cell { pair: string; lx: string; ly: string; wr: number }
+  interface Cell { pair: string; lx: string; ly: string; wr: number; turns: number; spread: number }
   const cells: Cell[] = [];
   // --csv <path>: dump EVERY cell (owner's analysis format — see AC_REWORK.md
   // "Grid CSV format"): alphabetical pair, first class special/passive, second
@@ -435,7 +537,7 @@ function stagePairComps(games: number): void {
             { specialSlug: ly.specialSlug, passiveSlug: ly.passiveSlug },
           ];
           const wrs: number[] = [];
-          let wSum = 0, gSum = 0;
+          let wSum = 0, gSum = 0, turnSum = 0;
           for (let k = 0; k < REFS.length; k++) {
             const r = runSim([X, X, Y, Y], REFS[k][1], {
               games,
@@ -446,14 +548,14 @@ function stagePairComps(games: number): void {
             errors += r.totalValidationErrors;
             for (const e of r.sampleErrors) distinctErrors.add(`[vs ${REFS[k][0]}] ${e}`);
             wrs.push(r.p1WinRate);
-            wSum += r.p1Wins; gSum += r.games;
+            wSum += r.p1Wins; gSum += r.games; turnSum += r.avgTurns;
           }
           // Per-ref results in REFS order, THEN sort a copy for the median.
           const perRef = [...wrs];
           wrs.sort((a, b) => a - b);
           // Median of 6 = mean of the middle two.
           const median = (wrs[2] + wrs[3]) / 2;
-          cells.push({ pair, lx: lx.label, ly: ly.label, wr: median });
+          cells.push({ pair, lx: lx.label, ly: ly.label, wr: median, turns: turnSum / REFS.length, spread: wrs[5] - wrs[0] });
           pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
           if (csvPath) {
             const cap = (c: string) => c.charAt(0).toUpperCase() + c.slice(1);
@@ -465,6 +567,7 @@ function stagePairComps(games: number): void {
               l2.specialSlug, l2.passiveSlug ?? 'none',
               (median * 100).toFixed(1), ((wSum / gSum) * 100).toFixed(1),
               ...perRef.map((w) => (w * 100).toFixed(1)),
+              (turnSum / REFS.length).toFixed(1),
             ].join(','));
           }
         }
@@ -495,6 +598,7 @@ function stagePairComps(games: number): void {
       'Team Combination', 'Class 1 Special', 'Class 1 Passive', 'Class 2 Special', 'Class 2 Passive',
       'Median Win % (vs 6 refs)', 'Mean Win % (vs 6 refs)',
       ...REFS.map(([n]) => `Win % vs ${n}`),
+      'Avg Turns',
     ].join(',');
     writeFileSync(csvPath, header + '\n' + csvRows.join('\n') + '\n');
     console.log(`  CSV written: ${csvPath} (${csvRows.length} rows)`);
@@ -502,6 +606,19 @@ function stagePairComps(games: number): void {
 
   // Per-special best-context report (owner's contextual-balance frame):
   // for each class/special, its best cell, top-5 mean, and cell count.
+  // Swinginess diagnostic (owner: wants ~70-80% on a good matchup, not 100%).
+  // Tests the alpha-strike hypothesis: if blowout cells finish FASTER than
+  // balanced cells, the game is being decided by the opening sequence.
+  {
+    const hi = cells.filter((c) => c.spread > 0.7);
+    const lo = cells.filter((c) => c.spread <= 0.4);
+    const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+    console.log('\n  SWINGINESS DIAGNOSTIC:');
+    console.log(`    cells spread>70pts: ${hi.length}  avg turns ${avg(hi.map((c) => c.turns)).toFixed(1)}`);
+    console.log(`    cells spread<=40pts: ${lo.length}  avg turns ${avg(lo.map((c) => c.turns)).toFixed(1)}`);
+    console.log('    (blowouts finishing FASTER supports alpha-strike snowball)');
+  }
+
   console.log('\n  BEST-CONTEXT BY SPECIAL (max | top-5 mean | cells):');
   const bySpecial: Record<string, number[]> = {};
   for (const c of cells) {
