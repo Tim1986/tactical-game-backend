@@ -323,3 +323,28 @@ Next: dedicated specials/passives pass (owner's contextual-balance
 philosophy) with per-special BEST-CONTEXT aggregates added to the tool;
 heal/ward redesign candidates; roar ceiling check; wizard basic 11→10 still
 in owner's pocket if wizard stays high after Stage A rerun on final values.
+
+## Pass 7 (owner-approved 9-knob batch) — results
+
+Stage A @150: warlock 59, barbarian 53, wizard 53, cleric 51, rogue 48,
+fighter 46, sorcerer 46, **ranger 38▼**. Stage B: grasp-spin 79▲ (stubborn
+across every pass), bruiser 57 … control 36, snipe 33 (wizard-nerf ripple).
+Grid v3: 0 validation errors.
+
+**BEST-CONTEXT BY SPECIAL (the philosophy instrument) — every special now
+has a real home.** Max | top-5 mean: concussive 91|87, ffh 88|82 (!! the
+range+1 unlocked the perennial 26%▼ special), pinning 84|81, second_wind
+84|81, grasp 91|79, purify 80|78, roar 83|78 (ceiling worked: was 95-cell),
+… floor: shockwave 73|65, longshot 70|64, ward 66|59 (weakest but now has
+solid homes post-buff). Spread of top-5 means 59–87: compressed, healthy.
+
+Wins: wizard 65→53 (missile), cleric 43→51 (heal/ward floors), roar tamed,
+ffh alive. New/remaining issues for pass 8:
+1. Ranger 38▼ + snipe 33: the arrow −1 finally bites in the evolved field.
+   Candidate: arrow back to 11 (the anti-2-ranger fear may now be priced by
+   the field itself; longshot/pinning got their own bumps).
+2. Warlock 59 + grasp-spin 79: the one comp that never yields (76-79 across
+   FIVE configurations). Either accept as the defining skill comp (owner
+   earlier: strong-but-not-98% ok — is 79 ok?) or take the cast-range knob
+   (grasp range 5→4).
+3. Concussive 91|87 is now the hottest special context. Watch.
