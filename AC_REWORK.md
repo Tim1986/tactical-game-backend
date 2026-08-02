@@ -287,3 +287,39 @@ is partly the AI throwing turns, not the ability being weak) — the owner's
 this). Fix: planBestTurn skips act-then-move candidates for self-rooting/
 freezing casts. Verified: wizard-pair cells now 0 errors; 298 tests green.
 Grid re-run required (previous pass-6 grid data is tainted for wizard cells).
+
+## Pass 6 grid v2 (post brain-fix): 545k games, 0 validation errors
+
+Pair means (deflated vs optimized refs — read relative): barb²/rogue² 54 top;
+fighter pairs 44–48; ALL cleric pairs bottom-third (26–34) on MEAN — but see
+Purify. Top outlier cells:
+  95/93/88% barb²/rogue² ROAR + dagger_toss/expose+opportunist
+  89/88%   fighter²/warlock² concussive+undying + grasp/drain+opportunist
+  88%      cleric²/warlock² PURIFY+undying + drain+anchor
+  83%      ranger²/cleric² pinning+stalwart + PURIFY+undying
+  83%      cleric²/wizard² PURIFY+undying + freeze+stalwart
+  68%      cleric²/wizard² PURIFY + BLIZZARD+stalwart (cleanse-your-own-
+           frozen-allies tech — blizzard's first-ever solid context)
+
+Verdicts:
+1. **Owner fully vindicated on Purify**: 3 of the top-12 cells are purify
+   comps (83–88%). It was measurement blindness, not weakness. Purify is a
+   premier meta pick; arguably watch it doesn't become oppressive.
+2. **Heal and Ward are the real cleric problems** (their outlier appearances
+   are overwhelmingly low-side; cleric pair MEANS sit bottom because 2 of 3
+   specials drag). Matches owner: "Heal cannot possibly be balanced."
+3. **Blizzard post-fix**: still weak generally but now owns a real context
+   (68% with purify support). Under contextual-balance philosophy this may
+   be acceptable; revisit in specials pass.
+4. **NEW DISCOVERY — Roar is the sleeper synergy king**: 95/93/88% cells
+   with multi-attack partners (dagger rogues). Weaken(-4 dmg, 2t) on all
+   enemies within 2 + the fast-hitting comp = both halves multiply. Duel
+   marginals showed roar ~51-54 (context-blind again). Watch as the possible
+   next grasp-spin.
+5. grasp/drain+opportunist with concussive fighters 88-89% — warlock comps
+   healthy-strong, no longer degenerate.
+
+Next: dedicated specials/passives pass (owner's contextual-balance
+philosophy) with per-special BEST-CONTEXT aggregates added to the tool;
+heal/ward redesign candidates; roar ceiling check; wizard basic 11→10 still
+in owner's pocket if wizard stays high after Stage A rerun on final values.
