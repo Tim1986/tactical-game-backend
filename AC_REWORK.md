@@ -749,3 +749,41 @@ real statement about class balance.
 
 TOOL: Stage E now prints a CLASS CEILING block automatically. All-cell chassis
 means are deprecated for class balance and should not be quoted.
+
+## Pass 13 — the three-ceiling nerf (Rogue twin, Fighter HP 52, Barbarian strike 13)
+
+Ladder @150: ranger 61, sorcerer 61, cleric 57, fighter 53, barbarian 39,
+wizard 36▼, rogue 35▼, warlock 30▼. Comps: classic 68▲ … grasp-wall 22▼.
+
+CLASS CEILING (top-10 mean | best | top50 | top100), vs pass 12:
+  Rogue      67.9  70.8  18  29   (71.6 → -3.7)
+  Barbarian  67.7  70.8  26  49   (70.3 → -2.6)
+  Cleric     66.0  68.1  12  27   (61.2 → +4.8)
+  Ranger     65.6  70.0  12  28   (64.3 → +1.3)
+  Warlock    64.2  68.1  10  19   (64.5 → -0.3)
+  Wizard     63.3  67.5   9  17   (62.5 → +0.8)
+  Fighter    63.1  67.5  10  24   (68.1 → -5.0)
+  Sorcerer   61.4  67.8   3   7   (61.5 → -0.1)
+
+**The ceiling spread collapsed from 10.4 to 6.5 points** (71.6-61.2 → 67.9-61.4)
+and the top cell fell from 75.0 to 70.8. All three nerfs landed in proportion:
+Fighter -5.0 (biggest, as intended — it was intrinsic), Rogue -3.7, Barbarian
+-2.6 (lightest touch, plus indirect rogue effect). Cleric +4.8 from its HP buff.
+
+Concentration also improved: Rogue+Barbarian+Fighter held 77 of the global
+top 100 in pass 12; they now hold **102 of 300**... i.e. 34% vs the ~33% an
+even split would give. Barbarian is the remaining concentration (26 top-50).
+
+REMAINING ISSUES:
+1. **Ladder vs ceiling disagree sharply** — Stage A says rogue 35/warlock 30
+   are worst while the ceiling says they are mid-pack. Stage A is a 4-stack
+   mirror format (a class fights ITSELF ×4), which punishes classes needing
+   partners. The ceiling lens is the owner's; treat Stage A as secondary.
+2. Sorcerer's top50 count is 3 (next lowest is 9) — its ceiling is fine but
+   it has very FEW good builds. Breadth problem, not power problem.
+3. grasp-wall 22▼ has been the weakest comp for many passes.
+4. Blizzard/ward/heal need re-reading now that the field moved.
+
+TOOL BUG FIXED: the CLASS CEILING console report compared capitalised class
+names against lowercase cell.pair keys and printed NaN. The xlsx tab was
+unaffected (the CSV capitalises). Fixed; numbers above computed from the CSV.

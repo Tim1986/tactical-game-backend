@@ -885,7 +885,10 @@ function stagePairComps(games: number): void {
     console.log('\n  CLASS CEILING (top-10 mean | best cell | cells in global top-50 / top-100):');
     const rows2 = classes.map((cls) => {
       const cap = cls.charAt(0).toUpperCase() + cls.slice(1);
-      const mine = sorted.filter((c) => c.pair.replace(/²/g, '').split('/').includes(cap));
+      // cell.pair is built from the LOWERCASE class slugs ("fighter²/rogue²"),
+      // so compare lowercase — comparing against the capitalised display name
+      // matched nothing and produced NaN.
+      const mine = sorted.filter((c) => c.pair.replace(/²/g, '').split('/').includes(cls));
       const top10 = mine.slice(0, 10);
       const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
       return {
