@@ -621,6 +621,12 @@ function stagePairComps(games: number): void {
   const RGR = L('pinning', 'opportunist'), WIZ = L('cold_snap', 'opportunist');
   const SRC = L('ignite', 'undying'), WLK_D = L('drain', 'anchor'), WLK_G = L('grasp', 'anchor');
   const RGE = L('expose', 'opportunist'), CLR = L('heal', 'undying');
+  // 7th reference (owner-approved 2026-08-03): the panel had NO stalwart at
+  // all and anchor on only 2 of 6, so counter-play was invisible — Fear's root
+  // was never countered anywhere in the data. "wardens" carries BOTH counters
+  // (2x anchor, 2x stalwart) and is strong on its own merits (61.3 median in
+  // the pass-10 grid), adding a defensive-control style the panel lacked.
+  const CLR_A = L('purify', 'anchor'), WIZ_S = L('freeze', 'stalwart');
   const REFS: Ref[] = [
     ['bruisers',   ['fighter', 'fighter', 'barbarian', 'barbarian'], [FTR, FTR, BRB, BRB]],
     ['snipers',    ['ranger', 'ranger', 'wizard', 'wizard'],         [RGR, RGR, WIZ, WIZ]],
@@ -628,6 +634,7 @@ function stagePairComps(games: number): void {
     ['spellstorm', ['sorcerer', 'sorcerer', 'warlock', 'warlock'],   [SRC, SRC, WLK_D, WLK_D]],
     ['grasp-spin', ['warlock', 'warlock', 'barbarian', 'barbarian'], [WLK_G, WLK_G, BRB, BRB]],
     ['blade-rush', ['rogue', 'rogue', 'sorcerer', 'sorcerer'],       [RGE, RGE, SRC, SRC]],
+    ['wardens',    ['cleric', 'cleric', 'wizard', 'wizard'],          [CLR_A, CLR_A, WIZ_S, WIZ_S]],
   ];
   interface Cell { pair: string; lx: string; ly: string; wr: number; turns: number; spread: number }
   const cells: Cell[] = [];
@@ -673,9 +680,13 @@ function stagePairComps(games: number): void {
           // Per-ref results in REFS order, THEN sort a copy for the median.
           const perRef = [...wrs];
           wrs.sort((a, b) => a - b);
-          // Median of 6 = mean of the middle two.
-          const median = (wrs[2] + wrs[3]) / 2;
-          cells.push({ pair, lx: lx.label, ly: ly.label, wr: median, turns: turnSum / REFS.length, spread: wrs[5] - wrs[0] });
+          // General median (even count -> mean of the middle two).
+          const mid = wrs.length >> 1;
+          const median = wrs.length % 2 ? wrs[mid] : (wrs[mid - 1] + wrs[mid]) / 2;
+          cells.push({
+            pair, lx: lx.label, ly: ly.label, wr: median,
+            turns: turnSum / REFS.length, spread: wrs[wrs.length - 1] - wrs[0],
+          });
           pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
           if (csvPath) {
             const cap = (c: string) => c.charAt(0).toUpperCase() + c.slice(1);
@@ -716,7 +727,7 @@ function stagePairComps(games: number): void {
   if (csvPath) {
     const header = [
       'Team Combination', 'Class 1 Special', 'Class 1 Passive', 'Class 2 Special', 'Class 2 Passive',
-      'Median Win % (vs 6 refs)', 'Mean Win % (vs 6 refs)',
+      `Median Win % (vs ${REFS.length} refs)`, `Mean Win % (vs ${REFS.length} refs)`,
       ...REFS.map(([n]) => `Win % vs ${n}`),
       'Avg Turns',
     ].join(',');

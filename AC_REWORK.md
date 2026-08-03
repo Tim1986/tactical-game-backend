@@ -606,3 +606,50 @@ METHODOLOGY GAP: with no stalwart in the reference panel, root counterplay is
 invisible, and anchor appears on only 2 of 6 refs. Consider adding a
 counter-heavy 7th reference (would break median-of-6 comparability with
 passes 9-10, so owner should decide).
+
+## Pass 11 results (last 6-reference run)
+
+Ladder @150: sorcerer 62, fighter 56, ranger 55, cleric 47, warlock 41,
+rogue 41, barbarian 35▼, wizard 34▼. Comps: bruiser-wall 74▲ … grasp-wall 24▼.
+
+FIRST-APPEARANCE (class-rank/global) vs pass 10:
+  Warlock   **fear #1/g1 (was #19)** | drain #4/g16 (was #1) | grasp #9/g43
+  Cleric    purify #1 | heal #2 (was #8)✓ | **ward #60/g524 (was #111)** ✓
+  Sorcerer  **ffh #1/g1 (was #15)** | ignite #3 | flame_jet #5
+  Wizard    freeze #1 | cold_snap #3 | **blizzard #5/g16 (was #17)** ✓✓
+  Ranger    pinning #1 | piercing #2 | longshot #9 (was #22) ✓
+  Rogue     dagger #1 | expose #2 | assassinate #20 (was #17)
+  Barbarian roar #1 | whirlwind #11 | shockwave #38 (was #24) ✗
+  Fighter   concussive #1 | shield_bash #7 | second_wind #8 (was #1) ✓
+
+**FEAR OVERSHOT — owner's nervousness was correct.** root 1->2 took it from
+#19 to #1 in class AND global #1 (83.7 w/ sorcerer ffh; also g7, g8). We did
+not balance warlock, we swapped which special dominates (drain #1 -> fear #1).
+Fear is now a 2-turn root + 3-tile push with the class's best cells.
+FIX: keep root 2 (the control identity owner wants) but cut push 3 -> 2.
+Fear becomes pure control; grasp keeps displacement+damage as the aggressive
+option. Smaller knob than reverting the root.
+
+**Blizzard is FIXED**: #28 -> #17 -> **#5/g16**. Wizard's trio (freeze #1,
+cold_snap #3, blizzard #5) is the best-balanced in the game. But wizard the
+CLASS is now last at 34% — good specials, weak chassis.
+
+**Ward still last by a mile**: #60, global 524, best cell only 51.2%. The
+6->10 grant moved it +51 ranks but it remains the worst special in the game.
+Owner's pricing concern (must stay under Heal's 28) is real, but 10 is
+clearly still too low. Recommend 13 and accept near-parity with Heal, since
+Heal is capped by missing HP while Ward never is.
+
+WORST SPECIALS (global first-appearance): ward g524, shockwave g159,
+assassinate g112, longshot g74, whirlwind g60, grasp g43.
+
+## Pass 12 recommendation (with the new 7-reference panel)
+1. Fear push 3 -> 2 (trim the overshoot, keep root 2).
+2. Ward grant 10 -> 13.
+3. Wizard chassis: +3 HP (34 -> 37). Specials are balanced; the class is not.
+4. Barbarian: shockwave is now the game's 2nd-worst special (+5 dmg did not
+   help its RANK because roar/whirlwind rose). Give it utility instead of
+   damage: knockback 2 -> 3, or a self-heal. Owner input wanted.
+5. Sorcerer still 62% — ffh at global #1 suggests trimming ffh damage 14->13
+   rather than touching the chassis again.
+6. Hold: assassinate, longshot, grasp (all mid-band and moving).
