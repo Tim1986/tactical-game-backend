@@ -653,3 +653,57 @@ assassinate g112, longshot g74, whirlwind g60, grasp g43.
 5. Sorcerer still 62% — ffh at global #1 suggests trimming ffh damage 14->13
    rather than touching the chassis again.
 6. Hold: assassinate, longshot, grasp (all mid-band and moving).
+
+## Pass 12 — first 9-reference run (counter-play finally measurable)
+
+Ladder @150: fighter 56, ranger 56, warlock 51, sorcerer 50, rogue 47,
+cleric 44, barbarian 37▼, wizard 35▼. Comps: bruiser-wall 74▲ … grasp-wall 30▼.
+0 validation errors.
+
+**Sorcerer fix worked**: 62% -> 50%. The two-knob approach (class -2 HP +
+undying tax -5) landed it exactly in the owner's "top half" target.
+**Warlock 41 -> 51 without touching it** — the owner's call to hold Fear was
+right; nerfing the sorcerer resolved fear's apparent dominance indirectly
+(fear is now #34 globally, was #1).
+
+### PANEL CALIBRATION — my prediction was WRONG
+  bruisers 17.8% | vanguard 18.2% | classic+ 30.6% | grasp-spin 31.6%
+  skirmishers 43.0% | blade-rush 46.2% | snipers 53.5% | wardens 57.8%
+  spellstorm 59.5% | PANEL MEAN 39.8% (was ~41% — I predicted ~45%)
+vanguard measured 75.0 as a CELL but is near-unbeatable as a REFERENCE
+(18.2%), because a cell is scored against a panel that does not include
+itself. **Lesson: cell strength does NOT predict reference difficulty.**
+The panel now has TWO near-unbeatable refs, which compresses medians further
+rather than relieving them. Fix options for pass 13: drop one of
+bruisers/vanguard, or report percentile rank instead of raw median.
+
+### COUNTER-PLAY (normalized against each reference's own difficulty)
+Penalty = (relative perf vs wardens[anchor+stalwart]) - (vs the 6 non-counter refs):
+  PUNISHED: pinning -20.5 | freeze -13.3 | grasp -13.1 | fear -11.6 | cold_snap -9.2
+  NEUTRAL:  blizzard -4.2 | concussive +1.6 | drain +4.2
+  IGNORES:  shield_bash +6.4 | expose +6.6 | roar +9.4 | shockwave +14.8
+**Counter-play is real and working.** Root/push control specials lose 9-21
+points against a comp built to resist them; raw-damage and debuff specials
+are unaffected. This validates the owner's design intuition that Fear-style
+control SHOULD have counters — and it was completely invisible for 11 passes.
+Note pinning takes the largest penalty, which argues AGAINST further pinning
+nerfs: it already has the strongest counterplay in the game.
+
+### SPECIALS — every one has a home (global first-appearance)
+  second_wind #1, expose #1, concussive #2, roar #3, cold_snap #6,
+  whirlwind #11, pinning #12, shield_bash #15, dagger_toss #16,
+  assassinate #17 (was #112 — the threshold buff finally shows), purify #22,
+  piercing #23, drain #31, fear #34, ffh #38, longshot #52, grasp #55,
+  blizzard #59, freeze #62, ignite #67, **ward #75 (was #524)**,
+  shockwave #81, flame_jet #98, heal #114
+Ward at 13 max health WORKS: #524 -> #75, best cell 67.5%. Heal is now the
+weakest cleric special (#114) — the inversion the owner predicted.
+
+### Pass 13 candidates
+1. Panel: resolve the two-near-unbeatable-references problem (drop one, or
+   switch reporting to percentile rank).
+2. Barbarian 37 / Wizard 35 are the persistent floor. Wizard's specials are
+   healthy (cold_snap #6, blizzard #59, freeze #62) — it is a chassis issue.
+3. Heal #114 now needs the attention Ward used to.
+4. Fighter/Rogue second_wind+undying | expose+opportunist at 95.0 is the new
+   top cell — watch it.

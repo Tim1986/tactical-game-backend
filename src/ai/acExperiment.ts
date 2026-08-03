@@ -759,7 +759,7 @@ function stagePairComps(games: number): void {
         }
       }
       const agg = pairAgg[pair];
-      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells x 6 refs done)`);
+      console.log(`  ${pair.padEnd(22)} mean ${pct(agg.w / agg.g)}  (81 cells x ${REFS.length} refs done)`);
     }
   }
   console.log(`\n  validation errors: ${errors}`);
