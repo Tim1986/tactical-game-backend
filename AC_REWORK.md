@@ -520,3 +520,54 @@ must reduce hard counters (e.g. AoE vs clumped melee, reach vs no-reach),
 not game speed. Recommend treating this as a design property to bound, not
 a bug to fix: the 6 references are FIXED optimized comps, so extremes are
 partly an artifact of measuring against a small fixed panel.
+
+## Pass 10 — owner's per-class high-end pass (Ward redesigned)
+
+Ladder @150: sorcerer 67▲, fighter 55, ranger 52, cleric 48, rogue 42,
+wizard 39, warlock 36▼, barbarian 30▼. Comps: bruiser 66 … grasp-wall 26▼.
+Grid 0 errors. NEW ENGINE EFFECT: grant_max_health (Ward).
+
+FIRST-APPEARANCE RANK (class-rank/global) — the owner's instrument:
+  Barbarian roar #1/g11 | whirlwind #8 | shockwave #24 (was #12) ✗ WORSE
+  Cleric    purify #1/g5 | heal #8 | ward #111/g785 (was #38) ✗✗ MUCH WORSE
+  Ranger    piercing #1 | pinning #2 (was #1) ✓ | longshot #22 (was #18) ✗
+  Rogue     expose #1 | dagger #2 | assassinate #17 (was #10) ✗
+  Sorcerer  ignite #1/g1 | flame_jet #2 | ffh #15 (was #2) ✗
+  Warlock   drain #1/g6 | grasp #4 (was #9) ✓ | fear #19
+  Wizard    cold_snap #1 (was #4) ✓ | freeze #2 | blizzard #17/g59 (was #28) ✓✓
+  Fighter   second_wind #1/g1 | shield_bash #2/g2 | concussive #5
+
+WHAT WORKED:
+- Pinning nerf: ranger's specials now piercing #1 / pinning #2 — spread fixed.
+- Blizzard: #28 -> #17 (global 104 -> 59). The self-root 2->1 + range 3 combo
+  finally gave it a home. Cold_snap #1 over freeze — wizard's specials are
+  the most balanced trio in the game now.
+- Grasp: #9 -> #4 (range revert justified).
+- Sorcerer chassis: bolt +2 put ignite at GLOBAL #1.
+
+WHAT BACKFIRED — 4 items, same mechanism (relative-value shift):
+1. **WARD IS NOW MUCH WORSE (#38 -> #111, global 785)** despite the redesign.
+   +6 max health is simply worth less than the 14 heal it replaced, and the
+   AI casts it early (per its design) where it converts to less tempo. The
+   DESIGN is right; the NUMBER is far too small. Needs ~+12-15 max health,
+   or +6 max health AND keep a partial heal.
+2. Shockwave #12 -> #24 despite +5 damage — because roar/whirlwind ride the
+   barbarian's improved partners; relative rank fell while absolute rose.
+3. Assassinate #10 -> #17 despite threshold +3.
+4. FFH #2 -> #15: collateral from the ignite buff (bolt +2 lifted ignite's
+   whole package to global #1).
+LESSON: first-appearance RANK is relative — a buffed special can fall if its
+in-class rivals gained more. Read rank AND absolute score together.
+
+NEW PROBLEMS:
+- Sorcerer 67▲ overshot (bolt +2 was too much; ignite now global #1).
+- Barbarian 30▼ and Warlock 36▼ at the bottom of the ladder.
+- Fighter's own specials are now #1/#2/#5 globally — second_wind+undying is
+  global #1 again.
+
+## Pass 11 recommendation
+- Ward: grant_max_health 6 -> 14 (owner's design, properly sized).
+- Sorcerer: bolt +2 -> +1 (revert half).
+- Barbarian: small chassis help now warranted (+3 HP) — 2 passes at 30-33%.
+- Warlock: watch (drain trim + grasp revert may have crossed).
+- Shockwave/assassinate: hold, re-read absolutes not ranks.
