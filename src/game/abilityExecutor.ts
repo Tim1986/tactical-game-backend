@@ -72,7 +72,12 @@ export function executeAbility(ctx: ExecutionContext): void {
   // Self-status cost (Blizzard's channeling self-freeze): applied to the
   // caster after the ability resolves, unconditionally — no shield, dodge,
   // or Stalwart check; it's a cost, not an attack.
-  if (ctx.ability.selfStatus && ctx.caster.isAlive) {
+  // durationTurns <= 0 means "no self-cost" — do NOT apply the status.
+  // A 0-duration status would be PERMANENT: decrementStatusDurations only
+  // ticks effects with turnsRemaining > 0, while move/charge validation tests
+  // for the mere PRESENCE of 'rooted'. A channel priced at 0 turns would
+  // immobilise its own caster for the rest of the match.
+  if (ctx.ability.selfStatus && ctx.ability.selfStatus.durationTurns > 0 && ctx.caster.isAlive) {
     const sst = ctx.ability.selfStatus;
     const existing = ctx.caster.statusEffects.find((se) => se.slug === sst.statusSlug);
     if (existing) {
