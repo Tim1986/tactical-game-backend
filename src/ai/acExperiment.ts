@@ -305,6 +305,47 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+  // Pass 12 (owner calls, 2026-08-03) — FIRST RUN ON THE 7-REFERENCE PANEL.
+  //  SORCERER (62% -> target top-half): owner's read is that all three
+  //   specials are well represented, so it is a chassis/passive problem, not
+  //   an ffh problem — my proposed ffh trim was DROPPED. Class -2 HP (34->32)
+  //   plus undying tax -4 -> -5 (undying sorcerer 27 HP). Two modest cuts
+  //   rather than one large one, because they hit different builds: the -2
+  //   touches every sorcerer, the extra -1 only the dominant undying build.
+  //  CLERIC undying tax -4 -> -6 (owner: still an overwhelming favorite).
+  //  WARD grant 10 -> 13 (owner-approved; near-parity with Heal accepted
+  //   because Heal is capped by missing HP and Ward never is).
+  //  WHIRLWIND 18 -> 20 damage. Owner floated making it unblockable with a
+  //   damage cut; I kept it BLOCKABLE deliberately — removing the variance
+  //   would disproportionately buff the grasp+whirlwind comp we spent five
+  //   passes taming, and the risk/reward is the point of the ability.
+  //  SHOCKWAVE knockback 2 -> 3 (damage did not help its rank twice; its real
+  //   problem is identity — it pushes enemies away from a melee class. Lean
+  //   into peel: make it the barbarian's "get off me" button).
+  //  WARLOCK/FEAR HELD per owner — 2 of fear's 3 top-10 cells ride the
+  //   overtuned sorcerer, so the sorcerer nerf may resolve it indirectly.
+  pass12: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 11, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: -2 },
+    dmg: {
+      eldritch: 2, twin: 1, ignite: -3, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 3, missile: -1, concussive: -2, pinning: -4, bolt: 1, whirlwind: 2,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 },
+    pullDist: { grasp: -1, shockwave: 1 },
+    passiveHp: { fighter: { undying: -5 }, sorcerer: { undying: -5 }, cleric: { undying: -6 } },
+    lifesteal: { drain: { heal: 1 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -1 },
+    replaceEffects: {
+      ward: [
+        { type: 'grant_max_health', value: 13 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**
