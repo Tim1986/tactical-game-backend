@@ -75,6 +75,9 @@ interface Preset {
   /** Ability-slug → delta on the ability's SELF status duration (Blizzard's
    * channel root — distinct from statusDur, which hits the target). */
   selfStatusDur?: Record<string, number>;
+  /** Ability-slug → override the ability's excludeAllies flag (Blizzard: an
+   * ally-hitting AoE with no damage is strictly worse than cold_snap). */
+  excludeAllies?: Record<string, boolean>;
   /** Ability-slug → wholesale effects replacement, for REDESIGNS the value
    * knobs can't express (e.g. Ward trading its heal for grant_max_health).
    * Values here are absolute, not deltas. */
@@ -396,6 +399,56 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+  // Pass 14 (owner calls + two data-driven answers, 2026-08-03).
+  //  ROGUE twin 9+8 -> 8+8 (owner's suggestion). Kept conservative: one damage
+  //   point on arrow once swung ranger 20 points via kill-breakpoints, so a
+  //   bigger cut risks overshoot. Rogue held 6 of the top 6 cells.
+  //  BARBARIAN AC 10 -> 9 (hit 80% -> 85%, EHP 70 -> 66) rather than HP. AC is
+  //   MULTIPLICATIVE — it scales every incoming attack — and it also strips the
+  //   lucky-miss high-rolls that inflate a ceiling, which HP does not. It also
+  //   separates the two bruisers thematically: Fighter = armour (AC 12/70%),
+  //   Barbarian = toughness (high HP, easy to hit). If 26-of-top-50
+  //   concentration persists, AC 8 is the follow-up.
+  //  CLERIC ward 13 -> 15 (still last at #88); undying tax -6 -> -7.
+  //  FIGHTER undying tax -5 -> -7 (its best passive by far).
+  //  SORCERER equal nudges to all three specials (owner: they are well
+  //   balanced, it needs breadth — only 3 cells in the global top 50).
+  //  BLIZZARD excludeAllies. THE SELF-ROOT WAS NEVER THE PROBLEM: pass 13
+  //   confirms the channel cost is gone (durationTurns 0 => not applied) and
+  //   blizzard STILL sits at #342 vs cold_snap #12 / freeze #41. Stripped of
+  //   its self-cost it is simply "cold_snap with no damage, shorter range, and
+  //   it freezes your own team". Enemies-only is the fix — the same flag roar
+  //   already carries.
+  pass14: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: -2 },
+    dmg: {
+      eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 3, missile: -1, concussive: -2, pinning: -4, bolt: 1, whirlwind: 2,
+      shield_bash: 3, strike: -1, ffh: 1, flame_jet: 1,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 },
+    pullDist: { grasp: -1, shockwave: 1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: true },
+    replaceEffects: {
+      // Owner: "drop 1 point on the first attack so it does the same on both."
+      // The dmg knob is per-ABILITY, so -1 would give 8+7; set them exactly.
+      twin: [
+        { type: 'damage', formula: 'flat', value: 8 },
+        { type: 'damage', formula: 'flat', value: 8 },
+      ],
+      ward: [
+        { type: 'grant_max_health', value: 15 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**
@@ -438,6 +491,9 @@ const BASE_DMG: Record<string, number[]> = Object.fromEntries(
   ]),
 );
 const BASE_RANGE: Record<string, number> = Object.fromEntries(DEFAULT_ABILITIES.map((a) => [a.slug, a.range]));
+const BASE_XA: Record<string, boolean> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [a.slug, (a as { excludeAllies?: boolean }).excludeAllies ?? false]),
+);
 const BASE_HEAL: Record<string, number[]> = Object.fromEntries(
   DEFAULT_ABILITIES.map((a) => [
     a.slug,
@@ -506,12 +562,21 @@ function applyPreset(p: Preset): void {
   for (const a of DEFAULT_ABILITIES) {
     // Restore pristine effects (undoes a previous preset's replaceEffects),
     // then apply this preset's replacement if any, then the value deltas.
-    (a as { effects: unknown[] }).effects = JSON.parse(JSON.stringify(p.replaceEffects?.[a.slug] ?? BASE_EFFECTS[a.slug]));
+    // The deltas must be applied to whichever set we just installed — reading
+    // them from BASE_* would silently overwrite a replacement's own numbers
+    // (this clobbered a replaceEffects twin back to its original damage).
+    const srcEffects = (p.replaceEffects?.[a.slug] ?? BASE_EFFECTS[a.slug]) as Array<Record<string, unknown>>;
+    (a as { effects: unknown[] }).effects = JSON.parse(JSON.stringify(srcEffects));
+    const localDmg = srcEffects.filter((e) => e.type === 'damage').map((e) => (e.value as number) ?? 0);
+    const localHeal = srcEffects.filter((e) => e.type === 'heal').map((e) => (e.value as number) ?? 0);
+    const localDur = srcEffects.filter((e) => e.type === 'apply_status').map((e) => (e.durationTurns as number) ?? 0);
+    const localPP = srcEffects.filter((e) => e.type === 'push' || e.type === 'pull').map((e) => (e.distance as number) ?? 0);
     const selfBase = BASE_SELFSTATUS[a.slug];
     const dSelf = p.selfStatusDur?.[a.slug] ?? 0;
     if (selfBase != null) {
       (a as { selfStatus?: { durationTurns: number } }).selfStatus!.durationTurns = selfBase + dSelf;
     }
+    (a as { excludeAllies?: boolean }).excludeAllies = p.excludeAllies?.[a.slug] ?? BASE_XA[a.slug];
     const dTh = p.threshold?.[a.slug] ?? 0;
     let ti = 0;
     for (const e of a.effects as ThEff[]) {
@@ -524,10 +589,10 @@ function applyPreset(p: Preset): void {
     const dPP = p.pullDist?.[a.slug] ?? 0;
     let i = 0, h = 0, d = 0, pp = 0;
     for (const e of a.effects as (Eff & PPEff)[]) {
-      if (e.type === 'damage') { e.value = BASE_DMG[a.slug][i] + dDmg; i++; }
-      if (e.type === 'heal') { e.value = BASE_HEAL[a.slug][h] + dHeal; h++; }
-      if (e.type === 'apply_status') { e.durationTurns = BASE_SDUR[a.slug][d] + dDur; d++; }
-      if (e.type === 'push' || e.type === 'pull') { e.distance = BASE_PP[a.slug][pp] + dPP; pp++; }
+      if (e.type === 'damage') { e.value = localDmg[i] + dDmg; i++; }
+      if (e.type === 'heal') { e.value = localHeal[h] + dHeal; h++; }
+      if (e.type === 'apply_status') { e.durationTurns = localDur[d] + dDur; d++; }
+      if (e.type === 'push' || e.type === 'pull') { e.distance = localPP[pp] + dPP; pp++; }
     }
     const ls = p.lifesteal?.[a.slug];
     let li = 0;
@@ -930,7 +995,8 @@ function dumpAbilities(slugs: string[]): void {
     const a = DEFAULT_ABILITIES.find((x) => x.slug === slug) as unknown as Record<string, unknown>;
     if (!a) { console.log(`    ${slug}: NOT FOUND`); continue; }
     const self = a.selfStatus ? ` self=${JSON.stringify(a.selfStatus)}` : '';
-    console.log(`    ${slug.padEnd(13)} range ${String(a.range).padStart(2)}  ${JSON.stringify(a.effects)}${self}`);
+    const xa = (a as { excludeAllies?: boolean }).excludeAllies ? ' EXCLUDE_ALLIES' : '';
+    console.log(`    ${slug.padEnd(13)} range ${String(a.range).padStart(2)}  ${JSON.stringify(a.effects)}${self}${xa}`);
   }
 }
 
