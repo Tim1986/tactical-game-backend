@@ -360,17 +360,26 @@ const PRESETS: Record<string, Preset> = {
   //   the class's ceiling is fine — only ignite is weak.
   //  WARLOCK drain heal 7 -> 8 (#49). Deliberately +1 not more: at heal 9 it
   //   was warlock's #1 special, at 7 it is #49 — this knob is very sensitive.
+  //  FIGHTER HP 56 -> 52 (EHP 80 -> 74; was the highest in the game by 10).
+  //   Its ceiling is INTRINSIC — only 8 of its top-20 cells involve rogue and
+  //   its top-20 partners span 6 classes, so the rogue nerf would not have
+  //   touched it. The cut also has to absorb the shield_bash buff above.
+  //  BARBARIAN strike 14 -> 13 (highest basic in the game). Light on purpose:
+  //   15 of its top-20 cells are rogue-partnered (ceiling 70.3 with rogue,
+  //   64.7 without), so the rogue nerf does much of the work indirectly. Roar
+  //   deliberately untouched — nerfing its best special would wreck the
+  //   intra-class spread the owner wants preserved.
   //  WIZARD blizzard self-root 1 -> 0 (#114, the worst special in the game).
   //   Chose removing the channel cost over more range: the root is what makes
   //   a squishy wizard commit next to the group it just froze. Freeze
   //   duration untouchable (cold_snap is also 1 turn).
   pass13: {
     ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
-    hp: { fighter: 11, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: -2 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: -2 },
     dmg: {
       eldritch: 2, twin: 0, ignite: -2, grasp: 5, cold_snap: -2, shockwave: 5,
       longshot: 3, missile: -1, concussive: -2, pinning: -4, bolt: 1, whirlwind: 2,
-      shield_bash: 3,
+      shield_bash: 3, strike: -1,
     },
     range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
     heal: { second_wind: 4, heal: 4, purify: -2 },
