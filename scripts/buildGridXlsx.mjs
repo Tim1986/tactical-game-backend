@@ -59,7 +59,54 @@ c.addRow(['punish synergy-dependent ones (Barbarian, Warlock).']);
 c.views = [{ state: 'frozen', ySplit: 1 }];
 [16, 13, 11, 18, 19, 9].forEach((w, i) => { c.getColumn(i + 1).width = w; });
 
-// ── Tab 3: References ──────────────────────────────────────────────────────
+// ── Tab 3: Pair Synergy ────────────────────────────────────────────────────
+// Ceiling (top-5 mean) for every class pair, plus a consistency read. Guards
+// against mistaking BREADTH for POWER: a class with many workable partners
+// accumulates top-50 cells without being individually strong, so the per-pair
+// intensity column matters more than the raw count.
+const pairCells = new Map();
+for (const x of withMean) {
+  const [a, b] = x.r[0].split('/');
+  const k = [a, b].sort().join('|');
+  if (!pairCells.has(k)) pairCells.set(k, []);
+  pairCells.get(k).push(x);
+}
+const pairCeil = new Map();
+for (const [k, v] of pairCells) {
+  const top5 = v.sort((p, q) => q.m - p.m).slice(0, 5);
+  pairCeil.set(k, top5.reduce((a2, b2) => a2 + b2.m, 0) / top5.length);
+}
+const ps = wb.addWorksheet('Pair Synergy');
+ps.addRow(['Pair ceiling = mean of that pair\'s top-5 cells. Higher = the two classes combine well.']);
+ps.addRow([]);
+ps.addRow(['', ...classes]);
+for (const a of classes) {
+  ps.addRow([a, ...classes.map((b) => (a === b ? '—' : Number((pairCeil.get([a, b].sort().join('|')) ?? 0).toFixed(1))))]);
+}
+ps.addRow([]);
+ps.addRow(['Class', 'Mean', 'Best partner', 'Best', 'Worst partner', 'Worst', 'Spread (sd)', 'Partners >=58', '>=60', '>=62', 'Top-50 cells', 'Top-50 per partner >=60']);
+for (const a of classes) {
+  const entries = classes.filter((b) => b !== a)
+    .map((b) => ({ b, v: pairCeil.get([a, b].sort().join('|')) ?? 0 }))
+    .sort((x, y) => y.v - x.v);
+  const vals = entries.map((e) => e.v);
+  const mean2 = vals.reduce((x, y) => x + y, 0) / vals.length;
+  const sd = Math.sqrt(vals.reduce((x, y) => x + (y - mean2) ** 2, 0) / vals.length);
+  const n60 = vals.filter((v) => v >= 60).length;
+  const t50 = withMean.filter((x) => x.rank <= 50 && x.r[0].split('/').includes(a)).length;
+  ps.addRow([a, Number(mean2.toFixed(1)), entries[0].b, Number(entries[0].v.toFixed(1)),
+    entries[entries.length - 1].b, Number(entries[entries.length - 1].v.toFixed(1)),
+    Number(sd.toFixed(1)), vals.filter((v) => v >= 58).length, n60, vals.filter((v) => v >= 62).length,
+    t50, Number((t50 / Math.max(n60, 1)).toFixed(1))]);
+}
+ps.addRow([]);
+ps.addRow(['NOTE: a low ">=60" count can be a THRESHOLD ARTIFACT — check Mean and sd.']);
+ps.addRow(['Fighter (pass 13) had only 2 partners >=60 but 5 >=58 and the 2nd-lowest sd:']);
+ps.addRow(['it works with almost everyone, it just never excels with anyone.']);
+ps.views = [{ state: 'frozen', ySplit: 3 }];
+[16, ...classes.map(() => 11)].forEach((w, i) => { ps.getColumn(i + 1).width = w; });
+
+// ── Tab 4: References ──────────────────────────────────────────────────────
 const REF_DEFS = JSON.parse(readFileSync(new URL('./referenceParties.json', import.meta.url), 'utf8'));
 const rs = wb.addWorksheet('References');
 rs.addRow(['Reference', 'Style', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4']);
