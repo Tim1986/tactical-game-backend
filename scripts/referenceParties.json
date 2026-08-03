@@ -1,0 +1,20 @@
+{
+  "bruisers":    { "style": "melee wall — hardest test in the panel",
+    "units": ["Fighter — Concussive Blow + Undying", "Fighter — Concussive Blow + Undying", "Barbarian — Whirlwind + Thorns", "Barbarian — Whirlwind + Thorns"] },
+  "snipers":     { "style": "ranged poke + turn denial",
+    "units": ["Ranger — Pinning Shot + Opportunist", "Ranger — Pinning Shot + Opportunist", "Wizard — Cold Snap + Opportunist", "Wizard — Cold Snap + Opportunist"] },
+  "classic+":    { "style": "balanced — the only 4-distinct-class shape",
+    "units": ["Fighter — Concussive Blow + Undying", "Barbarian — Whirlwind + Thorns", "Ranger — Pinning Shot + Opportunist", "Cleric — Heal + Undying"] },
+  "spellstorm":  { "style": "caster attrition (burn) + anchor",
+    "units": ["Sorcerer — Ignite + Undying", "Sorcerer — Ignite + Undying", "Warlock — Essence Drain + Anchor", "Warlock — Essence Drain + Anchor"] },
+  "grasp-spin":  { "style": "pull synergy — drag targets into AoE",
+    "units": ["Warlock — Shadow Grasp + Anchor", "Warlock — Shadow Grasp + Anchor", "Barbarian — Whirlwind + Thorns", "Barbarian — Whirlwind + Thorns"] },
+  "blade-rush":  { "style": "burst assassins",
+    "units": ["Rogue — Expose Weakness + Opportunist", "Rogue — Expose Weakness + Opportunist", "Sorcerer — Ignite + Undying", "Sorcerer — Ignite + Undying"] },
+  "wardens":     { "style": "defensive control — the ONLY counter-play reference (anchor blocks push/pull, stalwart blocks root/weaken/expose)",
+    "units": ["Cleric — Purify + Anchor", "Cleric — Purify + Anchor", "Wizard — Freeze + Stalwart", "Wizard — Freeze + Stalwart"] },
+  "skirmishers": { "style": "mobile harass — carries Swift",
+    "units": ["Ranger — Pinning Shot + Opportunist", "Ranger — Pinning Shot + Opportunist", "Rogue — Dagger Toss + Swift", "Rogue — Dagger Toss + Swift"] },
+  "vanguard":    { "style": "wounded-scaling attrition — carries Vengeful",
+    "units": ["Barbarian — Roar + Vengeful", "Barbarian — Roar + Vengeful", "Rogue — Dagger Toss + Vengeful", "Rogue — Dagger Toss + Vengeful"] }
+}
