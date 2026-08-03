@@ -635,6 +635,16 @@ function scoreEffectsOnTarget(
         break;
       }
 
+      case 'grant_max_health': {
+        // Ward: permanent durability for an ALLY. Unlike a heal this is never
+        // wasted at full health, so it scores its full value; slight bonus for
+        // putting it on a frontliner (the unit that will actually eat hits).
+        if (isEnemy) { s -= eff.value; break; }
+        s += eff.value * WEIGHTS.heal;
+        if (isMelee(target, map)) s += eff.value * 0.25;
+        break;
+      }
+
       case 'apply_status': {
         // Stalwart passive: rooted/weakened/exposed are negated outright —
         // the status is worth nothing against this target (engine skips it).

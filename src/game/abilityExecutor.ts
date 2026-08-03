@@ -2,7 +2,7 @@ import {
   MatchState, UnitInstance, GameEvent, BoardPosition,
 } from '../types/matchState.js';
 import {
-  AbilityDefinition, AbilityEffect, DamageEffect, HealEffect,
+  AbilityDefinition, AbilityEffect, DamageEffect, HealEffect, GrantMaxHealthEffect,
   ApplyStatusEffect, RemoveStatusEffect, PushEffect, PullEffect, ModifyCooldownEffect,
   LifestealEffect,
 } from '../types/index.js';
@@ -169,6 +169,7 @@ function applyEffect(ctx: ExecutionContext, target: UnitInstance, effect: Abilit
   switch (effect.type) {
     case 'damage': applyDamage(ctx, target, effect); break;
     case 'heal': applyHeal(ctx, target, effect); break;
+    case 'grant_max_health': applyGrantMaxHealth(ctx, target, effect); break;
     case 'apply_status': applyStatus(ctx, target, effect); break;
     case 'remove_status': removeStatus(ctx, target, effect); break;
     case 'push': applyPush(ctx, target, effect); break;
@@ -283,6 +284,24 @@ function applyHeal(ctx: ExecutionContext, target: UnitInstance, effect: HealEffe
   if (healAmount <= 0) return;
   target.currentHealth += healAmount;
   ctx.events.push({ type: 'HEALING_DONE', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: healAmount });
+}
+
+/**
+ * Ward's proactive protection: raise max health for the rest of the match and
+ * grant the same amount as current health. Never wasted on a full-HP ally —
+ * that is the whole point (see GrantMaxHealthEffect).
+ */
+function applyGrantMaxHealth(ctx: ExecutionContext, target: UnitInstance, effect: GrantMaxHealthEffect): void {
+  if (!target.isAlive) return;
+  target.maxHealth += effect.value;
+  target.currentHealth += effect.value;
+  ctx.events.push({
+    type: 'HEALING_DONE',
+    sourceUnitInstanceId: ctx.caster.instanceId,
+    targetUnitInstanceId: target.instanceId,
+    value: effect.value,
+    message: `+${effect.value} max health`,
+  });
 }
 
 function applyStatus(ctx: ExecutionContext, target: UnitInstance, effect: ApplyStatusEffect): void {

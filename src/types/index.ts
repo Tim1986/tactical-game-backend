@@ -56,7 +56,8 @@ export type AbilityEffectType =
   | 'pull'
   | 'teleport'
   | 'modify_cooldown'
-  | 'lifesteal';
+  | 'lifesteal'
+  | 'grant_max_health';
 
 export interface DamageEffect {
   type: 'damage';
@@ -68,6 +69,18 @@ export interface DamageEffect {
 export interface HealEffect {
   type: 'heal';
   formula: 'flat';
+  value: number;
+}
+
+/**
+ * Proactive protection (Ward): permanently raises the target's maximum health
+ * for the match AND grants the same amount as current health. Unlike a heal it
+ * is never wasted on a full-health ally — the design point is that you cast it
+ * BEFORE the ally wades in, not as reactive triage (which Heal/Purify already
+ * do better).
+ */
+export interface GrantMaxHealthEffect {
+  type: 'grant_max_health';
   value: number;
 }
 
@@ -117,7 +130,8 @@ export type AbilityEffect =
   | PushEffect
   | PullEffect
   | ModifyCooldownEffect
-  | LifestealEffect;
+  | LifestealEffect
+  | GrantMaxHealthEffect;
 
 export interface AbilityDefinition {
   id: UUID;

@@ -70,6 +70,15 @@ interface Preset {
   /** Ability-slug → {dmg, heal} deltas for LIFESTEAL effects (drain), which
    * the plain dmg/heal knobs don't reach (different effect type). */
   lifesteal?: Record<string, { dmg?: number; heal?: number }>;
+  /** Ability-slug → delta on an execute healthThreshold (Kill Shot). */
+  threshold?: Record<string, number>;
+  /** Ability-slug → delta on the ability's SELF status duration (Blizzard's
+   * channel root — distinct from statusDur, which hits the target). */
+  selfStatusDur?: Record<string, number>;
+  /** Ability-slug → wholesale effects replacement, for REDESIGNS the value
+   * knobs can't express (e.g. Ward trading its heal for grant_max_health).
+   * Values here are absolute, not deltas. */
+  replaceEffects?: Record<string, unknown[]>;
 }
 
 const PRESETS: Record<string, Preset> = {
@@ -213,6 +222,49 @@ const PRESETS: Record<string, Preset> = {
     },
     lifesteal: { drain: { heal: 3 } },
   },
+  // Pass 10 (owner's per-class high-end analysis, 2026-08-02). Owner reads the
+  // TOP of each class's 7 pair-comps, not aggregates — verified against the
+  // grid, and nearly every call confirmed by first-appearance rank.
+  //  BARBARIAN: owner overruled my roar buff (roar is already its #1 special;
+  //    buffing it would worsen intra-class spread). Shockwave +5 (8->13)
+  //    instead. No chassis change — barbarian's ceiling is fine (global #13).
+  //  CLERIC: purify heal -2 (22->20); undying tax -3 -> -4; WARD REDESIGNED
+  //    (see replaceEffects) from reactive heal to proactive +6 max health,
+  //    keeping the shield — owner's design read: ward's heal was always
+  //    mistimed (waste it pre-combat, or lose tempo mid-combat).
+  //  RANGER: pinning 11->7 (substantial, per owner; keeps the 2-turn root,
+  //    which is the identity). Longshot 13->14.
+  //  ROGUE: assassinate threshold 18->21 (small; owner wary of overshoot).
+  //  SORCERER: bolt 9->11. Chose DAMAGE over HP deliberately: an HP buff
+  //    would amplify undying (the thing we are taxing), damage dilutes its
+  //    relative value. Holding the tax at -4 (see notes).
+  //  WARLOCK: drain heal +3 -> +1 (6->7; my +3 overshot, drain went last to
+  //    first). Grasp cast range REVERTED to 5 — the 5 grasp nerfs chased a
+  //    comp whose strength turned out to be the passive-blindness artifact.
+  //  WIZARD: cold_snap 7->8; blizzard self-root 2->1 AND range 2->3 (owner:
+  //    "drastic buff" — it is the last special with no viable home).
+  pass10: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: {
+      eldritch: 2, twin: 1, ignite: -3, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 2, missile: -1, concussive: -2, pinning: -4, bolt: 2,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1 },
+    pullDist: { grasp: -1 },
+    passiveHp: { fighter: { undying: -5 }, sorcerer: { undying: -4 }, cleric: { undying: -4 } },
+    lifesteal: { drain: { heal: 1 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -1 },
+    replaceEffects: {
+      ward: [
+        { type: 'grant_max_health', value: 6 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**
@@ -281,6 +333,21 @@ type PassiveOpt = (typeof DEFAULT_UNITS)[string]['passiveOptions'][number];
 const BASE_PASSIVES: Record<string, PassiveOpt[]> = Object.fromEntries(
   ALL_CLASSES.map((c) => [c, DEFAULT_UNITS[c].passiveOptions.map((po) => ({ ...po }))]),
 );
+type ThEff = { type: string; healthThreshold?: number };
+const BASE_TH: Record<string, number[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [
+    a.slug,
+    (a.effects as ThEff[]).filter((e) => e.healthThreshold != null).map((e) => e.healthThreshold ?? 0),
+  ]),
+);
+const BASE_SELFSTATUS: Record<string, number | null> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [a.slug, (a as { selfStatus?: { durationTurns: number } }).selfStatus?.durationTurns ?? null]),
+);
+// Deep clone of every ability's original effects, so replaceEffects can be
+// reverted between presets in one process.
+const BASE_EFFECTS: Record<string, unknown[]> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [a.slug, JSON.parse(JSON.stringify(a.effects))]),
+);
 type PPEff = { type: string; distance?: number };
 const BASE_PP: Record<string, number[]> = Object.fromEntries(
   DEFAULT_ABILITIES.map((a) => [
@@ -306,6 +373,19 @@ function applyPreset(p: Preset): void {
     });
   }
   for (const a of DEFAULT_ABILITIES) {
+    // Restore pristine effects (undoes a previous preset's replaceEffects),
+    // then apply this preset's replacement if any, then the value deltas.
+    (a as { effects: unknown[] }).effects = JSON.parse(JSON.stringify(p.replaceEffects?.[a.slug] ?? BASE_EFFECTS[a.slug]));
+    const selfBase = BASE_SELFSTATUS[a.slug];
+    const dSelf = p.selfStatusDur?.[a.slug] ?? 0;
+    if (selfBase != null) {
+      (a as { selfStatus?: { durationTurns: number } }).selfStatus!.durationTurns = selfBase + dSelf;
+    }
+    const dTh = p.threshold?.[a.slug] ?? 0;
+    let ti = 0;
+    for (const e of a.effects as ThEff[]) {
+      if (e.healthThreshold != null) { e.healthThreshold = BASE_TH[a.slug][ti] + dTh; ti++; }
+    }
     const dDmg = p.dmg?.[a.slug] ?? 0;
     const dHeal = p.heal?.[a.slug] ?? 0;
     const dDur = p.statusDur?.[a.slug] ?? 0;
@@ -638,6 +718,17 @@ function stagePairComps(games: number): void {
   }
 }
 
+/** --dump: print the post-preset shape of named abilities (preset verification). */
+function dumpAbilities(slugs: string[]): void {
+  console.log('\n  ABILITY DUMP (post-preset):');
+  for (const slug of slugs) {
+    const a = DEFAULT_ABILITIES.find((x) => x.slug === slug) as unknown as Record<string, unknown>;
+    if (!a) { console.log(`    ${slug}: NOT FOUND`); continue; }
+    const self = a.selfStatus ? ` self=${JSON.stringify(a.selfStatus)}` : '';
+    console.log(`    ${slug.padEnd(13)} range ${String(a.range).padStart(2)}  ${JSON.stringify(a.effects)}${self}`);
+  }
+}
+
 const presetName = flag('preset');
 if (presetName) {
   const preset = PRESETS[presetName];
@@ -647,6 +738,8 @@ if (presetName) {
   }
   applyPreset(preset);
   header(`PRESET ${presetName}`);
+  const dump = flag('dump');
+  if (dump) dumpAbilities(dump.split(','));
   if (STAGE === 'a' || STAGE === 'all') stageA(1, GAMES);
   if (STAGE === 'b' || STAGE === 'all') stageB(1, GAMES);
   if (STAGE === 'c' || args.includes('--marginals')) stageMarginals(16, 40);
