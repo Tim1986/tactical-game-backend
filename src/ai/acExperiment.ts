@@ -668,6 +668,16 @@ function stagePairComps(games: number): void {
   // (2x anchor, 2x stalwart) and is strong on its own merits (61.3 median in
   // the pass-10 grid), adding a defensive-control style the panel lacked.
   const CLR_A = L('purify', 'anchor'), WIZ_S = L('freeze', 'stalwart');
+  // 8th/9th references (owner-approved 2026-08-03) after a calibration +
+  // redundancy audit of the 6-panel: correlations were all <=0.46 (diverse,
+  // good) but difficulty was badly skewed — bruisers sat at a 22.8% mean with
+  // the LOWEST spread, i.e. near-unbeatable and the least discriminating, and
+  // it was the main source of the compressed medians. These two add the three
+  // passives the panel had never contained (swift, vengeful; warded rejected
+  // — its best comp measured 13.8, and a weak reference teaches nothing) and
+  // pull the panel mean up toward ~45%.
+  const RGE_S = L('dagger_toss', 'swift');
+  const BRB_V = L('roar', 'vengeful'), RGE_V = L('dagger_toss', 'vengeful');
   const REFS: Ref[] = [
     ['bruisers',   ['fighter', 'fighter', 'barbarian', 'barbarian'], [FTR, FTR, BRB, BRB]],
     ['snipers',    ['ranger', 'ranger', 'wizard', 'wizard'],         [RGR, RGR, WIZ, WIZ]],
@@ -676,6 +686,10 @@ function stagePairComps(games: number): void {
     ['grasp-spin', ['warlock', 'warlock', 'barbarian', 'barbarian'], [WLK_G, WLK_G, BRB, BRB]],
     ['blade-rush', ['rogue', 'rogue', 'sorcerer', 'sorcerer'],       [RGE, RGE, SRC, SRC]],
     ['wardens',    ['cleric', 'cleric', 'wizard', 'wizard'],          [CLR_A, CLR_A, WIZ_S, WIZ_S]],
+    // measured 51.2 as a cell vs the 6-panel — well calibrated, adds SWIFT
+    ['skirmishers',['ranger', 'ranger', 'rogue', 'rogue'],             [RGR, RGR, RGE_S, RGE_S]],
+    // measured 75.0 — a genuine top-tier comp, adds VENGEFUL
+    ['vanguard',   ['barbarian', 'barbarian', 'rogue', 'rogue'],       [BRB_V, BRB_V, RGE_V, RGE_V]],
   ];
   interface Cell { pair: string; lx: string; ly: string; wr: number; turns: number; spread: number }
   const cells: Cell[] = [];
