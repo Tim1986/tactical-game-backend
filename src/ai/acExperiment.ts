@@ -691,7 +691,12 @@ function stagePairComps(games: number): void {
     // measured 75.0 — a genuine top-tier comp, adds VENGEFUL
     ['vanguard',   ['barbarian', 'barbarian', 'rogue', 'rogue'],       [BRB_V, BRB_V, RGE_V, RGE_V]],
   ];
-  interface Cell { pair: string; lx: string; ly: string; wr: number; turns: number; spread: number }
+  interface Cell {
+    pair: string; lx: string; ly: string;
+    /** SCORE = mean win% across the panel (see note at the push site). */
+    wr: number; median: number;
+    turns: number; spread: number; worst: number; best: number; beaten: number;
+  }
   const cells: Cell[] = [];
   // --csv <path>: dump EVERY cell (owner's analysis format — see AC_REWORK.md
   // "Grid CSV format"): alphabetical pair, first class special/passive, second
@@ -735,12 +740,20 @@ function stagePairComps(games: number): void {
           // Per-ref results in REFS order, THEN sort a copy for the median.
           const perRef = [...wrs];
           wrs.sort((a, b) => a - b);
-          // General median (even count -> mean of the middle two).
+          // General median (even count -> mean of the middle two). Reported,
+          // but NOT the score: with 9 references the median is a single
+          // order statistic, so a BIMODAL cell (crushes 5 refs, gets crushed
+          // by 4) reads as its dominant side — the pass-12 top cell scored
+          // median 95 on values [0, 7.5, 22.5, 40, 95, 95, 95, 100, 100].
+          // The MEAN reflects power across the whole field; sanity-checked by
+          // "refs actually beaten": top-20 by mean beat 6.8/9, by median 6.0/9.
           const mid = wrs.length >> 1;
           const median = wrs.length % 2 ? wrs[mid] : (wrs[mid - 1] + wrs[mid]) / 2;
+          const meanWr = wSum / gSum;
           cells.push({
-            pair, lx: lx.label, ly: ly.label, wr: median,
+            pair, lx: lx.label, ly: ly.label, wr: meanWr, median,
             turns: turnSum / REFS.length, spread: wrs[wrs.length - 1] - wrs[0],
+            worst: wrs[0], best: wrs[wrs.length - 1], beaten: wrs.filter((w) => w > 0.5).length,
           });
           pairAgg[pair].w += wSum; pairAgg[pair].g += gSum;
           if (csvPath) {
@@ -754,6 +767,9 @@ function stagePairComps(games: number): void {
               (median * 100).toFixed(1), ((wSum / gSum) * 100).toFixed(1),
               ...perRef.map((w) => (w * 100).toFixed(1)),
               (turnSum / REFS.length).toFixed(1),
+              (wrs[0] * 100).toFixed(1), (wrs[wrs.length - 1] * 100).toFixed(1),
+              ((wrs[wrs.length - 1] - wrs[0]) * 100).toFixed(1),
+              String(wrs.filter((w) => w > 0.5).length),
             ].join(','));
           }
         }
@@ -784,7 +800,7 @@ function stagePairComps(games: number): void {
       'Team Combination', 'Class 1 Special', 'Class 1 Passive', 'Class 2 Special', 'Class 2 Passive',
       `Median Win % (vs ${REFS.length} refs)`, `Mean Win % (vs ${REFS.length} refs)`,
       ...REFS.map(([n]) => `Win % vs ${n}`),
-      'Avg Turns',
+      'Avg Turns', 'Worst Ref %', 'Best Ref %', 'Spread', `Refs Beaten (of ${REFS.length})`,
     ].join(',');
     writeFileSync(csvPath, header + '\n' + csvRows.join('\n') + '\n');
     console.log(`  CSV written: ${csvPath} (${csvRows.length} rows)`);

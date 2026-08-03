@@ -430,10 +430,18 @@ dumps every grid cell, then convert to .xlsx (openpyxl). Columns:
   A Team Combination — "Barbarian/Warlock" (classes alphabetical)
   B Class 1 Special / C Class 1 Passive   (alphabetical-first class)
   D Class 2 Special / E Class 2 Passive
-  F Median Win % (vs 6 refs) — the score used in all reports/outliers
-  G Mean Win % (vs 6 refs)
+  F Median Win % — reported only, NOT the score (see below)
+  G Mean Win % — **THE SCORE** used in all reports/outliers/best-context
   H–M Win % vs each named reference comp (bruisers, snipers, classic+,
       spellstorm, grasp-spin, blade-rush) — shows WHICH style a comp beats
+  +4 analysis columns: Worst Ref %, Best Ref %, Spread, Refs Beaten.
+**Sort by MEAN (G), not median (F).** With 9 references the median is a
+single order statistic, so a BIMODAL cell reads as its dominant side: the
+pass-12 #1-by-median cell scored median 95 on values
+[0, 7.5, 22.5, 40, 95, 95, 95, 100, 100] — it crushes 5 references and is
+crushed by 3, and its mean is 61.7. Sanity check: the top-20 by mean actually
+beat 6.8 of 9 references; the top-20 by median only 6.0. Median and mean
+disagree by an average of 226 rank places (max 1271), so this is not cosmetic.
 2268 rows (28 pairs × 81 loadout combos). The "91|86"-style numbers in the
 BEST-CONTEXT tables are per-SPECIAL aggregates over these cells: max cell |
 mean of its top-5 cells.
