@@ -435,7 +435,16 @@ const PRESETS: Record<string, Preset> = {
     lifesteal: { drain: { heal: 2 } },
     threshold: { assassinate: 3 },
     selfStatusDur: { blizzard: -2 },
-    excludeAllies: { blizzard: true },
+    // Firestorm enemies-only. Sorcerer's problem is not partner COUNT (it is a
+    // consistent class, sd 3.6) — it is that its BEST pair, 62.3, is the worst
+    // "best pair" in the game: no strong synergy anywhere. The blocker is
+    // friendly fire: two of its three specials hit allies, and the brain
+    // correctly refuses to fire them into its own frontline (see smokeTest
+    // "Sorcerer avoids ally-killing Firestorm"), so its signature spell is
+    // unusable at exactly the moment enemies cluster. Flame Jet KEEPS friendly
+    // fire — it is a line, positional discipline is its identity, and one
+    // risky tool preserves the class flavour.
+    excludeAllies: { blizzard: true, ffh: true },
     replaceEffects: {
       // Owner: "drop 1 point on the first attack so it does the same on both."
       // The dmg knob is per-ABILITY, so -1 would give 8+7; set them exactly.
