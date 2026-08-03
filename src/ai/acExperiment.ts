@@ -265,6 +265,46 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+  // Pass 11 (owner calls + data-derived Fear fix, 2026-08-03).
+  //  WARD 6 -> 10 max health. Owner's pricing: ward ~= grant + ~10 shield
+  //  absorption, and must stay NOTICEABLY under Heal (28) or its proactive
+  //  reliability obliterates Heal. 10 + ~10 = ~20 guaranteed — equal to
+  //  Purify's heal, clearly under Heal's 28 nominal, and +67% on the grant
+  //  that failed at rank 111. (14 would land ~24, which the owner correctly
+  //  judged too close to Heal.)
+  //  BOLT +2 -> +1 (sorcerer overshot to 67%).
+  //  BARBARIAN +2 HP (owner: not overwhelmingly weak, so +2 not +3).
+  //  LONGSHOT +2 -> +3 (12 -> 15).
+  //  ASSASSINATE held at +3 threshold per owner.
+  //  FEAR root 1 -> 2 turns. Data-driven: Fear is NOT being punished by its
+  //  counters (vs anchor-bearing refs it scores 37.6% vs 34.0% without —
+  //  no penalty; and NO reference carries stalwart, so its root is never
+  //  countered in current data). Its real problem is that it is nearly
+  //  DOMINATED BY GRASP: grasp = 9 dmg + pull 2 + root 1, fear = push 3 +
+  //  root 1 and no damage. Doubling the root gives fear a distinct control
+  //  identity instead of being a worse grasp.
+  pass11: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -5, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 11, barbarian: 11, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: {
+      eldritch: 2, twin: 1, ignite: -3, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 3, missile: -1, concussive: -2, pinning: -4, bolt: 1,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: { fighter: { undying: -5 }, sorcerer: { undying: -4 }, cleric: { undying: -4 } },
+    lifesteal: { drain: { heal: 1 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -1 },
+    replaceEffects: {
+      ward: [
+        { type: 'grant_max_health', value: 10 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**

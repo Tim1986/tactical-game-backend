@@ -571,3 +571,38 @@ NEW PROBLEMS:
 - Barbarian: small chassis help now warranted (+3 HP) — 2 passes at 30-33%.
 - Warlock: watch (drain trim + grasp revert may have crossed).
 - Shockwave/assassinate: hold, re-read absolutes not ranks.
+
+## Fear investigation (owner's question, 2026-08-03) — counters are NOT the problem
+
+Owner asked whether we have matchup data separating Fear-with-counter from
+Fear-without. We do (grid columns H-M). Reference counter inventory:
+  ANCHOR (blocks push/pull): spellstorm, grasp-spin (2 units each)
+  STALWART (blocks root):    **NONE of the 6 references**
+
+Warlock specials, win% split (pass-10 grid):
+  special   vs ANCHOR refs   vs no-anchor   | vs melee(bruisers)  vs ranged(snipers)
+  fear         37.6%            34.0%       |      30.6%               50.6%
+  grasp        40.2%            41.7%       |      27.8%               65.4%
+  drain        44.8%            38.8%       |      24.7%               59.6%
+
+Findings:
+1. **Anchor does not measurably punish Fear** (it scores slightly BETTER into
+   anchor comps). Its root is never countered at all — no reference carries
+   stalwart. So Fear's weakness is NOT counterplay.
+2. **All warlock specials lose hard to melee comps** (-20 to -38 vs ranged).
+   That is a warlock CHASSIS property, not a Fear property. Notably Fear has
+   the SMALLEST melee penalty of the three, so it IS relatively the warlock's
+   best anti-melee tool — the owner's design intent holds directionally, but
+   single-target peel cannot answer a 4-melee comp, and the warlock cannot
+   survive the units it did not peel.
+3. **Fear is nearly DOMINATED BY GRASP**: grasp = 9 dmg + pull 2 + root 1;
+   fear = push 3 + root 1, no damage. Its only edge is one tile of
+   displacement. That is why it sits #19 in class while grasp is #4.
+FIX (pass 11): fear root 1 -> 2 turns, giving it a control identity distinct
+from grasp's damage identity. Damage was rejected — it would make fear a
+worse copy of grasp rather than a different tool.
+
+METHODOLOGY GAP: with no stalwart in the reference panel, root counterplay is
+invisible, and anchor appears on only 2 of 6 refs. Consider adding a
+counter-heavy 7th reference (would break median-of-6 comparability with
+passes 9-10, so owner should decide).
