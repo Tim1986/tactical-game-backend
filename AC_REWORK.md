@@ -715,3 +715,37 @@ weakest cleric special (#114) — the inversion the owner predicted.
 3. Heal #114 now needs the attention Ward used to.
 4. Fighter/Rogue second_wind+undying | expose+opportunist at 95.0 is the new
    top cell — watch it.
+
+## METHODOLOGY (owner, 2026-08-03): judge classes by CEILING, not average
+
+The grid runs every loadout permutation, so a large share of its 2268 cells
+are builds nobody would ever field. Averaging a class over all 567 of its
+cells therefore measures "how good is this class when built badly" — which
+systematically FLATTERS generically-strong classes (Fighter needs no synergy,
+so its junk builds are still fine) and PUNISHES synergy-dependent ones
+(Barbarian, Warlock, Sorcerer, whose value is concentrated in specific pairings).
+
+Pass-12 data, both lenses:
+  class      top10mean  best  top50  top100 | ALL-cell mean
+  Rogue          71.6   75.0    28     45   |     41.2  (avg rank #3)
+  Barbarian      70.3   74.2    25     50   |     45.3  (avg rank #2)
+  Fighter        68.1   75.0    24     53   |     45.7  (avg rank #1)
+  Warlock        64.5   70.6     7     16   |     39.9
+  Ranger         64.3   66.7     8     15   |     38.8
+  Wizard         62.5   69.2     3      8   |     38.3
+  Sorcerer       61.5   70.6     3      6   |     34.8
+  Cleric         61.2   64.2     2      7   |     34.6
+Fighter is #1 by average but only #3 by ceiling; Rogue is #3 by average and
+#1 by ceiling. **The all-cell mean inverted the top of the ladder.**
+
+Ceiling spread is also much tighter (71.6 -> 61.2, 10.4 points) than the
+average spread (45.7 -> 34.6, 11.1) and, more importantly, the ORDER is the
+one that matches how the game is actually played.
+
+Note the top-50/top-100 columns tell a harsher story than top-10 mean:
+Rogue/Barbarian/Fighter occupy 77 of the global top 100 between them, while
+Sorcerer+Cleric together hold 13. That concentration — not the mean — is the
+real statement about class balance.
+
+TOOL: Stage E now prints a CLASS CEILING block automatically. All-cell chassis
+means are deprecated for class balance and should not be quoted.

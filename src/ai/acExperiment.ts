@@ -862,6 +862,36 @@ function stagePairComps(games: number): void {
     console.log('    (blowouts finishing FASTER supports alpha-strike snowball)');
   }
 
+  // CLASS CEILING report (owner's lens, 2026-08-03): the grid runs EVERY
+  // loadout pair, so most cells are builds nobody would field. Averaging over
+  // all 567 cells of a class therefore measures "how good is this class when
+  // built badly", which systematically flatters generically-strong classes
+  // (Fighter) and punishes synergy-dependent ones (Barbarian, Warlock). Judge
+  // classes by their CEILING — the top cells — and by how often they appear in
+  // the global top ranks. Do NOT use all-cell means for class balance.
+  {
+    const sorted = [...cells].sort((a, b) => b.wr - a.wr);
+    const rankOf = new Map(sorted.map((c, i) => [c, i + 1]));
+    const classes = [...new Set(ALL_CLASSES)];
+    console.log('\n  CLASS CEILING (top-10 mean | best cell | cells in global top-50 / top-100):');
+    const rows2 = classes.map((cls) => {
+      const cap = cls.charAt(0).toUpperCase() + cls.slice(1);
+      const mine = sorted.filter((c) => c.pair.replace(/²/g, '').split('/').includes(cap));
+      const top10 = mine.slice(0, 10);
+      const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+      return {
+        cls: cap,
+        top10: avg(top10.map((c) => c.wr)),
+        best: mine.length ? mine[0].wr : NaN,
+        t50: mine.filter((c) => (rankOf.get(c) ?? 1e9) <= 50).length,
+        t100: mine.filter((c) => (rankOf.get(c) ?? 1e9) <= 100).length,
+      };
+    }).sort((a, b) => b.top10 - a.top10);
+    for (const r of rows2) {
+      console.log(`    ${r.cls.padEnd(10)} ${pct(r.top10)} | ${pct(r.best)} | ${String(r.t50).padStart(3)} / ${String(r.t100).padStart(3)}`);
+    }
+  }
+
   console.log('\n  BEST-CONTEXT BY SPECIAL (max | top-5 mean | cells):');
   const bySpecial: Record<string, number[]> = {};
   for (const c of cells) {
