@@ -865,3 +865,72 @@ the exact fix that rescued those two specials.
 Alternative worth considering if the UI cannot carry it cleanly: make ALL AoEs
 enemies-only and re-price whirlwind/flame_jet damage. Simpler to learn, at the
 cost of the risk-reward identity the owner values in whirlwind.
+
+## PASS 16 — NEW BASELINE: universal friendly fire + the eye of the hurricane
+
+Owner ruling (2026-08-03), after weighing the mixed rule from passes 14-15:
+"Having to manage friendly fire is WAY more interesting and tactical, zero
+friendly fire feels like a game for babies. But having it be mixed is really
+a user intuitiveness problem." Resolution: **EVERY AoE hits allies — no
+exceptions, no flags to memorise** — and the big PLACED blasts get a RING
+shape (3x3 minus the centre), the eye of the hurricane. You aim the calm
+centre at your own frontliner and everything around them takes the hit.
+
+Why a shape and not an exception: the eye is visible in the preview, so it
+explains itself, whereas an invisible per-ability immunity flag does not.
+Friendly fire still bites — two adjacent allies means you can only save one.
+
+Diagnosis this replaced: friendly fire never killed whirlwind/flame_jet/
+piercing because YOUR OWN POSITION is their aiming mechanism (walk, or rotate
+the lane). It killed firestorm and blizzard because a 9-tile box dropped at
+range is aimed by where the ENEMY melee happens to stand — frequently no clean
+placement exists at all.
+
+ENGINE: new `areaShape: 'ring'` in boardUtils.isInAoe (shared by engine AND
+brain, so the AI understands it for free) + the types. 300 tests green.
+TOOL: new areaShape / areaRadius preset knobs; --dump now prints shape, radius
+and hits-allies vs EXCLUDE_ALLIES.
+
+Pass-16 numbers (best estimates for the re-priced downside):
+  ffh       12 -> 14 damage, shape RING (regains friendly fire; the eye is
+            worth less than blanket immunity, so not all the way back to 15)
+  blizzard  range 2 -> 3, shape RING (friendly fire IS its cost now)
+  roar      radius 2 -> 1 (weakening your own team over 12 tiles is
+            unplayable; radius 1 = whirlwind's footprint, which survives FF)
+  shockwave friendly fire restored, keeps 13 damage
+  whirlwind / flame_jet / piercing unchanged — they always had friendly fire
+
+AT SHIP TIME (do NOT do these before the values are approved — rulebookSpec
+runs against gameData, so changing the rule text early fails the meta-test):
+  - ABL-8 text must describe the RING shape.
+  - ABL-10 becomes universal: "ALL area and line abilities hit allies."
+  - Remove `exclude_allies: true` from roar in gameData (the only shipped one).
+  - Rewrite ffh/blizzard descriptions for the ring ("all units around the
+    centre point"), and shockwave's for friendly fire.
+  - C23 (the AoE preview task) is SIMPLIFIED by this: with one universal rule
+    the preview no longer needs ally-vs-enemy tinting, it just needs to draw
+    the ring's hole correctly.
+
+### Ship-time item: RENAME the ring abilities (owner, 2026-08-03)
+
+"Firestorm" and "Blizzard" both read as a solid blast. Now that they are RINGS
+with a safe eye, the names actively mislead — a player who has not read the
+tooltip will assume the centre burns too, which is the exact intuition problem
+the ring shape was chosen to solve. The name should do the teaching before the
+preview has to.
+
+Rename both at ship time, alongside the description rewrites already listed.
+Candidates (owner's: "Ring of Fire", "Ice Hurricane"):
+  ffh       Ring of Fire · Firewheel · Circle of Flame · Flameburst Ring
+  blizzard  Ice Hurricane · Ring of Frost · Frost Cyclone · Eye of Winter
+Pairing them so the shared shape reads as a family is worth considering
+("Ring of Fire" / "Ring of Frost"), as is leaning on the eye in the flavour
+("Eye of the Storm" style) since that is the mechanic players must learn.
+
+Touch points for the rename (name is data, but it appears in several places):
+  - backend/src/config/gameData.ts  — `name` + `description`
+  - any campaign/puzzle content referencing the ability by name
+  - mobile patch notes for the release
+  - SPECIALS_TEST_SCRIPT.md (the owner-facing QA script names each special)
+The SLUG should stay `ffh` / `blizzard` — renaming slugs would break saved
+teams, campaign definitions and the rulebookSpec references for no benefit.
