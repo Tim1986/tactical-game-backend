@@ -920,12 +920,10 @@ the ring shape was chosen to solve. The name should do the teaching before the
 preview has to.
 
 Rename both at ship time, alongside the description rewrites already listed.
-Candidates (owner's: "Ring of Fire", "Ice Hurricane"):
-  ffh       Ring of Fire · Firewheel · Circle of Flame · Flameburst Ring
-  blizzard  Ice Hurricane · Ring of Frost · Frost Cyclone · Eye of Winter
-Pairing them so the shared shape reads as a family is worth considering
-("Ring of Fire" / "Ring of Frost"), as is leaning on the eye in the flavour
-("Eye of the Storm" style) since that is the mechanic players must learn.
+**DECIDED (owner):** `ffh` -> **Ring of Fire**, `blizzard` -> **Ring of Frost**.
+Named as a family on purpose: a player who learns one immediately understands
+the other, which matters more than either name being individually evocative.
+Apply only if the pass-16 values are approved.
 
 Touch points for the rename (name is data, but it appears in several places):
   - backend/src/config/gameData.ts  — `name` + `description`
@@ -934,3 +932,28 @@ Touch points for the rename (name is data, but it appears in several places):
   - SPECIALS_TEST_SCRIPT.md (the owner-facing QA script names each special)
 The SLUG should stay `ffh` / `blizzard` — renaming slugs would break saved
 teams, campaign definitions and the rulebookSpec references for no benefit.
+
+## FUTURE (pre-beta, owner 2026-08-03): the great slug cleanup
+
+The ability slugs are historical junk — `ffh` is the worst offender (it means
+"Firestorm" and communicates nothing), and several others are terse or no
+longer describe what the ability does after this rework:
+  ffh          -> ring_of_fire      (was already a meaningless acronym)
+  blizzard     -> ring_of_frost     (name AND shape changed)
+  second_wind  -> first_aid         (slug says second_wind, NAME says First Aid)
+  twin         -> twin_daggers      (bare adjective)
+  ...plus a full audit pass over the rest; some are fine (fear, drain, grasp).
+
+**Blocked deliberately.** Slugs are referenced by saved teams
+(`team_units.special_slug`), campaign definitions, puzzle scripts, the
+rulebookSpec, and the AI brain's slug checks. Renaming them mid-flight would
+silently break every saved team.
+
+**Owner's window:** before the larger beta test, they are willing to WIPE ALL
+SAVED DATA and do the cleanup properly. That is the moment to do it — one
+migration that drops/rebuilds teams rather than a compatibility shim.
+
+When that lands, do it as ONE sweep: slugs + display names + descriptions +
+campaign/puzzle references + SPECIALS_TEST_SCRIPT.md + rulebookSpec ids, with
+a grep for every old slug afterwards to prove nothing dangles. Do NOT attempt
+it piecemeal, and do NOT do it while saved teams still matter.
