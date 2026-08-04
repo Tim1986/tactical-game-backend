@@ -573,6 +573,66 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+
+  // --- Pass 17 SCREENING VARIANTS (blizzard only; everything else = pass16
+  // plus the two settled changes: fighter buff reverted, shockwave push 2). ---
+  // Question: blizzard ring @ range 3 sits at #133 while the STRUCTURALLY
+  // IDENTICAL firestorm ring @ range 5 sits at #20. Is that range, or is it
+  // that a freeze which can freeze your own team is self-cancelling?
+  // p17_base : blizzard unchanged (range 3, 8-tile ring)   [control]
+  // p17_range: blizzard range 5   (reach parity with firestorm/cold_snap)
+  // p17_small: blizzard 4-tile orthogonal @ range 3        (my speculation)
+  p17_base: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 }, pullDist: { grasp: -1, shockwave: 0 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } }, threshold: { assassinate: 3 }, selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring' }, areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+    },
+  },
+  p17_range: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 3 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 }, pullDist: { grasp: -1, shockwave: 0 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } }, threshold: { assassinate: 3 }, selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring' }, areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+    },
+  },
+  p17_small: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 }, pullDist: { grasp: -1, shockwave: 0 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } }, threshold: { assassinate: 3 }, selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'orthogonal' }, areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+    },
+  },
 };
 
 /**
