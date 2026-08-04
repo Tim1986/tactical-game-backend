@@ -458,6 +458,57 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+
+  // Pass 15 (owner-approved, 2026-08-03). Rebalancing after the friendly-fire
+  // fix, which was the largest single change of the rework.
+  //  SORCERER (69 ceiling, 25 top-50 — the new concentration leader; ALL 25 of
+  //   its top cells run undying): nerf via SPECIALS, not chassis. ffh 15 -> 12
+  //   (it lost its only drawback last pass and must pay for it) and flame_jet
+  //   17 -> 16 (in 14 of the 25 top cells). HP 32 -> 34 deliberately goes the
+  //   other way: sorcerer's EHP 38 is the lowest in the game by 7, which is
+  //   WHY undying is mandatory — raising base HP makes stalwart/opportunist
+  //   survivable enough to compete, buying build diversity while total power
+  //   falls. A deeper undying tax would have done the opposite.
+  //  FIGHTER (63 ceiling and 6 top-50, both LAST, despite the highest EHP —
+  //   it survives but cannot close): sword 11 -> 12 lifts every build every
+  //   turn; concussive 6 -> 8 reverts the pass-10 cut made when concussive was
+  //   the hottest special in the game (91|87). It is #30 now and can afford it.
+  //  SHOCKWAVE excludeAllies — the THIRD instance of the friendly-fire
+  //   disease. Worst special at #78 and immune to two separate damage buffs,
+  //   exactly like blizzard. Whirlwind deliberately KEEPS friendly fire (owner:
+  //   its risk is the point), so the two barbarian AoEs separate cleanly:
+  //   whirlwind = high damage, risky; shockwave = safe displacement.
+  //  BLIZZARD range 3 -> 2: it currently has no downside whatsoever
+  //   (enemies-only, no self-cost, unblockable, 3x3 freeze) and sits at #1.
+  //   Range makes the wizard commit position for it.
+  pass15: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: {
+      eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 3, missile: -1, concussive: 0, pinning: -4, bolt: 1, whirlwind: 2,
+      shield_bash: 3, strike: -1, ffh: -2, flame_jet: 0, sword: 1,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 },
+    pullDist: { grasp: -1, shockwave: 1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: true, ffh: true, shockwave: true },
+    replaceEffects: {
+      twin: [
+        { type: 'damage', formula: 'flat', value: 8 },
+        { type: 'damage', formula: 'flat', value: 8 },
+      ],
+      ward: [
+        { type: 'grant_max_health', value: 15 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**
