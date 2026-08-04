@@ -1102,3 +1102,38 @@ Validation errors: 0 across all four runs.
 - **C23 scope grew.** The AoE preview must now also show a LEAP: the landing
   tile plus the ring around it, and which allies the ring will catch. Same
   ship blocker, more surface.
+
+### Leaping Slam vs root — DECIDED (owner, 2026-08-04)
+
+**Ruling: the leap works while rooted, and the root SURVIVES the leap.**
+Verified against the engine, not assumed: a Barbarian rooted for 2 turns that
+leaps arrives at the target tile with `rooted: turnsRemaining 2` untouched and
+still ticking. So it is not root immunity — it is exactly ONE displacement,
+bought with the once-per-game special, after which the unit is planted in its
+new spot for the remainder of the root.
+
+Kept deliberately because specials are HIDDEN information: an opponent rooting
+a Barbarian does not know whether they are rooting into a Leaping Slam. That
+read is the point. Note the sim cannot model it — the AI plays with perfect
+information, so the grid systematically UNDERVALUES the escape and its true
+in-play worth is higher than whatever pass 17 prints.
+
+**Acceptance bar this creates (owner): Leaping Slam must NOT be the clear best
+barbarian special.** If it is, opponents stop reading and simply assume every
+Barbarian has it, and the whole class gets priced as root-resistant whether or
+not it is equipped. The bluff only works with three live picks. If the grid
+shows Leaping Slam on top by any real margin, TRIM IT rather than buffing the
+other two toward it — the sim already understates it. Ground Slam trailing
+stops being acceptable variety under this bar and becomes the thing to fix.
+
+**⚠ DESCRIPTION REQUIREMENT (ship-time, do not lose).** The ability text must
+state that the Barbarian leaps **"(even if rooted)"**. This is non-obvious
+rules-critical information — MOV-4 tells players a rooted unit cannot move, so
+without the clause the leap reads as illegal and players will never try the
+escape that is the whole reason the interaction was kept. Goes in the same
+pass as the Ring of Fire / Ring of Frost / Leaping Slam / Ground Slam renames.
+
+Owner acknowledged the fiction is strained — a unit that just jumped is
+still "rooted" on landing — and ruled that the mechanics are better this way.
+If the wording ever needs to carry it: the root is what he is dragging with
+him, not what is holding his feet.
