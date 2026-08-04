@@ -822,3 +822,46 @@ WATCH: sorcerer 69 ceiling + 25 top-50 is now the concentration leader — the
 AoE pair may have overshot. Barbarian dropped to 9 top-50 (from 26), so the
 AC 9 cut plus the field shift moved it a lot; do not cut it further.
 Rogue 6 top-50 (from 18) — the twin 8+8 cut landed.
+
+## ⚠ SHIP BLOCKER (owner, 2026-08-03): mixed AoE friendly-fire needs UI support
+
+After pass 15 the AoE abilities split into TWO groups that behave oppositely:
+
+  ENEMIES ONLY : roar, firestorm (ffh), blizzard, shockwave
+  HITS ALLIES  : whirlwind, flame_jet, piercing   (deliberate — the risk is
+                 the point; owner explicitly rejected making whirlwind safe)
+
+Owner: "some aoe specials having friendly fire and some not is tricky
+business, the game needs to be intuitive, we are playing with fire here."
+
+**Requirement.** When targeting an enemies-only AoE, a tile occupied by YOUR
+OWN unit must NOT render as a damage tile. Seeing the orange 3x3 swallow your
+own fighter and having to remember "…but Firestorm is safe now" is exactly the
+confusion that makes players distrust the preview. Conversely, friendly-fire
+AoEs must make ally tiles look actively dangerous, not neutral.
+
+**Where.** `mobile/app/match/[id].tsx`, `getTileTint` — both AoE branches
+currently return the same `'aoePreview'` tint for every tile in the area,
+with no reference to occupancy or the ability's flag:
+  - self-centred branch  (~line 2277)
+  - placed-AoE branch    (~line 2282)
+`AbilityDef.excludeAllies` is already present client-side (src/api/client.ts),
+and the ENGINE already resolves it correctly — this is purely player-facing.
+
+**Suggested treatment** (needs an owner/design call, not just a code change):
+  - enemies-only + ally on tile  -> no damage tint (or an explicit "safe" tint)
+  - friendly-fire + ally on tile -> distinct DANGER tint, not the neutral orange
+  - carry the same distinction into the ability card/tooltip, not just the board
+  - every description must state it: several already say "(including allies)";
+    ffh/blizzard/shockwave descriptions currently say "all units"/"every unit"
+    and MUST be rewritten to say enemies only when these values ship
+    (gameData.ts lines ~32, 45, 262, 315, 327, 437 are the AoE description set)
+
+**Risk if skipped:** players learn the rule by losing a unit to their own
+Firestorm — the single worst way to teach a mechanic — or they never learn
+Shockwave/Blizzard are safe and simply keep not using them, which would undo
+the exact fix that rescued those two specials.
+
+Alternative worth considering if the UI cannot carry it cleanly: make ALL AoEs
+enemies-only and re-price whirlwind/flame_jet damage. Simpler to learn, at the
+cost of the risk-reward identity the owner values in whirlwind.
