@@ -84,6 +84,8 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'ABL-8', text: "Area abilities hit every unit within their radius, including diagonals (a radius-1 blast covers a full 3×3 square). Orthogonal area abilities — Whirlwind and Shockwave — hit only the 4 tiles directly adjacent to the caster, never diagonals." },
       { id: 'ABL-9', text: "Line abilities (Piercing Shot) fire a ray in one of the 8 directions and hit EVERY unit along it — friend and foe — for the ability's full range. The tile you tap only chooses the direction: the ray does not stop at it, nor at the first unit it hits. It stops only at the board edge or a removed corner." },
       { id: 'ABL-10', text: "Area and line abilities that do not state otherwise hit allies caught in them, including the caster's own teammates. Whirlwind, Shockwave and Piercing Shot all hit allies; the caster itself is never hit by its own self-centred blast." },
+      { id: 'ABL-11', text: "Ring abilities (Ring of Fire, Ring of Frost) hit every tile within their radius EXCEPT the centre tile you aimed at. The calm eye is how you spare a unit standing in the middle — including your own." },
+      { id: 'ABL-12', text: "Leaping abilities (Leaping Slam) move the caster to the tile it targets, then resolve from there. The leap passes clean over anything in the way — allies, enemies, any distance within range — but the landing tile itself must be empty. Anchor does not stop a unit from leaping under its own power." },
     ],
   },
   {

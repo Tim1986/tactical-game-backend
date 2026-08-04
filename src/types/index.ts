@@ -54,6 +54,7 @@ export type AbilityEffectType =
   | 'remove_status'
   | 'push'
   | 'pull'
+  | 'move_self'
   | 'teleport'
   | 'modify_cooldown'
   | 'lifesteal'
@@ -108,6 +109,23 @@ export interface PullEffect {
   distance: number;
 }
 
+/**
+ * The caster relocates to the targeted tile (Leaping Slam). Unlike MOVE this is
+ * a LEAP: it ignores intervening units entirely — only the destination must be
+ * empty and in range. Range is the ability's own `range` (Manhattan, matching
+ * cast validation), NOT the unit's movementRange, and it costs the action, not
+ * the move.
+ *
+ * Resolved ONCE at cast time, before targets are hit — never per-target — so
+ * the blast lands around where the caster ends up. Pair it with `areaShape:
+ * 'ring'` and the caster settles in the calm eye of its own blast; with a
+ * chebyshev shape it would blow itself up, which is why the shape is the design
+ * and not a nicety (see AC_REWORK.md, the Barbarian placement-freedom problem).
+ */
+export interface MoveSelfEffect {
+  type: 'move_self';
+}
+
 export interface ModifyCooldownEffect {
   type: 'modify_cooldown';
   abilitySlug: string;
@@ -129,6 +147,7 @@ export type AbilityEffect =
   | RemoveStatusEffect
   | PushEffect
   | PullEffect
+  | MoveSelfEffect
   | ModifyCooldownEffect
   | LifestealEffect
   | GrantMaxHealthEffect;

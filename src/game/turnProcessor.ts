@@ -565,6 +565,15 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
       : manhattanDistance(unit.position, action.target);
     if (rangeDistance > ability.range) throw new TurnValidationError('Target out of range');
   }
+  // Leap (move_self): the caster ends the cast standing on the target tile, so
+  // that tile must be free. Nothing in BETWEEN is checked — a leap passes over
+  // units by design, which is the whole point of giving melee some reach.
+  if (ability.effects.some((e) => e.type === 'move_self')) {
+    const occupant = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
+    if (occupant && occupant.instanceId !== unit.instanceId) {
+      throw new TurnValidationError('Cannot leap onto an occupied tile');
+    }
+  }
   if (ability.targetingType === 'single') {
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
     if (!targetUnit) throw new TurnValidationError('No unit at target position');

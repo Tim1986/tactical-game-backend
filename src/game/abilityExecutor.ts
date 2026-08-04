@@ -55,6 +55,11 @@ function hasStatusEffect(unit: UnitInstance, slug: string): boolean {
 }
 
 export function executeAbility(ctx: ExecutionContext): void {
+  // The leap lands FIRST, before targets are resolved, so the blast is centred
+  // on where the caster ends up rather than where it started. Everything below
+  // — targeting, push direction, thorns — then reads the landing tile.
+  if (ctx.ability.effects.some((e) => e.type === 'move_self')) applyMoveSelf(ctx);
+
   const targets = resolveTargets(ctx);
   const dealsDamage = ctx.ability.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
   const needsHitRoll = !ctx.ability.isUnblockable
@@ -179,6 +184,8 @@ function applyEffect(ctx: ExecutionContext, target: UnitInstance, effect: Abilit
     case 'remove_status': removeStatus(ctx, target, effect); break;
     case 'push': applyPush(ctx, target, effect); break;
     case 'pull': applyPull(ctx, target, effect); break;
+    // move_self already resolved once at cast time — per-target it's a no-op.
+    case 'move_self': break;
     case 'modify_cooldown': applyModifyCooldown(ctx, target, effect); break;
     case 'lifesteal': applyLifesteal(ctx, target, effect); break;
   }
@@ -363,6 +370,33 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PULLED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
+}
+
+/**
+ * Leap the caster onto the targeted tile. Deliberately NOT routed through
+ * findLastFreePosition: a leap goes OVER intervening units, so nothing between
+ * here and there can shorten it — only the destination matters. Anchor does not
+ * stop it either; Anchor resists being MOVED by someone else, and this is the
+ * caster moving itself.
+ *
+ * Silently declines (no move, no event) if the landing tile is out of bounds or
+ * occupied. Range is enforced at validation (processUseAbility); this is the
+ * belt-and-braces layer for AI-generated and campaign-scripted casts, which
+ * reach executeAbility by other paths.
+ */
+function applyMoveSelf(ctx: ExecutionContext): void {
+  const dest = ctx.targetPosition;
+  if (!isInBounds(dest)) return;
+  const occupant = getUnitAtPosition(ctx.state.units.filter((u) => u.isAlive), dest);
+  if (occupant && occupant.instanceId !== ctx.caster.instanceId) return;
+  if (dest.x === ctx.caster.position.x && dest.y === ctx.caster.position.y) return;
+  ctx.caster.position = { x: dest.x, y: dest.y };
+  ctx.events.push({
+    type: 'UNIT_MOVED',
+    sourceUnitInstanceId: ctx.caster.instanceId,
+    targetUnitInstanceId: ctx.caster.instanceId,
+    position: { x: dest.x, y: dest.y },
+  });
 }
 
 function applyModifyCooldown(_ctx: ExecutionContext, target: UnitInstance, effect: ModifyCooldownEffect): void {

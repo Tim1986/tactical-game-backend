@@ -876,7 +876,11 @@ function scoreEffectsOnTarget(
       }
 
       default:
-        break; // modify_cooldown / teleport: no current abilities use them
+        // modify_cooldown / teleport: no current abilities use them.
+        // move_self scores 0 here BY DESIGN — a leap's value is already
+        // expressed in which tiles the blast can reach (the centre enumeration
+        // in the 'aoe' case), so paying for it per-target would double-count.
+        break;
     }
   }
   return s;
@@ -1032,6 +1036,11 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
       }
 
       case 'aoe': {
+        // A leap (move_self) relocates the caster to the blast centre, so the
+        // centre doubles as a landing tile: it must be unoccupied, and the
+        // caster must not be scored as a victim of its own blast at the tile it
+        // is about to VACATE (effPos still reports the pre-leap position).
+        const isLeap = def.effects.some((e) => e.type === 'move_self');
         const centers: BoardPosition[] = [];
         if (def.range === 0) {
           centers.push(casterPos);
@@ -1040,7 +1049,11 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             for (let y = 0; y < BOARD_SIZE; y++) {
               const c = { x, y };
               if (!isInBounds(c)) continue;
-              if (manhattanDistance(casterPos, c) <= def.range) centers.push(c);
+              if (manhattanDistance(casterPos, c) > def.range) continue;
+              if (isLeap && units.some((u) => u.isAlive
+                && u.instanceId !== caster.instanceId
+                && effPos(ctx, u).x === c.x && effPos(ctx, u).y === c.y)) continue;
+              centers.push(c);
             }
           }
         }
@@ -1053,7 +1066,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
           for (const t of units) {
             if (!t.isAlive) continue;
             // Self-centered AOE (Whirlwind) hits everything adjacent but not the caster.
-            if (def.range === 0 && t.instanceId === caster.instanceId) continue;
+            if ((def.range === 0 || isLeap) && t.instanceId === caster.instanceId) continue;
             if (!isInAoe(c, effPos(ctx, t), def.areaRadius, def.areaShape)) continue;
             // AOE ally exclusion (e.g. Roar): filter allies out entirely
             // before any scoring, matching the engine's resolveTargets.
@@ -1497,6 +1510,13 @@ export function planBestTurn(
     if (candDef?.selfStatus && ['rooted', 'frozen'].includes(candDef.selfStatus.statusSlug)) {
       continue; // cast-then-stay was already considered above
     }
+    // A leap (move_self) relocates the caster mid-turn, so every retreat tile
+    // below — precomputed from unit.position, with a path traced from it — is
+    // measured from a tile the unit no longer occupies. Queuing one produces
+    // "Destination is not reachable" rejections that forfeit the action, the
+    // same failure shape as the self-root case above. The leap already IS the
+    // repositioning; cast-then-stay (considered above) is the right plan.
+    if (candDef?.effects.some((e) => e.type === 'move_self')) continue;
     const dispEffect = candDef?.effects.find(
       (e) => e.type === 'push' || e.type === 'pull',
     );

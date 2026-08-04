@@ -574,6 +574,64 @@ const PRESETS: Record<string, Preset> = {
     },
   },
 
+  // --- PASS 17: the two Barbarian redesigns + blizzard range 4. -------------
+  // Settled going in: fighter buff reverted, shockwave push dropped.
+  //
+  // Roar is GONE, replaced by LEAPING SLAM. Roar died (#457/2268) because every
+  // one of the Barbarian's three specials was range 0 — under universal
+  // friendly fire a 24-tile blanket centred on a melee body cannot be aimed at
+  // all, and a weaken that lands on your own team is pure loss with no damage
+  // to weigh against it. The leap buys placement freedom the way firestorm's
+  // range does, but through the Barbarian's OWN body, which is on-theme and
+  // keeps the class melee. Landing in the ring's calm eye is what makes it
+  // survivable.
+  //
+  // Shockwave becomes GROUND SLAM: same 4-tile orthogonal footprint, push
+  // swapped for a 1-turn root. Rooting an ally you are already stood next to
+  // costs almost nothing, so friendly fire is naturally cheap here — the same
+  // "payload that doesn't punish a clip" property, arrived at from the other
+  // direction. It also sets up whirlwind.
+  //
+  // Blizzard goes to range 4. Range 5 (p17_range) took it from #44/#21 to #1 in
+  // BOTH screened pairs — decisive, but overshooting into best-in-class. 4 is
+  // the test of whether the fix survives at a smaller dose.
+  pass17: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: {
+      eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2,
+      longshot: 3, missile: -1, concussive: -2, pinning: -4, bolt: 1, whirlwind: 2,
+      shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0,
+      // shockwave/roar omitted on purpose — replaceEffects sets them outright.
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 2, roar: 3 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring', roar: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+      // Leaping Slam: leap up to 3, then ring the landing tile.
+      roar: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 10 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+      // Ground Slam: shockwave's damage, root instead of push.
+      shockwave: [
+        { type: 'damage', formula: 'flat', value: 13 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+      ],
+    },
+  },
+
   // --- Pass 17 SCREENING VARIANTS (blizzard only; everything else = pass16
   // plus the two settled changes: fighter buff reverted, shockwave push 2). ---
   // Question: blizzard ring @ range 3 sits at #133 while the STRUCTURALLY

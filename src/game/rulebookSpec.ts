@@ -108,6 +108,13 @@ function cast(ability: AbilityDefinition, caster: UnitInstance, target: UnitInst
   return events;
 }
 
+/** Cast at a bare TILE rather than at a unit — placed AoEs, rings, leaps. */
+function castAt(ability: AbilityDefinition, caster: UnitInstance, targetPosition: BoardPosition, allUnits: UnitInstance[]): GameEvent[] {
+  const events: GameEvent[] = [];
+  executeAbility({ state: mkLegacyState(allUnits), caster, targetPosition, ability, events });
+  return events;
+}
+
 const has = (u: UnitInstance, slug: string) => u.statusEffects.some((se) => se.slug === slug);
 const at = (list: BoardPosition[], x: number, y: number) => list.some((p) => p.x === x && p.y === y);
 
@@ -700,6 +707,68 @@ export const RULE_CHECKS: RuleCheck[] = [
         const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
         assert(!def?.excludeAllies, `${slug} must keep hitting allies (excludeAllies must stay falsy)`);
       }
+    },
+  },
+  {
+    rule: 'ABL-11', name: 'a ring blast covers its radius but spares the centre tile it was aimed at',
+    run: () => {
+      const ring = mkAbility({
+        slug: 'test_ring', targetingType: 'aoe', range: 4, areaRadius: 1,
+        areaShape: 'ring', isUnblockable: true,
+        effects: [{ type: 'damage', formula: 'flat', value: 5 }],
+      });
+      const caster = mkUnit(P1, 0, 0);
+      const eye = mkUnit(P1, 3, 3);        // stands in the calm centre — spared
+      const edge = mkUnit(P2, 3, 4);       // orthogonal neighbour — hit
+      const corner = mkUnit(P2, 4, 4);     // diagonal neighbour — hit
+      const ev = castAt(ring, caster, eye.position, [caster, eye, edge, corner]);
+      assert(!ev.some((e) => e.targetUnitInstanceId === eye.instanceId),
+        'a ring must NOT hit the unit standing on the tile it was aimed at');
+      assert(ev.some((e) => e.targetUnitInstanceId === edge.instanceId),
+        'a ring must hit the orthogonal neighbour of its centre');
+      assert(ev.some((e) => e.targetUnitInstanceId === corner.instanceId),
+        'a ring must hit the diagonal neighbour of its centre');
+    },
+  },
+  {
+    rule: 'ABL-12', name: 'a leap relocates the caster over intervening units; the landing tile must be free',
+    run: () => {
+      const leap = mkAbility({
+        slug: 'test_leap', targetingType: 'aoe', range: 3, areaRadius: 1,
+        areaShape: 'ring', isUnblockable: true,
+        effects: [
+          { type: 'move_self' },
+          { type: 'damage', formula: 'flat', value: 6 },
+        ],
+      });
+
+      // Leaps OVER a blocker: the wall at (3,2) would stop a MOVE dead.
+      const barb = mkUnit(P1, 3, 1);
+      const wall = mkUnit(P2, 3, 2);
+      const victim = mkUnit(P2, 4, 3);
+      const ev = castAt(leap, barb, { x: 3, y: 3 }, [barb, wall, victim]);
+      assert(barb.position.x === 3 && barb.position.y === 3,
+        'the caster must end the leap standing on the targeted tile');
+      assert(ev.some((e) => e.type === 'UNIT_MOVED' && e.targetUnitInstanceId === barb.instanceId),
+        'a leap must emit UNIT_MOVED for the caster');
+      // Blast is centred on the LANDING tile, not the take-off tile: the victim
+      // adjacent to (3,3) is hit, and the caster in the calm eye is not.
+      assert(ev.some((e) => e.targetUnitInstanceId === victim.instanceId),
+        'the blast must resolve around where the caster landed');
+      assert(!ev.some((e) => e.type === 'DAMAGE_DEALT' && e.targetUnitInstanceId === barb.instanceId),
+        'the leaping caster must land in the calm eye of its own ring');
+
+      // An occupied landing tile is declined outright — no move, no blast.
+      const barb2 = mkUnit(P1, 1, 1);
+      const squatter = mkUnit(P2, 1, 3);
+      castAt(leap, barb2, squatter.position, [barb2, squatter]);
+      assert(barb2.position.x === 1 && barb2.position.y === 1,
+        'a leap onto an occupied tile must not move the caster');
+
+      // Anchor blocks being MOVED by someone else, never self-propelled travel.
+      const anchored = mkUnit(P1, 5, 5, { passives: ['immovable'] });
+      castAt(leap, anchored, { x: 5, y: 3 }, [anchored]);
+      assert(anchored.position.y === 3, 'Anchor must not prevent a unit leaping under its own power');
     },
   },
 
