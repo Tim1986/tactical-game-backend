@@ -621,7 +621,11 @@ const PRESETS: Record<string, Preset> = {
       // Leaping Slam: leap up to 3, then ring the landing tile.
       roar: [
         { type: 'move_self' },
-        { type: 'damage', formula: 'flat', value: 10 },
+        // 10 made it rank #1 in both screened pairs by ~20pts over the rest of
+        // the kit (66.7/72.2 vs whirlwind 45.8/58.9) — the leap, the damage and
+        // the weaken were three payments for one action. Damage is the cheapest
+        // of the three to give back; the reach is the point of the design.
+        { type: 'damage', formula: 'flat', value: 6 },
         { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
       ],
       // Ground Slam: shockwave's damage, root instead of push.

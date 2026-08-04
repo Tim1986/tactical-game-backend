@@ -1007,3 +1007,98 @@ blizzard is dead again. Fighter 70 with 34 of the top 50 is now the outlier
    knockback 3 -> 2 and re-testing; the bigger push made FF worse.
 4. FIGHTER: 34 of the top 50. The pass-15 buff (sword 12, concussive 8) should
    probably be given back now that the field around it changed.
+
+---
+
+## Pass 17 — the leap, and the blizzard range answer (2026-08-04)
+
+### Blizzard: it was RANGE, and the shrink idea was wrong
+
+Screening (2 pairs x 81 loadouts x 9 refs, 20 games/cell), Blizzard's best
+rank and top-5 mean within its pair:
+
+| variant                     | wiz/fighter  | wiz/cleric  |
+|-----------------------------|--------------|-------------|
+| range 3, 8-tile ring (ctrl) | #44  (42.9)  | #21 (50.0)  |
+| range 3, 4-tile orthogonal  | not run      | #16 (48.7)  |
+| **range 4**, 8-tile ring    | **#5 (53.8)**| **#2 (57.8)**|
+| range 5, 8-tile ring        | #1   (63.9)  | #1  (64.4)  |
+
+Two lessons, one of them a correction:
+
+1. **Reach was the whole problem.** Structurally identical rings (ffh #20 at
+   range 5 vs blizzard #133 at range 3) differed only in how far they could be
+   placed. A placed AoE under friendly fire needs enough reach to FIND CLEAN
+   GROUND; without it you can only aim where your own team already is.
+2. **Shrinking the footprint did nothing** (48.7 vs the 50.0 control). This was
+   my speculation and the owner challenged it as speculation — correctly. The
+   constraint was never tile count. Log it next to the context-blind-marginals
+   trap: a plausible mechanism is not evidence.
+
+**DECIDED: blizzard range 4.** Range 5 made it best-in-class outright (#1 in
+both pairs); 4 puts it level with freeze (55.5/55.7) and cold_snap
+(57.9/56.5) — a real option, not the auto-pick.
+
+### Barbarian: the problem was never Roar's numbers
+
+All THREE barbarian specials were range 0. The class had no placement freedom
+anywhere in its kit, so under universal friendly fire it could not aim, and a
+weaken landing on your own team is pure loss with no damage to weigh against
+it (roar #457/2268, shockwave #253). Whirlwind survived only because 20 damage
+is worth clipping an ally for.
+
+**New `move_self` effect (engine, commit 02e7e9c).** The caster leaps to the
+targeted tile, THEN the blast resolves around where it landed. Passes over
+intervening units — only the landing tile must be free. Anchor does not stop
+it (Anchor resists being moved by someone ELSE). Paired with `ring` the caster
+settles in the calm eye; with a chebyshev shape it would blow itself up, so
+the shape is load-bearing, not decoration. Rules: ABL-11 (ring spares its
+centre — implemented since pass 16 but never written down) and ABL-12 (leap),
+both with spec checks.
+
+Brain fixes the leap required, all the same family of bug:
+- leap centres skip occupied tiles;
+- the caster is not scored as a victim of its own blast at the tile it is
+  about to VACATE (effPos still reports the pre-leap position);
+- **no retreat MOVE is queued after a leap** — retreat tiles are precomputed
+  and pathed from the pre-leap tile, so queuing one produces "Destination is
+  not reachable" and forfeits the action. Identical failure shape to the
+  Blizzard self-root bug that silently sabotaged every battery before pass 16.
+
+**Roar -> LEAPING SLAM** (leap 3, ring r1, damage + weaken 2).
+**Shockwave -> GROUND SLAM** (4-tile orthogonal, 13 damage + rooted 1, push
+dropped). Rooting an ally you already stand next to costs almost nothing, so
+friendly fire is naturally cheap — the same "payload that does not punish a
+clip" property reached from the other direction.
+
+Screened (same harness), best rank / top-5 mean within pair:
+
+| special           | barb/fighter | barb/cleric |
+|-------------------|--------------|-------------|
+| Leaping Slam @10  | #1  (66.7)   | #1  (72.2)  |
+| Whirlwind         | #19 (45.8)   | #7  (58.9)  |
+| Ground Slam       | #18 (43.9)   | #14 (50.9)  |
+
+Design validated, number wrong: ~20pts clear of the rest of the kit is the
+one-viable-pick shape we rejected on the Sorcerer. The leap, the damage and
+the weaken were three payments for one action; damage is the cheapest to give
+back. **DECIDED: Leaping Slam damage 10 -> 6.** Ground Slam left alone for
+now — at #18/#14 within its pair it is nothing like Shockwave's old #253, and
+once Leaping Slam comes down a 55/46/44 spread is healthy variety.
+
+Fighter pass-15 buff reverted as agreed (concussive -2, sword 0).
+Validation errors: 0 across all four runs.
+
+### Open, before the full grid
+
+- **Leap while ROOTED.** processUseAbility gates on `frozen` only, so a rooted
+  Barbarian can currently leap — consistent with MOV-4 ("a rooted unit can
+  still use abilities"), but it makes Leaping Slam a root escape and quietly
+  devalues Grasp, Ground Slam's own root, and Anchor's neighbours. Needs an
+  owner ruling BEFORE the grid: changing it afterwards invalidates the run.
+- **Names.** Ring of Fire / Ring of Frost already decided; add Leaping Slam
+  and Ground Slam to the same rename pass (slugs `roar` / `shockwave` stay
+  until the pre-beta slug cleanup).
+- **C23 scope grew.** The AoE preview must now also show a LEAP: the landing
+  tile plus the ring around it, and which allies the ring will catch. Same
+  ship blocker, more surface.
