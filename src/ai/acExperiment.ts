@@ -636,6 +636,84 @@ const PRESETS: Record<string, Preset> = {
     },
   },
 
+  // --- PASS 18 SCREENING: rein in Leaping Slam, revive Ground Slam. --------
+  // pass17 result: Leaping Slam is rank #1 of all 2268 cells, top10 74.6 vs
+  // whirlwind 65.6 and Ground Slam 57.0, holding 48 of the top 100. That is the
+  // clear-best outcome the owner ruled out — it collapses the hidden-special
+  // read, because opponents stop guessing and just assume every Barbarian has
+  // it, pricing the whole class as root-resistant. Barbarian ceiling hit 75 vs
+  // 70 for second place.
+  //
+  // The 10 -> 6 damage trim barely moved it, so DAMAGE IS NOT WHERE THE POWER
+  // LIVES — the leap itself is the payload. Owner keeps the weaken (thematic),
+  // so the lever is reach: leap 3 -> 2. Two damage levels are screened together
+  // to bracket the answer in one round rather than iterating.
+  //   p18_a: leap range 2, damage 6   p18_b: leap range 2, damage 4
+  // Both also carry GROUND SLAM ROOT 1 -> 2 (owner): at #109 with zero top-100
+  // cells it was the worst of the three, and two dead picks leak the read just
+  // as badly as one dominant pick. Blizzard range 4 is SETTLED (#133 -> #25,
+  // level with cold_snap and freeze) and unchanged here.
+  p18_a: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 2, roar: 2 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring', roar: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+      roar: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 6 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+      shockwave: [
+        { type: 'damage', formula: 'flat', value: 13 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      ],
+    },
+  },
+  p18_b: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 2, roar: 2 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring', roar: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+      roar: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 4 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+      shockwave: [
+        { type: 'damage', formula: 'flat', value: 13 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      ],
+    },
+  },
+
   // --- Pass 17 SCREENING VARIANTS (blizzard only; everything else = pass16
   // plus the two settled changes: fighter buff reverted, shockwave push 2). ---
   // Question: blizzard ring @ range 3 sits at #133 while the STRUCTURALLY
