@@ -1137,3 +1137,37 @@ Owner acknowledged the fiction is strained — a unit that just jumped is
 still "rooted" on landing — and ruled that the mechanics are better this way.
 If the wording ever needs to carry it: the root is what he is dragging with
 him, not what is holding his feet.
+
+### ⏸ Pass 18 grid — INTERRUPTED, needs a re-run (2026-08-04)
+
+The full pass18 grid was ~4 of 28 pairs in when the machine was closed. Nothing
+to salvage; just relaunch (it is deterministic given the preset, and cheap in
+attention — only CPU time):
+
+```
+nohup npx tsx src/ai/acExperiment.ts --preset pass18 --stage e --cellgames 20 \
+  --csv <scratch>/pass18_grid.csv > <scratch>/ac_pass18_grid.log 2>&1 &
+node scripts/buildGridXlsx.mjs <scratch>/pass18_grid.csv backend/pass18_balance_grid.xlsx
+```
+
+`caffeinate -i -w <pid>` alongside it — the Mac sleeps after ~1 minute idle and
+that silently stalls the run.
+
+**pass18 contents (all settled, no open questions):** Leaping Slam leap 2 /
+damage 4 / weaken 2 kept; Ground Slam 13 damage + 2-turn root; blizzard range 4;
+anchor +2 max HP on its five classes; assassinate threshold 22.
+
+**What the grid has to answer, in priority order:**
+1. Does the Barbarian ceiling rejoin the pack? pass17 was 75 vs 70 for second,
+   driven entirely by Leaping Slam holding 48 of the top 100.
+2. Is Cleric still strong once that distortion clears? Owner deliberately did
+   NOT touch the chassis pending this.
+3. Where does Rogue land with assassinate 22 — it read weak in pass17 but every
+   class was depressed by the Barbarian inflation.
+4. **Anchor's share** — the +2 HP reopens a door that was closed once before
+   (an old +6 rider made anchor strictly dominant; rulebookSpec still asserts
+   anchor must not change max health). pass16 baseline: median rank 1322/2268,
+   20 cells in the top 100. A sharp climb means the old failure is back.
+
+⚠ Ship-time: the anchor +2 will FAIL `rulebookSpec.ts` ("anchor must NOT change
+max health") and needs PAS-2 + the Anchor description updated alongside it.
