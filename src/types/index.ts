@@ -148,7 +148,7 @@ export interface AbilityDefinition {
   /** AOE abilities only: when true, allies are excluded from the blast (e.g. Roar). Default false — existing AOEs (Whirlwind, Firestorm, Piercing) hit allies unchanged. */
   excludeAllies?: boolean;
   /** AOE abilities: 'orthogonal' only hits the 4 cardinal neighbors (Manhattan ≤ 1). Default 'chebyshev' includes all 8 surrounding tiles. */
-  areaShape?: 'chebyshev' | 'orthogonal';
+  areaShape?: 'chebyshev' | 'orthogonal' | 'ring';
   /** Applied to the CASTER after the ability resolves (e.g. Blizzard's
    * self-freeze). Note: a status applied during the caster's own turn is
    * decremented at that turn's end, so durationTurns 2 skips exactly 1 turn. */

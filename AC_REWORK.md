@@ -957,3 +957,53 @@ When that lands, do it as ONE sweep: slugs + display names + descriptions +
 campaign/puzzle references + SPECIALS_TEST_SCRIPT.md + rulebookSpec ids, with
 a grep for every old slug afterwards to prove nothing dangles. Do NOT attempt
 it piecemeal, and do NOT do it while saved teams still matter.
+
+## Pass 16 results — the universal-friendly-fire baseline
+
+Ceiling: fighter 70 | warlock 69 | ranger 68 | cleric 68 | sorcerer 66 |
+rogue 65 | barbarian 63 | wizard 62. Spread 8.0 (was 6.0) — WIDER, as expected
+for a structural change. Ladder @150: fighter 64▲ … barbarian 31▼. 0 errors.
+
+**THE RING WORKS FOR FIRESTORM, NOT FOR BLIZZARD.**
+AoE specials, first-appearance rank:
+  piercing   #  1  (line, always had FF — unaffected)
+  flame_jet  # 14  (line, always had FF — unaffected)
+  ffh        # 20  <- RING + friendly fire. Was #26-38 as a FF box, #2 as an
+                     enemies-only box. The eye put it back in playable range
+                     WITH the downside restored. This is the design working.
+  whirlwind  # 22  (self-centred, always had FF — unaffected)
+  blizzard   #133  <- RING + friendly fire. Was #1 enemies-only, #342 as a FF
+                     box. The eye helped (342 -> 133) but not enough.
+  shockwave  #253  <- friendly fire restored, and it collapsed (was ~#78)
+  roar       #457  <- radius 2->1 AND friendly fire. Destroyed, as owner
+                     predicted ("we pick up the pieces afterwards").
+
+READING: the eye rescues a DAMAGE ring (ffh) but not a CONTROL ring (blizzard).
+Reason is asymmetry of consequence — taking 14 damage from your own Ring of
+Fire is a cost you can pay; being FROZEN by your own Ring of Frost costs a
+whole unit-turn, which is the same currency the ability is trying to win. A
+freeze that can freeze your own team is close to self-cancelling.
+
+Also confirmed: whirlwind/flame_jet/piercing sit at #1/#14/#22 and were
+untouched by any of this, which validates the original diagnosis — friendly
+fire is fine when YOUR OWN POSITION is the aiming mechanism.
+
+CLASS NOTES: barbarian 63 ceiling and just 1 top-50 cell — it lost roar AND
+shockwave in one pass, i.e. two of its three specials. Wizard 62 / 2 top-50 —
+blizzard is dead again. Fighter 70 with 34 of the top 50 is now the outlier
+(the pass-15 buff landed on top of a field that got weaker around it).
+
+## Pass 17 candidates (owner to rule)
+1. BLIZZARD: the ring is not enough for a control AoE. Options: (a) let it
+   damage-only-hit allies i.e. allies take the freeze but at 1 turn it is
+   nearly a wash — no; (b) shrink to a 4-tile orthogonal ring so a clean angle
+   is findable like whirlwind's; (c) accept freeze-AoE cannot carry friendly
+   fire and give blizzard a different payload (damage + slow?); (d) single
+   documented exception. My lead: (b), it keeps the universal rule.
+2. ROAR: radius 1 + FF still leaves it weakening your own front line. It is a
+   SHOUT — the cleanest fiction for an exception, if we want exactly one.
+   Alternative that keeps the rule: make it damage-only (drop the weaken).
+3. SHOCKWAVE: #253. Its push now scatters allies too. Suggest reverting the
+   knockback 3 -> 2 and re-testing; the bigger push made FF worse.
+4. FIGHTER: 34 of the top 50. The pass-15 buff (sword 12, concussive 8) should
+   probably be given back now that the field around it changed.

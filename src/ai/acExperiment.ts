@@ -75,6 +75,10 @@ interface Preset {
   /** Ability-slug → delta on the ability's SELF status duration (Blizzard's
    * channel root — distinct from statusDur, which hits the target). */
   selfStatusDur?: Record<string, number>;
+  /** Ability-slug → override areaShape ('chebyshev'|'orthogonal'|'ring'). */
+  areaShape?: Record<string, 'chebyshev' | 'orthogonal' | 'ring'>;
+  /** Ability-slug → delta on areaRadius. */
+  areaRadius?: Record<string, number>;
   /** Ability-slug → override the ability's excludeAllies flag (Blizzard: an
    * ally-hitting AoE with no damage is strictly worse than cold_snap). */
   excludeAllies?: Record<string, boolean>;
@@ -509,6 +513,66 @@ const PRESETS: Record<string, Preset> = {
       ],
     },
   },
+
+  // Pass 16 — NEW BASELINE. THE UNIVERSAL FRIENDLY-FIRE RULE (owner, 2026-08-03).
+  //
+  // Design decision: EVERY AoE hits allies. No exceptions, no per-ability flags,
+  // nothing for a player to memorise. The mixed rule we tested in passes 14-15
+  // worked mechanically but was judged an intuitiveness trap ("we are playing
+  // with fire here"), and zero friendly fire was judged tactically empty.
+  //
+  // What makes the big placed blasts usable again is a SHAPE, not an exception:
+  // firestorm and blizzard become RING (3x3 minus the centre) — the eye of the
+  // hurricane. You aim the calm centre at your OWN frontliner and everything
+  // around them takes the hit. Friendly fire still bites (two adjacent allies
+  // means you can only protect one), the preview shows the hole so it explains
+  // itself, and the rule stays one sentence.
+  //
+  // Number estimates for the re-priced downside:
+  //  ffh      12 -> 14  (regains friendly fire; the eye is worth less than
+  //                      blanket immunity, so it gets damage back but not all
+  //                      the way to the 15 it had while enemies-only)
+  //  blizzard range 2 -> 3 (friendly fire IS its cost now, so give the reach
+  //                      back that was taken when it had no downside at all)
+  //  roar     radius 2 -> 1. Owner accepts roar may be "destroyed" and wants to
+  //                      pick up the pieces after. Best estimate: weakening
+  //                      your own team across a radius-2 (12-tile) area is
+  //                      unplayable; radius 1 matches whirlwind's footprint,
+  //                      which demonstrably survives friendly fire.
+  //  shockwave           keeps 13 damage, friendly fire restored (4-tile
+  //                      self-centred, same footprint as whirlwind).
+  // Everything else carries over from pass 15 unchanged.
+  pass16: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: {
+      eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, shockwave: 5,
+      longshot: 3, missile: -1, concussive: 0, pinning: -4, bolt: 1, whirlwind: 2,
+      shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 1,
+    },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 1 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { roar: -1, fear: 1 },
+    pullDist: { grasp: -1, shockwave: 1 },
+    passiveHp: { fighter: { undying: -7 }, sorcerer: { undying: -5 }, cleric: { undying: -7 } },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 3 },
+    selfStatusDur: { blizzard: -2 },
+    // THE RULE: nothing is enemies-only any more.
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [
+        { type: 'damage', formula: 'flat', value: 8 },
+        { type: 'damage', formula: 'flat', value: 8 },
+      ],
+      ward: [
+        { type: 'grant_max_health', value: 15 },
+        { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 },
+      ],
+    },
+  },
 };
 
 /**
@@ -551,6 +615,12 @@ const BASE_DMG: Record<string, number[]> = Object.fromEntries(
   ]),
 );
 const BASE_RANGE: Record<string, number> = Object.fromEntries(DEFAULT_ABILITIES.map((a) => [a.slug, a.range]));
+const BASE_SHAPE: Record<string, string | undefined> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [a.slug, (a as { areaShape?: string }).areaShape]),
+);
+const BASE_RADIUS: Record<string, number> = Object.fromEntries(
+  DEFAULT_ABILITIES.map((a) => [a.slug, a.areaRadius]),
+);
 const BASE_XA: Record<string, boolean> = Object.fromEntries(
   DEFAULT_ABILITIES.map((a) => [a.slug, (a as { excludeAllies?: boolean }).excludeAllies ?? false]),
 );
@@ -637,6 +707,8 @@ function applyPreset(p: Preset): void {
       (a as { selfStatus?: { durationTurns: number } }).selfStatus!.durationTurns = selfBase + dSelf;
     }
     (a as { excludeAllies?: boolean }).excludeAllies = p.excludeAllies?.[a.slug] ?? BASE_XA[a.slug];
+    (a as { areaShape?: string }).areaShape = p.areaShape?.[a.slug] ?? BASE_SHAPE[a.slug];
+    (a as { areaRadius: number }).areaRadius = BASE_RADIUS[a.slug] + (p.areaRadius?.[a.slug] ?? 0);
     const dTh = p.threshold?.[a.slug] ?? 0;
     let ti = 0;
     for (const e of a.effects as ThEff[]) {
@@ -1055,8 +1127,9 @@ function dumpAbilities(slugs: string[]): void {
     const a = DEFAULT_ABILITIES.find((x) => x.slug === slug) as unknown as Record<string, unknown>;
     if (!a) { console.log(`    ${slug}: NOT FOUND`); continue; }
     const self = a.selfStatus ? ` self=${JSON.stringify(a.selfStatus)}` : '';
-    const xa = (a as { excludeAllies?: boolean }).excludeAllies ? ' EXCLUDE_ALLIES' : '';
-    console.log(`    ${slug.padEnd(13)} range ${String(a.range).padStart(2)}  ${JSON.stringify(a.effects)}${self}${xa}`);
+    const xa = (a as { excludeAllies?: boolean }).excludeAllies ? ' EXCLUDE_ALLIES' : ' hits-allies';
+    const shp = a.areaRadius ? ` shape=${(a as { areaShape?: string }).areaShape ?? 'chebyshev'} r=${a.areaRadius}` : '';
+    console.log(`    ${slug.padEnd(13)} range ${String(a.range).padStart(2)}  ${JSON.stringify(a.effects)}${shp}${self}${xa}`);
   }
 }
 

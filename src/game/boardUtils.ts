@@ -74,11 +74,23 @@ export function getOrthogonalAdjacentUnits(center: BoardPosition, units: UnitIns
  * SINGLE SOURCE OF TRUTH for AOE blast shape. Both the engine's resolveTargets
  * and the AI brain's hit prediction MUST use this predicate — the whirlwind
  * diagonal bug happened because the two sides each had their own geometry.
+ *
+ * Which tiles an area ability covers.
+ *   chebyshev  — full square, radius R (a radius-1 blast is the 3x3)
+ *   orthogonal — the 4 cardinal neighbours only
+ *   ring       — the square MINUS its centre: the "eye of the hurricane".
+ *                Every AoE in the game hits allies, so the eye is what makes a
+ *                large placed blast usable: you aim the calm centre at your own
+ *                frontliner and everything around them takes the hit. It is a
+ *                SHAPE, not a rules exception — the preview shows the hole, so
+ *                it explains itself (see AC_REWORK.md, mixed-friendly-fire).
  */
-export function isInAoe(center: BoardPosition, pos: BoardPosition, radius: number, shape?: 'chebyshev' | 'orthogonal'): boolean {
-  return shape === 'orthogonal'
-    ? manhattanDistance(center, pos) === 1
-    : chebyshevDistance(center, pos) <= radius;
+export function isInAoe(center: BoardPosition, pos: BoardPosition, radius: number, shape?: 'chebyshev' | 'orthogonal' | 'ring'): boolean {
+  if (shape === 'orthogonal') return manhattanDistance(center, pos) === 1;
+  if (shape === 'ring') {
+    return chebyshevDistance(center, pos) <= radius && chebyshevDistance(center, pos) > 0;
+  }
+  return chebyshevDistance(center, pos) <= radius;
 }
 
 export function calculatePushDestination(unitPos: BoardPosition, pusherPos: BoardPosition, distance: number): BoardPosition {
