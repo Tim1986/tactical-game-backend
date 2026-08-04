@@ -787,3 +787,38 @@ REMAINING ISSUES:
 TOOL BUG FIXED: the CLASS CEILING console report compared capitalised class
 names against lowercase cell.pair keys and printed NaN. The xlsx tab was
 unaffected (the CSV capitalises). Fixed; numbers above computed from the CSV.
+
+## Pass 14 — the AoE friendly-fire pass (Firestorm + Blizzard enemies-only)
+
+Ceiling: sorcerer 69 | cleric 67 | ranger 67 | warlock 67 | barbarian 66 |
+wizard 66 | rogue 64 | fighter 63. **Spread 6.5 -> 6.0, tightest yet.**
+Ladder @150: sorcerer 66▲ … rogue 32▼. 0 validation errors.
+
+**THE FRIENDLY-FIRE DIAGNOSIS WAS RIGHT, AND BIGGER THAN EXPECTED.**
+Sorcerer pair ceilings, pass13 -> pass14:
+  Wizard   53.3 -> 69.7 (+16.4)   Warlock 57.9 -> 67.5 (+9.6)
+  Ranger   57.5 -> 66.2 (+8.7)    Rogue   50.3 -> 55.0 (+4.7)
+  Fighter  57.9 -> 61.1 (+3.2)    Cleric  62.3 -> 65.3 (+3.0)
+  Barbarian 58.7 -> 58.7 (+0.0)
+Sorcerer's best pair went 62.3 -> 69.7 (was the worst best-pair in the game).
+Its top-50 count went 3 -> 25.
+
+**Counter-intuitive result worth understanding:** the biggest gains were with
+RANGED partners (wizard +16.4, warlock +9.6, ranger +8.7), not melee. The
+friendly-fire block was not mainly "my frontliner is in the blast" — it was
+that a 3x3 AoE could not be dropped anywhere near ANY ally, and backline
+pairs cluster too. Two AoE casters can now overlap fire, which is why
+Sorcerer/Wizard is the new #1 pair.
+
+**BLIZZARD FIXED: #342 -> #1.** Both prior attempts (self-root reduction, then
+removal) did nothing; enemies-only was the whole problem. Every one of the top
+4 cells is a sorcerer/wizard AoE stack.
+
+**Every special now first-appears within the global top 78** (worst:
+shockwave #78, ignite #70, longshot #63). Compare pass 11, where ward was
+#524. The specials layer is effectively balanced under the ceiling lens.
+
+WATCH: sorcerer 69 ceiling + 25 top-50 is now the concentration leader — the
+AoE pair may have overshot. Barbarian dropped to 9 top-50 (from 26), so the
+AC 9 cut plus the field shift moved it a lot; do not cut it further.
+Rogue 6 top-50 (from 18) — the twin 8+8 cut landed.
