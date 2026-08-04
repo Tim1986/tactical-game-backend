@@ -820,6 +820,45 @@ const PRESETS: Record<string, Preset> = {
     },
   },
 
+
+  pass20: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 9, rogue: 8, warlock: 8, cleric: 4, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, longshot: 3, missile: -1,
+           concussive: -1, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 2, roar: 2 },
+    heal: { second_wind: 4, heal: 3, purify: -3 },
+    statusDur: { fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: {
+      fighter: { undying: -7, anchor: 2 },
+      sorcerer: { undying: -5 },
+      cleric: { undying: -7, anchor: 2 },
+      barbarian: { anchor: 2 },
+      wizard: { anchor: 3 },
+      warlock: { anchor: 2 },
+    },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 4 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring', roar: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 16 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+      roar: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 3 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+      shockwave: [
+        { type: 'damage', formula: 'flat', value: 15 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      ],
+    },
+  },
+
   // --- Pass 17 SCREENING VARIANTS (blizzard only; everything else = pass16
   // plus the two settled changes: fighter buff reverted, shockwave push 2). ---
   // Question: blizzard ring @ range 3 sits at #133 while the STRUCTURALLY
