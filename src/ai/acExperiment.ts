@@ -714,6 +714,73 @@ const PRESETS: Record<string, Preset> = {
     },
   },
 
+  // --- PASS 18 (full grid candidate) --------------------------------------
+  // = p18_a plus the two owner calls made while reading the pass17 workbook:
+  //
+  // ANCHOR +2 max HP on all five classes that can take it (fighter, barbarian,
+  //   cleric, wizard, warlock). "The opposite of undying" — undying is being
+  //   taxed DOWN, anchor gets a small lift so it is not dead weight outside its
+  //   anti-push niche. Deliberately tiny. ⚠ SEE THE HISTORY NOTE IN
+  //   AC_REWORK.md: anchor previously carried a +6 maxHealth rider that made it
+  //   STRICTLY DOMINANT and was removed for exactly that reason; rulebookSpec
+  //   still asserts anchor must not change max health. +2 is a third of the old
+  //   rider, but this is a knowingly-reopened door — watch anchor's share.
+  // ASSASSINATE threshold +1 (delta 3 -> 4). Rogue read weak in pass17; owner
+  //   is starting with the special rather than the chassis and will re-look
+  //   after the Barbarian nerf lands (Leaping Slam held 48 of the top 100, so
+  //   every other class's pass17 ranking is depressed and not yet trustworthy).
+  //
+  // CLERIC: looks strong, deliberately NOT touched yet — owner does not want to
+  //   nerf the chassis before the Barbarian distortion is out of the data.
+  //
+  // ROAR DAMAGE = 4, SETTLED by the p18_a/p18_b screen. Within-pair top-5:
+  //   leap 2 dmg 6 -> Slam #1 in BOTH pairs (60.6 vs 50.0 / 63.7 vs 59.7) —
+  //     still the clear best, 10.6 clear in the fighter pair. Fails the bar.
+  //   leap 2 dmg 4 -> Slam #1 by 3.6 in one pair and THIRD in the other (56.4
+  //     behind whirlwind 59.7 and Ground Slam 55.0). Three live picks. Passes.
+  // The leap RANGE did most of the work (3->2); damage 6->4 was worth a further
+  // ~6pts. Erring to the weaker number on purpose: the sim plays with perfect
+  // information, so it cannot price the bluff value of a hidden special and
+  // systematically UNDERSTATES the leap. Ground Slam root 1->2 revived it from
+  // #109/zero top-100 cells to #8 and #2 within its pairs.
+  pass18: {
+    ac: { fighter: -5, ranger: -5, cleric: -5, wizard: -5, barbarian: -6, warlock: -5, sorcerer: -5, rogue: -5 },
+    hp: { fighter: 7, barbarian: 11, rogue: 8, warlock: 8, cleric: 6, ranger: 0, wizard: 0, sorcerer: 0 },
+    dmg: { eldritch: 2, ignite: -1, grasp: 5, cold_snap: -2, longshot: 3, missile: -1,
+           concussive: -2, pinning: -4, bolt: 1, whirlwind: 2, shield_bash: 3, strike: -1, ffh: 0, flame_jet: 0, sword: 0 },
+    range: { freeze: -1, heal: 1, ffh: 1, ward: 1, blizzard: 2, roar: 2 },
+    heal: { second_wind: 4, heal: 4, purify: -2 },
+    statusDur: { fear: 1 },
+    pullDist: { grasp: -1 },
+    passiveHp: {
+      fighter: { undying: -7, anchor: 2 },
+      sorcerer: { undying: -5 },
+      cleric: { undying: -7, anchor: 2 },
+      barbarian: { anchor: 2 },
+      wizard: { anchor: 2 },
+      warlock: { anchor: 2 },
+    },
+    lifesteal: { drain: { heal: 2 } },
+    threshold: { assassinate: 4 },
+    selfStatusDur: { blizzard: -2 },
+    excludeAllies: { blizzard: false, ffh: false, shockwave: false, roar: false },
+    areaShape: { ffh: 'ring', blizzard: 'ring', roar: 'ring' },
+    areaRadius: { roar: -1 },
+    replaceEffects: {
+      twin: [{ type: 'damage', formula: 'flat', value: 8 }, { type: 'damage', formula: 'flat', value: 8 }],
+      ward: [{ type: 'grant_max_health', value: 15 }, { type: 'apply_status', statusSlug: 'shielded', stacks: 1, durationTurns: 3 }],
+      roar: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 4 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+      shockwave: [
+        { type: 'damage', formula: 'flat', value: 13 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      ],
+    },
+  },
+
   // --- Pass 17 SCREENING VARIANTS (blizzard only; everything else = pass16
   // plus the two settled changes: fighter buff reverted, shockwave push 2). ---
   // Question: blizzard ring @ range 3 sits at #133 while the STRUCTURALLY
