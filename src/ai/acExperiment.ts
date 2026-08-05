@@ -89,6 +89,36 @@ interface Preset {
 }
 
 const PRESETS: Record<string, Preset> = {
+
+  // ═══ POST-SHIP PRESETS ═══════════════════════════════════════════════════
+  // ⚠ gameData now HOLDS pass21, so every delta below is measured from the
+  // SHIPPED values, not from the old pre-rework baseline. The pass1..pass21
+  // presets above are HISTORICAL ONLY — running them double-applies.
+  //
+  // s1_gs10 — Ground Slam damage 15 -> 10.
+  // The problem is READABILITY, not balance. On the units page Ground Slam
+  // (15 unblockable + rooted 2) strictly dominates Whirlwind (20 blockable) on
+  // the card: expected damage at the shipped AC band is 18/17/16/15/14 for
+  // Whirlwind against AC 8/9/10/11/12, so against FOUR of the eight classes
+  // Whirlwind is equal or worse AND can be dodged. The sim disagrees (pass21:
+  // whirlwind best cell #2 and highest all-cell mean 44.9 vs 43.7) because 20
+  // crosses kill thresholds 15 cannot — but a player cannot read that off a
+  // stat card. At 10, the trade is legible: you pay real damage for a
+  // guaranteed hit plus lockdown.
+  // Control: the SHIPPED values, unchanged. Needed because the no-preset path
+  // only runs stages A/B — stage E (the pair grid) lives in the preset branch,
+  // so "no preset" cannot produce a comparable control.
+  shipped: { ac: {}, hp: {} },
+  s1_gs10: { ac: {}, hp: {}, dmg: { shockwave: -5 } },
+  // s2_gs12 — 10 overshot: Ground Slam's all-cell mean fell in ALL THREE
+  // screened pairs (40.5->38.0, 38.5->31.2, 49.9->44.6) and its best rank went
+  // #2->#11 (cleric) and #5->#14 (rogue), leaving it 10-14 points behind the
+  // leader — back toward the dead zone it was in at #109 before the 2-turn
+  // root. 12 still reads correctly on the card (12 guaranteed vs Whirlwind's
+  // 14-18 expected against every one of the eight classes) while giving back
+  // half of what 10 surrendered.
+  s2_gs12: { ac: {}, hp: {}, dmg: { shockwave: -3 } },
+
   // Pass 1 draft, informed by the flat sweep (scratchpad ac_sweep.log,
   // 2026-08-01): the sweep's dominant distortion is RANGED vs MELEE, not
   // tank vs squishy — closing distance now costs real HP (approach turns eat

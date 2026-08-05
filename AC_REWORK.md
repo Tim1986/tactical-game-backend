@@ -1271,3 +1271,55 @@ been shown to make anchor dominant. Do not raise it without a full grid.
 - Cold Snap is the weakest special in the game (best cell #58 of 2268); ignite
   second (#35). Sorcerer is the bottom class at 64. All acceptable, none
   distorting.
+
+## Post-ship: Ground Slam 15 -> 12 (2026-08-05)
+
+**A READABILITY bug, not a balance bug — and the sim could never have caught
+it.** Owner, comparing the two on the units page: Whirlwind is 20 blockable,
+Ground Slam was 15 unblockable + rooted 2. Expected damage at the shipped AC
+band:
+
+| target AC | hit% | Whirlwind 20 blockable | Ground Slam 15 unblockable |
+|---|---|---|---|
+| 8 rogue | 90% | 18.0 | 15.0 |
+| 9 barb/sorc | 85% | 17.0 | 15.0 |
+| 10 warlock | 80% | 16.0 | 15.0 |
+| 11 rgr/clr/wiz | 75% | **15.0** | **15.0** |
+| 12 fighter | 70% | **14.0** | **15.0** |
+
+Against FOUR of eight classes Whirlwind was equal or worse AND dodgeable, with
+Ground Slam carrying a free 2-turn root. On a stat card it strictly dominated.
+The sim scored them within a point (pass21: whirlwind best cell #2 and the
+highest all-cell mean 44.9 vs 43.7) because 20 crosses kill thresholds 15 does
+not — but a player cannot read kill thresholds off a card. **Nothing in 2268
+cells was ever going to flag this. It took a person looking at the units page.**
+
+Screened 10 and 12 against a `shipped` no-op control, 3 barbarian pairs:
+  - **10 overshot** — Ground Slam's all-cell mean fell in ALL three pairs and
+    its best rank went #2->#11 (cleric) and #5->#14 (rogue).
+  - **12 held** — best rank stayed single-digit in all three (#4/#5/#9) and
+    Whirlwind led by 2.8/6.4/4.9 where at 15 they were dead even (+2.1/+1.6/-0.2).
+
+**SHIPPED 12.** Full-grid effect (spliced, see below): barbarian kit goes
+Leaping Slam 63.5 / Whirlwind 61.9 / Ground Slam 57.7 — spread widens 1.6 ->
+5.8 and Ground Slam is now clearly third, best cell #15 of 2268 (still well
+inside the field; cold_snap is #58). Barbarian top-50 13->9, top-100 23->14,
+ceiling unchanged at 66. All other class ceilings and the 73.9% top team
+unchanged. Accepted trade: a modest intra-kit spread with an honest card beats
+a tight spread with a card that tells players never to pick Whirlwind.
+
+⚠ Do NOT raise Ground Slam above 12 — at 14 the expected-damage maths ties or
+loses to Whirlwind again at AC 11-12 and the readability problem returns.
+
+### The partial-grid splice trick (reusable, ~7x cheaper)
+
+A single ability change only affects cells that FIELD it, **provided no
+reference party uses it**. Ground Slam appears in no reference (barbarian refs
+are `whirlwind/thorns` and `roar/vengeful`), so only 189 of 2268 cells could
+move: 7 barbarian pairs x 27 loadouts. Run `--pair barbarian,X` for the 7
+pairs, take only the rows whose special is the changed one, and splice them
+into the previous grid keyed on (pair, s1, p1, s2, p2). 15 minutes instead of 3
+hours. **ALWAYS check the reference panel first** — if a ref fields the ability,
+it changes the opponent in every cell and the splice is invalid.
+Caveat: the result mixes two sampling runs, so ±2-3 points. Read orderings and
+large shifts, not small gaps.

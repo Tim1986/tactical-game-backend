@@ -42,7 +42,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'shockwave',
     name: 'Ground Slam',
-    description: 'Slams the ground for 15 unblockable damage to all units directly adjacent, including allies, and roots them for 2 turns.',
+    description: 'Slams the ground for 12 unblockable damage to all units directly adjacent, including allies, and roots them for 2 turns.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -51,7 +51,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 15 },
+      { type: 'damage', formula: 'flat', value: 12 },
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
     ],
   },
