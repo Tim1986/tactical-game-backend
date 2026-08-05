@@ -878,11 +878,19 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'PAS-2', name: 'Anchor blocks push and pull with visible feedback, and adds no stats',
+    rule: 'PAS-2', name: 'Anchor blocks push and pull with visible feedback, and its HP rider stays tiny',
     run: () => {
       const base = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 });
       const anchor = buildUnitInstance(defOf('fighter'), P2, { x: 3, y: 3 }, { specialSlug: 'second_wind', passiveSlug: 'anchor' });
-      assert(anchor.maxHealth === base.maxHealth, 'anchor must NOT change max health (the old +6 rider made it strictly dominate)');
+      // Anchor carries a max-health rider so it is not dead weight against
+      // teams with no push or pull — but the SIZE is the whole story, and this
+      // check exists to stop it creeping. History: the original Immovable had
+      // +6 and strictly dominated; +2 (passes 18-20) put anchor in three of the
+      // top five teams; +1 sits it 6th of 8 passives. Anything above +2 has
+      // twice been shown to break the meta — do not raise this bound without a
+      // full grid proving otherwise.
+      const rider = anchor.maxHealth - base.maxHealth;
+      assert(rider >= 0 && rider <= 2, `anchor's max-health rider must stay within 0..2 (got ${rider}) — +6 and +2 both made it dominant`);
       assert(anchor.passives.includes('immovable'), 'anchor must carry the immovable flag');
       const pusher = mkUnit(P1, 3, 1);
       const pushEvents = cast(mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);

@@ -1206,3 +1206,68 @@ blizzard is strong and freeze is fine, but neither carries a damage value.
 Owner's framing, worth keeping: "The balance is so tenuous and hard to find that
 I honestly wouldn't be surprised if after the anchor cut the overall balance was
 worse than this."
+
+---
+
+# ✅ SHIPPED — pass21 is now gameData (2026-08-05)
+
+Owner: "Go ahead and build this one... we're minimally extremely close."
+
+## ⚠⚠ THE PRESETS NO LONGER REPRODUCE THEMSELVES
+
+`acExperiment.ts` presets are **deltas from gameData**, and gameData is now the
+pass21 values. So `--preset pass21` DOUBLE-APPLIES every delta (eldritch came
+out 13 instead of 11 when this was first checked). **Every preset in that file
+is now historical, not runnable.** To sim the shipped state, run with NO preset
+and no delta. To try a new change, express it as a delta from the SHIPPED
+numbers, and add a fresh preset — do not edit pass21.
+
+## What shipped
+
+Chassis (HP / AC): fighter 52/12, barbarian 54/9, ranger 38/11, rogue 43/8,
+cleric 50/11, wizard 34/11, sorcerer 34/9, warlock 40/10.
+
+Passives: `ANCHOR` +1 max HP (`ANCHOR_WIZ` +2 for wizard only); `UNDYING_7`
+(-7, fighter/cleric) and `UNDYING_5` (-5, sorcerer). The shared consts became
+factories — `anchorWith(n)` / `undyingWith(n)` — because the riders differ per
+class. Descriptions state their numbers.
+
+Renames (names only, SLUGS UNCHANGED so saved teams and campaigns keep working):
+  `ffh` -> **Ring of Fire**, `blizzard` -> **Ring of Frost**,
+  `roar` -> **Leaping Slam**, `shockwave` -> **Ground Slam**.
+
+Rules changed: DGE-1 AC band 13–17 -> **8–12** (the point of the whole rework).
+ABL-8 and ABL-10 renamed Shockwave -> Ground Slam; ABL-10 is now UNIVERSAL
+("EVERY area and line ability hits allies") since `exclude_allies` is gone from
+gameData entirely. ABL-11 (ring spares its centre) and ABL-12 (leap) already
+existed. PAS-2 now mentions Anchor's small HP gain.
+
+`rulebookSpec` PAS-2 changed from "anchor adds no stats" to a **bounded** check:
+the rider must stay within 0..2. The bound is the point — +6 and +2 have each
+been shown to make anchor dominant. Do not raise it without a full grid.
+
+## Caught during the ship (both would have shipped silently)
+
+1. **Ward had never been migrated.** gameData still had the old heal-8 /
+   range-2 version while every sim since pass 13 used grant_max_health 16 /
+   range 3. Found by diffing all 30 abilities against the pre-edit pass21 dump
+   — NOT by the test suite, which had no opinion. **Always diff the whole
+   ability table against the preset dump when shipping; the tests only check
+   internal consistency between a description and its own data.**
+2. Two self-inflicted errors: mace silently changed 11->10, and Pinning Shot's
+   description called it "unblockable" when `is_unblockable: false`. Both were
+   caught by `specConformance`, which parses every description against its
+   ability data. That test is worth its weight.
+
+## Still open
+
+- **Campaign hpScaleOverride retune.** Every campaign band was tuned against
+  the OLD ACs (13–17) and is now wrong — enemies at AC 8–12 are far easier to
+  hit. Re-run campaignSim and retune per CAMPAIGNS.md before shipping to
+  players. THIS IS THE BIGGEST REMAINING ITEM.
+- C23 AoE preview UI (ship blocker for the rings + the leap landing tile).
+- Pre-beta slug cleanup (the four renamed abilities still carry their old
+  slugs, by design, until the saved-data wipe).
+- Cold Snap is the weakest special in the game (best cell #58 of 2268); ignite
+  second (#35). Sorcerer is the bottom class at 64. All acceptable, none
+  distorting.
