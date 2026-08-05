@@ -1171,3 +1171,38 @@ anchor +2 max HP on its five classes; assassinate threshold 22.
 
 ⚠ Ship-time: the anchor +2 will FAIL `rulebookSpec.ts` ("anchor must NOT change
 max health") and needs PAS-2 + the Anchor description updated alongside it.
+
+## Pass 20 — SHIPPABLE FALLBACK (owner, 2026-08-04)
+
+Owner: "it's honestly really close as is, definitely shippable as is. The global
+top 50 and top 100 numbers look incredible." **If pass21 regresses, ship pass20.**
+
+Ceilings: Warlock 71 / Cleric 69 / Fighter 68 / Wizard 68 / Rogue 67 /
+Barbarian 67 / Ranger 67 / Sorcerer 65 — a 6-point spread.
+Barbarian kit finished: Leaping Slam 64.3, Ground Slam 64.2, Whirlwind 62.2
+(2.1 spread). The fighter -2 and cleric -2 HP corrections both landed exactly.
+
+Known and ACCEPTED at pass20: best team mean 75.6% (above the under-70 bar),
+driven by Cleric/Warlock holding the top three slots outright — an attrition
+pairing (Warlock drain lifesteal + Cleric healing). Owner: "not ideal, but their
+overall numbers are really not bad."
+
+## Pass 21 — anchor cut + cold snap
+
+**ANCHOR -1 for all** (2 -> 1; wizard 3 -> 2). In pass20 it appeared in THREE of
+the top five teams including the single best, first-appearing at rank #1, with
+top-100 cells running 20 -> 27 -> 40 -> 40 across passes. Owner: "I want it
+playable, but counter tech as a dominant pick is not good for the meta."
+
+⚠ **Record this: the anchor maxHealth rider has now caused dominance TWICE** —
+once historically at +6 (removed, and rulebookSpec still asserts anchor must not
+change max health) and again at +2. If +1 also drifts upward, the conclusion is
+that anchor cannot carry a maxHealth rider at all and the "not useless outside
+its niche" problem needs a different solution.
+
+**COLD SNAP +1 damage** (8 -> 9). The only tunable knob in the wizard kit —
+blizzard is strong and freeze is fine, but neither carries a damage value.
+
+Owner's framing, worth keeping: "The balance is so tenuous and hard to find that
+I honestly wouldn't be surprised if after the anchor cut the overall balance was
+worse than this."
