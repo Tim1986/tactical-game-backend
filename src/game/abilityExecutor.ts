@@ -21,7 +21,10 @@ export interface ExecutionContext {
 }
 
 /** Flat damage reduction applied to a 'weakened' caster's outgoing damage/lifesteal effects. */
-const WEAKENED_DAMAGE_REDUCTION = 4;
+/** Flat reduction to EVERY outgoing damage/lifesteal effect from a 'weakened'
+ * caster. Exported so the AI brain scores weaken with the SAME number and the
+ * same per-effect granularity (no drift). */
+export const WEAKENED_DAMAGE_REDUCTION = 4;
 
 /**
  * Resolve one blockable dodge roll. Normal matches roll fresh randomness per

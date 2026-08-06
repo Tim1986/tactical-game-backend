@@ -66,7 +66,7 @@ import {
 // Shared AOE shape predicate — the engine's resolveTargets uses the SAME
 // function, so brain hit prediction can never diverge from engine resolution.
 import { isInAoe } from '../game/boardUtils.js';
-import { BURNING_DAMAGE_PER_STACK, missChanceOf } from '../game/abilityExecutor.js';
+import { BURNING_DAMAGE_PER_STACK, missChanceOf, WEAKENED_DAMAGE_REDUCTION } from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
 // Public interface (matches the sim harness spec)
@@ -484,10 +484,12 @@ function scoreEffectsOnTarget(
     }
   }
 
-  // Weakened caster: outgoing attack damage reduced by 4, applied once per
-  // ability use to the first damage/lifesteal effect (matches the engine's
-  // weakenedAdjustedDamage hook in abilityExecutor.ts).
-  let weakenRemaining = hasStatus(caster, 'weakened') ? 4 : 0;
+  // Weakened caster: the engine's weakenedAdjustedDamage runs on EVERY
+  // damage/lifesteal effect, flooring each at 0 — not once per ability. This
+  // used to model it as a single 4-point budget consumed by the first effect,
+  // so a weakened multi-effect attack was overvalued: Twin Strike scored
+  // (8-4)+8 = 12 while the engine actually deals (8-4)+(8-4) = 8.
+  const weakenCut = hasStatus(caster, 'weakened') ? WEAKENED_DAMAGE_REDUCTION : 0;
   // Opportunist passive: engine adds +4 per damage/lifesteal effect against a
   // target with ANY status effect (added after the weaken cut, not reduced by it).
   const opportunistBonus =
@@ -539,12 +541,7 @@ function scoreEffectsOnTarget(
           break;
         }
 
-        let raw = eff.value;
-        if (weakenRemaining > 0) {
-          const cut = Math.min(weakenRemaining, raw);
-          raw -= cut;
-          weakenRemaining -= cut;
-        }
+        let raw = Math.max(0, eff.value - weakenCut);
         raw += opportunistBonus;
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
@@ -580,12 +577,7 @@ function scoreEffectsOnTarget(
       case 'lifesteal': {
         // Damages target, heals caster (Life Drain). Scored like flat damage
         // for the target side, plus a heal-on-caster term.
-        let raw = eff.value;
-        if (weakenRemaining > 0) {
-          const cut = Math.min(weakenRemaining, raw);
-          raw -= cut;
-          weakenRemaining -= cut;
-        }
+        let raw = Math.max(0, eff.value - weakenCut);
         raw += opportunistBonus;
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
@@ -1203,16 +1195,20 @@ function dangerAt(
     const reach =
       (willBlockOwnAction(e, 'rooted') ? 0 : e.movementRange) + (b.range || 1);
     if (manhattanDistance(e.position, pos) > reach) continue;
+    // Weaken is applied per damage effect and floored at 0 by the engine, so it
+    // must be subtracted inside this loop — taking it off the SUM once
+    // understated how much a weakened multi-effect attacker was defanged
+    // (a weakened Twin Strike threatens 8, not 12).
+    const eWeakenCut = hasStatus(e, 'weakened') ? WEAKENED_DAMAGE_REDUCTION : 0;
     let raw = 0;
     for (const eff of b.effects) {
       if (
         (eff.type === 'damage' && eff.healthThreshold === undefined) ||
         eff.type === 'lifesteal'
       ) {
-        raw += eff.value;
+        raw += Math.max(0, eff.value - eWeakenCut);
       }
     }
-    if (hasStatus(e, 'weakened')) raw = Math.max(0, raw - 4);
     if (raw <= 0) continue;
     guaranteed.push(raw);
   }
