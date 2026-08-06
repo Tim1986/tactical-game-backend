@@ -414,6 +414,27 @@ export const RULE_CHECKS: RuleCheck[] = [
       });
       cast(twin, caster, t);
       assert(t.currentHealth === 83, `both hits must land (got HP ${t.currentHealth})`);
+
+      // The check above builds its OWN ability with isMultiHit hard-coded, so it
+      // passed even while DEFAULT_ABILITIES silently dropped the flag and every
+      // offline/AI Twin Strike ran down the single-hit path (one roll for both
+      // daggers). Assert the flag survives the real gameData → AbilityDefinition
+      // conversion, and that the shipped ability actually rolls twice.
+      const realTwin = DEFAULT_ABILITIES.find((a) => a.slug === 'twin');
+      assert(realTwin, 'twin must exist in DEFAULT_ABILITIES');
+      assert(realTwin.isMultiHit === true, 'shipped Twin Strike must carry isMultiHit through defaultData');
+
+      const atk = mkUnit(P1, 1, 1);
+      const def = mkUnit(P2, 2, 1, { armorClass: 12 }); // AC > 6 so a dodge roll is actually made
+      const state = mkLegacyState([atk, def]);
+      state.rollLog = [];
+      const events: GameEvent[] = [];
+      executeAbility({ state, caster: atk, targetPosition: def.position, ability: realTwin, events });
+      const resolved = events.filter((e) => e.type === 'DAMAGE_DEALT' || e.type === 'DODGED').length;
+      assert(
+        state.rollLog.length === resolved && resolved === 2,
+        `Twin Strike must roll once per blow — got ${state.rollLog.length} roll(s) for ${resolved} resolution(s)`,
+      );
     },
   },
   {
