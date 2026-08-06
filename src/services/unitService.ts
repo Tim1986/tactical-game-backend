@@ -1,5 +1,6 @@
 import { query } from '../db/pool.js';
 import { UnitDefinition, AbilityDefinition } from '../types/index.js';
+import { abilityShape } from '../config/abilityShape.js';
 
 interface UnitRow {
   id: string;
@@ -73,6 +74,10 @@ function rowToAbility(row: AbilityRow): AbilityDefinition {
     effects: row.effects as AbilityDefinition['effects'],
     isSpecial: row.is_special,
     canTargetAlly: isHealOnly || ALLY_TARGETABLE_SPECIAL_SLUGS.has(row.slug),
+    // areaShape has no DB column and this query omits is_multi_hit, so without
+    // this the client renders ring previews as full squares and multi-hit
+    // attacks as a single grouped log line. See config/abilityShape.ts.
+    ...abilityShape(row.slug),
   };
 }
 

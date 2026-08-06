@@ -1,6 +1,9 @@
 import { query, withTransaction } from '../db/pool.js';
 import { MatchState, TurnAction, UnitInstance, BoardPosition, GameEvent, MoveAction, ChargeAction, UseAbilityAction } from '../types/matchState.js';
 import { AbilityDefinition, UnitDefinition } from '../types/index.js';
+// area_shape / self_status have no DB columns — overlay them from gameData or
+// rings resolve as full squares and orthogonal AoEs hit diagonals. See abilityShape.ts.
+import { abilityShape } from '../config/abilityShape.js';
 import { processTurn, beginTurn, applyAction, endTurn, TurnValidationError } from '../game/turnProcessor.js';
 import { buildInitialState, buildUnitInstance, FABLE_PLAYER_ID, FABLE_HP_SCALE } from '../game/initialState.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
@@ -405,7 +408,7 @@ async function loadAbilityMapDirect(): Promise<Map<string, AbilityDefinition>> {
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'], ...abilityShape(row.slug) });
   }
   return map;
 }
@@ -446,7 +449,7 @@ async function loadAbilityMap(client: import('pg').PoolClient): Promise<Map<stri
   );
   const map = new Map<string, AbilityDefinition>();
   for (const row of result.rows) {
-    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'] });
+    map.set(row.slug, { id: row.id, slug: row.slug, name: row.name, description: row.description, targetingType: row.targeting_type as AbilityDefinition['targetingType'], range: row.range, areaRadius: row.area_radius, cooldownTurns: row.cooldown_turns, isSpecial: row.is_special, isUnblockable: row.is_unblockable, excludeAllies: row.exclude_allies, isMultiHit: row.is_multi_hit, effects: row.effects as AbilityDefinition['effects'], ...abilityShape(row.slug) });
   }
   return map;
 }
