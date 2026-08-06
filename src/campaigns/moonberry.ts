@@ -41,33 +41,33 @@ export const moonberryCampaign: CampaignDefinition = {
     lantern_lifter: {
       // Nimble goblin thieves in half-masks; the troupe's stagehands.
       baseClass: 'rogue', name: 'Lantern Lifter',
-      maxHealth: 34, armorClass: 13, movementRange: 5,
+      maxHealth: 34, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
     },
     mooncap_marksman: {
       baseClass: 'ranger', name: 'Mooncap Marksman',
-      maxHealth: 38, armorClass: 15, specialSlug: 'longshot',
+      maxHealth: 38, armorClass: 10, specialSlug: 'longshot',
       nightmare: { acBonus: 1 },
     },
     ember_juggler: {
       baseClass: 'sorcerer', name: 'Ember Juggler',
-      maxHealth: 36, armorClass: 14, specialSlug: 'flame_jet',
+      maxHealth: 36, armorClass: 9, specialSlug: 'flame_jet',
       nightmare: { passiveFlags: ['warded'] },
     },
     moonhook_caller: {
       baseClass: 'warlock', name: 'Moonhook Caller',
-      maxHealth: 34, armorClass: 15, specialSlug: 'grasp',
+      maxHealth: 34, armorClass: 10, specialSlug: 'grasp',
       nightmare: { acBonus: 1 },
     },
     starstep_duelist: {
       baseClass: 'rogue', name: 'Starstep Duelist',
-      maxHealth: 36, armorClass: 14, specialSlug: 'expose',
+      maxHealth: 36, armorClass: 9, specialSlug: 'expose',
       nightmare: { hpBonus: 5 },
     },
     night_cartographer: {
       // BOSS. A masked goblin mapmaker who drew everyone into this mess on purpose.
       baseClass: 'warlock', name: 'The Night Cartographer',
-      maxHealth: 80, armorClass: 15, specialSlug: 'grasp',
+      maxHealth: 80, armorClass: 10, specialSlug: 'grasp',
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
     },
@@ -75,19 +75,19 @@ export const moonberryCampaign: CampaignDefinition = {
     velvet_gate_guard: {
       // A broad orc doorman in a velvet coat two sizes too small for the drama of it.
       baseClass: 'fighter', name: 'Velvet Gate Guard',
-      maxHealth: 47, armorClass: 17, specialSlug: 'shield_bash',
+      maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
       nightmare: { hpBonus: 6, passiveFlags: ['immovable'] },
     },
     silverthread_mender: {
       // Orc costume-mender who patches performers AND wounds; keeps the troupe on stage.
       baseClass: 'cleric', name: 'Silverthread Mender',
-      maxHealth: 46, armorClass: 16, specialSlug: 'ward',
+      maxHealth: 46, armorClass: 11, specialSlug: 'ward',
       nightmare: { hpBonus: 4 },
     },
     masque_bruiser: {
       // The troupe's immovable "statue act" — an orc who simply will not be moved.
       baseClass: 'fighter', name: 'Masque Bruiser',
-      maxHealth: 62, armorClass: 17,
+      maxHealth: 62, armorClass: 12,
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
     },

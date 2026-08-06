@@ -38,54 +38,54 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // ── Goblins (ranger/rogue/sorcerer chassis → goblin art) ──
     bluecap_scout: {
       baseClass: 'ranger', name: 'Bluecap Scout',
-      maxHealth: 36, armorClass: 15,
+      maxHealth: 36, armorClass: 10,
       nightmare: { acBonus: 1 },
     },
     bellrunner: {
       // A goblin courier who does nothing but sprint with stolen goods. Fast, fragile.
       baseClass: 'rogue', name: 'Bellrunner',
-      maxHealth: 35, armorClass: 13, movementRange: 5,
+      maxHealth: 35, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
     },
     sparkcap_slinger: {
       baseClass: 'sorcerer', name: 'Sparkcap Slinger',
-      maxHealth: 36, armorClass: 14, specialSlug: 'ignite',
+      maxHealth: 36, armorClass: 9, specialSlug: 'ignite',
       nightmare: { passiveFlags: ['warded'] },
     },
     bluecap_pathfinder: {
       baseClass: 'ranger', name: 'Bluecap Pathfinder',
-      maxHealth: 40, armorClass: 16, specialSlug: 'pinning',
+      maxHealth: 40, armorClass: 11, specialSlug: 'pinning',
       nightmare: { acBonus: 1 },
     },
     // ── Orcs (barbarian/cleric/fighter chassis → orc art) ──
     // Goblinopolis hires orcs as its heavy muscle; blue sashes mark the city's service.
     kettlehelm_orc: {
       baseClass: 'fighter', name: 'Kettlehelm Orc',
-      maxHealth: 47, armorClass: 17, specialSlug: 'shield_bash',
+      maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
       nightmare: { hpBonus: 6, passiveFlags: ['immovable'] },
     },
     mudboot_bruiser: {
       baseClass: 'barbarian', name: 'Mudboot Bruiser',
-      maxHealth: 46, armorClass: 14, specialSlug: 'shockwave',
+      maxHealth: 46, armorClass: 9, specialSlug: 'shockwave',
       nightmare: { hpBonus: 5 },
     },
     patchcoat_mender: {
       // Orc field-medic in a coat of stitched-together sashes; keeps the brutes standing.
       baseClass: 'cleric', name: 'Patchcoat Mender',
-      maxHealth: 46, armorClass: 16, specialSlug: 'heal',
+      maxHealth: 46, armorClass: 11, specialSlug: 'heal',
       nightmare: { hpBonus: 4 },
     },
     ironbell_warden: {
       // The gate-brute of Goblinopolis — an immovable orc who guards the bell-arch.
       baseClass: 'fighter', name: 'Ironbell Warden',
-      maxHealth: 62, armorClass: 17,
+      maxHealth: 62, armorClass: 12,
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
     },
     warboss_gurm: {
       // BOSS. A huge orc who swapped both towns' bells to start a war he could rule.
       baseClass: 'barbarian', name: 'Warboss Gurm',
-      maxHealth: 84, armorClass: 15, specialSlug: 'shockwave',
+      maxHealth: 84, armorClass: 10, specialSlug: 'shockwave',
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
     },

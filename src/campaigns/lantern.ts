@@ -31,37 +31,37 @@ export const lanternCampaign: CampaignDefinition = {
   enemies: {
     goblin_scrapper: {
       baseClass: 'rogue', name: 'Goblin Scrapper',
-      maxHealth: 36, armorClass: 14,
+      maxHealth: 36, armorClass: 9,
       nightmare: { acBonus: 1 },
     },
     goblin_slinger: {
       baseClass: 'ranger', name: 'Goblin Slinger',
-      maxHealth: 36, armorClass: 15,
+      maxHealth: 36, armorClass: 10,
       nightmare: { acBonus: 1 },
     },
     wolfpelt_runner: {
       // The goblins' "wolves": goblins in wolf pelts, running on all fours.
       // Humanoid (rogue chassis, goblin art) — real wolves can't be animated.
       baseClass: 'rogue', name: 'Wolfpelt Runner',
-      maxHealth: 33, armorClass: 13, movementRange: 4,
+      maxHealth: 33, armorClass: 8, movementRange: 4,
       nightmare: {},
     },
     orc_bruiser: {
       baseClass: 'fighter', name: 'Orc Bruiser',
-      maxHealth: 68, armorClass: 17,
+      maxHealth: 68, armorClass: 12,
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 4 },
     },
     moss_shaman: {
       baseClass: 'cleric', name: 'Moss Shaman',
-      maxHealth: 34, armorClass: 15,
+      maxHealth: 34, armorClass: 10,
       specialSlug: 'heal',   // the story's whole beat: he keeps the King standing
       nightmare: {},
     },
     king_grubnash: {
       // Barbarian chassis = orc art: Grubnash is a huge orc the goblins crowned.
       baseClass: 'barbarian', name: 'King Grubnash',
-      maxHealth: 80, armorClass: 15,
+      maxHealth: 80, armorClass: 10,
       passiveFlags: ['immovable'],
       nightmare: {},
     },
