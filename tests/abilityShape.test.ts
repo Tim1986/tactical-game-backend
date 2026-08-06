@@ -41,3 +41,22 @@ describe('DB-row abilities keep their engine shape', () => {
     expect(abilityShape('sword').areaShape).toBe('chebyshev');
   });
 });
+
+// Purify reads "yourself or an ally within 3 tiles", but canTargetAlly was
+// derived as "every effect is a heal" — its three remove_status effects failed
+// that test, so the client refused to accept an ally and a frozen teammate
+// could never be cleansed. The derivation is now "every effect is beneficial".
+describe('ally-targetable derivation', () => {
+  it('covers cleanses and shields, and lets nothing harmful through', async () => {
+    const { isBeneficialAbility } = await import('../src/services/unitService.js');
+    const { ABILITY_DEFS } = await import('../src/config/gameData.js');
+    const allyTargetable = (ABILITY_DEFS as readonly any[])
+      .filter((a) => isBeneficialAbility(a.targeting_type, a.effects))
+      .map((a) => a.slug)
+      .sort();
+    // Exactly the beneficial abilities. Anything that deals damage, pushes,
+    // pulls or applies a harmful status must NOT appear — the UI would then
+    // offer to "help" an enemy, or refuse to help an ally.
+    expect(allyTargetable).toEqual(['heal', 'purify', 'ward']);
+  });
+});

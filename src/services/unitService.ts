@@ -51,15 +51,34 @@ function rowToUnit(row: UnitRow): UnitDefinition {
   };
 }
 
-// Abilities whose non-heal effects (e.g. shielded, pull) are still meant to
-// target an ally rather than an enemy — can't be derived from effect type
-// alone since the same effect types (apply_status, pull) are also used by
-// enemy-targeting abilities (e.g. Blizzard's frozen, Grasp's pull-toward-caster).
+// Abilities whose effects are still meant to target an ally rather than an
+// enemy but that this derivation can't see — kept as a safety net.
 const ALLY_TARGETABLE_SPECIAL_SLUGS = new Set(['ward', 'rescue']);
 
+// An ability is ally-targetable when EVERY effect it has is beneficial.
+//
+// This used to require every effect to be a `heal`, which quietly excluded
+// Purify: its three remove_status effects failed the test, so despite a
+// description reading "yourself or an ally within 3 tiles" the client refused
+// to accept an ally as a target and a frozen teammate could never be cleansed.
+// Effect type alone is not enough for apply_status — the same effect delivers
+// Ward's shield and Ring of Frost's freeze — so the status slug is checked too.
+const BENEFICIAL_EFFECTS = new Set(['heal', 'remove_status', 'grant_max_health']);
+const BENEFICIAL_STATUSES = new Set(['shielded']);
+
+export function isBeneficialAbility(
+  targetingType: string,
+  effects: ReadonlyArray<{ type: string; statusSlug?: string }>,
+): boolean {
+  if (targetingType === 'self' || !Array.isArray(effects) || effects.length === 0) return false;
+  return effects.every((e) =>
+    BENEFICIAL_EFFECTS.has(e.type) ||
+    (e.type === 'apply_status' && !!e.statusSlug && BENEFICIAL_STATUSES.has(e.statusSlug)));
+}
+
 function rowToAbility(row: AbilityRow): AbilityDefinition {
-  const effects = row.effects as Array<{ type: string }>;
-  const isHealOnly = row.targeting_type !== 'self' && Array.isArray(effects) && effects.length > 0 && effects.every((e) => e.type === 'heal');
+  const effects = row.effects as Array<{ type: string; statusSlug?: string }>;
+  const isHealOnly = isBeneficialAbility(row.targeting_type, effects);
   return {
     id: row.id,
     slug: row.slug,
