@@ -100,7 +100,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
       noSpecials: true,
       // Tutorial softening; easy is allowed above band (near-certain first win).
-      hpScaleOverride: { easy: 0.6, medium: 1.15, hard: 1.4, nightmare: 1.45 },
+      hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.43, nightmare: 1.61 },
     },
     // e2 — Blue-Ribbon Tollgate: an orc guard + orc bruiser up front, goblin fire behind.
     e2: {
@@ -108,7 +108,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'sparkcap_slinger'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 4, y: 3 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.98, medium: 1.05, hard: 1.3, nightmare: 1.4 },
+      hpScaleOverride: { easy: 1.13, medium: 1.35, hard: 1.46, nightmare: 1.46 },
     },
     // e3 — Amrun Ferry Relay: a four-role formation with an orc healer in the back.
     e3: {
@@ -116,7 +116,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['bluecap_pathfinder', 'bellrunner', 'kettlehelm_orc', 'patchcoat_mender'],
       enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 5 }, { x: 3, y: 2 }, { x: 4, y: 1 }],
       playerPlacement: [{ x: 3, y: 6 }, { x: 4, y: 6 }, { x: 2, y: 5 }, { x: 5, y: 5 }],
-      hpScaleOverride: { easy: 0.6, medium: 0.76, hard: 0.95, nightmare: 0.95 },
+      hpScaleOverride: { easy: 0.84, medium: 0.91, hard: 0.98, nightmare: 1.13 },
     },
     // e4 — The Bell-Arch: an immovable orc warden blocks the city gate, goblins flank.
     e4: {
@@ -124,7 +124,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['ironbell_warden', 'sparkcap_slinger', 'bellrunner', 'bluecap_scout'],
       enemyPlacement: [{ x: 4, y: 2 }, { x: 6, y: 1 }, { x: 2, y: 1 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.68, medium: 0.74, hard: 0.92, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.82, medium: 0.91, hard: 1.02, nightmare: 1.13 },
     },
     // e5 — Gurm's War-Camp: the boss orc, kept standing by his mender, ringed by guards.
     e5: {
@@ -132,7 +132,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['warboss_gurm', 'patchcoat_mender', 'kettlehelm_orc', 'bluecap_pathfinder'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.65, medium: 0.8, hard: 0.98, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.80, medium: 0.87, hard: 0.97, nightmare: 0.95 },
     },
   },
 

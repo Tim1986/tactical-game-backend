@@ -102,7 +102,7 @@ export const moonberryCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
       // Tutorial softening; easy allowed above band (near-certain first win).
-      hpScaleOverride: { easy: 0.6, medium: 0.95, hard: 1.2, nightmare: 1.3 },
+      hpScaleOverride: { easy: 0.97, medium: 1.13, hard: 1.57, nightmare: 1.61 },
     },
     // e2 — The Silver Arch: an immovable orc doorman, a goblin fire act, an orc mender.
     e2: {
@@ -110,7 +110,7 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['velvet_gate_guard', 'ember_juggler', 'silverthread_mender'],
       enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 1 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.9, medium: 1.0, hard: 1.25, nightmare: 1.2 },
+      hpScaleOverride: { easy: 1.28, medium: 1.44, hard: 1.57, nightmare: 1.50 },
     },
     // e3 — Midnight Ferry Stage: ranged pressure at the corners, forced movement, a healer.
     e3: {
@@ -118,7 +118,7 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['mooncap_marksman', 'moonhook_caller', 'starstep_duelist', 'silverthread_mender'],
       enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 1 }, { x: 3, y: 3 }, { x: 4, y: 1 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.66, medium: 0.82, hard: 1.0, nightmare: 1.0 },
+      hpScaleOverride: { easy: 0.84, medium: 0.98, hard: 1.13, nightmare: 1.13 },
     },
     // e4 — The Unmarked Road: an immovable orc "statue" gates a lane, goblins harry it.
     e4: {
@@ -126,7 +126,7 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['masque_bruiser', 'ember_juggler', 'mooncap_marksman', 'lantern_lifter'],
       enemyPlacement: [{ x: 4, y: 2 }, { x: 6, y: 1 }, { x: 2, y: 1 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 1.05, nightmare: 1.05 },
+      hpScaleOverride: { easy: 1.04, medium: 1.13, hard: 1.30, nightmare: 1.15 },
     },
     // e5 — The Cartographer's Stage: the boss goblin, his orc mender, and two performers.
     e5: {
@@ -134,7 +134,7 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['night_cartographer', 'silverthread_mender', 'starstep_duelist', 'mooncap_marksman'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.65, medium: 0.8, hard: 0.92, nightmare: 0.87 },
+      hpScaleOverride: { easy: 0.75, medium: 0.87, hard: 0.93, nightmare: 1.06 },
     },
   },
 

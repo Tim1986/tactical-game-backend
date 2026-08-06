@@ -78,7 +78,7 @@ export const lanternCampaign: CampaignDefinition = {
       // Tutorial fight: green goblins, softer than their later appearances.
       // Easy sits ~96% — above band, allowed under the tutorial exemption
       // (near-certain first win is correct UX).
-      hpScaleOverride: { easy: 0.6, medium: 0.9, hard: 1.2, nightmare: 1.3 },
+      hpScaleOverride: { easy: 0.93, medium: 1.19, hard: 1.24, nightmare: 1.43 },
     },
     // e2 — The Old Mill: scrappers up front, a slinger perched behind them.
     e2: {
@@ -86,16 +86,28 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 7, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 0, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.85, medium: 1.2, hard: 1.45, nightmare: 1.6 },
+      hpScaleOverride: { easy: 1.28, medium: 1.43, hard: 1.54, nightmare: 1.79 },
     },
     // e3 — Runners at Dusk: four fast wolfpelt goblins converging from three directions.
     e3: {
       level: 3,
       enemies: ['wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner'],
-      enemyPlacement: [{ x: 7, y: 1 }, { x: 7, y: 3 }, { x: 7, y: 6 }, { x: 4, y: 0 }],
+      // Runners start CLOSE. Four fast goblins crossing an open board was a
+      // free-shot gallery for a ranged party and a 4-on-4 dogpile for a melee
+      // one: melee 57% / ranged 100% at medium, a 43-point spread that put
+      // melee under the floor once the mean was tuned into band. hpScale
+      // cannot fix a spread — it moves every party together. Starting them
+      // inside charge range removes the approach phase that caused it
+      // (spread 43 -> 5 at medium), and suits "Runners at Dusk" better:
+      // these are the fast ones, they should be on you immediately.
+      // Measured alternatives: swapping a runner for a slinger made the
+      // spread WORSE (82pts) — a ranged enemy punishes the melee party more,
+      // since melee must cross to reach it. Dropping to 3 runners trivialised
+      // the fight (100% every party).
+      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }, { x: 4, y: 1 }],
       // Nightmare sits ~47% — a breakpoint cliff between 1.35 and 1.45 collapses
       // it to ~24%, so we take the nearest band edge (2026-07 rebalance).
-      hpScaleOverride: { easy: 0.68, medium: 1.08, hard: 1.32, nightmare: 1.55 },
+      hpScaleOverride: { easy: 1.13, medium: 1.33, hard: 1.43, nightmare: 1.57 },
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
     },
     // e4 — The Cave Mouth: an unmovable orc bruiser blocks the path, scrappers flank.
@@ -104,7 +116,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['orc_bruiser', 'goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 3, y: 6 }, { x: 4, y: 4 }, { x: 2, y: 3 }, { x: 5, y: 6 }],
       playerPlacement: [{ x: 0, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 1, y: 7 }],
-      hpScaleOverride: { easy: 0.75, medium: 0.92, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.91, medium: 0.93, hard: 1.02, nightmare: 1.22 },
     },
     // e5 — The Lantern Court: the Goblin King, kept alive by his shaman.
     e5: {
@@ -112,7 +124,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_scrapper'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.65, medium: 0.78, hard: 0.95, nightmare: 1.0 },
+      hpScaleOverride: { easy: 0.69, medium: 0.98, hard: 1.13, nightmare: 1.26 },
     },
   },
 
