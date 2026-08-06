@@ -98,7 +98,9 @@ export const moonberryCampaign: CampaignDefinition = {
     e1: {
       level: 1,
       enemies: ['lantern_lifter', 'lantern_lifter', 'lantern_lifter'],
-      enemyPlacement: [{ x: 6, y: 2 }, { x: 1, y: 5 }, { x: 6, y: 5 }],
+      // Enemies backed off one tile. Same shape as lantern e4 — at a 0.8-tile gap the
+      // ranged party had no standoff at all (10% at hard). Spread 33 -> 13 at medium.
+      enemyPlacement: [{ x: 7, y: 2 }, { x: 0, y: 5 }, { x: 7, y: 5 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
       // Tutorial softening; easy allowed above band (near-certain first win).

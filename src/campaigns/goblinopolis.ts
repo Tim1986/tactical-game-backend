@@ -96,7 +96,12 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e1: {
       level: 1,
       enemies: ['bluecap_scout', 'bellrunner', 'bluecap_scout'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 5 }, { x: 6, y: 4 }],
+      // Enemies backed off. NOTE: distance alone does NOT fix this encounter — a full
+      // start-distance sweep left the ranged party at 18-35% at EVERY offset, so this
+      // is the best available placement rather than a solution. Ranged still sits
+      // under the medium floor (~33% vs 40); needs a composition look. See
+      // CAMPAIGNS.md and src/ai/spreadSweep.ts.
+      enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
       noSpecials: true,
       // Tutorial softening; easy is allowed above band (near-certain first win).

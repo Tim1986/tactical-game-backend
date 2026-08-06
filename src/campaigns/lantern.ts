@@ -114,7 +114,13 @@ export const lanternCampaign: CampaignDefinition = {
     e4: {
       level: 4,
       enemies: ['orc_bruiser', 'goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
-      enemyPlacement: [{ x: 3, y: 6 }, { x: 4, y: 4 }, { x: 2, y: 3 }, { x: 5, y: 6 }],
+      // Enemies start FARTHER back. At the old 3-tile gap a ranged party was rushed
+      // before it could establish any standoff — ranged 15% at medium, 5% at hard,
+      // an 85-point spread. hpScale cannot close a spread. Backing them off to a
+      // ~6-tile gap restores the approach phase ranged play needs: ranged 15% -> 85%,
+      // spread 85 -> 27, mean still in band. (See CAMPAIGNS.md — start distance is
+      // the dominant driver of party spread, and it cuts both ways.)
+      enemyPlacement: [{ x: 5, y: 6 }, { x: 6, y: 3 }, { x: 4, y: 2 }, { x: 7, y: 6 }],
       playerPlacement: [{ x: 0, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 1, y: 7 }],
       hpScaleOverride: { easy: 0.91, medium: 0.93, hard: 1.02, nightmare: 1.22 },
     },
@@ -122,7 +128,11 @@ export const lanternCampaign: CampaignDefinition = {
     e5: {
       level: 5,
       enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_scrapper'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
+      // Enemies start one tile CLOSER. The opposite failure to e4: at a 5.5-tile gap a
+      // melee party crossed open ground under fire and arrived shattered — melee 23%
+      // at medium, a 77-point spread. Closing the gap gives melee a fight instead of
+      // a march: melee 23% -> 95%, spread 77 -> 38.
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 2 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
       hpScaleOverride: { easy: 0.69, medium: 0.98, hard: 1.13, nightmare: 1.26 },
     },
