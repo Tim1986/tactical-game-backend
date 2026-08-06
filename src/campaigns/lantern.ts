@@ -78,7 +78,7 @@ export const lanternCampaign: CampaignDefinition = {
       // Tutorial fight: green goblins, softer than their later appearances.
       // Easy sits ~96% — above band, allowed under the tutorial exemption
       // (near-certain first win is correct UX).
-      hpScaleOverride: { easy: 0.93, medium: 1.19, hard: 1.24, nightmare: 1.43 },
+      hpScaleOverride: { easy: 0.93, medium: 1.17, hard: 1.22, nightmare: 1.28 },
     },
     // e2 — The Old Mill: scrappers up front, a slinger perched behind them.
     e2: {
@@ -86,7 +86,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 7, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 0, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 1.28, medium: 1.43, hard: 1.54, nightmare: 1.79 },
+      hpScaleOverride: { easy: 1.26, medium: 1.44, hard: 1.55, nightmare: 1.68 },
     },
     // e3 — Runners at Dusk: four fast wolfpelt goblins converging from three directions.
     e3: {
@@ -107,7 +107,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }, { x: 4, y: 1 }],
       // Nightmare sits ~47% — a breakpoint cliff between 1.35 and 1.45 collapses
       // it to ~24%, so we take the nearest band edge (2026-07 rebalance).
-      hpScaleOverride: { easy: 1.13, medium: 1.33, hard: 1.43, nightmare: 1.57 },
+      hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.39, nightmare: 1.63 },
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
     },
     // e4 — The Cave Mouth: an unmovable orc bruiser blocks the path, scrappers flank.
@@ -122,7 +122,7 @@ export const lanternCampaign: CampaignDefinition = {
       // the dominant driver of party spread, and it cuts both ways.)
       enemyPlacement: [{ x: 5, y: 6 }, { x: 6, y: 3 }, { x: 4, y: 2 }, { x: 7, y: 6 }],
       playerPlacement: [{ x: 0, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 1, y: 7 }],
-      hpScaleOverride: { easy: 0.91, medium: 0.93, hard: 1.02, nightmare: 1.22 },
+      hpScaleOverride: { easy: 0.78, medium: 0.91, hard: 0.98, nightmare: 1.04 },
     },
     // e5 — The Lantern Court: the Goblin King, kept alive by his shaman.
     e5: {
@@ -134,7 +134,7 @@ export const lanternCampaign: CampaignDefinition = {
       // a march: melee 23% -> 95%, spread 77 -> 38.
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 2 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.69, medium: 0.98, hard: 1.13, nightmare: 1.26 },
+      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.00, nightmare: 1.13 },
     },
   },
 
