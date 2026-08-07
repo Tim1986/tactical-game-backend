@@ -342,7 +342,12 @@ function removeStatus(ctx: ExecutionContext, target: UnitInstance, effect: Remov
   const before = target.statusEffects.length;
   target.statusEffects = target.statusEffects.filter((se) => se.slug !== effect.statusSlug);
   if (target.statusEffects.length < before) {
-    ctx.events.push({ type: 'STATUS_REMOVED', targetUnitInstanceId: target.instanceId, statusSlug: effect.statusSlug });
+    // sourceUnitInstanceId marks this as a DELIBERATE cleanse (Purify) — the log
+    // builder shows a line only for these. Natural status EXPIRY also emits
+    // STATUS_REMOVED (decrementStatusDurations) but carries no source, so it
+    // stays silent; without this tag the two are indistinguishable and every
+    // expiring debuff would spam "no longer frozen".
+    ctx.events.push({ type: 'STATUS_REMOVED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, statusSlug: effect.statusSlug });
   }
 }
 

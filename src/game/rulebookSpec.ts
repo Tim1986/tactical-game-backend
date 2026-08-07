@@ -846,7 +846,12 @@ export const RULE_CHECKS: RuleCheck[] = [
       assert(has(u, 'weakened'), 'status must still be in force at the start of the turn');
       decrementStatusDurations(u, ev);
       assert(!has(u, 'weakened'), '1-turn status must expire at end of that turn');
-      assert(ev.some((e) => e.type === 'STATUS_REMOVED'), 'expiry must emit STATUS_REMOVED');
+      const expiryRemoved = ev.find((e) => e.type === 'STATUS_REMOVED');
+      assert(!!expiryRemoved, 'expiry must emit STATUS_REMOVED');
+      // Natural expiry carries NO source — that is how the combat log tells it
+      // apart from a deliberate cleanse (Purify) and keeps it silent. If this
+      // ever gains a source, expiring debuffs would spam the log.
+      assert(!expiryRemoved!.sourceUnitInstanceId, 'expiry STATUS_REMOVED must have no source unit');
     },
   },
   {
