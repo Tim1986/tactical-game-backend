@@ -35,32 +35,13 @@ export function isTileOccupied(units: UnitInstance[], pos: BoardPosition): boole
   return getUnitAtPosition(units, pos) !== undefined;
 }
 
-export function getReachableTiles(from: BoardPosition, range: number, units: UnitInstance[], excludeUnitInstanceId: string): BoardPosition[] {
-  const reachable: BoardPosition[] = [];
-  for (let x = 0; x < BOARD_WIDTH; x++) {
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
-      const pos = { x, y };
-      if (!isInBounds(pos)) continue;
-      if (chebyshevDistance(from, pos) <= range && chebyshevDistance(from, pos) > 0) {
-        const occupant = getUnitAtPosition(units, pos);
-        if (!occupant || occupant.instanceId === excludeUnitInstanceId) reachable.push(pos);
-      }
-    }
-  }
-  return reachable;
-}
-
-export function getTilesInRange(from: BoardPosition, range: number): BoardPosition[] {
-  const tiles: BoardPosition[] = [];
-  for (let x = 0; x < BOARD_WIDTH; x++) {
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
-      const pos = { x, y };
-      if (!isInBounds(pos)) continue;
-      if (chebyshevDistance(from, pos) <= range) tiles.push(pos);
-    }
-  }
-  return tiles;
-}
+// NOTE: getReachableTiles and getTilesInRange used to live here. Both measured
+// range with chebyshevDistance — i.e. a diagonal counted as ONE tile, which
+// contradicts MOV-1/ABL-2 (a diagonal is two steps). Neither had a single
+// caller, so they were dead code that would have silently reintroduced
+// diagonal-is-free movement the moment anyone wired them up. Movement
+// reachability is ai/geometry.ts reachableFrom (4-way BFS); ability range is
+// manhattanDistance in turnProcessor.
 
 export function getUnitsInRadius(center: BoardPosition, radius: number, units: UnitInstance[]): UnitInstance[] {
   return units.filter((u) => u.isAlive && chebyshevDistance(center, u.position) <= radius);
@@ -93,52 +74,20 @@ export function isInAoe(center: BoardPosition, pos: BoardPosition, radius: numbe
   return chebyshevDistance(center, pos) <= radius;
 }
 
-export function calculatePushDestination(unitPos: BoardPosition, pusherPos: BoardPosition, distance: number): BoardPosition {
-  const dx = unitPos.x - pusherPos.x;
-  const dy = unitPos.y - pusherPos.y;
-  const normX = dx === 0 ? 0 : dx / Math.abs(dx);
-  const normY = dy === 0 ? 0 : dy / Math.abs(dy);
-  const newX = Math.max(0, Math.min(BOARD_WIDTH - 1, unitPos.x + normX * distance));
-  const newY = Math.max(0, Math.min(BOARD_HEIGHT - 1, unitPos.y + normY * distance));
-  return { x: Math.round(newX), y: Math.round(newY) };
-}
-
 /**
- * Drag `unitPos` toward `pullerPos`, tile by tile, spending a budget where a
- * DIAGONAL step costs 2 and an ORTHOGONAL step costs 1. This is what stops a
- * diagonal pull from covering twice the ground of an orthogonal one: the old
- * code advanced BOTH axes by the full step count, so a "2 tile" diagonal pull
- * moved 2-on-x AND 2-on-y — four tiles of ground. Here a diagonal is honestly
- * two tiles of the budget.
- *
- * The walk prefers a diagonal step; with only 1 budget left it straightens out
- * along the dominant axis (so a distance-3 diagonal pull lands ~1 diagonal + 1
- * straight, keeping roughly the old reach without the 4-tile blink). It never
- * lands on the puller (stops while still adjacent) and `isBlocked` halts it at
- * the first occupied tile — folding in what findLastFreePosition did for the
- * old straight-line version, which cannot represent this bent path.
+ * Slide one tile at a time along a single step vector, stopping before the
+ * board edge, a removed corner, or an occupied tile. Shared by push and pull so
+ * displacement can only ever stop for the reasons the rulebook lists (ABL-7).
  */
-export function calculatePullPath(
-  unitPos: BoardPosition,
-  pullerPos: BoardPosition,
-  distance: number,
-  isBlocked: (p: BoardPosition) => boolean = () => false,
+function slide(
+  from: BoardPosition,
+  step: BoardPosition,
+  tiles: number,
+  isBlocked: (p: BoardPosition) => boolean,
 ): BoardPosition {
-  let cur: BoardPosition = { x: unitPos.x, y: unitPos.y };
-  let budget = distance;
-  while (budget > 0) {
-    const dx = pullerPos.x - cur.x;
-    const dy = pullerPos.y - cur.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 1) break; // adjacent — don't land on the puller
-    const sx = Math.sign(dx);
-    const sy = Math.sign(dy);
-    let step: BoardPosition;
-    if (sx !== 0 && sy !== 0) {
-      if (budget >= 2) { step = { x: sx, y: sy }; budget -= 2; }
-      else { step = Math.abs(dx) >= Math.abs(dy) ? { x: sx, y: 0 } : { x: 0, y: sy }; budget -= 1; }
-    } else {
-      step = { x: sx, y: sy }; budget -= 1;
-    }
+  let cur: BoardPosition = { x: from.x, y: from.y };
+  if (step.x === 0 && step.y === 0) return cur;
+  for (let i = 0; i < tiles; i++) {
     const next = { x: cur.x + step.x, y: cur.y + step.y };
     if (!isInBounds(next)) break;
     if (isBlocked(next)) break;
@@ -146,6 +95,98 @@ export function calculatePullPath(
   }
   return cur;
 }
+
+/**
+ * Every legal destination a PUSH may send the target to.
+ *
+ * A push travels in ONE CARDINAL direction — never diagonally. A diagonal step
+ * costs two tiles of movement in this game (MOV-1), so advancing both axes (as
+ * the old calculatePushDestination did) made a "3 tile" diagonal push cover six
+ * tiles of ground.
+ *
+ * When the target sits exactly diagonal from the caster neither axis dominates,
+ * so BOTH cardinals are returned and the player picks which way the target is
+ * shoved — this is Fear's two-option prompt.
+ */
+export function calculatePushOptions(
+  unitPos: BoardPosition,
+  casterPos: BoardPosition,
+  distance: number,
+  isBlocked: (p: BoardPosition) => boolean = () => false,
+): BoardPosition[] {
+  const dx = unitPos.x - casterPos.x;
+  const dy = unitPos.y - casterPos.y;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+  if (absDx === 0 && absDy === 0) return [{ x: unitPos.x, y: unitPos.y }];
+  const dirs: BoardPosition[] =
+    absDx > absDy ? [{ x: Math.sign(dx), y: 0 }] :
+    absDy > absDx ? [{ x: 0, y: Math.sign(dy) }] :
+    [{ x: Math.sign(dx), y: 0 }, { x: 0, y: Math.sign(dy) }];
+  const seen = new Set<string>();
+  const out: BoardPosition[] = [];
+  for (const dir of dirs) {
+    const landing = slide(unitPos, dir, distance, isBlocked);
+    const key = `${landing.x},${landing.y}`;
+    if (!seen.has(key)) { seen.add(key); out.push(landing); }
+  }
+  return out;
+}
+
+/**
+ * Every legal destination a PULL may draw the target to.
+ *
+ * The drag spends a budget where a DIAGONAL step costs 2 and an ORTHOGONAL step
+ * costs 1, so a diagonal pull can never cover more ground than a straight one
+ * (the old code advanced both axes per step: a "2 tile" diagonal pull moved
+ * 2-on-x AND 2-on-y, four tiles of ground). It prefers diagonal steps and
+ * straightens along the dominant axis when only 1 budget remains.
+ *
+ * A pull stops one tile short of the caster — it may never land on them. When
+ * the drag ends DIAGONALLY adjacent with budget to spare, the last step is a
+ * genuine choice between the two tiles that cut the corner (an enemy to your
+ * northwest can be drawn to the tile north of you or the tile west of you), so
+ * both are returned and the player picks — the same prompt Fear uses for push.
+ */
+export function calculatePullOptions(
+  unitPos: BoardPosition,
+  casterPos: BoardPosition,
+  distance: number,
+  isBlocked: (p: BoardPosition) => boolean = () => false,
+): BoardPosition[] {
+  let cur: BoardPosition = { x: unitPos.x, y: unitPos.y };
+  let budget = distance;
+  while (budget > 0) {
+    const dx = casterPos.x - cur.x;
+    const dy = casterPos.y - cur.y;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    // Orthogonally adjacent (or somehow on the caster): as close as a pull goes.
+    if (adx + ady <= 1) break;
+    // Diagonally adjacent: the final step is the player's choice, resolved below.
+    if (adx === 1 && ady === 1) break;
+    let step: BoardPosition;
+    if (adx !== 0 && ady !== 0) {
+      if (budget >= 2) { step = { x: Math.sign(dx), y: Math.sign(dy) }; budget -= 2; }
+      else { step = adx >= ady ? { x: Math.sign(dx), y: 0 } : { x: 0, y: Math.sign(dy) }; budget -= 1; }
+    } else {
+      step = { x: Math.sign(dx), y: Math.sign(dy) }; budget -= 1;
+    }
+    const next = { x: cur.x + step.x, y: cur.y + step.y };
+    if (!isInBounds(next)) break;
+    if (isBlocked(next)) break;
+    cur = next;
+  }
+  const fdx = casterPos.x - cur.x;
+  const fdy = casterPos.y - cur.y;
+  if (Math.abs(fdx) === 1 && Math.abs(fdy) === 1 && budget >= 1) {
+    const corners = [{ x: casterPos.x, y: cur.y }, { x: cur.x, y: casterPos.y }]
+      .filter((p) => isInBounds(p) && !isBlocked(p));
+    if (corners.length > 0) return corners;
+  }
+  return [cur];
+}
+
 
 /**
  * Tiles swept by a line ability: a full-length ray from `from` toward `to`,

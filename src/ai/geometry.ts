@@ -11,6 +11,10 @@
  */
 
 import { BoardPosition, UnitInstance } from './types';
+// Displacement geometry lives in the engine so brain and executor share ONE
+// implementation. boardUtils imports only types, so there is no cycle even
+// though game/turnProcessor imports this module.
+import { calculatePushOptions, calculatePullOptions } from '../game/boardUtils.js';
 
 export const BOARD_SIZE = 8;
 
@@ -247,9 +251,22 @@ export function reachableTiles(
 }
 
 /**
- * Resolve a push (e.g., Fear): target slides tile-by-tile directly away from
- * the caster (sign-vector direction), stopping early at the board edge, a
- * removed corner, or an occupied tile. Returns the final position.
+ * Blocker predicate matching the engine's: any living unit other than the one
+ * being displaced occupies the tile.
+ */
+function displacementBlocker(allUnits: UnitInstance[], movingUnitId: string) {
+  return (p: BoardPosition) => allUnits.some(
+    (u) => u.isAlive && u.instanceId !== movingUnitId && samePos(u.position, p),
+  );
+}
+
+/**
+ * Resolve a push (e.g., Fear). DELEGATES to the engine's calculatePushOptions
+ * so the brain can never predict a landing tile the executor won't produce —
+ * this used to walk a sign vector, which allowed a DIAGONAL push the engine
+ * (cardinal-only, since a diagonal costs two tiles under MOV-1) never performs.
+ * When the target is exactly diagonal both cardinals are legal and the human
+ * picks; the brain takes the first, same as the executor's no-choice fallback.
  */
 export function pushDestination(
   casterPos: BoardPosition,
@@ -258,21 +275,9 @@ export function pushDestination(
   allUnits: UnitInstance[],
   movingUnitId: string,
 ): BoardPosition {
-  const step = rayStep(casterPos, targetPos);
-  let cur = { ...targetPos };
-  for (let i = 0; i < distance; i++) {
-    const next = { x: cur.x + step.x, y: cur.y + step.y };
-    if (!isInBounds(next)) break;
-    const occupant = allUnits.find(
-      (u) =>
-        u.isAlive &&
-        u.instanceId !== movingUnitId &&
-        samePos(u.position, next),
-    );
-    if (occupant) break;
-    cur = next;
-  }
-  return cur;
+  return calculatePushOptions(
+    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId),
+  )[0];
 }
 
 /**
@@ -288,38 +293,11 @@ export function pullDestination(
   allUnits: UnitInstance[],
   movingUnitId: string,
 ): BoardPosition {
-  // Budget model must match the engine's calculatePullPath: a diagonal step
-  // costs 2, an orthogonal step 1, so the AI predicts the same landing tile the
-  // executor resolves. Prefers diagonal; straightens along the dominant axis
-  // when only 1 budget remains.
-  let cur = { ...targetPos };
-  let budget = distance;
-  while (budget > 0) {
-    const dx = casterPos.x - cur.x;
-    const dy = casterPos.y - cur.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 1) break; // adjacent — never land on the caster
-    const sx = Math.sign(dx);
-    const sy = Math.sign(dy);
-    let stepX: number;
-    let stepY: number;
-    if (sx !== 0 && sy !== 0) {
-      if (budget >= 2) { stepX = sx; stepY = sy; budget -= 2; }
-      else if (Math.abs(dx) >= Math.abs(dy)) { stepX = sx; stepY = 0; budget -= 1; }
-      else { stepX = 0; stepY = sy; budget -= 1; }
-    } else {
-      stepX = sx; stepY = sy; budget -= 1;
-    }
-    const next = { x: cur.x + stepX, y: cur.y + stepY };
-    if (!isInBounds(next)) break;
-    if (samePos(next, casterPos)) break;
-    const occupant = allUnits.find(
-      (u) =>
-        u.isAlive &&
-        u.instanceId !== movingUnitId &&
-        samePos(u.position, next),
-    );
-    if (occupant) break;
-    cur = next;
-  }
-  return cur;
+  // DELEGATES to the engine's calculatePullOptions — one budget model (diagonal
+  // costs 2), one set of stop conditions, so brain and executor cannot drift.
+  // A diagonally-adjacent drag offers two corner-cutting tiles for the human to
+  // pick between; the brain takes the first, matching the executor's fallback.
+  return calculatePullOptions(
+    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId),
+  )[0];
 }

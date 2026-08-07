@@ -7,8 +7,8 @@ import {
   LifestealEffect,
 } from '../types/index.js';
 import {
-  getUnitsInRadius, isInAoe, getLineTiles, calculatePushDestination,
-  calculatePullPath, getUnitAtPosition, isInBounds, manhattanDistance,
+  getUnitsInRadius, isInAoe, getLineTiles,
+  calculatePullOptions, calculatePushOptions, getUnitAtPosition, isInBounds, manhattanDistance,
 } from './boardUtils.js';
 
 export interface ExecutionContext {
@@ -352,9 +352,14 @@ function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffe
     ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
     return;
   }
-  const idealDestination = ctx.pushDestination
-    ?? calculatePushDestination(target.position, ctx.caster.position, effect.distance);
-  const finalPos = findLastFreePosition(target.position, idealDestination, ctx.state.units, target.instanceId);
+  const options = calculatePushOptions(
+    target.position, ctx.caster.position, effect.distance, blockedFor(ctx, target),
+  );
+  // The client may steer which cardinal a diagonal push takes (Fear's prompt);
+  // turnProcessor has already validated that choice against this same option
+  // list, so anything unrecognised here is an AI/campaign cast that didn't
+  // choose — fall back to the first option rather than trusting the input.
+  const finalPos = pickDestination(options, ctx.pushDestination);
   // No actual displacement (blocked by a wall or another unit): don't emit a
   // UNIT_PUSHED event, so the log doesn't claim a push that never happened.
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
@@ -368,20 +373,21 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
     ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
     return;
   }
-  const finalPos = calculatePullPath(
-    target.position,
-    ctx.caster.position,
-    effect.distance,
-    (p) => ctx.state.units.some((u) => u.isAlive && u.instanceId !== target.instanceId && u.position.x === p.x && u.position.y === p.y),
+  const options = calculatePullOptions(
+    target.position, ctx.caster.position, effect.distance, blockedFor(ctx, target),
   );
+  // Same contract as push: a diagonally-adjacent drag offers two corner-cutting
+  // tiles and the player picks; turnProcessor validated it, so an unrecognised
+  // value means nobody chose (AI/campaign) and we take the first option.
+  const finalPos = pickDestination(options, ctx.pushDestination);
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PULLED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
 }
 
 /**
- * Leap the caster onto the targeted tile. Deliberately NOT routed through
- * findLastFreePosition: a leap goes OVER intervening units, so nothing between
+ * Leap the caster onto the targeted tile. Deliberately NOT routed through the
+ * push/pull walkers: a leap goes OVER intervening units, so nothing between
  * here and there can shorten it — only the destination matters. Anchor does not
  * stop it either; Anchor resists being MOVED by someone else, and this is the
  * caster moving itself.
@@ -411,22 +417,25 @@ function applyModifyCooldown(_ctx: ExecutionContext, target: UnitInstance, effec
   target.cooldowns[effect.abilitySlug] = Math.max(0, current + effect.delta);
 }
 
-function findLastFreePosition(start: BoardPosition, end: BoardPosition, units: UnitInstance[], movingUnitId: string): BoardPosition {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const steps = Math.max(Math.abs(dx), Math.abs(dy));
-  if (steps === 0) return start;
-  const normX = dx === 0 ? 0 : dx / Math.abs(dx);
-  const normY = dy === 0 ? 0 : dy / Math.abs(dy);
-  let lastFree = start;
-  for (let i = 1; i <= steps; i++) {
-    const pos = { x: start.x + Math.round(normX * i), y: start.y + Math.round(normY * i) };
-    if (!isInBounds(pos)) break;
-    const occupant = units.find((u) => u.isAlive && u.instanceId !== movingUnitId && u.position.x === pos.x && u.position.y === pos.y);
-    if (occupant) break;
-    lastFree = pos;
-  }
-  return lastFree;
+/**
+ * "Is this tile occupied by someone other than the unit being displaced?" —
+ * the blocker predicate both push and pull hand to the boardUtils walkers.
+ */
+function blockedFor(ctx: ExecutionContext, target: UnitInstance): (p: BoardPosition) => boolean {
+  return (p) => ctx.state.units.some(
+    (u) => u.isAlive && u.instanceId !== target.instanceId && u.position.x === p.x && u.position.y === p.y,
+  );
+}
+
+/**
+ * Take the caster's chosen destination only if it is one the rules actually
+ * offer; otherwise use the first option. Never trust `chosen` blindly — before
+ * this existed, a crafted pushDestination could shove a unit any distance in
+ * any direction because applyPush passed it straight through.
+ */
+function pickDestination(options: BoardPosition[], chosen?: BoardPosition): BoardPosition {
+  if (chosen && options.some((o) => o.x === chosen.x && o.y === chosen.y)) return chosen;
+  return options[0];
 }
 
 function hasPassive(unit: UnitInstance, passiveSlug: string): boolean {

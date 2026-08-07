@@ -101,10 +101,10 @@ function mkAbility(over: Partial<AbilityDefinition> = {}): AbilityDefinition {
   } as AbilityDefinition;
 }
 
-function cast(ability: AbilityDefinition, caster: UnitInstance, target: UnitInstance, allUnits?: UnitInstance[]): GameEvent[] {
+function cast(ability: AbilityDefinition, caster: UnitInstance, target: UnitInstance, allUnits?: UnitInstance[], pushDestination?: BoardPosition): GameEvent[] {
   const events: GameEvent[] = [];
   const state = mkLegacyState(allUnits ?? [caster, target]);
-  executeAbility({ state, caster, targetPosition: target.position, ability, events });
+  executeAbility({ state, caster, targetPosition: target.position, ability, events, pushDestination });
   return events;
 }
 
@@ -627,8 +627,37 @@ export const RULE_CHECKS: RuleCheck[] = [
       // dominant axis: a distance-3 diagonal pull lands 1 diagonal + 1 straight.
       const d3Puller = mkUnit(P1, 1, 1);
       let d3t = mkUnit(P2, 5, 5);
-      cast(mkAbility({ slug: 'test_pull3', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 3 }] }), d3Puller, d3t, [d3Puller, d3t]);
+      const pull3 = mkAbility({ slug: 'test_pull3', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 3 }] });
+      cast(pull3, d3Puller, d3t, [d3Puller, d3t]);
       assert(d3t.position.x === 3 && d3t.position.y === 4, `diagonal pull-3 must land 1 diagonal + 1 straight (got ${d3t.position.x},${d3t.position.y})`);
+
+      // A push is CARDINAL, never diagonal: an exactly-diagonal target offers
+      // both cardinals and the caster picks. Without a choice the first is used,
+      // and either way one axis must stay put.
+      const diagPusher = mkUnit(P1, 3, 3);
+      let dp = mkUnit(P2, 4, 4);
+      cast(pushAb, diagPusher, dp, [diagPusher, dp]);
+      assert(dp.position.x === 4 || dp.position.y === 4,
+        `diagonal push must travel one cardinal, not diagonally (got ${dp.position.x},${dp.position.y})`);
+      dp = mkUnit(P2, 4, 4);
+      cast(pushAb, diagPusher, dp, [diagPusher, dp], { x: 4, y: 7 });
+      assert(dp.position.x === 4 && dp.position.y === 7, `caster's chosen cardinal must be honoured (got ${dp.position.x},${dp.position.y})`);
+
+      // A diagonally-adjacent target CAN be pulled: it cuts the corner onto one
+      // of the two tiles beside the caster, and the caster picks which.
+      const adjPuller = mkUnit(P1, 3, 3);
+      let ap = mkUnit(P2, 4, 4);
+      cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 4, y: 3 });
+      assert(ap.position.x === 4 && ap.position.y === 3, `chosen corner-cut must be honoured (got ${ap.position.x},${ap.position.y})`);
+      ap = mkUnit(P2, 4, 4);
+      cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 3, y: 4 });
+      assert(ap.position.x === 3 && ap.position.y === 4, `the other corner-cut must also be reachable (got ${ap.position.x},${ap.position.y})`);
+
+      // An out-of-set destination is ignored by the executor (turnProcessor
+      // rejects it outright); the target must never teleport to it.
+      ap = mkUnit(P2, 4, 4);
+      cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 7, y: 7 });
+      assert(!(ap.position.x === 7 && ap.position.y === 7), 'a bogus displacement destination must never be honoured');
     },
   },
 

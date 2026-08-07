@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chebyshevDistance, isInBounds, calculatePushDestination, calculatePullPath, positionsEqual, getUnitsInRadius } from '../src/game/boardUtils.js';
+import { chebyshevDistance, isInBounds, calculatePushOptions, calculatePullOptions, positionsEqual, getUnitsInRadius } from '../src/game/boardUtils.js';
 import { UnitInstance } from '../src/types/matchState.js';
 
 const makeUnit = (id: string, x: number, y: number): UnitInstance => ({ instanceId: id, definitionSlug: 'test', ownerPlayerId: 'p1', position: { x, y }, currentHealth: 100, maxHealth: 100, isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false, cooldowns: {}, statusEffects: [] });
@@ -21,16 +21,38 @@ describe('isInBounds', () => {
   });
 });
 
-describe('calculatePushDestination', () => {
-  it('pushes unit away from caster', () => { const result = calculatePushDestination({ x: 4, y: 2 }, { x: 2, y: 2 }, 2); expect(result.x).toBe(6); expect(result.y).toBe(2); });
-  it('clamps to board edge', () => { const result = calculatePushDestination({ x: 6, y: 3 }, { x: 0, y: 3 }, 5); expect(result.x).toBe(7); });
+describe('calculatePushOptions', () => {
+  it('pushes unit away from caster', () => { const [r] = calculatePushOptions({ x: 4, y: 2 }, { x: 2, y: 2 }, 2); expect(r.x).toBe(6); expect(r.y).toBe(2); });
+  it('clamps to board edge', () => { const [r] = calculatePushOptions({ x: 6, y: 3 }, { x: 0, y: 3 }, 5); expect(r.x).toBe(7); });
+  it('offers BOTH cardinals when the target is exactly diagonal', () => {
+    const opts = calculatePushOptions({ x: 4, y: 4 }, { x: 3, y: 3 }, 2);
+    expect(opts).toHaveLength(2);
+    // never diagonal: each option keeps one axis fixed
+    for (const o of opts) expect(o.x === 4 || o.y === 4).toBe(true);
+  });
+  it('stops before an occupied tile', () => { const [r] = calculatePushOptions({ x: 3, y: 2 }, { x: 3, y: 1 }, 3, (p) => p.x === 3 && p.y === 4); expect(r.y).toBe(3); });
 });
 
-describe('calculatePullPath', () => {
-  it('pulls unit toward caster orthogonally, one tile per distance', () => { const result = calculatePullPath({ x: 5, y: 0 }, { x: 0, y: 0 }, 3); expect(result.x).toBe(2); expect(result.y).toBe(0); });
-  it('counts a diagonal step as two of the distance', () => { const result = calculatePullPath({ x: 5, y: 5 }, { x: 1, y: 1 }, 2); expect(result.x).toBe(4); expect(result.y).toBe(4); });
-  it('straightens along the dominant axis with 1 budget left after a diagonal', () => { const result = calculatePullPath({ x: 5, y: 5 }, { x: 1, y: 1 }, 3); expect(result.x).toBe(3); expect(result.y).toBe(4); });
-  it('stops before an occupied tile', () => { const result = calculatePullPath({ x: 5, y: 1 }, { x: 0, y: 1 }, 3, (p) => p.x === 3 && p.y === 1); expect(result.x).toBe(4); expect(result.y).toBe(1); });
+describe('calculatePullOptions', () => {
+  it('pulls unit toward caster orthogonally, one tile per distance', () => { const [r] = calculatePullOptions({ x: 5, y: 3 }, { x: 0, y: 3 }, 3); expect(r.x).toBe(2); expect(r.y).toBe(3); });
+  it('counts a diagonal step as two of the distance', () => { const [r] = calculatePullOptions({ x: 5, y: 5 }, { x: 1, y: 1 }, 2); expect(r.x).toBe(4); expect(r.y).toBe(4); });
+  it('straightens along the dominant axis with 1 budget left after a diagonal', () => { const [r] = calculatePullOptions({ x: 5, y: 5 }, { x: 1, y: 1 }, 3); expect(r.x).toBe(3); expect(r.y).toBe(4); });
+  it('stops before an occupied tile', () => { const [r] = calculatePullOptions({ x: 5, y: 1 }, { x: 0, y: 1 }, 3, (p) => p.x === 3 && p.y === 1); expect(r.x).toBe(4); expect(r.y).toBe(1); });
+  it('offers both corner-cuts for a diagonally adjacent target', () => {
+    const opts = calculatePullOptions({ x: 4, y: 4 }, { x: 3, y: 3 }, 3);
+    expect(opts).toHaveLength(2);
+    const keys = opts.map((o) => `${o.x},${o.y}`).sort();
+    expect(keys).toEqual(['3,4', '4,3']);
+  });
+  it('never lands on the caster', () => {
+    const [r] = calculatePullOptions({ x: 3, y: 5 }, { x: 3, y: 3 }, 9);
+    expect(`${r.x},${r.y}`).not.toBe('3,3');
+  });
+  it('drops a corner-cut that is blocked, leaving no choice', () => {
+    const opts = calculatePullOptions({ x: 4, y: 4 }, { x: 3, y: 3 }, 3, (p) => p.x === 3 && p.y === 4);
+    expect(opts).toHaveLength(1);
+    expect(`${opts[0].x},${opts[0].y}`).toBe('4,3');
+  });
 });
 
 describe('positionsEqual', () => {

@@ -806,7 +806,9 @@ function scoreEffectsOnTarget(
           ctx.state.units,
           target.instanceId,
         );
-        const moved = chebyshevDistance(projectedPos, dest);
+        // Manhattan: displacement is valued in TILES OF GROUND, and a diagonal
+        // is two of those (MOV-1). Chebyshev scored a diagonal shove as 1.
+        const moved = manhattanDistance(projectedPos, dest);
         projectedPos = dest;
         pushedDistance += moved;
         s += moved * (isMelee(target, map) ? WEIGHTS.pushMeleePerTile : WEIGHTS.pushRangedPerTile);
@@ -823,7 +825,9 @@ function scoreEffectsOnTarget(
           ctx.state.units,
           target.instanceId,
         );
-        const moved = chebyshevDistance(projectedPos, dest);
+        // Manhattan for the same reason as push: a diagonal drag covers two
+        // tiles of ground, so Chebyshev valued diagonal pulls at half.
+        const moved = manhattanDistance(projectedPos, dest);
         projectedPos = dest;
         if (isEnemy) {
           // Dragging an enemy INTO our melee: exploitation value — how much
@@ -1127,8 +1131,11 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
           let lastInBounds: BoardPosition | null = null;
           for (let k = 1; k <= def.range; k++) {
             const p = { x: casterPos.x + dx * k, y: casterPos.y + dy * k };
-            if (p.x < 0 || p.x >= BOARD_SIZE || p.y < 0 || p.y >= BOARD_SIZE) break;
-            if (isInBounds(p)) lastInBounds = p;
+            // Stop exactly where the engine's getLineTiles stops. Breaking only
+            // on the 8x8 box let the ray "pass through" a removed corner and
+            // score hits the executor never delivers.
+            if (!isInBounds(p)) break;
+            lastInBounds = p;
             const t = units.find(
               (u) =>
                 u.isAlive &&
@@ -1337,12 +1344,19 @@ function positionScore(
       sd.range +
       sd.areaRadius;
     if (manhattanDistance(e.position, pos) > castReach) continue;
+    // "Could one enemy blast catch us both?" — measured in the SHAPE that blast
+    // actually uses. Hardcoding Chebyshev over-estimated clustering risk for an
+    // orthogonal-shaped AoE (Whirlwind/Ground Slam never hit diagonals), making
+    // Fable spread out more than the threat warranted.
+    const clusterSpan = sd.areaRadius * 2;
     const clusteredWithAlly = state.units.some(
       (u) =>
         u.isAlive &&
         u.instanceId !== unit.instanceId &&
         u.ownerPlayerId === myPlayerId &&
-        chebyshevDistance(u.position, pos) <= sd.areaRadius * 2,
+        (sd.areaShape === 'orthogonal'
+          ? manhattanDistance(u.position, pos) <= clusterSpan
+          : chebyshevDistance(u.position, pos) <= clusterSpan),
     );
     if (clusteredWithAlly) s -= dmg * WEIGHTS.aoeClusterAvoidance;
   }

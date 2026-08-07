@@ -2,10 +2,10 @@ let _evtSeq = 0;
 function nextEventId(): string { return `e${Date.now().toString(36)}_${(++_evtSeq).toString(36)}`; }
 import {
   MatchState, TurnAction, MoveAction, UseAbilityAction, ChargeAction,
-  GameEvent, TurnResult, UnitInstance, InitiativeState,
+  GameEvent, TurnResult, UnitInstance, InitiativeState, BoardPosition,
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
-import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds } from './boardUtils.js';
+import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds, calculatePullOptions, calculatePushOptions } from './boardUtils.js';
 import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
 import { executeAbility } from './abilityExecutor.js';
@@ -584,6 +584,29 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     const hasPushEffect = ability.effects.some((e) => e.type === 'push');
     if (!hasPushEffect && !hasLineOfSight(unit.position, action.target, state.units, [unit.instanceId, targetUnit.instanceId])) {
       throw new TurnValidationError('No line of sight to target');
+    }
+  }
+  // The client may steer a displacement (which cardinal Fear shoves toward,
+  // which corner a diagonal Shadow Grasp cuts). That choice MUST be checked
+  // against the options the rules actually offer: it used to be passed straight
+  // through to applyPush, so a crafted pushDestination could shove a unit any
+  // distance in any direction — including toward the caster.
+  if (action.pushDestination) {
+    const disp = ability.effects.find((e) => e.type === 'push' || e.type === 'pull');
+    if (!disp || (disp as { distance?: number }).distance === undefined) {
+      throw new TurnValidationError('Ability has no displacement to steer');
+    }
+    const displaced = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
+    if (!displaced) throw new TurnValidationError('No unit at target position');
+    const blocked = (p: BoardPosition) => state.units.some(
+      (u) => u.isAlive && u.instanceId !== displaced.instanceId && u.position.x === p.x && u.position.y === p.y,
+    );
+    const distance = (disp as { distance: number }).distance;
+    const legal = disp.type === 'pull'
+      ? calculatePullOptions(displaced.position, unit.position, distance, blocked)
+      : calculatePushOptions(displaced.position, unit.position, distance, blocked);
+    if (!legal.some((p) => p.x === action.pushDestination!.x && p.y === action.pushDestination!.y)) {
+      throw new TurnValidationError('Illegal displacement destination');
     }
   }
   events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}`, abilitySlug: ability.slug });
