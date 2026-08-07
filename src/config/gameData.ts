@@ -393,7 +393,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'grasp',
     name: 'Shadow Grasp',
-    description: 'Deals 9 unblockable damage to an enemy within 5 tiles, drags them 2 tiles toward you and roots them for 1 turn.',
+    description: 'Deals 9 unblockable damage to an enemy within 5 tiles, drags them 3 tiles toward you and roots them for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -402,7 +402,7 @@ export const ABILITY_DEFS = [
     is_unblockable: true,
     effects: [
       { type: 'damage', formula: 'flat', value: 9 },
-      { type: 'pull', direction: 'toward_caster', distance: 2 },
+      { type: 'pull', direction: 'toward_caster', distance: 3 },
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],
   },

@@ -8,7 +8,7 @@ import {
 } from '../types/index.js';
 import {
   getUnitsInRadius, isInAoe, getLineTiles, calculatePushDestination,
-  calculatePullDestination, getUnitAtPosition, isInBounds, manhattanDistance,
+  calculatePullPath, getUnitAtPosition, isInBounds, manhattanDistance,
 } from './boardUtils.js';
 
 export interface ExecutionContext {
@@ -368,8 +368,12 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
     ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
     return;
   }
-  const destination = calculatePullDestination(target.position, ctx.caster.position, effect.distance);
-  const finalPos = findLastFreePosition(target.position, destination, ctx.state.units, target.instanceId);
+  const finalPos = calculatePullPath(
+    target.position,
+    ctx.caster.position,
+    effect.distance,
+    (p) => ctx.state.units.some((u) => u.isAlive && u.instanceId !== target.instanceId && u.position.x === p.x && u.position.y === p.y),
+  );
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PULLED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });

@@ -103,16 +103,48 @@ export function calculatePushDestination(unitPos: BoardPosition, pusherPos: Boar
   return { x: Math.round(newX), y: Math.round(newY) };
 }
 
-export function calculatePullDestination(unitPos: BoardPosition, pullerPos: BoardPosition, distance: number): BoardPosition {
-  const dx = pullerPos.x - unitPos.x;
-  const dy = pullerPos.y - unitPos.y;
-  const normX = dx === 0 ? 0 : dx / Math.abs(dx);
-  const normY = dy === 0 ? 0 : dy / Math.abs(dy);
-  const maxSteps = Math.max(Math.abs(dx), Math.abs(dy)) - 1;
-  const actualSteps = Math.min(distance, maxSteps);
-  const newX = Math.max(0, Math.min(BOARD_WIDTH - 1, unitPos.x + normX * actualSteps));
-  const newY = Math.max(0, Math.min(BOARD_HEIGHT - 1, unitPos.y + normY * actualSteps));
-  return { x: Math.round(newX), y: Math.round(newY) };
+/**
+ * Drag `unitPos` toward `pullerPos`, tile by tile, spending a budget where a
+ * DIAGONAL step costs 2 and an ORTHOGONAL step costs 1. This is what stops a
+ * diagonal pull from covering twice the ground of an orthogonal one: the old
+ * code advanced BOTH axes by the full step count, so a "2 tile" diagonal pull
+ * moved 2-on-x AND 2-on-y — four tiles of ground. Here a diagonal is honestly
+ * two tiles of the budget.
+ *
+ * The walk prefers a diagonal step; with only 1 budget left it straightens out
+ * along the dominant axis (so a distance-3 diagonal pull lands ~1 diagonal + 1
+ * straight, keeping roughly the old reach without the 4-tile blink). It never
+ * lands on the puller (stops while still adjacent) and `isBlocked` halts it at
+ * the first occupied tile — folding in what findLastFreePosition did for the
+ * old straight-line version, which cannot represent this bent path.
+ */
+export function calculatePullPath(
+  unitPos: BoardPosition,
+  pullerPos: BoardPosition,
+  distance: number,
+  isBlocked: (p: BoardPosition) => boolean = () => false,
+): BoardPosition {
+  let cur: BoardPosition = { x: unitPos.x, y: unitPos.y };
+  let budget = distance;
+  while (budget > 0) {
+    const dx = pullerPos.x - cur.x;
+    const dy = pullerPos.y - cur.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 1) break; // adjacent — don't land on the puller
+    const sx = Math.sign(dx);
+    const sy = Math.sign(dy);
+    let step: BoardPosition;
+    if (sx !== 0 && sy !== 0) {
+      if (budget >= 2) { step = { x: sx, y: sy }; budget -= 2; }
+      else { step = Math.abs(dx) >= Math.abs(dy) ? { x: sx, y: 0 } : { x: 0, y: sy }; budget -= 1; }
+    } else {
+      step = { x: sx, y: sy }; budget -= 1;
+    }
+    const next = { x: cur.x + step.x, y: cur.y + step.y };
+    if (!isInBounds(next)) break;
+    if (isBlocked(next)) break;
+    cur = next;
+  }
+  return cur;
 }
 
 /**

@@ -288,10 +288,28 @@ export function pullDestination(
   allUnits: UnitInstance[],
   movingUnitId: string,
 ): BoardPosition {
-  const step = rayStep(targetPos, casterPos);
+  // Budget model must match the engine's calculatePullPath: a diagonal step
+  // costs 2, an orthogonal step 1, so the AI predicts the same landing tile the
+  // executor resolves. Prefers diagonal; straightens along the dominant axis
+  // when only 1 budget remains.
   let cur = { ...targetPos };
-  for (let i = 0; i < distance; i++) {
-    const next = { x: cur.x + step.x, y: cur.y + step.y };
+  let budget = distance;
+  while (budget > 0) {
+    const dx = casterPos.x - cur.x;
+    const dy = casterPos.y - cur.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) <= 1) break; // adjacent — never land on the caster
+    const sx = Math.sign(dx);
+    const sy = Math.sign(dy);
+    let stepX: number;
+    let stepY: number;
+    if (sx !== 0 && sy !== 0) {
+      if (budget >= 2) { stepX = sx; stepY = sy; budget -= 2; }
+      else if (Math.abs(dx) >= Math.abs(dy)) { stepX = sx; stepY = 0; budget -= 1; }
+      else { stepX = 0; stepY = sy; budget -= 1; }
+    } else {
+      stepX = sx; stepY = sy; budget -= 1;
+    }
+    const next = { x: cur.x + stepX, y: cur.y + stepY };
     if (!isInBounds(next)) break;
     if (samePos(next, casterPos)) break;
     const occupant = allUnits.find(

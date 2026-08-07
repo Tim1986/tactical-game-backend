@@ -613,8 +613,22 @@ export const RULE_CHECKS: RuleCheck[] = [
       // pull
       const puller = mkUnit(P1, 1, 1);
       t = mkUnit(P2, 5, 1);
-      cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), puller, t, [puller, t]);
-      assert(t.position.x === 3 && t.position.y === 1, 'pull must draw the target 2 tiles toward the caster');
+      const pull2 = mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] });
+      cast(pull2, puller, t, [puller, t]);
+      assert(t.position.x === 3 && t.position.y === 1, 'orthogonal pull must draw the target 2 tiles toward the caster');
+      // Diagonal pull counts each diagonal step as 2 tiles of the distance, so a
+      // distance-2 pull moves ONE diagonal tile (not two) — a diagonal drag can
+      // never cover more ground than a straight one of the same tile count.
+      const dPuller = mkUnit(P1, 1, 1);
+      let dt = mkUnit(P2, 5, 5);
+      cast(pull2, dPuller, dt, [dPuller, dt]);
+      assert(dt.position.x === 4 && dt.position.y === 4, `diagonal pull-2 must move exactly one diagonal tile (got ${dt.position.x},${dt.position.y})`);
+      // With 1 budget left after a diagonal, the drag straightens along the
+      // dominant axis: a distance-3 diagonal pull lands 1 diagonal + 1 straight.
+      const d3Puller = mkUnit(P1, 1, 1);
+      let d3t = mkUnit(P2, 5, 5);
+      cast(mkAbility({ slug: 'test_pull3', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 3 }] }), d3Puller, d3t, [d3Puller, d3t]);
+      assert(d3t.position.x === 3 && d3t.position.y === 4, `diagonal pull-3 must land 1 diagonal + 1 straight (got ${d3t.position.x},${d3t.position.y})`);
     },
   },
 
