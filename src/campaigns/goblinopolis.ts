@@ -95,17 +95,17 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // e1 — Bridge Ambush: a tutorial pincer, two goblin stragglers front and rear.
     e1: {
       level: 1,
-      enemies: ['bluecap_scout', 'bellrunner', 'bluecap_scout'],
-      // Enemies backed off. NOTE: distance alone does NOT fix this encounter — a full
-      // start-distance sweep left the ranged party at 18-35% at EVERY offset, so this
-      // is the best available placement rather than a solution. Ranged still sits
-      // under the medium floor (~33% vs 40); needs a composition look. See
-      // CAMPAIGNS.md and src/ai/spreadSweep.ts.
+      // Composition: bellrunner replaced with sparkcap_slinger (2026-08-06). A full
+      // start-distance sweep showed ranged at 18-35% at EVERY offset with a move-5
+      // bellrunner in the pincer — the flanker closed before ranged could establish
+      // position. Slinger (ranged/stationary) balances the spread without breaking
+      // the pincer shape.
+      enemies: ['bluecap_scout', 'sparkcap_slinger', 'bluecap_scout'],
       enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
       noSpecials: true,
       // Tutorial softening; easy is allowed above band (near-certain first win).
-      hpScaleOverride: { easy: 1.24, medium: 1.35, hard: 1.52, nightmare: 1.61 },
+      hpScaleOverride: { easy: 1.13, medium: 1.46, hard: 1.54, nightmare: 1.76 },
     },
     // e2 — Blue-Ribbon Tollgate: an orc guard + orc bruiser up front, goblin fire behind.
     e2: {
@@ -154,7 +154,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     },
     bridge_ambush_node: {
       kind: 'encounter', encounter: 'e1',
-      preText: 'Two goblin stragglers spring from opposite hedges. "No pursuit without a pursuit permit!" squeaks one. {mainName} has just enough time to wonder whether that is a real law before the daggers come out.',
+      preText: 'Two goblin stragglers spring from opposite hedges. "No pursuit without a pursuit permit!" squeaks one. {mainName} has just enough time to wonder whether that is a real law before an arrow whizzes past and a crackle of sorcerer-fire answers from the other side.',
       next: 'lv2',
     },
     lv2: { kind: 'levelup', level: 2, next: 'first_clue' },

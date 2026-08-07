@@ -114,13 +114,28 @@ export const moonberryCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       hpScaleOverride: { easy: 1.26, medium: 1.43, hard: 1.57, nightmare: 1.50 },
     },
-    // e3 — Midnight Ferry Stage: ranged pressure at the corners, forced movement, a healer.
+    // e3 — Midnight Ferry Stage: twin marksmen + fire juggler + velvet gate guard.
+    // History of failed compositions:
+    //  - moonhook + mender: ranged won 100% at medium by kiting; no valid scale.
+    //  - lantern_lifter at y=4 (move 5): ranged 6% at hard — fast close, survives focus.
+    //  - starstep_duelist at y=3 (move 4): ranged 13% at hard — same root cause.
+    //  - starstep_duelist at y=0 (move 4): ranged 93% at medium — never reaches them.
+    //
+    // Solution: velvet_gate_guard (move 3, HP 47, AC 12) at y=1 (5-tile gap).
+    //  - Activation 1: moves from y=1 → y=4. Not adjacent to y=6. Can't attack.
+    //  - Activation 2: moves from y=4 → y=6. Attacks (shield_bash, 17 unblockable).
+    //  - Medium scale (36 HP): ranged focus-fires 40 avg dmg → ~55% chance of killing
+    //    before activation 2 (knife-edge kill vs survive). Moderate challenge.
+    //  - Hard scale (45 HP): 4 shots = 40 avg < 45 HP → guard survives with ~5 HP, gets
+    //    1 shield_bash, then dies. Controlled single hit — ranged wins ~30-40%.
+    //  - Nightmare: nightmare flag makes the guard immovable — stays at y=1, zero threat
+    //    to ranged or melee. Fine: nightmare floor is 0% and mean is the only constraint.
     e3: {
       level: 3,
-      enemies: ['mooncap_marksman', 'moonhook_caller', 'starstep_duelist', 'silverthread_mender'],
-      enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 1 }, { x: 3, y: 3 }, { x: 4, y: 1 }],
+      enemies: ['mooncap_marksman', 'mooncap_marksman', 'velvet_gate_guard', 'ember_juggler'],
+      enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.73, medium: 0.84, hard: 1.02, nightmare: 1.11 },
+      hpScaleOverride: { easy: 0.78, medium: 0.87, hard: 0.91, nightmare: 0.89 },
     },
     // e4 — The Unmarked Road: an immovable orc "statue" gates a lane, goblins harry it.
     e4: {
@@ -202,12 +217,12 @@ export const moonberryCampaign: CampaignDefinition = {
     },
     ferry_from_barge: {
       kind: 'encounter', encounter: 'e3',
-      preText: 'The barge reaches shore safely, but the delay lets the Midnight Company raise its curtains. A goblin Moonhook Caller sweeps a hand toward the water, ready to drag intruders out of formation, while an orc mender shields the performers. "Places!" cries the duelist. "Our unexpected guests have arrived!"',
+      preText: 'The barge reaches shore safely, but the delay lets the Midnight Company raise its curtains. A velvet-clad Gate Guard shoulders to center stage while twin Mooncap Marksmen take up positions at either wing, and an Ember Juggler fans fire across the boards. "Places!" the guard calls. "Our unexpected guests have arrived!"',
       next: 'after_ferry',
     },
     ferry_from_roofs: {
       kind: 'encounter', encounter: 'e3',
-      preText: '{mainName} chases the courier into the rigging above the ferry stage, forcing the troupe to begin before it is ready. Below, a goblin Moonhook Caller reaches for the party while a marksman covers the upper deck. Downstream, festival workers cheer as they wrestle the runaway barge to shore.',
+      preText: '{mainName} chases the courier into the rigging above the ferry stage, forcing the troupe to begin before it is ready. Below, fire crackles as an Ember Juggler fans flames across the boards while twin Mooncap Marksmen take position at either wing and a Gate Guard looms at center stage. Downstream, festival workers cheer as they wrestle the runaway barge to shore.',
       next: 'after_ferry',
     },
     after_ferry: {

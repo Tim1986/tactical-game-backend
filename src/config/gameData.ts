@@ -29,7 +29,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'whirlwind',
     name: 'Whirlwind',
-    description: 'Deals 20 damage to all units directly adjacent, including allies. Can be blocked.',
+    description: 'Deals 20 blockable damage to all units directly adjacent, including allies.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -185,7 +185,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'shield_bash',
     name: 'Shield Bash',
-    description: 'Deals 17 damage to an adjacent enemy and knocks them 2 tiles back.',
+    description: 'Deals 17 unblockable damage to an adjacent enemy and knocks them 2 tiles back.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -230,7 +230,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'dagger_toss',
     name: 'Dagger Toss',
-    description: 'Throws a dagger for 16 damage at an enemy within 4 tiles.',
+    description: 'Throws a dagger for 16 unblockable damage at an enemy within 4 tiles.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -242,7 +242,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'expose',
     name: 'Expose Weakness',
-    description: 'Deals 16 damage to an adjacent enemy and exposes them for 3 turns - an exposed unit cannot dodge.',
+    description: 'Deals 16 unblockable damage to an adjacent enemy and exposes them for 3 turns — an exposed unit cannot dodge.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -271,7 +271,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'piercing',
     name: 'Piercing Shot',
-    description: 'Deals 12 damage to every unit in a straight line (including allies), up to 6 tiles. Can be blocked.',
+    description: 'Deals 12 blockable damage to every unit in a straight line (including allies), up to 6 tiles.',
     targeting_type: 'line',
     range: 6,
     area_radius: 0,
@@ -283,7 +283,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'pinning',
     name: 'Pinning Shot',
-    description: 'Deals 7 damage to an enemy within 6 tiles and roots them for 2 turns.',
+    description: 'Deals 7 blockable damage to an enemy within 6 tiles and roots them for 2 turns.',
     targeting_type: 'single',
     range: 6,
     area_radius: 0,
@@ -298,7 +298,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'longshot',
     name: 'Longshot',
-    description: 'Deals 15 damage to an enemy up to 8 tiles away.',
+    description: 'Deals 15 blockable damage to an enemy up to 8 tiles away.',
     targeting_type: 'single',
     range: 8,
     area_radius: 0,
@@ -409,7 +409,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'drain',
     name: 'Essence Drain',
-    description: 'Drains 10 health from an enemy within 4 tiles, restoring 8 health to yourself.',
+    description: 'Drains 10 unblockable health from an enemy within 4 tiles, restoring 8 health to yourself.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
