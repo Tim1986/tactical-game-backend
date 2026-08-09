@@ -89,6 +89,10 @@ export function planPlacement(
   abilityMap: Map<string, AbilityDefinition>,
   _customizations?: (UnitCustomization | undefined)[],
 ): BoardPosition[] {
+  const cacheKey = slugs.join(',');
+  const cached = planCache.get(cacheKey);
+  if (cached) return cached.map((p) => ({ ...p }));
+
   const roles = slugs.map((s) => classify(s, abilityMap));
   // Place melee first (they claim the contested forward tiles), then ranged,
   // then healers; heavier melee first as a stable tie-break.
@@ -113,7 +117,94 @@ export function planPlacement(
     placed.push(best);
     result[i] = best;
   }
-  return result;
+
+  const optimized = optimize(result, roles);
+  planCache.set(cacheKey, optimized);
+  return optimized.map((p) => ({ ...p }));
+}
+
+/**
+ * Solo (non-pairwise) desirability of one tile for one role.
+ * Mirrors tileScore's first two terms; the pairwise terms live in totalScore.
+ */
+function soloScore(role: Role, tile: BoardPosition): number {
+  const edgeDist = Math.abs(tile.y - CENTER_Y);
+  return COL_PREF[role][tile.x]
+    + (role === 'melee' ? -edgeDist * 2 : role === 'healer' ? -edgeDist * 1.5 : edgeDist * 1);
+}
+
+/** Order-independent score of a whole arrangement — what `repair` maximizes. */
+function totalScore(tiles: BoardPosition[], roles: Role[]): number {
+  let s = 0;
+  for (let i = 0; i < tiles.length; i++) {
+    s += soloScore(roles[i], tiles[i]);
+    // Healers want to start near a patient (heal is touch-range).
+    if (roles[i] === 'healer' && tiles.length > 1) {
+      let nearest = Infinity;
+      for (let j = 0; j < tiles.length; j++) {
+        if (i === j) continue;
+        nearest = Math.min(nearest, Math.abs(tiles[j].x - tiles[i].x) + Math.abs(tiles[j].y - tiles[i].y));
+      }
+      if (nearest !== Infinity) s -= nearest * 2;
+    }
+    // AoE denial, counted once per pair.
+    for (let j = i + 1; j < tiles.length; j++) {
+      const cheb = Math.max(Math.abs(tiles[j].x - tiles[i].x), Math.abs(tiles[j].y - tiles[i].y));
+      if (cheb <= 1) s -= 100;
+      else if (cheb === 2) s -= 8;
+    }
+  }
+  return s;
+}
+
+/**
+ * Improve on the greedy result by SEARCHING, not nudging.
+ *
+ * The greedy pass is myopic — it commits to the best tile for the unit in front
+ * of it and cannot see that the choice strands a later one. With four melee it
+ * takes the front column at y=3, then 6, then 0, after which every remaining
+ * front tile is adjacent to something, so the fourth melee is exiled to the
+ * BACK column (owner-reported: "it put one of my fighters on my back row").
+ * y = 0/2/4/6 seats all four up front with no adjacency at all.
+ *
+ * Hill-climbing cannot fix that: escaping needs TWO units to move at once, so
+ * the greedy answer is a local optimum. For a standard 4-unit team the whole
+ * space is only P(22,4) = 175,560 arrangements, so search it exhaustively and
+ * take the true optimum. Larger teams (none today) keep the greedy answer
+ * rather than risk a blow-up.
+ *
+ * Results are memoized by comp: roles depend only on slugs, so the balance grid
+ * — tens of thousands of runSim calls over 28 distinct pairs — pays for this
+ * once per comp rather than once per call.
+ */
+const planCache = new Map<string, BoardPosition[]>();
+
+function optimize(greedy: BoardPosition[], roles: Role[]): BoardPosition[] {
+  if (roles.length > 4) return greedy;
+
+  let best = [...greedy];
+  let bestScore = totalScore(greedy, roles);
+  const chosen: BoardPosition[] = new Array(roles.length);
+  const used = new Array(ZONE.length).fill(false);
+
+  const recurse = (depth: number): void => {
+    if (depth === roles.length) {
+      const s = totalScore(chosen, roles);
+      // Strictly-better only, over a fixed iteration order — deterministic,
+      // which the sims depend on.
+      if (s > bestScore) { bestScore = s; best = [...chosen]; }
+      return;
+    }
+    for (let t = 0; t < ZONE.length; t++) {
+      if (used[t]) continue;
+      used[t] = true;
+      chosen[depth] = ZONE[t];
+      recurse(depth + 1);
+      used[t] = false;
+    }
+  };
+  recurse(0);
+  return best;
 }
 
 export function mirrorPlacement(placement: BoardPosition[]): BoardPosition[] {
