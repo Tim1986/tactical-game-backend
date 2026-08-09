@@ -4,6 +4,7 @@ import * as teamService from '../services/teamService.js';
 import * as userService from '../services/userService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sendSuccess, Errors } from '../utils/response.js';
+import { FABLE_TEAMS } from '../config/fableTeams.js';
 
 export const teamRouter = Router();
 
@@ -46,6 +47,22 @@ async function getAccountLevel(userId: string): Promise<number> {
 teamRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   const teams = await teamService.getUserTeams(req.user!.id);
   sendSuccess(res, { teams });
+});
+
+// ---------------------------------------------------------------
+// GET /teams/fable — Fable's own rosters, for the "Fable's Own Roster"
+// picker. Static config, not user data, so no per-user query. Declared
+// before any '/:id' route so 'fable' is never read as an id.
+// ---------------------------------------------------------------
+teamRouter.get('/fable', async (_req: Request, res: Response): Promise<void> => {
+  sendSuccess(res, {
+    teams: FABLE_TEAMS.map((t) => ({
+      id: t.id,
+      name: t.name,
+      style: t.style,
+      slugs: t.slugs,
+    })),
+  });
 });
 
 // ---------------------------------------------------------------

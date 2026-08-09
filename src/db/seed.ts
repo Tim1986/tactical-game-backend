@@ -1,6 +1,8 @@
 import { pool, checkDatabaseConnection } from './pool.js';
 import { logger } from '../utils/logger.js';
 import { ABILITY_DEFS, UNIT_DEFS } from '../config/gameData.js';
+import { FABLE_TEAMS, fablePlacement, fableCustomizations } from '../config/fableTeams.js';
+import { FABLE_PLAYER_ID } from '../game/initialState.js';
 
 // =============================================================
 // STATUS EFFECTS
@@ -200,6 +202,42 @@ async function seed(): Promise<void> {
       );
     }
     logger.info(`Seeded ${ACHIEVEMENTS.length} achievements`);
+
+    // Fable's own rosters
+    //
+    // These are real rows in `teams` owned by the Fable bot user, because
+    // `matches.player_two_team` is a FK to teams(id) — a PvE match against a
+    // roster needs a persisted team to point at. IDs are fixed in
+    // config/fableTeams.ts and must never change: historical matches reference
+    // them. Slugs resolve to unit_definition UUIDs here (units are seeded
+    // above, in the same transaction), and placement comes from the same
+    // planner the balance sims used.
+    logger.info('Seeding Fable rosters...');
+    for (const team of FABLE_TEAMS) {
+      const unitIds: string[] = [];
+      for (const slug of team.slugs) {
+        const r = await client.query<{ id: string }>(
+          'SELECT id FROM unit_definitions WHERE slug = $1', [slug]
+        );
+        if (!r.rows[0]) throw new Error(`Fable roster "${team.name}": no unit_definition for slug "${slug}"`);
+        unitIds.push(r.rows[0].id);
+      }
+      await client.query(
+        `INSERT INTO teams (id, user_id, name, unit_ids, placement, unit_customizations, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+         ON CONFLICT (id) DO UPDATE SET
+           name                = EXCLUDED.name,
+           unit_ids            = EXCLUDED.unit_ids,
+           placement           = EXCLUDED.placement,
+           unit_customizations = EXCLUDED.unit_customizations,
+           is_active           = EXCLUDED.is_active`,
+        [team.id, FABLE_PLAYER_ID, team.name,
+         JSON.stringify(unitIds),
+         JSON.stringify(fablePlacement(team)),
+         JSON.stringify(fableCustomizations(team))]
+      );
+    }
+    logger.info(`Seeded ${FABLE_TEAMS.length} Fable rosters`);
 
     await client.query('COMMIT');
     logger.info('Seed complete');

@@ -6,6 +6,7 @@ import { AbilityDefinition, UnitDefinition } from '../types/index.js';
 import { abilityShape } from '../config/abilityShape.js';
 import { processTurn, beginTurn, applyAction, endTurn, TurnValidationError } from '../game/turnProcessor.js';
 import { buildInitialState, buildUnitInstance, FABLE_PLAYER_ID, FABLE_HP_SCALE } from '../game/initialState.js';
+import { isFableTeamId, resolveFableTeam } from '../config/fableTeams.js';
 import { calculateElo, calculateXpGain, calculateLevel } from './eloService.js';
 import { logger } from '../utils/logger.js';
 import { notifyUser } from './notificationService.js';
@@ -40,9 +41,18 @@ export async function createPveMatch(
   fableTeamId: string,
   difficulty: FableDifficulty = 'hard',
 ): Promise<{ matchId: string; state: MatchState }> {
+  // `fableTeamId` is either one of the player's own teams (the original
+  // behaviour) or one of Fable's rosters — a concrete roster id, or the
+  // 'fable-random' sentinel meaning "roll one". Resolving here rather than in
+  // the route means every caller gets the same treatment, and the id stored in
+  // `player_two_team` is always a real team row.
+  const resolvedFableTeamId = isFableTeamId(fableTeamId)
+    ? resolveFableTeam(fableTeamId).id
+    : fableTeamId;
+
   const [humanResult, fableResult] = await Promise.all([
     loadTeamUnitsWithPlacement(humanTeamId),
-    loadTeamUnitsWithPlacement(fableTeamId),
+    loadTeamUnitsWithPlacement(resolvedFableTeamId),
   ]);
   // Human always goes first in PvE — simpler UX, no auto-process needed at creation
   const initialState = buildInitialState(humanPlayerId, FABLE_PLAYER_ID, humanResult.units, fableResult.units, humanResult.placement, fableResult.placement, humanPlayerId, humanResult.customizations, fableResult.customizations, FABLE_HP_SCALE[difficulty]);
@@ -51,7 +61,7 @@ export async function createPveMatch(
   const result = await query<{ id: string }>(
     `INSERT INTO matches (player_one_id, player_two_id, player_one_team, player_two_team, status, active_player_id, turn_number, turn_deadline, match_state, is_pve)
      VALUES ($1, $2, $3, $4, 'active', $5, 1, $6, $7, TRUE) RETURNING id`,
-    [humanPlayerId, FABLE_PLAYER_ID, humanTeamId, fableTeamId, humanPlayerId, deadline.toISOString(), JSON.stringify(initialState)]
+    [humanPlayerId, FABLE_PLAYER_ID, humanTeamId, resolvedFableTeamId, humanPlayerId, deadline.toISOString(), JSON.stringify(initialState)]
   );
   const matchId = result.rows[0].id;
   logger.info({ matchId, humanPlayerId }, 'PvE match created');

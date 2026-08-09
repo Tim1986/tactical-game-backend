@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as matchService from '../services/matchService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sendSuccess, sendError, Errors } from '../utils/response.js';
+import { FABLE_RANDOM_TEAM_ID } from '../config/fableTeams.js';
 
 export const matchRouter = Router();
 matchRouter.use(requireAuth);
@@ -89,7 +90,10 @@ matchRouter.get('/:id/history', async (req: Request, res: Response): Promise<voi
 
 const CreatePveMatchSchema = z.object({
   myTeamId: z.string().uuid(),
-  fableTeamId: z.string().uuid(),
+  // Either one of the player's own teams (a UUID) or one of Fable's rosters.
+  // Fable roster ids are UUIDs too, so the union only widens this to admit the
+  // non-UUID 'fable-random' sentinel; matchService resolves it.
+  fableTeamId: z.union([z.string().uuid(), z.literal(FABLE_RANDOM_TEAM_ID)]),
   difficulty: z.enum(['easy', 'medium', 'hard', 'nightmare']).optional(),
 });
 
