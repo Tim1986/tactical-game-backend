@@ -18,6 +18,7 @@ import { writeFileSync } from 'node:fs';
 import { runSim } from './simHarness.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
 import { loadoutsFor, runDuelMatrix, runReferenceMatrix } from './loadoutMatrix.js';
+import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | null => {
@@ -1319,6 +1320,13 @@ function stagePairComps(games: number): void {
   // MEDIAN of the six — a comp must handle at least three distinct styles.
   type Ref = [string, string[], { specialSlug: string; passiveSlug: string | null }[]];
   const L = (specialSlug: string, passiveSlug: string | null) => ({ specialSlug, passiveSlug });
+  // --refs fable: score every cell against Fable's 12 shipped rosters instead
+  // of the hand-built panel below. That makes the yardstick the opposition
+  // players actually face, at the cost of circularity (several rosters are
+  // themselves pair-comps that appear as grid rows) and of comparability with
+  // every pre-2026-08-10 grid — both accepted by the owner. Panel size changes
+  // 9 -> 12, so cells cost 33% more and the CSV gains three columns.
+  const USE_FABLE_REFS = flag('refs') === 'fable';
   const FTR = L('concussive', 'undying'), BRB = L('whirlwind', 'thorns');
   const RGR = L('pinning', 'opportunist'), WIZ = L('cold_snap', 'opportunist');
   const SRC = L('ignite', 'undying'), WLK_D = L('drain', 'anchor'), WLK_G = L('grasp', 'anchor');
@@ -1339,7 +1347,7 @@ function stagePairComps(games: number): void {
   // pull the panel mean up toward ~45%.
   const RGE_S = L('dagger_toss', 'swift');
   const BRB_V = L('roar', 'vengeful'), RGE_V = L('dagger_toss', 'vengeful');
-  const REFS: Ref[] = [
+  const CLASSIC_REFS: Ref[] = [
     ['bruisers',   ['fighter', 'fighter', 'barbarian', 'barbarian'], [FTR, FTR, BRB, BRB]],
     ['snipers',    ['ranger', 'ranger', 'wizard', 'wizard'],         [RGR, RGR, WIZ, WIZ]],
     ['classic+',   ['fighter', 'barbarian', 'ranger', 'cleric'],     [FTR, BRB, RGR, CLR]],
@@ -1352,6 +1360,11 @@ function stagePairComps(games: number): void {
     // measured 75.0 — a genuine top-tier comp, adds VENGEFUL
     ['vanguard',   ['barbarian', 'barbarian', 'rogue', 'rogue'],       [BRB_V, BRB_V, RGE_V, RGE_V]],
   ];
+  const FABLE_REFS: Ref[] = FABLE_TEAMS.map(
+    (t) => [t.name, [...t.slugs], fableCustomizations(t)] as Ref,
+  );
+  const REFS: Ref[] = USE_FABLE_REFS ? FABLE_REFS : CLASSIC_REFS;
+  console.log(`  reference panel: ${USE_FABLE_REFS ? 'FABLE (12 shipped rosters)' : 'classic (9 hand-built)'}`);
   interface Cell {
     pair: string; lx: string; ly: string;
     /** SCORE = mean win% across the panel (see note at the push site). */
@@ -1369,10 +1382,26 @@ function stagePairComps(games: number): void {
   const distinctErrors = new Set<string>();
   // --pair fighter,warlock limits the scan to one class pair (debug/deep-dive).
   const onlyPair = flag('pair')?.split(',');
+  // --part N (1-7) runs one disjoint slice so a long grid can be checkpointed
+  // and resumed. A pair belongs to the part of whichever of its two classes
+  // comes first alphabetically, which partitions the 28 pairs as
+  // 7+6+5+4+3+2+1 with no overlap and nothing missed:
+  //   1 barbarian  2 cleric  3 fighter  4 ranger  5 rogue  6 sorcerer  7 warlock
+  // Every part writes the same CSV header, so parts concatenate directly.
+  const PART_CLASSES = [...ALL_CLASSES].sort();
+  const partArg = flag('part');
+  const part = partArg ? Number(partArg) : null;
+  if (part !== null && (!Number.isInteger(part) || part < 1 || part >= PART_CLASSES.length)) {
+    console.error(`--part must be 1..${PART_CLASSES.length - 1}`);
+    process.exit(1);
+  }
+  const partOwner = part !== null ? PART_CLASSES[part - 1] : null;
+  if (partOwner) console.log(`  PART ${part}/${PART_CLASSES.length - 1}: pairs owned by "${partOwner}"`);
   for (let i = 0; i < ALL_CLASSES.length; i++) {
     for (let j = i + 1; j < ALL_CLASSES.length; j++) {
       const X = ALL_CLASSES[i], Y = ALL_CLASSES[j];
       if (onlyPair && !(onlyPair.includes(X) && onlyPair.includes(Y))) continue;
+      if (partOwner && (X < Y ? X : Y) !== partOwner) continue;
       const pair = `${X}²/${Y}²`;
       pairAgg[pair] = { w: 0, g: 0 };
       const lxs = loadoutsFor(X), lys = loadoutsFor(Y);
