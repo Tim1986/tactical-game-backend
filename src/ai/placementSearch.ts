@@ -6,11 +6,21 @@
  *                                     [--climb 2] [--out placements.json]
  *
  * ── Why this exists ────────────────────────────────────────────────────────
- * placement.ts scores tiles with hand-written weights. Sweeping those weights
- * (placementSweep.ts) found no improvement — but that was measuring the wrong
- * thing: a placement change swings an INDIVIDUAL matchup by up to 35 points
- * (sd ~22) while averaging to near zero across a diverse field. Small weight
- * tweaks move placements one tile and vanish into that average.
+ * placement.ts builds formations from a doctrine. Sweeping its weights (the
+ * since-deleted placementSweep.ts) found no improvement — but that was
+ * measuring the wrong thing: a placement change swings an INDIVIDUAL matchup by
+ * up to 35 points (sd ~22) while averaging to near zero across a diverse field.
+ * Small weight tweaks move placements one tile and vanish into that average.
+ *
+ * WHAT THIS TOOL FOUND, AND WHY IT WAS NOT ADOPTED (2026-08-09)
+ * It beat the heuristic by +8.0 points average, up to +19. Re-tested against
+ * opponents placed RANDOMLY, the same placements scored +0.0 — six rosters up,
+ * six down. The gains were fitted to the exact tiles the fixed field happened
+ * to be standing on, not to better formations, and the winning shapes were
+ * tellingly corner-clustered. ALWAYS re-test a winner against a randomised
+ * field before adopting it. (Known flaw: the heuristic seed can be unlucky in
+ * the low-game screen round and miss the confirm cut, which is why two rosters
+ * "lost" to their own baseline. Take max(heuristic, searched) if you use it.)
  *
  * So: search the placements themselves. For each roster, generate candidate
  * formations, play each against the whole field, and keep the one with the
