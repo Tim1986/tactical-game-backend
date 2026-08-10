@@ -14,6 +14,61 @@
  *
  * The plan is deterministic for a given comp — game-to-game variance comes
  * from the fortune meter's random phase, not from placement dice.
+ *
+ * ── Game facts this file MUST stay in step with (audited 2026-08-09) ────────
+ * Re-check these against gameData whenever abilities are rebalanced; the
+ * weights below are only as good as these numbers.
+ *
+ *  Reach:      melee basic range 1 (fighter/barbarian/rogue), warlock 4,
+ *              wizard/sorcerer 5, ranger 6. Movement 3 (rogue 4).
+ *  Geometry:   the front lines start 3 columns apart (P1 x=2 vs P2 x=5), so
+ *              melee from x=2 reach contact on turn 1 and long-ranged units
+ *              can already shoot from x=1 at deployment.
+ *  Support:    Heal range 2; Ward and Purify range 3. (A previous comment here
+ *              claimed heal was "touch-range (1)" — WRONG, and it justified
+ *              pinning healers one column behind the front. Corrected.)
+ *  AoE shapes: no ability uses plain chebyshev. Whirlwind / Ground Slam are
+ *              `orthogonal` r1 — Manhattan == 1 only, so DIAGONAL neighbours
+ *              are safe from them — and they are self-centred, meaning they
+ *              threaten the contact formation, not the deployment. The placed
+ *              ones (Ring of Fire r5, Ring of Frost r4, Leaping Slam r2) are
+ *              `ring` r1 — Chebyshev 1 around the centre, centre spared — and
+ *              those DO reach the deploy zone on turn 1, which is what the
+ *              Chebyshev-based spacing penalty below is actually defending
+ *              against.
+ *  Friendly fire: Piercing Shot, Flame Jet (line) and every AoE above have
+ *              excludeAllies=false — they hit your own units. A ranged unit
+ *              with a line special wants a clear lane toward the enemy.
+ *  Coverage:   range is MANHATTAN, so row offset is spent from the same budget
+ *              as column distance. Measured: a range-6 unit in column 1
+ *              threatens 9 enemy-zone tiles from rows 2-5 but only 5 from row
+ *              0 or 7 — a 44% loss for sitting on an edge row.
+ *
+ * ── SWEEP RESULT 2026-08-09: these weights are already near-optimal ─────────
+ * `placementSweep.ts` A/B-tested 11 weight variants against these defaults.
+ * DO NOT re-tune from theory alone — the theory loses. What was measured:
+ *
+ *   vs varied opponents (12x12 round robin, n≈15.6k decided games each)
+ *     baseline (control, both sides same weights) ...... 50.41%
+ *     adjacent 100 -> 20 ............................... 50.40%   no effect
+ *     ranged rowBias +1 -> 0, adj 20, cohesion 4 ....... 50.0%    no effect
+ *   effect-size bound (deliberately bad placements)
+ *     all four clumped in the BACK column .............. 46.8%    -3.6
+ *     all four clumped on the FRONT line ............... 42.4%    -8.0
+ *
+ * So placement is worth up to ~8 points, and this heuristic already sits at
+ * the top of that range: every sensible variant tested is statistically
+ * indistinguishable from it. Two traps for whoever revisits this:
+ *
+ *  1. MIRROR MATCHES LIE. Testing a variant against itself (same comp both
+ *     sides) rated these same variants at 53-57% — a 5-10x exaggeration —
+ *     because identical armies make the game a knife-edge that any consistent
+ *     nudge decides. One team swung to 93% off a ONE-TILE cleric move. Always
+ *     confirm against varied opponents.
+ *  2. The coverage/orphaning/AoE-spacing arguments above are analytically
+ *     correct and still produced NO win-rate gain: the brain repositions on
+ *     turn 1-2, so deployment nuance washes out. Only gross errors (clumping,
+ *     melee stranded in the back column) actually cost games.
  */
 
 import { BoardPosition, BOARD_WIDTH, BOARD_HEIGHT } from '../types/matchState.js';
@@ -43,37 +98,70 @@ for (let x = 0; x <= 2; x++) {
   }
 }
 
-const COL_PREF: Record<Role, [number, number, number]> = {
-  // score for x = 0, 1, 2
-  melee:  [0, 15, 30],
-  ranged: [15, 20, -10],
-  // Heal is touch-range (1): the healer must START near its patients, one
-  // column behind the front — hiding in the back column wastes whole turns
-  // walking in. AoE-denial spacing (below) keeps it from hugging them.
-  healer: [10, 25, -5],
+/**
+ * Tunable placement weights. Defaults are the historical values so behaviour is
+ * unchanged until a sweep proves an alternative better; `placementSweep.ts`
+ * varies these head-to-head and reports win rates.
+ */
+export interface PlacementWeights {
+  /** Column preference per role, score for x = 0, 1, 2. */
+  col: Record<Role, [number, number, number]>;
+  /** Row preference: score multiplier on distance from centre row. NEGATIVE
+   *  pulls toward the centre, POSITIVE pushes to the edges. */
+  rowBias: Record<Role, number>;
+  /** Healer pull toward the nearest already-placed ally (per tile of distance). */
+  healerCohesion: number;
+  /** AoE-denial penalty for an ally within Chebyshev 1 / exactly 2. */
+  adjacent: number;
+  cheb2: number;
+  /** Penalty for an ally sitting on one of the 8 rays out of this tile —
+   *  line specials (Piercing Shot, Flame Jet) hit allies in the lane. Only
+   *  applied to ranged units. 0 disables. */
+  lineOfFire: number;
+}
+
+export const DEFAULT_WEIGHTS: PlacementWeights = {
+  col: {
+    melee:  [0, 15, 30],
+    ranged: [15, 20, -10],
+    // Support reach is 2–3 (Heal 2, Ward/Purify 3), NOT 1 as an earlier comment
+    // claimed — a healer does not have to hug the front line to be useful.
+    healer: [10, 25, -5],
+  },
+  rowBias: { melee: -2, healer: -1.5, ranged: 1 },
+  healerCohesion: 2,
+  adjacent: 100,
+  cheb2: 8,
+  lineOfFire: 0,
 };
 
 const CENTER_Y = (BOARD_HEIGHT - 1) / 2;
 
-function tileScore(role: Role, tile: BoardPosition, placed: BoardPosition[]): number {
-  let s = COL_PREF[role][tile.x];
-  // Melee want the center of the line (fastest to engage anywhere); ranged
-  // drift slightly toward the edges (harder to collapse on); healers stay
-  // central AND near already-placed allies — their patients.
+function tileScore(role: Role, tile: BoardPosition, placed: BoardPosition[], w: PlacementWeights): number {
+  let s = w.col[role][tile.x];
   const edgeDist = Math.abs(tile.y - CENTER_Y);
-  s += role === 'melee' ? -edgeDist * 2 : role === 'healer' ? -edgeDist * 1.5 : edgeDist * 1;
+  s += edgeDist * w.rowBias[role];
   if (role === 'healer' && placed.length > 0) {
     const nearest = Math.min(
       ...placed.map((p) => Math.abs(p.x - tile.x) + Math.abs(p.y - tile.y)),
     );
-    s -= nearest * 2;
+    s -= nearest * w.healerCohesion;
   }
-  // AoE denial: never adjacent to an already-placed ally; Chebyshev 2 is
-  // mildly discouraged too.
+  // AoE denial. Chebyshev is the right metric here: the placed AoEs that can
+  // reach the deploy zone on turn 1 (Ring of Fire/Frost) are `ring` shaped, so
+  // a blast centred between two allies catches both at Chebyshev <= 2.
   for (const p of placed) {
     const cheb = Math.max(Math.abs(p.x - tile.x), Math.abs(p.y - tile.y));
-    if (cheb <= 1) s -= 100;
-    else if (cheb === 2) s -= 8;
+    if (cheb <= 1) s -= w.adjacent;
+    else if (cheb === 2) s -= w.cheb2;
+  }
+  // Friendly fire: line specials hit allies in the lane, so a ranged unit
+  // pays for having an ally on one of its 8 rays toward the enemy.
+  if (w.lineOfFire > 0 && role === 'ranged') {
+    for (const p of placed) {
+      const dx = p.x - tile.x, dy = p.y - tile.y;
+      if (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy)) s -= w.lineOfFire;
+    }
   }
   return s;
 }
@@ -88,8 +176,9 @@ export function planPlacement(
   slugs: string[],
   abilityMap: Map<string, AbilityDefinition>,
   _customizations?: (UnitCustomization | undefined)[],
+  weights: PlacementWeights = DEFAULT_WEIGHTS,
 ): BoardPosition[] {
-  const cacheKey = slugs.join(',');
+  const cacheKey = slugs.join(',') + '|' + (weights === DEFAULT_WEIGHTS ? 'D' : JSON.stringify(weights));
   const cached = planCache.get(cacheKey);
   if (cached) return cached.map((p) => ({ ...p }));
 
@@ -110,7 +199,7 @@ export function planPlacement(
     let bestScore = -Infinity;
     for (const tile of ZONE) {
       if (placed.some((p) => p.x === tile.x && p.y === tile.y)) continue;
-      const s = tileScore(role, tile, placed);
+      const s = tileScore(role, tile, placed, weights);
       if (s > bestScore) { bestScore = s; best = tile; }
     }
     if (!best) throw new Error('planPlacement: zone exhausted');
@@ -118,7 +207,7 @@ export function planPlacement(
     result[i] = best;
   }
 
-  const optimized = optimize(result, roles);
+  const optimized = optimize(result, roles, weights);
   planCache.set(cacheKey, optimized);
   return optimized.map((p) => ({ ...p }));
 }
@@ -127,17 +216,16 @@ export function planPlacement(
  * Solo (non-pairwise) desirability of one tile for one role.
  * Mirrors tileScore's first two terms; the pairwise terms live in totalScore.
  */
-function soloScore(role: Role, tile: BoardPosition): number {
+function soloScore(role: Role, tile: BoardPosition, w: PlacementWeights): number {
   const edgeDist = Math.abs(tile.y - CENTER_Y);
-  return COL_PREF[role][tile.x]
-    + (role === 'melee' ? -edgeDist * 2 : role === 'healer' ? -edgeDist * 1.5 : edgeDist * 1);
+  return w.col[role][tile.x] + edgeDist * w.rowBias[role];
 }
 
 /** Order-independent score of a whole arrangement — what `repair` maximizes. */
-function totalScore(tiles: BoardPosition[], roles: Role[]): number {
+function totalScore(tiles: BoardPosition[], roles: Role[], w: PlacementWeights): number {
   let s = 0;
   for (let i = 0; i < tiles.length; i++) {
-    s += soloScore(roles[i], tiles[i]);
+    s += soloScore(roles[i], tiles[i], w);
     // Healers want to start near a patient (heal is touch-range).
     if (roles[i] === 'healer' && tiles.length > 1) {
       let nearest = Infinity;
@@ -145,13 +233,20 @@ function totalScore(tiles: BoardPosition[], roles: Role[]): number {
         if (i === j) continue;
         nearest = Math.min(nearest, Math.abs(tiles[j].x - tiles[i].x) + Math.abs(tiles[j].y - tiles[i].y));
       }
-      if (nearest !== Infinity) s -= nearest * 2;
+      if (nearest !== Infinity) s -= nearest * w.healerCohesion;
     }
     // AoE denial, counted once per pair.
     for (let j = i + 1; j < tiles.length; j++) {
       const cheb = Math.max(Math.abs(tiles[j].x - tiles[i].x), Math.abs(tiles[j].y - tiles[i].y));
-      if (cheb <= 1) s -= 100;
-      else if (cheb === 2) s -= 8;
+      if (cheb <= 1) s -= w.adjacent;
+      else if (cheb === 2) s -= w.cheb2;
+    }
+    if (w.lineOfFire > 0 && roles[i] === 'ranged') {
+      for (let j = 0; j < tiles.length; j++) {
+        if (i === j) continue;
+        const dx = tiles[j].x - tiles[i].x, dy = tiles[j].y - tiles[i].y;
+        if (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy)) s -= w.lineOfFire;
+      }
     }
   }
   return s;
@@ -179,17 +274,17 @@ function totalScore(tiles: BoardPosition[], roles: Role[]): number {
  */
 const planCache = new Map<string, BoardPosition[]>();
 
-function optimize(greedy: BoardPosition[], roles: Role[]): BoardPosition[] {
+function optimize(greedy: BoardPosition[], roles: Role[], w: PlacementWeights): BoardPosition[] {
   if (roles.length > 4) return greedy;
 
   let best = [...greedy];
-  let bestScore = totalScore(greedy, roles);
+  let bestScore = totalScore(greedy, roles, w);
   const chosen: BoardPosition[] = new Array(roles.length);
   const used = new Array(ZONE.length).fill(false);
 
   const recurse = (depth: number): void => {
     if (depth === roles.length) {
-      const s = totalScore(chosen, roles);
+      const s = totalScore(chosen, roles, w);
       // Strictly-better only, over a fixed iteration order — deterministic,
       // which the sims depend on.
       if (s > bestScore) { bestScore = s; best = [...chosen]; }
