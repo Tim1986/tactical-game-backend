@@ -14,11 +14,23 @@ export interface LeaderboardEntry {
 // Get the most recent daily snapshot (top 10)
 // Falls back to live query if no snapshot exists yet.
 // ---------------------------------------------------------------
+/**
+ * pg returns TIMESTAMP columns as Date objects, not strings. This row type used
+ * to declare `snapshotted_at: string`, which the compiler believed, so
+ * `.split('T')` shipped and threw `r.snapshotted_at.split is not a function` on
+ * every call. Because the only caller is a fire-and-forget achievement check,
+ * that surfaced as the whole server dying after each completed match. Accept
+ * both shapes and normalise.
+ */
+export function isoDate(v: Date | string): string {
+  return (v instanceof Date ? v.toISOString() : String(v)).split('T')[0];
+}
+
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   // Try latest snapshot first
   const snapshotResult = await query<{
     rank: number; user_id: string; username: string; elo: number;
-    win_count: number; match_count: number; snapshotted_at: string;
+    win_count: number; match_count: number; snapshotted_at: Date | string;
   }>(
     `SELECT rank, user_id, username, elo, win_count, match_count, snapshotted_at
      FROM leaderboard_snapshots
@@ -35,7 +47,7 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       elo: r.elo,
       winCount: r.win_count,
       matchCount: r.match_count,
-      snapshotDate: r.snapshotted_at.split('T')[0],
+      snapshotDate: isoDate(r.snapshotted_at),
     }));
   }
 

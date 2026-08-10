@@ -19,6 +19,29 @@ async function main(): Promise<void> {
   });
 }
 
+// ── Last-resort guards ───────────────────────────────────────────────────────
+// Node 20 kills the process on an unhandled promise rejection. Every background
+// task here is fire-and-forget (push notifications, achievement evaluation), so
+// a single unguarded rejection anywhere in that code takes down a live game
+// server for everyone — which is precisely what happened on 2026-08-10, from a
+// Date being formatted as a string in leaderboard code nobody was even looking
+// at. Those call sites are now individually guarded; this is the backstop for
+// the ones nobody has written yet.
+//
+// Deliberately does NOT exit: a request handler that fails should return a 500,
+// not evict every connected player. These are logged at error level so they
+// stay visible rather than becoming invisible swallowed failures.
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, 'UNHANDLED REJECTION — server kept alive, investigate');
+});
+
+// An uncaught exception, by contrast, leaves the process in an undefined state.
+// Log it and let the platform restart us cleanly.
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'UNCAUGHT EXCEPTION — exiting for a clean restart');
+  process.exit(1);
+});
+
 main().catch((err) => {
   logger.error({ err }, 'Failed to start server');
   process.exit(1);

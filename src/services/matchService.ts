@@ -353,10 +353,17 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
   try {
     await client.query('SAVEPOINT analytics');
     const compResult = await client.query<{ team_id: string; slugs: string[] }>(
+      // teams.unit_ids is JSONB, not uuid[] — `= ANY(t.unit_ids)` is invalid
+      // against it and Postgres rejects the whole statement with 42809
+      // ("op ANY/ALL (array) requires array on right side"). The savepoint
+      // below meant this only ever logged a warning, so every match since this
+      // was written has silently written no analytics row. Unnest the JSON
+      // array properly instead.
       `SELECT t.id AS team_id, array_agg(u.slug ORDER BY u.slug) AS slugs
        FROM (VALUES ($1::uuid), ($2::uuid)) AS v(team_id)
        JOIN teams t ON t.id = v.team_id
-       JOIN unit_definitions u ON u.id = ANY(t.unit_ids)
+       JOIN LATERAL jsonb_array_elements_text(t.unit_ids) AS uid(id) ON TRUE
+       JOIN unit_definitions u ON u.id = uid.id::uuid
        GROUP BY t.id`,
       [match.player_one_team, match.player_two_team]
     );
@@ -381,10 +388,22 @@ async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, w
     logger.warn({ matchId: match.id, err }, 'Failed to write match analytics');
   }
 
-  // Evaluate achievements for human players only (not Fable)
+  // Evaluate achievements for human players only (not Fable).
+  //
+  // ⚠ The .catch() is load-bearing, not defensive padding. `void promise` with
+  // no rejection handler is an UNHANDLED REJECTION, which Node 20 treats as
+  // fatal — it exits the process. A cosmetic bug in the achievement path
+  // (leaderboard formatting a Date as a string) therefore killed the whole
+  // server every time a match completed, and users saw HTTP 502 until Railway
+  // restarted it. Nothing about awarding a badge should be able to do that.
+  const evaluateSafely = (userId: string) => {
+    evaluateAchievements(userId).catch((err) => {
+      logger.error({ err, userId }, 'Achievement evaluation failed (non-fatal)');
+    });
+  };
   setImmediate(() => {
-    if (match.player_one_id !== FABLE_PLAYER_ID) void evaluateAchievements(match.player_one_id);
-    if (match.player_two_id !== FABLE_PLAYER_ID) void evaluateAchievements(match.player_two_id);
+    if (match.player_one_id !== FABLE_PLAYER_ID) evaluateSafely(match.player_one_id);
+    if (match.player_two_id !== FABLE_PLAYER_ID) evaluateSafely(match.player_two_id);
   });
 }
 
