@@ -46,7 +46,7 @@
 import { runMatch } from './simHarness.js';
 import { OptimalBrain } from './aiBrain.js';
 import { buildAbilityMap, DEFAULT_UNITS } from './defaultData.js';
-import { planPlacement, mirrorPlacement, DEFAULT_WEIGHTS } from './placement.js';
+import { planPlacement, mirrorPlacement } from './placement.js';
 import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
 import { BoardPosition } from '../types/matchState.js';
 import { AbilityDefinition, UnitCustomization } from '../types/index.js';
@@ -104,7 +104,7 @@ function candidates(slugs: string[], custs: UnitCustomization[], rng: () => numb
     seen.add(k); out.push(p);
   };
 
-  push(planPlacement(slugs, normalized, custs, DEFAULT_WEIGHTS));
+  push(planPlacement(slugs, normalized, custs));
 
   const melee = slugs.map(isMelee);
   const pick = (allowed: BoardPosition[]) => allowed[Math.floor(rng() * allowed.length)];
@@ -141,7 +141,7 @@ function candidates(slugs: string[], custs: UnitCustomization[], rng: () => numb
 const FIELD = FABLE_TEAMS.map((t) => {
   const c = fableCustomizations(t);
   return { name: t.name, slugs: [...t.slugs], custs: c,
-           placement: mirrorPlacement(planPlacement([...t.slugs], normalized, c, DEFAULT_WEIGHTS)) };
+           placement: mirrorPlacement(planPlacement([...t.slugs], normalized, c)) };
 });
 
 interface Score { avg: number; worst: number; worstVs: string; per: { name: string; wr: number }[] }
@@ -210,7 +210,7 @@ FABLE_TEAMS.forEach((t, ti) => {
   // Re-confirm the climbed winner at full strength (climb used cheap games).
   best = { p: best.p, s: evaluate(slugs, custs, best.p, N_CONFIRM) };
 
-  const heur = evaluate(slugs, custs, planPlacement(slugs, normalized, custs, DEFAULT_WEIGHTS), N_CONFIRM);
+  const heur = evaluate(slugs, custs, planPlacement(slugs, normalized, custs), N_CONFIRM);
   console.log(`${'='.repeat(64)}\n${t.name}  [${slugs.join(', ')}]`);
   console.log(`  heuristic : avg ${heur.avg.toFixed(1)}%  worst ${heur.worst.toFixed(0)}% (vs ${heur.worstVs})`);
   console.log(`  SEARCHED  : avg ${best.s.avg.toFixed(1)}%  worst ${best.s.worst.toFixed(0)}% (vs ${best.s.worstVs})   ${best.s.avg > heur.avg ? `+${(best.s.avg - heur.avg).toFixed(1)}` : 'no gain'}`);
@@ -219,7 +219,7 @@ FABLE_TEAMS.forEach((t, ti) => {
   diagram(best.p).forEach((l) => console.log(l));
 
   results[t.name] = {
-    slugs, heuristic: { placement: planPlacement(slugs, normalized, custs, DEFAULT_WEIGHTS), ...heur },
+    slugs, heuristic: { placement: planPlacement(slugs, normalized, custs), ...heur },
     searched: { placement: best.p, ...best.s },
   };
   fs.writeFileSync(OUT, JSON.stringify(results, null, 1));

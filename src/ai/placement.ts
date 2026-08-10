@@ -1,85 +1,81 @@
 /**
  * placement.ts — Opening-placement planner ("Auto-Arrange").
  *
- * This is a PLAYER-FACING tool as well as the AI's deployment: the button on the
- * team page calls straight into it, and whatever it returns is what the owner of
- * the team sees and judges. So the bar is not "wins the most games" — it is
- * "produces a formation a player recognises as deliberate, and cannot easily
- * beat by hand". A formation that scores half a point higher but looks like the
- * units were dropped from a height is a worse answer.
+ * Player-facing: the button on the team page calls straight into this, and
+ * Fable's 12 rosters deploy with it. The bar is "a tactics player looks at the
+ * formation and recognises the plan" — mutual support without feeding AoE.
  *
- * It must also handle ANY composition. Fable's rosters happen to be 2+2, but a
- * player can bring four of one class, three casters and a healer, or anything
- * else, and every one of those has to come out looking intentional.
+ * ── Why this is a set of AUTHORED FORMATIONS and not an optimizer ───────────
+ * Two previous versions scored tiles with weighted sums (centre pull, span,
+ * spacing penalties) and both produced the same thing: units evenly smeared
+ * into lattices and picket lines. That is not a tuning failure — it is what
+ * the optimum of any smooth weighted sum looks like. The strategies a human
+ * actually plays ("rush the middle as a pack", "castle in a corner and make
+ * them walk") are DISCRETE plans, not points on a continuum, so no weight
+ * setting reaches them. The fix is to think in the same order a player does:
+ * pick the strategy from the composition, then arrange the units to express
+ * it, then verify AoE safety as a hard rule.
  *
- * ── The doctrine ────────────────────────────────────────────────────────────
- * Ranks, not free-form scoring:
+ *   RUSH    all-melee            wedge on the front line, centre-forward:
+ *                                the pack arrives at the same fight on the
+ *                                same turn, wings fold in behind.
+ *   PHALANX melee + support      melee wall centre-front; casters/healers
+ *                                tucked on the back shoulders, diagonal to
+ *                                the wall so no lane or blast lines up.
+ *   CASTLE  no melee             staggered lattice anchored in the top
+ *                                corner. A ranged/control team wants the
+ *                                approach to be long and awkward; the corner
+ *                                halves the angles melee can come from and
+ *                                buys two turns of free shooting.
  *
- *   melee            -> the FRONT column (x=2), always
- *   ranged / healer  -> the support ranks behind it (x=0-1)
- *   no melee at all  -> the casters become the front rank and step up to x=1-2
+ * ── The AoE geometry every shape must respect ───────────────────────────────
+ * The blasts that can reach the deploy zone on turn 1 (Ring of Fire/Frost)
+ * are ring-shaped: they hit the 8 tiles around a centre — a 3x3 box minus its
+ * middle. All three deploy columns fit inside one box width, which gives two
+ * hard rules and two derived facts:
  *
- * The optimiser then only chooses ROWS (and how deep each support unit sits).
- * Melee-in-front is therefore a structural guarantee, not something the scoring
- * can trade away for a couple of points — which is exactly how the previous
- * version put a fighter on the back row.
+ *   R1  every pair of allies at Chebyshev >= 2 (a blast centred on either
+ *       must not clip the other);
+ *   R2  any 3 consecutive ROWS hold at most 2 units (no single blast may
+ *       catch three).
  *
- * ── Why the back rank is column 0 and not column 1 ──────────────────────────
- * This is the non-obvious one, and it is geometry rather than taste. Two units
- * in adjacent columns are Chebyshev-adjacent unless their rows differ by 2+, so
- * pinning the support rank to x=1 forces it away from the melee rows and into
- * the extreme rows 0/7. Enumerated: for 2 melee + 2 support, the number of
- * formations that are all >=2 apart AND avoid rows 0/7 is
+ *   F1  under R2, four units need a vertical span of AT LEAST 4 rows, and
+ *       span 4 is only achievable as rows {r, r+1, r+3, r+4} with each
+ *       adjacent-row pair split into columns 0 and 2 (dx=2 keeps R1). This is
+ *       why no honest formation is tighter than the ones below — and why the
+ *       castle is a stagger, not a block.
+ *   F2  the "obvious" 2x2 square (e.g. (0,3),(2,3),(0,5),(2,5)) is the WORST
+ *       formation on the board: one ring centred in its middle catches all
+ *       four. Enumerated, not intuited. The eye wants to build it; never do.
  *
- *      support in column 1 ....... 0
- *      support in column 0-1 ... 142
- *
- * So the old planner's scattered, corner-hugging output was not a tuning bug —
- * its own anti-AoE rule left it nowhere else to stand. Letting the support rank
- * drop to x=0 is what makes a compact, spaced, sensible formation possible at
- * all. The cost is one tile of reach, which the brain closes on turn 1.
- *
- * ── Perfect AoE denial is impossible; aim for "not easy" ────────────────────
- * Two units are catchable by one ring-r1 blast at Chebyshev <= 2. Four units all
- * >=3 apart needs four rows pairwise 3 apart inside 8 rows (only 1/4/7 exist,
- * and 7 is an extreme). So SOME Chebyshev-2 pairs are unavoidable. The scoring
- * treats adjacency as effectively forbidden and Chebyshev-2 as a real but
- * payable cost, which is the honest version of the owner's requirement: don't
- * group up for AoE too easily, but stay close enough to support each other.
- *
- * ── Loadout awareness ───────────────────────────────────────────────────────
- * `customizations` is finally used rather than ignored:
- *   - a healer's support rank is checked against its ACTUAL reach (Heal 2,
- *     Ward/Purify 3), so it starts in range of someone instead of guessing;
- *   - a unit carrying a `line` special (Piercing Shot, Flame Jet) pays for an
- *     ally parked in its forward lane, because those hit allies. A unit without
- *     one is happy to shelter directly behind a tank.
+ * Every template below satisfies R1 and R2 exactly (worst single blast = 2,
+ * zero adjacent pairs), keeps all units off distinct rows (so a line special
+ * — Piercing Shot, Flame Jet, which hit allies in the lane — never has an
+ * ally parked in its firing row), and avoids the removed corner tiles.
  *
  * ── Game facts this file MUST stay in step with (audited 2026-08-09) ────────
  *  Reach:      melee basic range 1, warlock 4, wizard/sorcerer 5, ranger 6.
  *              Movement 3 (rogue 4).
  *  Geometry:   front lines start 3 columns apart (P1 x=2 vs P2 x=5), so melee
  *              from x=2 reach contact on turn 1.
- *  Support:    Heal range 2; Ward and Purify range 3.
- *  AoE shapes: Whirlwind / Ground Slam are `orthogonal` r1 (Manhattan == 1, so
- *              diagonals are safe) and self-centred, threatening the contact
- *              formation rather than the deployment. Ring of Fire/Frost and
- *              Leaping Slam are `ring` r1 — Chebyshev 1 around the centre — and
- *              those DO reach the deploy zone turn 1. Hence Chebyshev spacing.
+ *  Support:    Heal range 2; Ward and Purify range 3. Healers do NOT need to
+ *              deploy inside heal range — everyone is at full HP on turn 1 and
+ *              movement 3 closes any gap in these shapes before it matters.
+ *  AoE shapes: Whirlwind / Ground Slam are `orthogonal` r1 (Manhattan == 1 —
+ *              diagonal neighbours are safe) and self-centred; they threaten
+ *              the contact fight, not the deployment. Ring of Fire/Frost and
+ *              Leaping Slam are `ring` r1; the first two reach the deploy zone
+ *              turn 1, which is what R1/R2 defend against.
  *  Friendly fire: line and AoE specials have excludeAllies=false.
  *  Coverage:   range is MANHATTAN, so row offset spends the same budget as
- *              column distance. A range-6 unit in column 1 threatens 9 enemy
- *              tiles from rows 2-5 but only 5 from row 0/7 — hence the pull
- *              toward centre rows for everyone, not just melee.
+ *              column distance — another reason the phalanx sits centred.
  *
- * ── What the search says about win rate (2026-08-09) ────────────────────────
- * `placementSearch.ts` optimised placements directly against the field and
- * found +8 points — which then measured +0.0 against opponents placed randomly.
- * Those gains were fitted to the exact tiles the opponents were standing on, not
- * to better formations. Placement swings an individual matchup hugely (sd ~22)
- * but no fixed formation is globally dominant, so there is real freedom here to
- * optimise for legibility. That is what this file does. Do not re-tune these
- * weights toward a win-rate number measured against a static field.
+ * ── Do not re-tune this against a win-rate number ───────────────────────────
+ * placementSearch.ts optimised placements directly against a fixed field and
+ * "won" +8 points — which measured +0.0 against opponents placed randomly.
+ * Placement swings individual matchups enormously (sd ~22) but no fixed
+ * formation dominates a varied field, so win-rate cannot arbitrate between
+ * reasonable formations. Legibility can, and does.
  */
 
 import { BoardPosition, BOARD_WIDTH, BOARD_HEIGHT } from '../types/matchState.js';
@@ -91,10 +87,10 @@ type Role = 'melee' | 'ranged' | 'healer';
 /** What the planner needs to know about one unit, from its slug + loadout. */
 interface Profile {
   role: Role;
-  /** Longest reach of an ally-targeting heal/buff; 0 if it supports nobody. */
-  supportRange: number;
-  /** Carries a `line` ability, which hits allies standing in the lane. */
-  hasLine: boolean;
+  /** Basic-attack reach — used to slot short-reach casters forward. */
+  attackRange: number;
+  maxHealth: number;
+  movement: number;
 }
 
 function profile(
@@ -103,24 +99,22 @@ function profile(
   cust?: UnitCustomization,
 ): Profile {
   const def = DEFAULT_UNITS[slug];
-  if (!def) return { role: 'melee', supportRange: 0, hasLine: false };
+  if (!def) return { role: 'melee', attackRange: 1, maxHealth: 0, movement: 3 };
 
   const slugs = [...def.abilities];
   if (cust?.specialSlug && !slugs.includes(cust.specialSlug)) slugs.push(cust.specialSlug);
   const abilities = slugs.map((s) => abilityMap.get(s)).filter(Boolean) as AbilityDefinition[];
 
-  const supportAbilities = abilities.filter(
+  const isHealer = abilities.some(
     (a) => a.targetingType !== 'self' && a.effects.some((e) => e.type === 'heal'),
   );
-  const supportRange = supportAbilities.reduce((m, a) => Math.max(m, a.range), 0);
-  const hasLine = abilities.some((a) => a.targetingType === 'line');
-
-  if (supportAbilities.length > 0) return { role: 'healer', supportRange, hasLine };
   const basic = abilities.find((a) => !a.isSpecial) ?? abilities[0];
-  return { role: (basic?.range ?? 1) <= 1 ? 'melee' : 'ranged', supportRange: 0, hasLine };
+  const attackRange = basic?.range ?? 1;
+  const role: Role = isHealer ? 'healer' : attackRange <= 1 ? 'melee' : 'ranged';
+  return { role, attackRange, maxHealth: def.maxHealth, movement: def.movementRange };
 }
 
-/** All legal P1-zone tiles (x 0–2, the two removed corners excluded). */
+/** All legal P1-zone tiles (x 0–2, the two x=0 corners excluded). */
 const ZONE: BoardPosition[] = [];
 for (let x = 0; x <= 2; x++) {
   for (let y = 0; y < BOARD_HEIGHT; y++) {
@@ -129,208 +123,187 @@ for (let x = 0; x <= 2; x++) {
   }
 }
 
-const CENTER_Y = (BOARD_HEIGHT - 1) / 2;
+const P = (x: number, y: number): BoardPosition => ({ x, y });
 
-/**
- * Formation costs — LOWER IS BETTER (this is a cost, not a score; the previous
- * version maximised and the sign flip is easy to trip over).
- */
-export interface PlacementWeights {
-  /** Cost per column for a support unit, index = x. */
-  supportCol: [number, number, number];
-  /** Same, for a caster team with no melee to hide behind. */
-  supportColNoMelee: [number, number, number];
-  /** Pull toward the centre rows, per tile of distance. Applies to everyone. */
-  centre: number;
-  /** Cohesion: cost per row of the team's total vertical span. */
-  span: number;
-  /** Cost per row the formation's centre of mass sits off the board's middle. */
-  balance: number;
-  /** AoE denial: an ally within Chebyshev 1, and at exactly Chebyshev 2. */
-  adjacent: number;
-  cheb2: number;
-  /** Cost for each unit a single enemy blast can catch beyond the second. */
-  blast: number;
-  /** Cost per tile a healer sits beyond its own support range from any ally. */
-  outOfReach: number;
-  /** Cost for an ally in the forward lane of a unit carrying a line ability. */
-  lineOfFire: number;
-}
+/* ── The formations ─────────────────────────────────────────────────────────
+ * Listed per archetype and unit count. Slot ORDER within each template is the
+ * assignment order used below (most important slot first).                   */
 
-export const DEFAULT_WEIGHTS: PlacementWeights = {
-  supportCol: [0, 4, 40],
-  supportColNoMelee: [16, 0, 12],
-  centre: 5,
-  span: 3,
-  // `centre` sums each unit's own distance from the middle, which is symmetric:
-  // a formation hugging the top ties exactly with its mirror hugging the
-  // bottom, and the tie-break then picked whichever the tile order hit first —
-  // so teams sat lopsided against an edge. This scores the formation as a whole.
-  balance: 8,
-  // Effectively forbidden: one blast centred on either unit catches both.
-  adjacent: 1000,
-  // Real, but frequently unavoidable — so a nudge, not a wall. It has to stay
-  // well below `centre` and `span` or it buys spacing at any price: at 30 the
-  // planner flung units to rows 0 and 7, and for four melee it preferred the
-  // lopsided rows 0/3/5/7 (2 such pairs) over an even 0/2/4/6 (3 pairs).
-  cheb2: 6,
-  // Two units catchable by one blast is unavoidable (see the geometry note
-  // above), so this only bites at three or more — and bites hard, because that
-  // is the difference between trading a hit and losing the game on turn one.
-  blast: 60,
-  outOfReach: 20,
-  lineOfFire: 25,
+/** RUSH — all melee. Wedge: centre pair leads, wings trail on the flanks.
+ *  Tanks take the point; the fastest units take the wings (a rogue's movement
+ *  4 folds a wing into the centre fight on turn 1). */
+const RUSH: Record<number, BoardPosition[]> = {
+  1: [P(2, 4)],
+  2: [P(2, 3), P(2, 5)],
+  3: [P(2, 2), P(2, 4), P(2, 6)],
+  4: [P(2, 3), P(2, 5), P(1, 1), P(1, 7)], // point pair, then wings
 };
 
-/** Cost of a complete arrangement. Order-independent. */
-function formationCost(
-  tiles: BoardPosition[],
-  profiles: Profile[],
-  hasMelee: boolean,
-  w: PlacementWeights,
-): number {
-  let cost = 0;
-  let minY = Infinity;
-  let maxY = -Infinity;
+/** PHALANX — melee wall centre-front (by melee count), supports tucked on the
+ *  back shoulders, diagonal to the wall. The shoulder tiles are the ones that
+ *  are Chebyshev-2 from the wall without ever sharing its rows.
+ *  Keyed by melee count; the support list must be truncated to support count.
+ *  (Melee 3 forces the single support to the bottom shoulder: the top shoulder
+ *  (0,2) would put three units inside rows 1–3 — one blast catches them.) */
+const PHALANX_FRONT: Record<number, BoardPosition[]> = {
+  1: [P(2, 4)],
+  2: [P(2, 3), P(2, 5)],
+  3: [P(2, 1), P(2, 3), P(2, 5)],
+};
+const PHALANX_SUPPORT: Record<number, BoardPosition[]> = {
+  1: [P(0, 2), P(0, 6), P(1, 0)],
+  2: [P(0, 2), P(0, 6)],
+  3: [P(0, 6)],
+};
 
-  for (let i = 0; i < tiles.length; i++) {
-    const t = tiles[i];
-    const p = profiles[i];
-    if (p.role !== 'melee') {
-      cost += (hasMelee ? w.supportCol : w.supportColNoMelee)[t.x];
-    }
-    cost += Math.abs(t.y - CENTER_Y) * w.centre;
-    minY = Math.min(minY, t.y);
-    maxY = Math.max(maxY, t.y);
+/** CASTLE — no melee. The span-4 stagger from F1, anchored in the top corner:
+ *  two "bastion" tiles on the front column, two "keep" tiles deep behind,
+ *  each adjacent-row pair split across columns 0/2. Healers and short-reach
+ *  casters take the bastion (they are the durable/close-in ones); the longest
+ *  reaches shoot from the keep. */
+const CASTLE: Record<number, BoardPosition[]> = {
+  1: [P(1, 2)],
+  2: [P(1, 0), P(0, 2)],
+  3: [P(2, 0), P(2, 3), P(0, 1)],           // bastion, bastion, keep
+  4: [P(2, 0), P(2, 3), P(0, 1), P(0, 4)],  // bastion x2, keep x2
+};
 
-    // A healer that starts outside its own reach of everybody wastes turn 1
-    // walking instead of healing.
-    if (p.supportRange > 0 && tiles.length > 1) {
-      let nearest = Infinity;
-      for (let j = 0; j < tiles.length; j++) {
-        if (i === j) continue;
-        nearest = Math.min(nearest, Math.abs(tiles[j].x - t.x) + Math.abs(tiles[j].y - t.y));
-      }
-      if (nearest > p.supportRange) cost += (nearest - p.supportRange) * w.outOfReach;
-    }
+/* ── Safety verification (the R1/R2 rules as executable checks) ───────────── */
 
-    // Line abilities travel toward the enemy (+x) and hit allies en route.
-    if (p.hasLine) {
-      for (let j = 0; j < tiles.length; j++) {
-        if (i === j) continue;
-        if (tiles[j].y === t.y && tiles[j].x > t.x) cost += w.lineOfFire;
-      }
-    }
-  }
-
+function violatesRules(tiles: BoardPosition[]): boolean {
   for (let i = 0; i < tiles.length; i++) {
     for (let j = i + 1; j < tiles.length; j++) {
-      const cheb = Math.max(Math.abs(tiles[j].x - tiles[i].x), Math.abs(tiles[j].y - tiles[i].y));
-      if (cheb <= 1) cost += w.adjacent;
-      else if (cheb === 2) cost += w.cheb2;
+      const cheb = Math.max(Math.abs(tiles[i].x - tiles[j].x), Math.abs(tiles[i].y - tiles[j].y));
+      if (cheb < 2) return true; // R1
     }
   }
-
-  // What one enemy blast can actually do to this formation. Counting
-  // Chebyshev-2 PAIRS is only a proxy and it fails on tight clusters: a
-  // parallelogram of four units has five such pairs yet a single ring centred
-  // in the middle of it catches THREE of them. Measure the real thing —
-  // the worst ring-r1 blast anywhere on the board.
-  let worst = 0;
-  for (let cx = 0; cx < BOARD_WIDTH; cx++) {
-    for (let cy = 0; cy < BOARD_HEIGHT; cy++) {
-      let n = 0;
-      for (const t of tiles) {
-        if (Math.max(Math.abs(t.x - cx), Math.abs(t.y - cy)) === 1) n++;
-      }
-      if (n > worst) worst = n;
-    }
+  for (let w = 0; w <= BOARD_HEIGHT - 3; w++) {
+    let n = 0;
+    for (const t of tiles) if (t.y >= w && t.y <= w + 2) n++;
+    if (n > 2) return true; // R2
   }
-  if (worst > 2) cost += w.blast * (worst - 2) ** 2;
+  return false;
+}
 
-  if (tiles.length > 1) {
-    cost += (maxY - minY) * w.span;
-    const meanY = tiles.reduce((a, t) => a + t.y, 0) / tiles.length;
-    cost += Math.abs(meanY - CENTER_Y) * w.balance;
-  }
-  return cost;
+/* ── Assignment ─────────────────────────────────────────────────────────────
+ * Stable, deterministic orderings decide which unit takes which slot.        */
+
+/** Indices sorted for RUSH/PHALANX fronts: toughest first (they take the
+ *  point), original order as the tie-break. */
+function byToughness(idx: number[], profiles: Profile[]): number[] {
+  return [...idx].sort((a, b) => profiles[b].maxHealth - profiles[a].maxHealth || a - b);
+}
+
+/** Indices sorted for CASTLE: healers first, then shortest reach — those take
+ *  the bastion; the longest reaches end up in the keep. */
+function byBastionPriority(idx: number[], profiles: Profile[]): number[] {
+  return [...idx].sort((a, b) => {
+    const ha = profiles[a].role === 'healer' ? 0 : 1;
+    const hb = profiles[b].role === 'healer' ? 0 : 1;
+    return ha - hb || profiles[a].attackRange - profiles[b].attackRange || a - b;
+  });
 }
 
 /**
- * Which tiles each unit may occupy. This is where the doctrine is enforced:
- * restricting melee to the front column both guarantees the shape and shrinks
- * the search by two orders of magnitude (2 melee + 2 support is ~10k
- * arrangements instead of 175k), so the exhaustive pass stays cheap.
+ * Generic fallback for team sizes the templates don't cover (nothing in the
+ * game today builds one, but the planner must never throw at a player).
+ * Greedy fill over centre-out front-first tiles, honouring R1/R2, relaxing
+ * R2 then R1 only if the board genuinely cannot satisfy them.
  */
-function domains(profiles: Profile[], hasMelee: boolean): BoardPosition[][] {
-  const front = ZONE.filter((t) => t.x === 2);
-  const support = ZONE.filter((t) => (hasMelee ? t.x <= 1 : t.x >= 1));
-  return profiles.map((p) => (p.role === 'melee' ? front : support));
+function genericFill(n: number, preferFront: boolean): BoardPosition[] {
+  const ordered = [...ZONE].sort((a, b) => {
+    const ax = preferFront ? -a.x : a.x;
+    const bx = preferFront ? -b.x : b.x;
+    return ax - bx || Math.abs(a.y - 3.5) - Math.abs(b.y - 3.5) || a.y - b.y;
+  });
+  for (const relax of [0, 1, 2]) {
+    const placed: BoardPosition[] = [];
+    for (const t of ordered) {
+      if (placed.length === n) break;
+      const trial = [...placed, t];
+      const pairOk = relax >= 2 || !trial.some((p, i) =>
+        trial.some((q, j) => j > i && Math.max(Math.abs(p.x - q.x), Math.abs(p.y - q.y)) < 2));
+      let windowOk = true;
+      if (relax < 1) {
+        for (let w = 0; w <= BOARD_HEIGHT - 3 && windowOk; w++) {
+          if (trial.filter((p) => p.y >= w && p.y <= w + 2).length > 2) windowOk = false;
+        }
+      }
+      if (pairOk && windowOk) placed.push(t);
+    }
+    if (placed.length === n) return placed;
+  }
+  return ZONE.slice(0, n); // 22 tiles; a team can never exceed that
 }
 
 const planCache = new Map<string, BoardPosition[]>();
 
 /**
- * Plan starting tiles for a team, in the P1 frame (x 0–2, parallel to `slugs`).
- * Mirror with x -> BOARD_WIDTH-1-x for the P2 side.
- *
- * Exhaustive over the doctrine-restricted domains, so the result is the true
- * optimum of `formationCost` rather than a greedy approximation — the greedy
- * version stranded a 4th melee in the back column because it could not see that
- * an earlier choice had used up the front row's spacing. Deterministic (the
- * sims and the UI both depend on that), and memoised by comp because the
- * balance grid calls this tens of thousands of times over a handful of comps.
+ * Plan starting tiles for a team, in the P1 frame (x 0–2, parallel to
+ * `slugs`). Mirror with x -> BOARD_WIDTH-1-x for the P2 side. Deterministic
+ * (the sims and the UI both rely on that) and memoised per comp+loadout.
  */
 export function planPlacement(
   slugs: string[],
   abilityMap: Map<string, AbilityDefinition>,
   customizations?: (UnitCustomization | undefined)[],
-  weights: PlacementWeights = DEFAULT_WEIGHTS,
 ): BoardPosition[] {
   const custKey = (customizations ?? []).map((c) => c?.specialSlug ?? '-').join(',');
-  const cacheKey = `${slugs.join(',')}|${custKey}|${weights === DEFAULT_WEIGHTS ? 'D' : JSON.stringify(weights)}`;
+  const cacheKey = `${slugs.join(',')}|${custKey}`;
   const cached = planCache.get(cacheKey);
   if (cached) return cached.map((p) => ({ ...p }));
 
   const profiles = slugs.map((s, i) => profile(s, abilityMap, customizations?.[i]));
-  const hasMelee = profiles.some((p) => p.role === 'melee');
-  const doms = domains(profiles, hasMelee);
+  const meleeIdx = profiles.map((_, i) => i).filter((i) => profiles[i].role === 'melee');
+  const supportIdx = profiles.map((_, i) => i).filter((i) => profiles[i].role !== 'melee');
+  const n = slugs.length;
 
-  // Place the most constrained units first so the search prunes early.
-  const order = profiles
-    .map((_, i) => i)
-    .sort((a, b) => doms[a].length - doms[b].length || a - b);
+  const result: BoardPosition[] = new Array(n);
+  const assign = (order: number[], slots: BoardPosition[]) =>
+    order.forEach((unitIndex, k) => { result[unitIndex] = { ...slots[k] }; });
 
-  let best: BoardPosition[] | null = null;
-  let bestCost = Infinity;
-  const chosen: BoardPosition[] = new Array(slugs.length);
-  const used = new Set<string>();
+  if (meleeIdx.length === n && RUSH[n]) {
+    // RUSH — wings go to the fastest, point to the toughest. Sorting the
+    // remainder by movement puts rogues on the wings, where movement 4 folds
+    // them into the centre fight on turn 1.
+    const tough = byToughness(meleeIdx, profiles);
+    const point = tough.slice(0, Math.min(2, n));
+    const wings = tough.slice(point.length)
+      .sort((a, b) => profiles[b].movement - profiles[a].movement || a - b);
+    assign([...point, ...wings], RUSH[n]);
+  } else if (
+    meleeIdx.length > 0 &&
+    PHALANX_FRONT[meleeIdx.length] &&
+    supportIdx.length <= PHALANX_SUPPORT[meleeIdx.length].length
+  ) {
+    // PHALANX — wall by toughness; healers claim shoulder slots first so a
+    // team with one healer and one striker always tucks the healer in.
+    assign(byToughness(meleeIdx, profiles), PHALANX_FRONT[meleeIdx.length]);
+    const supports = [...supportIdx].sort((a, b) => {
+      const ha = profiles[a].role === 'healer' ? 0 : 1;
+      const hb = profiles[b].role === 'healer' ? 0 : 1;
+      return ha - hb || a - b;
+    });
+    assign(supports, PHALANX_SUPPORT[meleeIdx.length]);
+  } else if (meleeIdx.length === 0 && CASTLE[n]) {
+    assign(byBastionPriority(supportIdx, profiles), CASTLE[n]);
+  } else {
+    // No template fits (oversized or odd team) — generic doctrine-flavoured
+    // fill, melee-heavy teams toward the front, others toward the back.
+    const tiles = genericFill(n, meleeIdx.length * 2 >= n);
+    const order = [...byToughness(meleeIdx, profiles), ...byBastionPriority(supportIdx, profiles)];
+    assign(order, tiles);
+  }
 
-  const recurse = (depth: number): void => {
-    if (depth === order.length) {
-      const c = formationCost(chosen, profiles, hasMelee, weights);
-      if (c < bestCost) { bestCost = c; best = chosen.map((p) => ({ ...p })); }
-      return;
-    }
-    const i = order[depth];
-    for (const tile of doms[i]) {
-      const k = `${tile.x},${tile.y}`;
-      if (used.has(k)) continue;
-      used.add(k);
-      chosen[i] = tile;
-      recurse(depth + 1);
-      used.delete(k);
-    }
-  };
-  recurse(0);
+  // The templates are constructed to satisfy R1/R2; this guards against a
+  // future edit quietly breaking one. Fall back rather than ship a violation.
+  if (violatesRules(result)) {
+    const tiles = genericFill(n, meleeIdx.length * 2 >= n);
+    result.forEach((_, i) => { result[i] = tiles[i]; });
+  }
 
-  // Only reachable if a comp somehow can't fit its domain (more melee than
-  // front tiles). Fall back to any legal distinct tiles rather than throwing at
-  // a player who just tapped Auto-Arrange.
-  if (!best) best = slugs.map((_, i) => ZONE[i % ZONE.length]);
-
-  planCache.set(cacheKey, best);
-  return best.map((p) => ({ ...p }));
+  planCache.set(cacheKey, result.map((p) => ({ ...p })));
+  return result.map((p) => ({ ...p }));
 }
 
 export function mirrorPlacement(placement: BoardPosition[]): BoardPosition[] {
