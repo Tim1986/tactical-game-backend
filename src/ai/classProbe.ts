@@ -37,7 +37,7 @@
  * measured effect is smaller than its effect on the class in isolation.
  */
 import { runSim } from './simHarness.js';
-import { DEFAULT_UNITS } from './defaultData.js';
+import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
 import { loadoutsFor, ALL_CLASSES, Loadout } from './loadoutMatrix.js';
 import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
 
@@ -64,12 +64,34 @@ function parseDeltas(s: string | undefined): Record<string, number> {
 const dHp = parseDeltas(flag('hp'));
 const dAc = parseDeltas(flag('ac'));
 
+/** Ability-keyed deltas, no class-name validation (slugs are abilities). */
+function parseAbilityDeltas(str: string | undefined): Record<string, number> {
+  if (!str) return {};
+  const out: Record<string, number> = {};
+  for (const part of str.split(',')) { const [k, v] = part.split(':'); out[k] = Number(v); }
+  return out;
+}
+const dDmg = parseAbilityDeltas(flag('dmg'));         // per damage effect value
+const dRange = parseAbilityDeltas(flag('range'));     // per ability range
+const dDur = parseAbilityDeltas(flag('statusDur'));   // per apply_status durationTurns
+
 // Apply chassis deltas before anything reads the units.
 const before: Record<string, { hp: number; ac: number }> = {};
 for (const c of ALL_CLASSES) {
   before[c] = { hp: DEFAULT_UNITS[c].maxHealth, ac: DEFAULT_UNITS[c].armorClass };
   DEFAULT_UNITS[c].maxHealth += dHp[c] ?? 0;
   DEFAULT_UNITS[c].armorClass = Math.max(7, DEFAULT_UNITS[c].armorClass + (dAc[c] ?? 0));
+}
+
+// Apply ability deltas (damage / range / status duration) in place. Mirrors
+// acExperiment's applyPreset so a special buff can be tested here too.
+const abilityChanges: string[] = [];
+for (const a of DEFAULT_ABILITIES as unknown as Array<{ slug: string; range: number; effects: Array<Record<string, unknown>> }>) {
+  if (dRange[a.slug] != null) { a.range += dRange[a.slug]; abilityChanges.push(`${a.slug} range +${dRange[a.slug]}`); }
+  for (const e of a.effects) {
+    if (dDmg[a.slug] != null && e.type === 'damage') { (e.value as number) += dDmg[a.slug]; abilityChanges.push(`${a.slug} dmg +${dDmg[a.slug]}`); }
+    if (dDur[a.slug] != null && e.type === 'apply_status') { (e.durationTurns as number) += dDur[a.slug]; abilityChanges.push(`${a.slug} status +${dDur[a.slug]}t`); }
+  }
 }
 
 /** Balanced 3-of-9 sample: the diagonal of the specials x passives square. */
@@ -145,7 +167,8 @@ const changed = ALL_CLASSES.filter((c) => dHp[c] || dAc[c])
 console.log(`\n═══ classProbe: ${LABEL} ═══`);
 console.log(`${cells.length} cells x ${REFS.length} refs x ${GAMES} games = ${(cells.length * REFS.length * GAMES).toLocaleString()} games`
   + `  ·  ${((Date.now() - t0) / 60000).toFixed(1)} min  ·  ${errors} validation errors`);
-if (changed.length) console.log(`changes: ${changed.join('  |  ')}`);
+if (changed.length) console.log(`chassis: ${changed.join('  |  ')}`);
+if (abilityChanges.length) console.log(`abilities: ${[...new Set(abilityChanges)].join('  |  ')}`);
 console.log(`\nCHASSIS                mean    top-${topN}   top-${topWide} (of ${topWide * 2} slots)`);
 for (const { c, m } of ranked) {
   console.log(`  ${c.padEnd(12)} ${m.toFixed(1).padStart(8)}    ${String(topCount[c]).padStart(3)}   ${String(topWideCount[c]).padStart(4)}`);
