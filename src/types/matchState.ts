@@ -161,4 +161,9 @@ export interface GameEvent {
   winnerId?: UUID;
   message?: string;
   abilitySlug?: string;
+  /** Damage attribution for a DAMAGE_DEALT event: the base hit plus each
+   *  passive/status modifier that changed it, so the combat log can explain a
+   *  number the player would otherwise find inexplicable (e.g. Opportunist's
+   *  +4 vs a status-afflicted target). Only present when a modifier applied. */
+  damageParts?: { label: string; amount: number }[];
 }

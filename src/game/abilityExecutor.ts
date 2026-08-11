@@ -254,6 +254,25 @@ function vengefulBonus(ctx: ExecutionContext): number {
     ? VENGEFUL_BONUS : 0;
 }
 
+/**
+ * Break a final damage number into its base and each modifier, so the combat
+ * log can explain WHY a hit did what it did. Returns [] when nothing modified
+ * the base (the common case), so the log stays terse unless there is something
+ * to say. `base` is the ability's raw value; the parts sum to the final damage.
+ */
+function damageBreakdown(ctx: ExecutionContext, target: UnitInstance, base: number): { label: string; amount: number }[] {
+  const opp = opportunistBonus(ctx, target);
+  const ven = vengefulBonus(ctx);
+  const weak = hasStatusEffect(ctx.caster, 'weakened')
+    ? Math.min(WEAKENED_DAMAGE_REDUCTION, base) : 0;
+  if (opp === 0 && ven === 0 && weak === 0) return [];
+  const parts = [{ label: 'base', amount: base - weak }];
+  if (weak > 0) parts[0] = { label: 'Weakened', amount: base - weak };
+  if (opp > 0) parts.push({ label: 'Opportunist', amount: opp });
+  if (ven > 0) parts.push({ label: 'Vengeful', amount: ven });
+  return parts;
+}
+
 /** Thorns: an adjacent attacker whose hit landed takes 3 damage back. */
 function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): void {
   if (!hasPassive(target, 'thorns')) return;
@@ -272,16 +291,23 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
   }
   const isExecute = effect.healthThreshold !== undefined;
   const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
-    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: isExecute ? 'Executed' : `${actual} damage` });
+    // Only attach the breakdown when the hit was NOT capped by remaining HP —
+    // a partial (overkill) hit would make base+bonuses not sum to `actual`, and
+    // a misleading breakdown is worse than none.
+    const parts2 = actual === damage ? parts : [];
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: isExecute ? 'Executed' : `${actual} damage`, ...(parts2.length ? { damageParts: parts2 } : {}) });
   });
   if (actualDamage > 0) applyThornsRetaliation(ctx, target);
 }
 
 function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
   const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
-    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: `${actual} damage` });
+    const parts2 = actual === damage ? parts : [];
+    ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: `${actual} damage`, ...(parts2.length ? { damageParts: parts2 } : {}) });
   });
   if (actualDamage > 0) applyThornsRetaliation(ctx, target);
   if (ctx.caster.isAlive) {

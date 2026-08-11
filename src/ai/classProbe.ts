@@ -122,10 +122,22 @@ for (const cell of cells) for (const c of cell.pair.split('/')) chassis[c].push(
 
 const ranked = ALL_CLASSES.map((c) => ({ c, m: mean(chassis[c]) })).sort((a, b) => b.m - a.m);
 const sorted = [...cells].sort((a, b) => b.wr - a.wr);
-const topN = Math.max(1, Math.round(cells.length * 0.044)); // same fraction as top-100 of 2268
-const topCount: Record<string, number> = {};
-for (const c of ALL_CLASSES) topCount[c] = 0;
-for (const cell of sorted.slice(0, topN)) for (const c of cell.pair.split('/')) topCount[c]++;
+// Representation is the statistic the imbalance actually showed up in (cleric
+// and warlock held 79 of the full grid's top 100), so report it at two depths.
+// The shallow one matches top-100-of-2268 by fraction but is only ~11 cells —
+// far too few to trust per class. The 10% cut is ~25 cells and steadier; even
+// that is a PROXY, and a representation claim should be confirmed on the full
+// grid before it drives a decision.
+const topN = Math.max(1, Math.round(cells.length * 0.044));
+const topWide = Math.max(1, Math.round(cells.length * 0.10));
+const countTop = (k: number) => {
+  const t: Record<string, number> = {};
+  for (const c of ALL_CLASSES) t[c] = 0;
+  for (const cell of sorted.slice(0, k)) for (const c of cell.pair.split('/')) t[c]++;
+  return t;
+};
+const topCount = countTop(topN);
+const topWideCount = countTop(topWide);
 
 const changed = ALL_CLASSES.filter((c) => dHp[c] || dAc[c])
   .map((c) => `${c} ${before[c].hp}→${DEFAULT_UNITS[c].maxHealth}hp ${before[c].ac}→${DEFAULT_UNITS[c].armorClass}ac`);
@@ -134,9 +146,9 @@ console.log(`\n═══ classProbe: ${LABEL} ═══`);
 console.log(`${cells.length} cells x ${REFS.length} refs x ${GAMES} games = ${(cells.length * REFS.length * GAMES).toLocaleString()} games`
   + `  ·  ${((Date.now() - t0) / 60000).toFixed(1)} min  ·  ${errors} validation errors`);
 if (changed.length) console.log(`changes: ${changed.join('  |  ')}`);
-console.log(`\nCHASSIS                mean    top-${topN}`);
+console.log(`\nCHASSIS                mean    top-${topN}   top-${topWide} (of ${topWide * 2} slots)`);
 for (const { c, m } of ranked) {
-  console.log(`  ${c.padEnd(12)} ${m.toFixed(1).padStart(8)}    ${String(topCount[c]).padStart(3)}`);
+  console.log(`  ${c.padEnd(12)} ${m.toFixed(1).padStart(8)}    ${String(topCount[c]).padStart(3)}   ${String(topWideCount[c]).padStart(4)}`);
 }
 const spread = ranked[0].m - ranked[ranked.length - 1].m;
 console.log(`\nSPREAD (best-worst): ${spread.toFixed(1)} points   [${ranked[0].c} → ${ranked[ranked.length - 1].c}]`);
@@ -146,4 +158,5 @@ console.log(`grid mean: ${mean(cells.map((c) => c.wr)).toFixed(1)}`);
 console.log(`\nJSON ${JSON.stringify({
   label: LABEL, spread: Number(spread.toFixed(2)),
   chassis: Object.fromEntries(ranked.map((r) => [r.c, Number(r.m.toFixed(2))])),
+  top10pct: Object.fromEntries(ranked.map((r) => [r.c, topWideCount[r.c]])),
 })}`);
