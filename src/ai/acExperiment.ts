@@ -110,6 +110,12 @@ const PRESETS: Record<string, Preset> = {
   // only runs stages A/B — stage E (the pair grid) lives in the preset branch,
   // so "no preset" cannot produce a comparable control.
   shipped: { ac: {}, hp: {} },
+  // c6 — the post-Fable-grid chassis rebalance. NOT SHIPPED: gameData carries
+  // the pre-C6 values and balance experiments must never edit it (see the
+  // preflight chassis guard). Run the grid with `--preset c6` to reproduce.
+  // Probe-measured chassis spread 13.7 -> 4.7; derivation in AC_REWORK.md.
+  //   cleric AC 11->9, warlock AC 10->9, barbarian AC 9->10, rogue HP 43->45
+  c6: { ac: { cleric: -2, warlock: -1, barbarian: 1 }, hp: { rogue: 2 } },
   s1_gs10: { ac: {}, hp: {}, dmg: { shockwave: -5 } },
   // s2_gs12 — 10 overshot: Ground Slam's all-cell mean fell in ALL THREE
   // screened pairs (40.5->38.0, 38.5->31.2, 49.9->44.6) and its best rank went
