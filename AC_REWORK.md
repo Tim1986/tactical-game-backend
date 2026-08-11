@@ -1323,3 +1323,70 @@ hours. **ALWAYS check the reference panel first** — if a ref fields the abilit
 it changes the opponent in every cell and the splice is invalid.
 Caveat: the result mixes two sampling runs, so ±2-3 points. Read orderings and
 large shifts, not small gaps.
+
+# Chassis rebalance after the Fable-panel grid (2026-08-11, probe stage)
+
+The rerun grid (2268 cells vs Fable's 12 rosters, new opening placements) showed
+a 13.7-point chassis spread with cleric+warlock holding 79 of the top 100 cells.
+Owner: bring them down to the pack, modest buff for barbarian, don't touch
+specials or passives yet, don't overreact on rogue.
+
+All numbers below are `classProbe` (252-cell diagonal sample, 20 games, ~13 min),
+validated against the full grid at mean error 0.50 / spread 13.7 vs 13.8 /
+28-of-28 rank agreement. Noise floor ~1.5 points.
+
+## Measured sensitivity — the thing worth keeping
+
+  HP:  cleric 1.02, warlock 1.23, ROGUE 2.95 points per HP
+  AC:  cleric 1.8, warlock 3.7, barbarian 4.5 points per point (first point;
+       barbarian's 2nd AC point only bought 3.1 more, so it saturates)
+
+Two findings that should change how future passes are tuned:
+
+1. HP sensitivity is ~1 pt/HP against a varied field, NOT the ~3.5 implied by
+   the pass-5 Stage A read. Stage A is 4-stack mirrors and amplifies, the same
+   way mirror matches inflated placement effects 5-10x. Past HP calls were
+   tuned against an amplifier.
+2. Sensitivity is strongly class-dependent. Rogue converts HP nearly 3x better
+   than cleric — it has the lowest AC in the game (8), so it is hit by almost
+   everything and every point of buffer is spent. Do not reuse one class's
+   sensitivity for another.
+
+## Candidates
+
+  C1  cleric -8hp -2ac, warlock -6hp -1ac, barb +2ac   spread 17.0  INVERTED
+  C3  AC only: cleric -2, warlock -1, barb +2          spread  9.5
+  C4  AC only: cleric -2, warlock -1, barb +1          spread  9.9
+  C5  AC only: cleric -1, warlock -1, barb +1          spread  9.9  (cleric still
+      2nd with 6 of top-11 cells — the symptom survives; rejected)
+  C6  C4 + rogue +2hp                                  spread  4.7  ADOPTED
+
+C1 confirmed the owner's objection: -8 HP (-8.2) stacked on -2 AC (-3.7) is
+-11.9, which did not just overshoot but inverted the ladder and made the spread
+WORSE (17.0). HP was the wrong knob; AC alone nearly solved it.
+
+## C6 (recommended)
+
+  cleric    AC 11 -> 9      40.0 -> 35.3   (-4.7)
+  warlock   AC 10 -> 9      41.2 -> 37.2   (-4.0)
+  barbarian AC  9 -> 10     30.0 -> 35.9   (+5.9)
+  rogue     HP 43 -> 45     27.5 -> 35.4   (+7.9)
+
+  spread 13.7 -> 4.7. No HP touched except rogue +2; no special or passive
+  changed. Top-11 cells go from cleric 8 / warlock 9 (of 22 slots) to a spread
+  where no class holds more than 7.
+
+## Open, before shipping
+
+- CONFIRM WITH A FULL GRID RUN. The probe is a 13-min proxy with a +/-1.5 noise
+  floor, and the top-11 statistic is only 11 cells — far too small to trust for
+  per-class representation. The full grid's top-50/top-100 is the real test.
+- Wizard takes 7 of 22 top-cell slots in both C4 and C6. Possibly the next
+  concentration, possibly n=11 noise. The full grid will say.
+- Rogue's +7.9 from 2 HP is suspiciously large even at 2.95/HP and may be a
+  BREAKPOINT (45 HP surviving a specific burst total that 43 does not). If so it
+  is fragile: any damage change moves the cliff. Worth checking what 44 and 46 do
+  before locking 45 in.
+- Panel feedback is large (a class that did not change moved up to +6.2 when
+  cleric/warlock were nerfed inside the reference rosters). Probe numbers are
+  only comparable WITHIN a run, never as absolutes across runs.
