@@ -116,6 +116,11 @@ const PRESETS: Record<string, Preset> = {
   // Probe-measured chassis spread 13.7 -> 4.7; derivation in AC_REWORK.md.
   //   cleric AC 11->9, warlock AC 10->9, barbarian AC 9->10, rogue HP 43->45
   c6: { ac: { cleric: -2, warlock: -1, barbarian: 1 }, hp: { rogue: 2 } },
+  // ship candidate: C6 with rogue at 44 (not 45). The clean-slope probe showed
+  // 44 keeps the field tight while trimming rogue's ceiling; ranger deliberately
+  // NOT buffed (pinning root +1t read as oppressive). This is what the next full
+  // grid measures. gameData stays baseline — this is a delta.
+  c6_rogue44: { ac: { cleric: -2, warlock: -1, barbarian: 1 }, hp: { rogue: 1 } },
   s1_gs10: { ac: {}, hp: {}, dmg: { shockwave: -5 } },
   // s2_gs12 — 10 overshot: Ground Slam's all-cell mean fell in ALL THREE
   // screened pairs (40.5->38.0, 38.5->31.2, 49.9->44.6) and its best rank went
