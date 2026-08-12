@@ -66,7 +66,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'DGE-2', text: "Unblockable abilities always hit regardless of dodge chance or any status effects on the target." },
       { id: 'DGE-3', text: "Attacks against an EXPOSED unit always hit — their dodge chance is ignored." },
       { id: 'DGE-4', text: "Multi-hit abilities (like Twin Strike) apply each damage effect independently." },
-      { id: 'DGE-5', text: "A SHIELD negates the next damaging hit completely — even an unblockable one — and is then used up. Against a multi-hit ability, the shield absorbs only the first hit." },
+      { id: 'DGE-5', text: "A SHIELD negates the next damaging hit completely — and 'completely' means the whole hit, not just its damage. Any root, weaken, expose, push, pull or other effect the SAME attack would have applied is prevented along with the damage (so Pinning Shot's root, or Shadow Grasp's pull-and-root, never lands on a shielded target). This holds even against an unblockable hit. The shield is then used up. Against a multi-hit ability, the shield absorbs only the first hit; later hits land normally. A shield only triggers on an attack that deals damage — a purely non-damaging effect is not what it is there to stop and passes through." },
       { id: 'DGE-6', text: "Abilities that deal no damage (heals, buffs, pushes without damage) always land." },
     ],
   },

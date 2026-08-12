@@ -649,7 +649,14 @@ function scoreEffectsOnTarget(
         // Beneficial statuses (Ward's shielded) are FOR allies.
         if (eff.statusSlug === 'shielded') {
           if (isEnemy) { s -= WEIGHTS.statusOnAllyPenalty; break; }
-          if (hasStatus(target, 'shielded')) break; // no stacking value
+          // Shields don't stack: landing one on an already-shielded target
+          // (Warded passive) throws the shield half of a once-per-match special
+          // away. A flat 0 here still let the max-health half carry the cast —
+          // Warded clerics with no unshielded ally in range self-cast Ward and
+          // wasted it. Charge the floor value the shield WOULD have been worth,
+          // so holding the special (or just attacking) wins until the passive
+          // shield breaks and the cast is worth its whole payload.
+          if (hasStatus(target, 'shielded')) { s -= WEIGHTS.shieldBaseValue; break; }
           // Worth roughly the biggest single hit the enemy team projects
           // at this target, weighted up if the target sits in the enemy's
           // execute window (eating an Assassinate is the dream block).

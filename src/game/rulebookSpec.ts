@@ -457,6 +457,17 @@ export const RULE_CHECKS: RuleCheck[] = [
         ],
       }), caster, t);
       assert(t.currentHealth === 92 && !has(t, 'shielded'), 'shield must absorb only the FIRST hit of a multi-hit');
+      // The absorbed hit takes its whole payload with it: a status carried by
+      // the same damaging attack (Pinning Shot's root) must NOT land.
+      t = shielded();
+      cast(mkAbility({
+        effects: [
+          { type: 'damage', formula: 'flat', value: 7 },
+          { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+        ],
+      }), caster, t);
+      assert(t.currentHealth === 100 && !has(t, 'rooted') && !has(t, 'shielded'),
+        'a status on an absorbed damaging hit must be negated with it (no damage, no root, shield spent)');
     },
   },
   {
