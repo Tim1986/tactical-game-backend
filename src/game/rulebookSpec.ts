@@ -958,33 +958,11 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'PAS-2', name: 'Anchor blocks push and pull with visible feedback, and its HP rider stays tiny',
+    rule: 'PAS-3', name: 'Warded starts the match with a shield that negates the first hit, at a 2 HP cost',
     run: () => {
-      const base = buildUnitInstance(defOf('fighter'), P1, { x: 1, y: 1 });
-      const anchor = buildUnitInstance(defOf('fighter'), P2, { x: 3, y: 3 }, { specialSlug: 'second_wind', passiveSlug: 'anchor' });
-      // Anchor carries a max-health rider so it is not dead weight against
-      // teams with no push or pull — but the SIZE is the whole story, and this
-      // check exists to stop it creeping. History: the original Immovable had
-      // +6 and strictly dominated; +2 (passes 18-20) put anchor in three of the
-      // top five teams; +1 sits it 6th of 8 passives. Anything above +2 has
-      // twice been shown to break the meta — do not raise this bound without a
-      // full grid proving otherwise.
-      const rider = anchor.maxHealth - base.maxHealth;
-      assert(rider >= 0 && rider <= 2, `anchor's max-health rider must stay within 0..2 (got ${rider}) — +6 and +2 both made it dominant`);
-      assert(anchor.passives.includes('immovable'), 'anchor must carry the immovable flag');
-      const pusher = mkUnit(P1, 3, 1);
-      const pushEvents = cast(mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-      assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pushed');
-      assert(pushEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated push must emit PUSH_RESISTED so the player gets feedback');
-      const pullEvents = cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-      assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pulled');
-      assert(pullEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated pull must emit PUSH_RESISTED so the player gets feedback');
-    },
-  },
-  {
-    rule: 'PAS-3', name: 'Warded starts the match with a shield that negates the first hit',
-    run: () => {
+      const base = buildUnitInstance(defOf('cleric'), P1, { x: 1, y: 2 });
       const warded = buildUnitInstance(defOf('cleric'), P2, { x: 2, y: 1 }, { specialSlug: 'heal', passiveSlug: 'warded' });
+      assert(warded.maxHealth === base.maxHealth - 2, 'warded must cost 2 maximum health');
       assert(has(warded, 'shielded'), 'warded unit must begin shielded');
       const caster = mkUnit(P1, 1, 1);
       cast(mkAbility({ isUnblockable: true }), caster, warded);
@@ -1072,10 +1050,16 @@ export const RULE_CHECKS: RuleCheck[] = [
       t = mkUnit(P2, 3, 3);
       cast(hit, v, t, [v, t]);
       assert(t.currentHealth === t.maxHealth - 13, 'vengeful must deal +3 at or below half health');
+      // Barbarian's Vengeful is +4 (per-class override)
+      const bv = mkUnit(P1, 3, 2, { definitionSlug: 'barbarian', passives: ['vengeful'] });
+      bv.currentHealth = Math.floor(bv.maxHealth / 2);
+      const bt = mkUnit(P2, 3, 3);
+      cast(hit, bv, bt, [bv, bt]);
+      assert(bt.currentHealth === bt.maxHealth - 14, 'barbarian vengeful must deal +4 at or below half health');
     },
   },
   {
-    rule: 'PAS-8', name: 'Stalwart resists rooted/weakened/exposed with feedback; frozen still applies',
+    rule: 'PAS-8', name: 'Stalwart resists push/pull + rooted/weakened/exposed with feedback; frozen still applies; carries a per-class HP rider',
     run: () => {
       const caster = mkUnit(P1, 3, 2);
       const stal = mkUnit(P2, 3, 3, { passives: ['stalwart'] });
@@ -1086,10 +1070,21 @@ export const RULE_CHECKS: RuleCheck[] = [
       }
       cast(mkAbility({ slug: 't_frz', isUnblockable: true, effects: [{ type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 }] }), caster, stal, [caster, stal]);
       assert(has(stal, 'frozen'), 'frozen must still apply through stalwart');
+      // Merged Stalwart also blocks push/pull (absorbed the old Anchor).
+      const pushEv = cast(mkAbility({ slug: 't_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), caster, stal, [caster, stal]);
+      assert(stal.position.x === 3 && stal.position.y === 3, 'stalwart unit must not be pushed');
+      assert(pushEv.some((e) => e.type === 'PUSH_RESISTED'), 'a negated push must emit PUSH_RESISTED feedback');
+      const pullEv = cast(mkAbility({ slug: 't_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), caster, stal, [caster, stal]);
+      assert(stal.position.x === 3 && stal.position.y === 3, 'stalwart unit must not be pulled');
+      assert(pullEv.some((e) => e.type === 'PUSH_RESISTED'), 'a negated pull must emit PUSH_RESISTED feedback');
+      // Per-class HP rider: Wizard's Stalwart is +4 (varies by class).
+      const wBase = buildUnitInstance(defOf('wizard'), P1, { x: 1, y: 1 });
+      const wStal = buildUnitInstance(defOf('wizard'), P2, { x: 5, y: 5 }, { specialSlug: 'blizzard', passiveSlug: 'stalwart' });
+      assert(wStal.maxHealth === wBase.maxHealth + 4, `wizard stalwart must carry +4 max health (got ${wStal.maxHealth - wBase.maxHealth})`);
     },
   },
   {
-    rule: 'PAS-6', name: 'Opportunist deals +4 against targets with any status effect',
+    rule: 'PAS-6', name: 'Opportunist deals +4 against targets with any status effect (Ranger +5)',
     run: () => {
       const opp = mkUnit(P1, 3, 2, { passives: ['opportunist'] });
       // clean target: base damage only
@@ -1100,6 +1095,39 @@ export const RULE_CHECKS: RuleCheck[] = [
       t = mkUnit(P2, 3, 3, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
       cast(mkAbility({ isUnblockable: true }), opp, t, [opp, t]);
       assert(t.currentHealth === t.maxHealth - 14, 'opportunist must deal +4 against a statused target');
+      // Ranger's Opportunist is +5 (per-class override)
+      const rOpp = mkUnit(P1, 3, 2, { definitionSlug: 'ranger', passives: ['opportunist'] });
+      const rt = mkUnit(P2, 3, 3, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
+      cast(mkAbility({ isUnblockable: true }), rOpp, rt, [rOpp, rt]);
+      assert(rt.currentHealth === rt.maxHealth - 15, 'ranger opportunist must deal +5 against a statused target');
+    },
+  },
+  {
+    rule: 'PAS-9', name: 'Channeler deals +2 with abilities only on a turn the caster did not move',
+    run: () => {
+      const still = mkUnit(P1, 3, 2, { passives: ['channeler'], hasMovedThisTurn: false });
+      let t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), still, t, [still, t]);
+      assert(t.currentHealth === t.maxHealth - 12, 'channeler must add +2 when the caster has not moved');
+      const moved = mkUnit(P1, 3, 2, { passives: ['channeler'], hasMovedThisTurn: true });
+      t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), moved, t, [moved, t]);
+      assert(t.currentHealth === t.maxHealth - 10, 'channeler must add nothing on a turn the caster moved');
+    },
+  },
+  {
+    rule: 'PAS-10', name: 'Siphon heals the caster 1 when its ability damages an enemy, capped at max',
+    run: () => {
+      const siph = mkUnit(P1, 3, 2, { passives: ['siphon'] });
+      siph.currentHealth = 50;
+      const t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), siph, t, [siph, t]);
+      assert(siph.currentHealth === 51, 'siphon must heal 1 on damaging an enemy');
+      // no overheal at full health
+      const full = mkUnit(P1, 3, 2, { passives: ['siphon'] });
+      const t2 = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), full, t2, [full, t2]);
+      assert(full.currentHealth === full.maxHealth, 'siphon must not heal above maximum');
     },
   },
 

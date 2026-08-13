@@ -201,9 +201,32 @@ function weakenedAdjustedDamage(ctx: ExecutionContext, rawValue: number): number
 
 const THORNS_DAMAGE = 3;
 const OPPORTUNIST_BONUS = 4;
+/**
+ * Per-class Opportunist override, mirroring the per-class Undying HP tax
+ * (undyingWith). A class slug present here uses its value instead of the base
+ * OPPORTUNIST_BONUS. SHIPPED: Ranger +5 (v1.0.81); every other class gets the
+ * base +4. The balance harness patches this at runtime (via a preset's
+ * `oppBonus`) — a bare grid run RESETS it to empty, so re-seed shipped values
+ * into any future baseline preset for comparability.
+ */
+export const OPPORTUNIST_BONUS_BY_CLASS: Record<string, number> = { ranger: 5 };
 const VENGEFUL_BONUS = 3;
+/** Per-class Vengeful override, same pattern as OPPORTUNIST_BONUS_BY_CLASS.
+ *  SHIPPED: Barbarian +4 (v1.0.81); every other class gets the base +3. The
+ *  harness patches this via a preset's `vengBonus` (bare runs reset to empty). */
+export const VENGEFUL_BONUS_BY_CLASS: Record<string, number> = { barbarian: 4 };
+/** Channeler: bonus ability damage when the caster did NOT move this turn. */
+const CHANNELER_BONUS = 2;
+/** Siphon: self-heal when one of the caster's abilities damages an enemy. */
+const SIPHON_HEAL = 1;
 /** Statuses negated by the Stalwart passive. */
 const STALWART_IMMUNE = new Set(['rooted', 'weakened', 'exposed']);
+/** Displacement immunity. Merged Stalwart (2026-08-13) absorbed the old Anchor,
+ *  so push/pull is now resisted by the 'stalwart' flag; 'immovable' is kept for
+ *  any legacy Anchor flag still in play (test fixtures, un-migrated data). */
+function isImmovable(u: UnitInstance): boolean {
+  return hasPassive(u, 'immovable') || hasPassive(u, 'stalwart');
+}
 
 /**
  * SINGLE damage sink: subtracts health and resolves death — including the
@@ -243,15 +266,23 @@ export function takeDamage(
   return actual;
 }
 
-/** Opportunist: +4 damage when the target suffers any status effect. */
+/** Opportunist: bonus damage when the target suffers any status effect. Base
+ *  +4, or a per-class override from OPPORTUNIST_BONUS_BY_CLASS. */
 function opportunistBonus(ctx: ExecutionContext, target: UnitInstance): number {
-  return hasPassive(ctx.caster, 'opportunist') && target.statusEffects.length > 0 ? OPPORTUNIST_BONUS : 0;
+  if (!hasPassive(ctx.caster, 'opportunist') || target.statusEffects.length === 0) return 0;
+  return OPPORTUNIST_BONUS_BY_CLASS[ctx.caster.definitionSlug] ?? OPPORTUNIST_BONUS;
 }
 
-/** Vengeful: +3 damage while the caster is at or below half health. */
+/** Vengeful: bonus damage while the caster is at or below half health. Base +3,
+ *  or a per-class override from VENGEFUL_BONUS_BY_CLASS. */
 function vengefulBonus(ctx: ExecutionContext): number {
-  return hasPassive(ctx.caster, 'vengeful') && ctx.caster.currentHealth * 2 <= ctx.caster.maxHealth
-    ? VENGEFUL_BONUS : 0;
+  if (!hasPassive(ctx.caster, 'vengeful') || ctx.caster.currentHealth * 2 > ctx.caster.maxHealth) return 0;
+  return VENGEFUL_BONUS_BY_CLASS[ctx.caster.definitionSlug] ?? VENGEFUL_BONUS;
+}
+
+/** Channeler: +2 ability damage while the caster has not moved this turn. */
+function channelerBonus(ctx: ExecutionContext): number {
+  return hasPassive(ctx.caster, 'channeler') && !ctx.caster.hasMovedThisTurn ? CHANNELER_BONUS : 0;
 }
 
 /**
@@ -263,13 +294,15 @@ function vengefulBonus(ctx: ExecutionContext): number {
 function damageBreakdown(ctx: ExecutionContext, target: UnitInstance, base: number): { label: string; amount: number }[] {
   const opp = opportunistBonus(ctx, target);
   const ven = vengefulBonus(ctx);
+  const chan = channelerBonus(ctx);
   const weak = hasStatusEffect(ctx.caster, 'weakened')
     ? Math.min(WEAKENED_DAMAGE_REDUCTION, base) : 0;
-  if (opp === 0 && ven === 0 && weak === 0) return [];
+  if (opp === 0 && ven === 0 && chan === 0 && weak === 0) return [];
   const parts = [{ label: 'base', amount: base - weak }];
   if (weak > 0) parts[0] = { label: 'Weakened', amount: base - weak };
   if (opp > 0) parts.push({ label: 'Opportunist', amount: opp });
   if (ven > 0) parts.push({ label: 'Vengeful', amount: ven });
+  if (chan > 0) parts.push({ label: 'Channeler', amount: chan });
   return parts;
 }
 
@@ -290,7 +323,7 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     return;
   }
   const isExecute = effect.healthThreshold !== undefined;
-  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx);
   const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     // Only attach the breakdown when the hit was NOT capped by remaining HP —
@@ -299,7 +332,19 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     const parts2 = actual === damage ? parts : [];
     ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, value: actual, message: isExecute ? 'Executed' : `${actual} damage`, ...(parts2.length ? { damageParts: parts2 } : {}) });
   });
-  if (actualDamage > 0) applyThornsRetaliation(ctx, target);
+  if (actualDamage > 0) {
+    applyThornsRetaliation(ctx, target);
+    // Siphon: the caster leeches a little health each time one of its abilities
+    // damages an ENEMY (never friendly fire), capped at its max.
+    if (hasPassive(ctx.caster, 'siphon') && ctx.caster.isAlive
+        && target.ownerPlayerId !== ctx.caster.ownerPlayerId) {
+      const heal = Math.min(SIPHON_HEAL, ctx.caster.maxHealth - ctx.caster.currentHealth);
+      if (heal > 0) {
+        ctx.caster.currentHealth += heal;
+        ctx.events.push({ type: 'HEALING_DONE', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: heal, message: 'Siphon' });
+      }
+    }
+  }
 }
 
 function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
@@ -379,8 +424,8 @@ function removeStatus(ctx: ExecutionContext, target: UnitInstance, effect: Remov
 
 function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffect): void {
   if (!target.isAlive) return;
-  if (hasPassive(target, 'immovable')) {
-    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
+  if (isImmovable(target)) {
+    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted' });
     return;
   }
   const options = calculatePushOptions(
@@ -400,8 +445,8 @@ function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffe
 
 function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffect): void {
   if (!target.isAlive) return;
-  if (hasPassive(target, 'immovable')) {
-    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted — Anchor' });
+  if (isImmovable(target)) {
+    ctx.events.push({ type: 'PUSH_RESISTED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Resisted' });
     return;
   }
   const options = calculatePullOptions(

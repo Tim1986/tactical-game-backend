@@ -134,7 +134,7 @@ export const FABLE_TEAMS: FableTeam[] = [
     name: 'Concussive Mark',
     style: 'an anchored bruiser sets up guaranteed-hit focus fire',
     slugs: ['fighter', 'fighter', 'rogue', 'rogue'],
-    loadoutA: { specialSlug: 'concussive', passiveSlug: 'anchor' },
+    loadoutA: { specialSlug: 'concussive', passiveSlug: 'stalwart' },
     loadoutB: { specialSlug: 'expose', passiveSlug: 'opportunist' },
     meanWinPct: 64.2,
   },

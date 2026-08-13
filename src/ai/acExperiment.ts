@@ -17,6 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { runSim } from './simHarness.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
+import { OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS } from '../game/abilityExecutor.js';
 import { loadoutsFor, runDuelMatrix, runReferenceMatrix } from './loadoutMatrix.js';
 import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
 
@@ -58,6 +59,13 @@ interface Preset {
   dmg?: Record<string, number>;
   /** Ability-slug → delta applied to the ability's range. */
   range?: Record<string, number>;
+  /** Class-slug → per-class Opportunist bonus (overrides the base +4 for that
+   * class only). Mirrors the per-class Undying tax; patches the engine's
+   * OPPORTUNIST_BONUS_BY_CLASS map for the run. */
+  oppBonus?: Record<string, number>;
+  /** Class-slug → per-class Vengeful bonus (overrides the base +3). Patches the
+   * engine's VENGEFUL_BONUS_BY_CLASS map for the run. */
+  vengBonus?: Record<string, number>;
   /** Ability-slug → delta applied to every 'heal' effect value. */
   heal?: Record<string, number>;
   /** Ability-slug → delta applied to every apply_status durationTurns. */
@@ -121,6 +129,73 @@ const PRESETS: Record<string, Preset> = {
   // NOT buffed (pinning root +1t read as oppressive). This is what the next full
   // grid measures. gameData stays baseline — this is a delta.
   c6_rogue44: { ac: { cleric: -2, warlock: -1, barbarian: 1 }, hp: { rogue: 1 } },
+  // NOTE: c6 / c6_rogue44 above are now SHIPPED into gameData (v1.0.80). They
+  // are deltas, so re-running them stacks ON TOP of the shipped chassis — do NOT
+  // use them as a baseline anymore. An empty run (no --preset) is the shipped
+  // baseline. The two presets below are Wizard-loadout tests (owner 2026-08-12):
+  // break Blizzard's grip on the Wizard so Freeze/Cold Snap become real choices.
+  //   A: Blizzard range 4->3 (shrink the reach that makes it strictly best).
+  blz_r3:        { ac: {}, hp: {}, range: { blizzard: -1 } },
+  //   B: Blizzard range 4->3 AND Freeze range 3->4 (also make Freeze reach out).
+  blz_r3_frz_r4: { ac: {}, hp: {}, range: { blizzard: -1, freeze: 1 } },
+  // No-op preset = the shipped baseline. Needed because stage E only runs inside
+  // the `--preset` branch of the dispatcher; a bare (no --preset) run falls into
+  // the AC-delta sweep and produces NO pair-comp CSV. Use `--preset baseline`.
+  baseline: { ac: {}, hp: {} },
+  // Ranger-only Opportunist +6 (owner 2026-08-12): a synergy buff that only pays
+  // off next to status-appliers (the non-Fighter partners Ranger lacks) and stays
+  // near-invisible in the Fighter pair. Class-specific, like the per-class Undying.
+  rgr_opp6: { ac: {}, hp: {}, oppBonus: { ranger: 6 } },
+  // Full-grid ship candidate (owner 2026-08-12): all three balance changes at
+  // once, on top of the shipped C6+Rogue44 chassis. Ranger Opportunist +6,
+  // Blizzard range 4->3, Freeze range 3->4. Run against the NEW 12-team panel.
+  rgr6_blz3_frz4: { ac: {}, hp: {}, range: { blizzard: -1, freeze: 1 }, oppBonus: { ranger: 6 } },
+  // Candidate v2 (owner 2026-08-12): opp6 dialed to +5, plus a Barbarian rescue
+  // package and a small Fighter trim. On top of shipped C6+Rogue44.
+  //   Ranger Opportunist +5 · Blizzard range 4->3 · Freeze range 3->4
+  //   Barbarian: Vengeful +3->+4, Ground Slam (shockwave) dmg 12->13, HP 54->55
+  //   Fighter: Concussive Blow 7->6, Shield Bash 17->16
+  cand2: {
+    ac: {}, hp: { barbarian: 1 },
+    range: { blizzard: -1, freeze: 1 },
+    dmg: { shockwave: 1, concussive: -1, shield_bash: -1 },
+    oppBonus: { ranger: 5 },
+    vengBonus: { barbarian: 4 },
+  },
+  // Candidate v3 (owner 2026-08-12): cand2 + two changes. Cleric's Warded passive
+  // now costs 2 max HP (it dominated the top table — top 14 cells all ran Warded),
+  // a passive-carried tax like Undying. Warlock +2 base HP (most of its best teams
+  // were Cleric/Warded, so it takes collateral from that nerf).
+  cand3: {
+    ac: {}, hp: { barbarian: 1, warlock: 2 },
+    range: { blizzard: -1, freeze: 1 },
+    dmg: { shockwave: 1, concussive: -1, shield_bash: -1 },
+    oppBonus: { ranger: 5 },
+    vengBonus: { barbarian: 4 },
+    passiveHp: { cleric: { warded: -2 } },
+  },
+  // Candidate v5 (owner 2026-08-13): cand3 numerics + Rogue +1 HP (low top-build
+  // representation). Runs on the new-passive gameData (merged Stalwart now +3 HP,
+  // Channeler +1, Siphon Heal 1 — all baked into gameData/engine, not this preset).
+  cand5: {
+    ac: {}, hp: { barbarian: 1, warlock: 2, rogue: 1 },
+    range: { blizzard: -1, freeze: 1 },
+    dmg: { shockwave: 1, concussive: -1, shield_bash: -1 },
+    oppBonus: { ranger: 5 },
+    vengBonus: { barbarian: 4 },
+    passiveHp: { cleric: { warded: -2 } },
+  },
+  // Candidate v7 (owner 2026-08-13): cand5 numerics + Warlock chassis +1 (now +3
+  // total). Stalwart tiers retuned in gameData: Barbarian 0, Fighter/Warlock +1,
+  // Cleric/Ranger/Sorcerer +3, Wizard +4. Channeler +2. Goal: Stalwart "okay".
+  cand7: {
+    ac: {}, hp: { barbarian: 1, warlock: 3, rogue: 1 },
+    range: { blizzard: -1, freeze: 1 },
+    dmg: { shockwave: 1, concussive: -1, shield_bash: -1 },
+    oppBonus: { ranger: 5 },
+    vengBonus: { barbarian: 4 },
+    passiveHp: { cleric: { warded: -2 } },
+  },
   s1_gs10: { ac: {}, hp: {}, dmg: { shockwave: -5 } },
   // s2_gs12 — 10 overshot: Ground Slam's all-cell mean fell in ALL THREE
   // screened pairs (40.5->38.0, 38.5->31.2, 49.9->44.6) and its best rank went
@@ -1100,6 +1175,12 @@ const BASE_PP: Record<string, number[]> = Object.fromEntries(
 );
 
 function applyPreset(p: Preset): void {
+  // Per-class Opportunist override: rebuilt from scratch each run so a preset
+  // without `oppBonus` restores the shipped base +4 for every class.
+  for (const k of Object.keys(OPPORTUNIST_BONUS_BY_CLASS)) delete OPPORTUNIST_BONUS_BY_CLASS[k];
+  for (const [c, v] of Object.entries(p.oppBonus ?? {})) OPPORTUNIST_BONUS_BY_CLASS[c] = v;
+  for (const k of Object.keys(VENGEFUL_BONUS_BY_CLASS)) delete VENGEFUL_BONUS_BY_CLASS[k];
+  for (const [c, v] of Object.entries(p.vengBonus ?? {})) VENGEFUL_BONUS_BY_CLASS[c] = v;
   for (const c of ALL_CLASSES) {
     DEFAULT_UNITS[c].armorClass = Math.max(7, BASE_AC[c] + (p.ac[c] ?? 0));
     DEFAULT_UNITS[c].maxHealth = BASE_HP[c] + (p.hp[c] ?? 0);
@@ -1393,6 +1474,7 @@ function stagePairComps(games: number): void {
   const distinctErrors = new Set<string>();
   // --pair fighter,warlock limits the scan to one class pair (debug/deep-dive).
   const onlyPair = flag('pair')?.split(',');
+  const focusClass = flag('focus');
   // --part N (1-7) runs one disjoint slice so a long grid can be checkpointed
   // and resumed. A pair belongs to the part of whichever of its two classes
   // comes first alphabetically, which partitions the 28 pairs as
@@ -1412,6 +1494,9 @@ function stagePairComps(games: number): void {
     for (let j = i + 1; j < ALL_CLASSES.length; j++) {
       const X = ALL_CLASSES[i], Y = ALL_CLASSES[j];
       if (onlyPair && !(onlyPair.includes(X) && onlyPair.includes(Y))) continue;
+      // --focus wizard: keep EVERY pair containing that class (8 pairs), a fast
+      // slice for judging one class's internal loadout balance without the full grid.
+      if (focusClass && X !== focusClass && Y !== focusClass) continue;
       if (partOwner && (X < Y ? X : Y) !== partOwner) continue;
       const pair = `${X}²/${Y}²`;
       pairAgg[pair] = { w: 0, g: 0 };
