@@ -17,19 +17,32 @@
  * ---------------------------------------------------------------------------
  * Where these came from
  * ---------------------------------------------------------------------------
- * Selected from `pass21_balance_grid.xlsx` (the Stage E grid: 28 class pairs x
- * 81 loadout combos = 2268 cells, each played 40 games against all 9 reference
- * parties). The score is **Mean Win %** — column G, not the median. See
- * AC_REWORK.md:429-450 for why the median misreads bimodal cells.
+ * Reselected 2026-08-12 from `grids/c6r44/merged.xlsx` — the Stage E grid on the
+ * shipped v1.0.80 chassis (C6 + Rogue 44): 28 class pairs x 81 loadout combos =
+ * 2268 cells, each played 40 games against Fable's THEN-current 12 rosters
+ * (`--refs fable`). The score is **Mean Win %** — column G, not the median.
  *
- * Selection was strength-first: every roster here scores 62.8-73.3 mean win %
- * against the reference panel, versus a grid median of 43.3. Diversity was a
- * tie-break applied on top, not a constraint allowed to weaken a team:
+ * This panel REPLACED the previous one wholesale (owner call): the old refs had
+ * gone stale — several were mediocre on the new chassis (e.g. the old "Pull and
+ * Stun", barbarian/warlock whirlwind+grasp, sat rank ~892 of 2268). Because the
+ * new refs were themselves scored against the OLD panel, meanWinPct here is
+ * provenance only and does NOT carry over: it does not describe performance
+ * against THIS panel. Comparability to any pre-2026-08-12 grid is deliberately
+ * broken, and the next grid must be re-baselined against these teams.
  *
- *   - all 8 classes appear (2-4 times each)
- *   - 20 of the game's 24 specials appear
- *   - all 8 passives appear
- *   - no class pair is used twice
+ * Selection was strength-first: every roster scores 55.2-69.6 mean win % vs the
+ * old panel (grid mean 36.3), i.e. all sit in the top ~3% of cells. Diversity
+ * was a tie-break on top, never allowed to weaken a team, so coverage is looser
+ * than the old set:
+ *
+ *   - all 8 classes appear (Fighter/Rogue x4, Cleric/Sorcerer/Warlock/Wizard x3,
+ *     Barbarian/Ranger x2) — the lean mirrors the meta, not a quota
+ *   - 17 of the game's 24 specials appear (the omitted 7 are the genuinely weak
+ *     ones — grasp, whirlwind, shockwave, pinning, freeze, ignite, heal)
+ *   - 7 of 8 passives appear (only stalwart is absent)
+ *   - one class pair recurs (Barbarian/Rogue: Warcry Volley vs Bloodrush) —
+ *     Barbarian's only strong non-Blizzard partner is Rogue, and Blizzard is
+ *     capped at 2 rosters on purpose (it is the mechanic under active review)
  *
  * Every grid cell is a 2+2 composition (two of each class), so each roster is
  * `[A, A, B, B]` with one loadout shared by the pair — that is exactly the
@@ -60,7 +73,8 @@ export interface FableTeam {
   loadoutA: UnitCustomization;
   /** Loadout for the B pair (slots 2-3). */
   loadoutB: UnitCustomization;
-  /** Mean win % vs the 9 reference parties in pass21. Provenance, not gameplay. */
+  /** Mean win % vs the PREVIOUS 12-roster panel in the c6r44 grid. Provenance
+   *  only — not performance against the current panel, and not gameplay. */
   meanWinPct: number;
 }
 
@@ -72,111 +86,111 @@ export interface FableTeam {
 export const FABLE_TEAMS: FableTeam[] = [
   {
     id: 'fab1e000-0000-4000-a000-000000000001',
-    name: 'Wounded Fury',
-    style: 'both pairs hit harder as they bleed',
-    slugs: ['barbarian', 'barbarian', 'rogue', 'rogue'],
-    loadoutA: { specialSlug: 'whirlwind', passiveSlug: 'vengeful' },
-    loadoutB: { specialSlug: 'dagger_toss', passiveSlug: 'vengeful' },
-    meanWinPct: 73.3,
+    name: 'Sanctum Artillery',
+    style: 'shielded clerics feed a fire-artillery sorcerer line',
+    slugs: ['cleric', 'cleric', 'sorcerer', 'sorcerer'],
+    loadoutA: { specialSlug: 'ward', passiveSlug: 'warded' },
+    loadoutB: { specialSlug: 'flame_jet', passiveSlug: 'undying' },
+    meanWinPct: 69.6,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000002',
-    name: 'Warded Drain',
-    style: 'shielded clerics behind unmovable life-stealers',
-    slugs: ['cleric', 'cleric', 'warlock', 'warlock'],
-    loadoutA: { specialSlug: 'ward', passiveSlug: 'warded' },
-    loadoutB: { specialSlug: 'drain', passiveSlug: 'anchor' },
-    meanWinPct: 72.8,
+    name: 'Ironclad Pyre',
+    style: 'an undying wall behind a Ring-of-Fire nuke',
+    slugs: ['fighter', 'fighter', 'sorcerer', 'sorcerer'],
+    loadoutA: { specialSlug: 'shield_bash', passiveSlug: 'undying' },
+    loadoutB: { specialSlug: 'ffh', passiveSlug: 'undying' },
+    meanWinPct: 65.6,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000003',
-    name: 'Thorn Wall',
-    style: 'melee wall that punishes every hit it takes',
-    slugs: ['fighter', 'fighter', 'ranger', 'ranger'],
-    loadoutA: { specialSlug: 'shield_bash', passiveSlug: 'thorns' },
-    loadoutB: { specialSlug: 'piercing', passiveSlug: 'thorns' },
-    meanWinPct: 71.1,
+    name: 'Warded Leech',
+    style: 'shields up front, lifesteal grinds you down',
+    slugs: ['cleric', 'cleric', 'warlock', 'warlock'],
+    loadoutA: { specialSlug: 'ward', passiveSlug: 'warded' },
+    loadoutB: { specialSlug: 'drain', passiveSlug: 'opportunist' },
+    meanWinPct: 65.4,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000004',
-    name: 'Pull and Stun',
-    style: 'drags you out of position, then locks you down',
-    slugs: ['fighter', 'fighter', 'warlock', 'warlock'],
-    loadoutA: { specialSlug: 'concussive', passiveSlug: 'undying' },
-    loadoutB: { specialSlug: 'grasp', passiveSlug: 'opportunist' },
-    meanWinPct: 69.4,
+    name: 'Exposed Frost',
+    style: 'expose your guard, then bury you in a blizzard',
+    slugs: ['rogue', 'rogue', 'wizard', 'wizard'],
+    loadoutA: { specialSlug: 'expose', passiveSlug: 'opportunist' },
+    loadoutB: { specialSlug: 'blizzard', passiveSlug: 'opportunist' },
+    meanWinPct: 64.8,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000005',
-    name: 'Thorn Volley',
-    style: 'ranged poke behind a retaliating front line',
-    slugs: ['barbarian', 'barbarian', 'ranger', 'ranger'],
-    loadoutA: { specialSlug: 'roar', passiveSlug: 'thorns' },
-    loadoutB: { specialSlug: 'piercing', passiveSlug: 'thorns' },
-    meanWinPct: 67.8,
+    name: 'Dread Freeze',
+    style: 'fear scatters your line, blizzard freezes the pieces',
+    slugs: ['warlock', 'warlock', 'wizard', 'wizard'],
+    loadoutA: { specialSlug: 'fear', passiveSlug: 'opportunist' },
+    loadoutB: { specialSlug: 'blizzard', passiveSlug: 'opportunist' },
+    meanWinPct: 64.8,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000006',
-    name: 'Shock and Freeze',
-    style: 'knocks you back, then freezes you where you land',
-    slugs: ['barbarian', 'barbarian', 'wizard', 'wizard'],
-    loadoutA: { specialSlug: 'shockwave', passiveSlug: 'thorns' },
-    loadoutB: { specialSlug: 'blizzard', passiveSlug: 'anchor' },
-    meanWinPct: 67.8,
+    name: 'Concussive Mark',
+    style: 'an anchored bruiser sets up guaranteed-hit focus fire',
+    slugs: ['fighter', 'fighter', 'rogue', 'rogue'],
+    loadoutA: { specialSlug: 'concussive', passiveSlug: 'anchor' },
+    loadoutB: { specialSlug: 'expose', passiveSlug: 'opportunist' },
+    meanWinPct: 64.2,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000007',
-    name: 'Elemental Storm',
-    style: 'pure caster damage, fire and ice',
-    slugs: ['sorcerer', 'sorcerer', 'wizard', 'wizard'],
-    loadoutA: { specialSlug: 'flame_jet', passiveSlug: 'undying' },
-    loadoutB: { specialSlug: 'blizzard', passiveSlug: 'opportunist' },
-    meanWinPct: 67.2,
+    name: 'Warcry Volley',
+    style: 'a warcry buff behind a hail of thrown daggers',
+    slugs: ['barbarian', 'barbarian', 'rogue', 'rogue'],
+    loadoutA: { specialSlug: 'roar', passiveSlug: 'thorns' },
+    loadoutB: { specialSlug: 'dagger_toss', passiveSlug: 'opportunist' },
+    meanWinPct: 63.5,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000008',
-    name: 'Swift Skirmish',
-    style: 'fast flankers that strip your defenses',
-    slugs: ['ranger', 'ranger', 'rogue', 'rogue'],
-    loadoutA: { specialSlug: 'piercing', passiveSlug: 'opportunist' },
-    loadoutB: { specialSlug: 'expose', passiveSlug: 'swift' },
-    meanWinPct: 66.1,
+    name: 'Thorn Bulwark',
+    style: 'a self-healing thorn wall screens a piercing volley',
+    slugs: ['fighter', 'fighter', 'ranger', 'ranger'],
+    loadoutA: { specialSlug: 'second_wind', passiveSlug: 'thorns' },
+    loadoutB: { specialSlug: 'piercing', passiveSlug: 'thorns' },
+    meanWinPct: 62.9,
   },
   {
     id: 'fab1e000-0000-4000-a000-000000000009',
-    name: 'Pin and Cleanse',
-    style: 'roots you in place and shrugs off your control',
-    slugs: ['cleric', 'cleric', 'ranger', 'ranger'],
-    loadoutA: { specialSlug: 'purify', passiveSlug: 'undying' },
-    loadoutB: { specialSlug: 'pinning', passiveSlug: 'thorns' },
-    meanWinPct: 66.1,
+    name: 'Bloodrush',
+    style: 'the more they bleed, the harder they execute you',
+    slugs: ['barbarian', 'barbarian', 'rogue', 'rogue'],
+    loadoutA: { specialSlug: 'roar', passiveSlug: 'vengeful' },
+    loadoutB: { specialSlug: 'assassinate', passiveSlug: 'swift' },
+    meanWinPct: 62.1,
   },
   {
     id: 'fab1e000-0000-4000-a000-00000000000a',
-    name: 'Burn Attrition',
-    style: 'stacks burn and outlasts you',
-    slugs: ['cleric', 'cleric', 'sorcerer', 'sorcerer'],
-    loadoutA: { specialSlug: 'ward', passiveSlug: 'warded' },
-    loadoutB: { specialSlug: 'ignite', passiveSlug: 'undying' },
-    meanWinPct: 63.3,
+    name: 'Draining Wall',
+    style: 'stalls behind an undying line and drains you out',
+    slugs: ['fighter', 'fighter', 'warlock', 'warlock'],
+    loadoutA: { specialSlug: 'concussive', passiveSlug: 'undying' },
+    loadoutB: { specialSlug: 'drain', passiveSlug: 'opportunist' },
+    meanWinPct: 62.1,
   },
   {
     id: 'fab1e000-0000-4000-a000-00000000000b',
-    name: 'Frozen Line',
-    style: 'a front line that heals itself while you sit frozen',
-    slugs: ['fighter', 'fighter', 'wizard', 'wizard'],
-    loadoutA: { specialSlug: 'second_wind', passiveSlug: 'thorns' },
-    loadoutB: { specialSlug: 'freeze', passiveSlug: 'opportunist' },
-    meanWinPct: 62.8,
+    name: 'Longfire Line',
+    style: 'max-range snipers and a fire cone, all backline',
+    slugs: ['ranger', 'ranger', 'sorcerer', 'sorcerer'],
+    loadoutA: { specialSlug: 'longshot', passiveSlug: 'thorns' },
+    loadoutB: { specialSlug: 'flame_jet', passiveSlug: 'undying' },
+    meanWinPct: 55.4,
   },
   {
     id: 'fab1e000-0000-4000-a000-00000000000c',
-    name: 'Fear and Fire',
-    style: 'scatters your formation, then burns the stragglers',
-    slugs: ['sorcerer', 'sorcerer', 'warlock', 'warlock'],
-    loadoutA: { specialSlug: 'ffh', passiveSlug: 'stalwart' },
-    loadoutB: { specialSlug: 'fear', passiveSlug: 'opportunist' },
-    meanWinPct: 62.8,
+    name: 'Frostward Cleanse',
+    style: 'cleanses your control, then freezes you solid',
+    slugs: ['cleric', 'cleric', 'wizard', 'wizard'],
+    loadoutA: { specialSlug: 'purify', passiveSlug: 'warded' },
+    loadoutB: { specialSlug: 'cold_snap', passiveSlug: 'opportunist' },
+    meanWinPct: 55.2,
   },
 ];
 
