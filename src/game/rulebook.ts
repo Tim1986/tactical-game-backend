@@ -111,7 +111,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'PAS-6', text: "Opportunist: this unit deals +4 damage against targets suffering any status effect. A Ranger deals +5 instead." },
       { id: 'PAS-7', text: "Vengeful: this unit deals +3 damage while at or below half of its maximum health. A Barbarian deals +4 instead." },
       { id: 'PAS-8', text: "Stalwart: this unit can never be pushed or pulled, and is immune to Rooted, Weakened, and Exposed. It also gains extra maximum health, the amount depending on the class. A negated push, pull, or status is announced as \"Resisted\". Frozen and Burning still apply normally." },
-      { id: 'PAS-9', text: "Channeler: this unit deals +2 damage with its abilities on any turn it did not move. Offered to the Wizard." },
+      { id: 'PAS-9', text: "Channeler: this unit deals +2 damage with its damage-dealing abilities on any turn it did not move. Abilities that only apply a status, like Ring of Frost, don't benefit. Offered to the Wizard." },
       { id: 'PAS-10', text: "Siphon: whenever one of this unit's abilities damages an enemy, it heals 1 (never above its maximum). Offered to the Warlock." },
     ],
   },

@@ -551,7 +551,7 @@ const STALWART_2 = stalwartWith(2);
 const STALWART_3 = stalwartWith(3);
 const STALWART_4 = stalwartWith(4);
 // Channeler (Wizard): rewards holding position and casting.
-const CHANNELER: PassiveOption = { slug: 'channeler', name: 'Channeler', description: '+2 damage on your abilities if you did not move this turn.', passiveFlag: 'channeler' };
+const CHANNELER: PassiveOption = { slug: 'channeler', name: 'Channeler', description: '+2 damage on your damage-dealing abilities if you did not move this turn. (No effect on abilities that only apply a status, like Ring of Frost.)', passiveFlag: 'channeler' };
 // Siphon (Warlock): drain-flavoured sustain.
 const SIPHON: PassiveOption = { slug: 'siphon', name: 'Siphon', description: 'Heal 1 whenever one of your abilities damages an enemy.', passiveFlag: 'siphon' };
 
