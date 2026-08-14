@@ -66,7 +66,10 @@ import {
 // Shared AOE shape predicate — the engine's resolveTargets uses the SAME
 // function, so brain hit prediction can never diverge from engine resolution.
 import { isInAoe } from '../game/boardUtils.js';
-import { BURNING_DAMAGE_PER_STACK, missChanceOf, WEAKENED_DAMAGE_REDUCTION } from '../game/abilityExecutor.js';
+import {
+  BURNING_DAMAGE_PER_STACK, missChanceOf, WEAKENED_DAMAGE_REDUCTION,
+  OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS,
+} from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
 // Public interface (matches the sim harness spec)
@@ -490,12 +493,27 @@ function scoreEffectsOnTarget(
   // so a weakened multi-effect attack was overvalued: Twin Strike scored
   // (8-4)+8 = 12 while the engine actually deals (8-4)+(8-4) = 8.
   const weakenCut = hasStatus(caster, 'weakened') ? WEAKENED_DAMAGE_REDUCTION : 0;
-  // Opportunist passive: engine adds +4 per damage/lifesteal effect against a
-  // target with ANY status effect (added after the weaken cut, not reduced by it).
+  // Opportunist passive: engine adds +4 (per-class override: Ranger +5) per
+  // damage/lifesteal effect against a target with ANY status effect (added
+  // after the weaken cut, not reduced by it). Read the engine's own per-class
+  // maps so a shipped override can never drift from the brain's model.
+  const oppValue = OPPORTUNIST_BONUS_BY_CLASS[caster.definitionSlug] ?? 4;
+  const vengValue = VENGEFUL_BONUS_BY_CLASS[caster.definitionSlug] ?? 3;
   const opportunistBonus =
-    ((caster.passives ?? []).includes('opportunist') && target.statusEffects.length > 0 ? 4 : 0)
-    // Vengeful passive: +3 while the caster sits at or below half health.
-    + ((caster.passives ?? []).includes('vengeful') && caster.currentHealth * 2 <= caster.maxHealth ? 3 : 0);
+    ((caster.passives ?? []).includes('opportunist') && target.statusEffects.length > 0 ? oppValue : 0)
+    // Vengeful passive: +3 (Barbarian +4) while the caster sits at or below half health.
+    + ((caster.passives ?? []).includes('vengeful') && caster.currentHealth * 2 <= caster.maxHealth ? vengValue : 0)
+    // Channeler passive: +2 per damage effect on a turn the caster does not
+    // move. ctx.casterPos is the PROJECTED cast tile — if this plan moves
+    // first, the bonus is off, so "stay and cast" naturally outscores
+    // "step and cast" when both reach the same target.
+    + ((caster.passives ?? []).includes('channeler')
+        && !caster.hasMovedThisTurn
+        && ctx.casterPos.x === caster.position.x && ctx.casterPos.y === caster.position.y ? 2 : 0);
+  // Siphon passive: the caster leeches 1 HP per damage/lifesteal effect that
+  // lands on an enemy. Tiny, but a real tiebreaker toward aggression when hurt.
+  const siphonHeal = (caster.passives ?? []).includes('siphon')
+    && caster.currentHealth < caster.maxHealth ? 1 : 0;
   const targetUndying = (target.passives ?? []).includes('undying');
   const targetThorns = isEnemy && (target.passives ?? []).includes('thorns');
   // Thorns passive: each damage/lifesteal effect that lands from an adjacent
@@ -546,7 +564,10 @@ function scoreEffectsOnTarget(
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
           s += effective * WEIGHTS.damage;
-          if (effective > 0) s -= thornsCost(projectedPos);
+          if (effective > 0) {
+            s -= thornsCost(projectedPos);
+            s += siphonHeal * WEIGHTS.heal; // Siphon: leech 1 per landing damage effect
+          }
           if (raw >= target.currentHealth && targetUndying) {
             // Lethal damage on an Undying target leaves it at 1 — no kill credit.
           } else if (raw >= target.currentHealth) {
@@ -582,7 +603,10 @@ function scoreEffectsOnTarget(
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
           s += effective * WEIGHTS.damage;
-          if (effective > 0) s -= thornsCost(projectedPos);
+          if (effective > 0) {
+            s -= thornsCost(projectedPos);
+            s += siphonHeal * WEIGHTS.heal; // Siphon procs on lifesteal effects too
+          }
           if (raw >= target.currentHealth && targetUndying) {
             // Lethal damage on an Undying target leaves it at 1 — no kill credit.
           } else if (raw >= target.currentHealth) {
@@ -800,8 +824,9 @@ function scoreEffectsOnTarget(
           s -= 10;
           break;
         }
-        // Immovable passive: push does nothing — no displacement value.
-        if ((target.passives ?? []).includes('immovable')) break;
+        // Displacement immunity: the engine resists push on 'immovable' OR the
+        // merged Stalwart flag — no displacement value against either.
+        if ((target.passives ?? []).includes('immovable') || (target.passives ?? []).includes('stalwart')) break;
         // pushDestination walks tile-by-tile and stops at occupied/invalid
         // tiles, so `moved` is the ACTUAL displacement — a fully blocked
         // push scores zero. Record the destination so later effects in the
@@ -823,8 +848,9 @@ function scoreEffectsOnTarget(
       }
 
       case 'pull': {
-        // Eldritch Grasp (enemy) / Rescue (ally). Immovable targets don't move.
-        if ((target.passives ?? []).includes('immovable')) break;
+        // Eldritch Grasp (enemy) / Rescue (ally). Immovable OR merged-Stalwart
+        // targets don't move (engine resists pull on either flag).
+        if ((target.passives ?? []).includes('immovable') || (target.passives ?? []).includes('stalwart')) break;
         const dest = pullDestination(
           ctx.casterPos,
           projectedPos,
