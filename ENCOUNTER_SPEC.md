@@ -30,10 +30,23 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   - Push/pull: the displacement walk stops short of a blocked tile (same rule
     as an occupied tile).
   - Leap (Leaping Slam): passes OVER blocked tiles; may not LAND on one.
-  - AoE/rings/lines: effects are not stopped by walls (a fireball curls over
-    a pillar) — EXCEPT line abilities (Piercing Shot), whose ray stops at the
-    first blocked tile (walls eat arrows). This asymmetry is deliberate and
-    must be shown in the targeting preview.
+  - Line abilities (Piercing Shot, Flame Jet): the ray stops at the first
+    blocked tile — walls eat arrows and flame (owner 2026-08-14).
+  - Placed AoE (Ring of Frost, Ring of Fire, placed blasts): two-part rule
+    (owner 2026-08-14):
+    1. The CASTER needs line of sight to the CENTER tile (the eye of the
+       storm) — wall-opaque LoS. In campaigns this overrides arena ABL-3's
+       "area abilities ignore line of sight" (arena semantics unchanged —
+       there is nothing to block there).
+    2. The effect spreads from the CENTER and does not pass through walls:
+       an area tile is affected only if the center has wall-opaque line of
+       sight to it. Wall tiles themselves are never affected. UNITS never
+       block area spread (walls only). So a ring placed at the edge of your
+       sight can curl partially out of your view — fine, you only need to
+       see its eye — but it cannot put ice on the far side of a wall.
+    Self-centred AoE (Whirlwind, Ground Slam, Leaping Slam's ring) uses the
+    same center-spread rule with the caster (or landing tile) as center.
+    Targeting previews must show exactly the affected set.
 - **Phasing** (`moveFlags: ['phasing']` — Wraith/Specter): may move THROUGH
   blocked tiles but not end on them. Phasing does not ignore units. LoS/
   displacement rules unchanged for phasers.
@@ -79,8 +92,15 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   currently-spawned enemies dead), `round(n)` (start of round n), `door`
   (a party unit ENDS its move on the tile). Spawn placement: authored tiles;
   if occupied, nearest free non-hazard tile (deterministic scan order).
-  Spawned units join the END of the initiative interleave and take their
-  first turn in the NEXT round (no same-instant ambush turns).
+- **Wave initiative (owner 2026-08-14): spawns act in the round they
+  appear** — no free ambush round for the player. The party's committed
+  order NEVER resets; new enemies WEAVE into the alternating pattern:
+  they take the open enemy slots between the party's units (PC1, E1, PC2,
+  E2, …), extras appending after the weave. Enemies woven into slots that
+  come after the current initiative position act THIS round; slots already
+  passed act from next round (no time travel). `surprise: true` on a wave/
+  room (non-default, for designed player ambushes) delays the whole spawn's
+  first turns to the next round.
 - **Rooms**: when `rooms` is present it REPLACES the top-level enemies/
   enemyPlacement/terrain/waves entirely — `rooms[0]` is room 1, and the
   encounter-level `playerPlacement` is room 1's entry. Each later room

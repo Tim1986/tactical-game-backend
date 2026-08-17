@@ -75,6 +75,9 @@ export interface WaveSpec {
   enemies: string[];
   placement: BoardPosition[];
   trigger: WaveTrigger;
+  /** Non-default: the spawn does NOT act the round it appears (a designed
+   *  player ambush). Normal waves weave into initiative and act same-round. */
+  surprise?: boolean;
 }
 
 /** [A4] One room of a multi-room encounter. The board re-carves per room;
@@ -93,6 +96,9 @@ export interface RoomSpec {
   doorMode?: 'on_clear' | 'always';
   /** Party entry tiles on arrival (room 1 uses encounter playerPlacement). */
   entryTiles?: BoardPosition[];
+  /** Non-default: this room's starting enemies don't act the round the party
+   *  enters (the party caught THEM off guard). */
+  surprise?: boolean;
   noSpecials?: boolean;
 }
 
