@@ -69,7 +69,9 @@ describe('buildEncounterState', () => {
         const { state } = buildEncounterState(campaign, encId, party, choices, campaign.encounters[encId].level, 'nightmare', 'h', 'e');
         const enc0 = campaign.encounters[encId];
         const opening = enc0.rooms ? enc0.rooms[0].enemies : enc0.enemies!;
-        expect(state.units.length).toBe(4 + opening.length);
+        // party (4) + A5 allies (party-owned NPCs) + the opening enemy board
+        const allyCount = Object.keys(enc0.allies ?? {}).length;
+        expect(state.units.length).toBe(4 + allyCount + opening.length);
       }
     }
   });

@@ -6,7 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { MatchState, UnitInstance, AllyBehaviorState } from '../src/types/matchState.js';
-import { planBestTurn, normalizeAbilityDefinitions } from '../src/ai/aiBrain.js';
+import { planBestTurn, normalizeAbilityDefinitions, OptimalBrain } from '../src/ai/aiBrain.js';
 import { checkWinCondition } from '../src/game/winCondition.js';
 import { buildEncounterState } from '../src/campaigns/runtime.js';
 import { lanternCampaign } from '../src/campaigns/lantern.js';
@@ -189,5 +189,45 @@ describe('A8 — harness surfaces the objective reason', () => {
       p1Id: 'H', p2Id: 'E', forceFirstPlayerId: 'H', stateFactory,
     });
     expect(r.reason).toBeTruthy(); // whichever side wins, the objective names why
+  });
+});
+
+describe('A5 — round-1 ally commit fallback (Moonberry D2 bug)', () => {
+  it('commits an ALLY when every uncommitted party unit is frozen', () => {
+    // Round 1, party half: one party unit left but frozen (the engine rejects
+    // committing a frozen unit), plus a healthy ally. Preferring "any non-ally"
+    // left the brain with no committable pick and it returned a bare END_TURN,
+    // which round 1 rejects. It must fall back to the ally.
+    const committed = mk(P, 0, 0);
+    const frozen = mk(P, 1, 1, { statusEffects: [{ slug: 'frozen', turnsRemaining: 2, stacks: 1 }] as never });
+    const ally = mk(P, 2, 2, { abilities: [] });
+    const orc = mk(E, 6, 6);
+    const st = mkState([committed, frozen, ally, orc], { [ally.instanceId]: { mode: 'hold' } }, committed.instanceId);
+    st.initiative.isRound1 = true;
+    st.initiative.order = [committed.instanceId];   // only the first is committed
+    st.initiative.activeUnitId = null;              // round 1: brain picks
+
+    const brain = new OptimalBrain();
+    const actions = brain.selectActions(st, P, amap as never);
+    // Must be a real commitment (not a bare END_TURN) and must be the ally.
+    const committing = actions.find((a) => a.type !== 'END_TURN') as { unitInstanceId: string } | undefined;
+    expect(committing, 'brain returned a bare END_TURN — round 1 rejects that').toBeTruthy();
+    expect(committing!.unitInstanceId).toBe(ally.instanceId);
+  });
+
+  it('still prefers a usable PARTY unit over an ally when one exists', () => {
+    const committed = mk(P, 0, 0);
+    const healthy = mk(P, 1, 1, { abilities: ['sword'], cooldowns: { sword: 0 } });
+    const ally = mk(P, 2, 2, { abilities: [] });
+    const orc = mk(E, 6, 6);
+    const st = mkState([committed, healthy, ally, orc], { [ally.instanceId]: { mode: 'hold' } }, committed.instanceId);
+    st.initiative.isRound1 = true;
+    st.initiative.order = [committed.instanceId];
+    st.initiative.activeUnitId = null;
+
+    const brain = new OptimalBrain();
+    const actions = brain.selectActions(st, P, amap as never);
+    const committing = actions.find((a) => a.type !== 'END_TURN') as { unitInstanceId: string };
+    expect(committing.unitInstanceId).toBe(healthy.instanceId);   // party first
   });
 });

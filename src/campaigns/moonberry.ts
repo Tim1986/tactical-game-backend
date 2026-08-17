@@ -34,6 +34,12 @@ export const moonberryCampaign: CampaignDefinition = {
     { slug: 'dragon_interviewer', name: 'Question the Dragon', description: 'Interview the parade dragon as an official witness.' },
     { slug: 'lantern_lifeguard',  name: 'Barge to the Rescue', description: 'Save the festival lantern barge from drifting downriver.' },
     { slug: 'roof_runner',        name: 'Above the Awning',   description: 'Keep pace with the masked courier across the rooftops.' },
+    // Battle goals (A7) — slug must match the encounter goal's slug.
+    { slug: 'clean_opening',      name: 'Clean Opening',      description: 'Win the alley without losing anyone.' },
+    { slug: 'quick_study',        name: 'Quick Study',        description: 'Open the Silver Arch by round 6.' },
+    { slug: 'untouched_by_flame', name: 'Untouched by Flame', description: 'Win the ferry stage without the hero taking a scratch.' },
+    { slug: 'everyone_home',      name: 'Everyone Home',      description: 'Reach the north road with the whole party still standing.' },
+    { slug: 'final_bow',          name: 'The Final Bow',      description: 'Let the hero personally land the blow that ends the show.' },
   ],
 
   enemies: {
@@ -66,10 +72,26 @@ export const moonberryCampaign: CampaignDefinition = {
     },
     night_cartographer: {
       // BOSS. A masked goblin mapmaker who drew everyone into this mess on purpose.
+      // D2: as a KILL-TARGET the other three are ignorable, so he needs his own
+      // budget (Lantern's Grubnash was burst down in 17 turns at 80 HP). His
+      // differentiator across the trilogy is `warded` — an opening shield that
+      // eats the alpha strike, where Grubnash has `undying` and Gurm has a clock.
       baseClass: 'warlock', name: 'The Night Cartographer',
-      maxHealth: 80, armorClass: 10, specialSlug: 'grasp',
-      passiveFlags: ['immovable'],
-      nightmare: { hpBonus: 6 },
+      maxHealth: 100, armorClass: 10, specialSlug: 'grasp',
+      passiveFlags: ['immovable', 'warded'],
+      nightmare: { hpBonus: 8 },
+    },
+    crescent_stalker: {
+      // The escort hunter for e4, deliberately its OWN key: aiHints attach to a
+      // DEFINITION, so hinting a shared key (lantern_lifter, say) would send
+      // every instance on the board after the Stage Manager at once.
+      // Tuned as the escort's difficulty dial. Hunter COUNT is binary (two is a
+      // stroll, three walls ranged at 0-10%) and hpScale is inert on an escort,
+      // so speed//bulk is what is left: move 5 closes on her a turn sooner.
+      baseClass: 'rogue', name: 'Crescent Stalker',
+      maxHealth: 38, armorClass: 9, movementRange: 5,
+      aiHints: { priorityTarget: 'ally' },
+      nightmare: { acBonus: 1 },
     },
     // ── Orc performers (fighter/cleric chassis → orc art) ──
     velvet_gate_guard: {
@@ -94,71 +116,153 @@ export const moonberryCampaign: CampaignDefinition = {
   },
 
   encounters: {
-    // e1 — Lantern Alley: a softened two-and-a-half goblin pincer; high move, no specials.
+    // ═══ D2 RETROFIT (2026-08-17) ═══════════════════════════════════════════
+    // Palette: e1 kill-all · e2 hold · e3 hazard · e4 escort · e5 boss.
+    // Five distinct types, none consecutive (CAMPAIGNS.md §8). Moonberry is the
+    // ESCORT + BUTTONS + BATTLE GOALS showcase, and `hazard` is its first use
+    // anywhere in the trilogy.
+    //
+    // D1 must-fix #2 is addressed by DESIGN: e2 was bricked for ranged (10% on
+    // hard vs a floor of 15) and out of band at EVERY difficulty, because an
+    // immovable orc doorman had to be killed. As a `hold` he no longer does —
+    // you open the arch by standing on its seals.
+    // ════════════════════════════════════════════════════════════════════════
+
+    // e1 — Lantern Alley (kill-all). Tutorial: no terrain, no objective.
     e1: {
       level: 1,
       enemies: ['lantern_lifter', 'lantern_lifter', 'lantern_lifter'],
-      // Enemies backed off one tile. Same shape as lantern e4 — at a 0.8-tile gap the
-      // ranged party had no standoff at all (10% at hard). Spread 33 -> 13 at medium.
       enemyPlacement: [{ x: 7, y: 2 }, { x: 0, y: 5 }, { x: 7, y: 5 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
-      // Tutorial softening; easy allowed above band (near-certain first win).
-      hpScaleOverride: { easy: 0.98, medium: 1.24, hard: 1.28, nightmare: 1.35 },
+      goals: [
+        { slug: 'clean_opening', name: 'Clean Opening', description: 'Win the alley without losing anyone.', check: { kind: 'no_party_deaths' } },
+      ],
+      // Walk: 0.94->96 · 0.98->83 · 1.24->73 · 1.28->65 · 1.29->68 · 1.30->37.
+      // ⚠ hard is CLIFF-LOCKED: three identical lifters share breakpoints, so
+      // the whole cell moves at once and nothing lands mid-band (65 -> 37 across
+      // 0.01). Parked on 1.28, the nearest safe rung, riding the band's top edge.
+      hpScaleOverride: { easy: 0.98, medium: 1.27, hard: 1.29, nightmare: 1.33 },
     },
-    // e2 — The Silver Arch: an immovable orc doorman, a goblin fire act, an orc mender.
-    // ⚠ TOO HARD, AND BRICKED FOR RANGED — D1 diagnostic 2026-08-17, 200 games/cell.
-    // Means 76/55/27/15 against bands of 80-95/65-80/45-65/25-45 — out of band at
-    // EVERY difficulty, and ranged wins 10% on hard (floor 15). The hpScaleOverride
-    // below is the most cranked in the trilogy (1.26-1.57); it was tuned against the
-    // pre-rework player stat line and is now badly over-tuned. Deliberately left
-    // unfixed: Phase D2 rebuilds this encounter as part of the escort/buttons
-    // redesign. See CAMPAIGN_ROADMAP.md D2 must-fix #2.
+
+    // e2 — The Silver Arch (hold). Two moonstone seals, far apart: the arch
+    // opens only while both are pressed at once, so the party must SPLIT. The
+    // troupe's job is to stop you holding them — nobody has to die.
     e2: {
       level: 2,
+      objective: {
+        text: 'Press both moonstone seals at once to open the arch',
+        win: [{
+          kind: 'units_at_tiles', scope: 'any', simultaneous: true,
+          tiles: [{ x: 6, y: 1 }, { x: 6, y: 6 }],
+        }],
+      },
+      // The guard and the juggler STAND ON the seals. Unguarded marks made this
+      // a stroll (96/94/96/78) — a tile can hold one unit, so an occupied seal
+      // must be cleared or shoved off before the party can press it.
       enemies: ['velvet_gate_guard', 'ember_juggler', 'silverthread_mender'],
-      enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 1 }, { x: 6, y: 5 }],
+      enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 6 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.26, medium: 1.43, hard: 1.57, nightmare: 1.50 },
+      goals: [
+        { slug: 'quick_study', name: 'Quick Study', description: 'Open the Silver Arch by round 6.', check: { kind: 'win_by_round', round: 6 } },
+      ],
+      // A `hold` is gated by how long the seal-guards survive, so its scales run
+      // far above a kill-all's. Walk: 1.00->97 · 1.30->78 · 1.70->47 · 2.00->29.
+      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.52, nightmare: 2.30 },
     },
-    // e3 — Midnight Ferry Stage: twin marksmen + fire juggler + velvet gate guard.
-    // History of failed compositions:
-    //  - moonhook + mender: ranged won 100% at medium by kiting; no valid scale.
-    //  - lantern_lifter at y=4 (move 5): ranged 6% at hard — fast close, survives focus.
-    //  - starstep_duelist at y=3 (move 4): ranged 13% at hard — same root cause.
-    //  - starstep_duelist at y=0 (move 4): ranged 93% at medium — never reaches them.
-    //
-    // Solution: velvet_gate_guard (move 3, HP 47, AC 12) at y=1 (5-tile gap).
-    //  - Activation 1: moves from y=1 → y=4. Not adjacent to y=6. Can't attack.
-    //  - Activation 2: moves from y=4 → y=6. Attacks (shield_bash, 17 unblockable).
-    //  - Medium scale (36 HP): ranged focus-fires 40 avg dmg → ~55% chance of killing
-    //    before activation 2 (knife-edge kill vs survive). Moderate challenge.
-    //  - Hard scale (45 HP): 4 shots = 40 avg < 45 HP → guard survives with ~5 HP, gets
-    //    1 shield_bash, then dies. Controlled single hit — ranged wins ~30-40%.
-    //  - Nightmare: nightmare flag makes the guard immovable — stays at y=1, zero threat
-    //    to ranged or melee. Fine: nightmare floor is 0% and mean is the only constraint.
+
+    // e3 — Midnight Ferry Stage (hazard). The Ember Juggler's fire is on the
+    // BOARD, not just in his kit: burning boards carve the stage into lanes
+    // that shift what "safe" means for both sides.
     e3: {
       level: 3,
-      enemies: ['mooncap_marksman', 'mooncap_marksman', 'velvet_gate_guard', 'ember_juggler'],
-      enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }],
+      terrain: {
+        hazards: [
+          { pos: { x: 3, y: 2 }, type: 'fire' }, { pos: { x: 4, y: 3 }, type: 'fire' },
+          { pos: { x: 4, y: 4 }, type: 'fire' }, { pos: { x: 3, y: 5 }, type: 'fire' },
+        ],
+      },
+      // One marksman, not two: with a pair of them the burning lanes denied a
+      // ranged party the repositioning it needs while melee simply closed —
+      // ranged 9-13% against melee 87-92%, the reverse of the usual spread.
+      enemies: ['mooncap_marksman', 'lantern_lifter', 'velvet_gate_guard', 'ember_juggler'],
+      enemyPlacement: [{ x: 6, y: 1 }, { x: 1, y: 1 }, { x: 5, y: 3 }, { x: 5, y: 5 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.78, medium: 0.87, hard: 0.91, nightmare: 0.89 },
+      goals: [
+        { slug: 'untouched_by_flame', name: 'Untouched by Flame', description: 'Win the ferry stage without the hero taking a scratch.', check: { kind: 'no_damage_to_main' } },
+      ],
+      hpScaleOverride: { easy: 0.72, medium: 0.76, hard: 0.86, nightmare: 0.75 },
     },
-    // e4 — The Unmarked Road: an immovable orc "statue" gates a lane, goblins harry it.
+
+    // e4 — The Unmarked Road (escort). The stage manager knows the way north;
+    // she cannot fight at all. Guardrails from ENCOUNTER_SPEC A5: she starts
+    // BEHIND the party and out of round-1 reach, carries boss-tier HP because
+    // she is defenseless, and the hunter that stalks her is its OWN enemy key
+    // (aiHints attach per-definition — hinting a shared key turns the whole
+    // board into hunters).
     e4: {
       level: 4,
-      enemies: ['masque_bruiser', 'ember_juggler', 'mooncap_marksman', 'lantern_lifter'],
-      enemyPlacement: [{ x: 4, y: 2 }, { x: 6, y: 1 }, { x: 2, y: 1 }, { x: 5, y: 4 }],
-      playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 1.06, medium: 1.13, hard: 1.30, nightmare: 1.20 },
+      allies: {
+        stage_manager: {
+          name: 'The Stage Manager', baseClass: 'rogue',
+          // Boss-tier HP per the A5 guardrail for a DEFENSELESS VIP. At 46 a
+          // ranged party could not keep her alive (37-50% vs a 60 floor) —
+          // they cannot body-block the hunter, so she has to take a hit.
+          maxHealth: 62, abilities: [],
+          // Short, direct route. A LONGER walk made this easier, not harder —
+          // it drew her away from the opening cluster and bought the party turns
+          // to screen. Exposure per tile beats total tiles walked.
+          behavior: { mode: 'route', waypoints: [{ x: 3, y: 4 }, { x: 5, y: 4 }, { x: 7, y: 4 }] },
+          placement: { x: 0, y: 4 },
+        },
+      },
+      objective: {
+        text: 'See the Stage Manager safely up the road',
+        win: [{ kind: 'ally_at_tiles', allyKey: 'stage_manager', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
+        loss: [{ kind: 'ally_dead', allyKey: 'stage_manager' }],
+      },
+      // ONE stalker. An escort is inherently melee-favouring — bodies can screen
+      // the charge, arrows cannot — so hunter pressure is the sharpest possible
+      // lever on the spread. Two stalkers walled ranged at 1-7%; one parked far
+      // from the route (7,1) never engaged at all and the escort cruised at 96%.
+      // (6,2) is the middle rung: on the route's flank, outside round-1 reach of
+      // her start at (0,4).
+      enemies: ['masque_bruiser', 'crescent_stalker', 'crescent_stalker', 'mooncap_marksman'],
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 1 }],
+      playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
+      goals: [
+        { slug: 'everyone_home', name: 'Everyone Home', description: 'Reach the north road with the whole party still standing.', check: { kind: 'unit_survives', scope: 'all' } },
+      ],
+      // Walk with the final hunter build (move 5 / 38 HP, two of them):
+      //   0.70 -> 87% · 1.00 -> 74% · 1.30 -> 41%
+      hpScaleOverride: { easy: 0.70, medium: 1.10, hard: 1.24, nightmare: 1.30 },
     },
-    // e5 — The Cartographer's Stage: the boss goblin, his orc mender, and two performers.
+
+    // e5 — The Cartographer's Stage (boss). Kill-target: only the mapmaker has
+    // to fall. His differentiator is `warded` — he opens the scene with a
+    // shield that eats your alpha strike, so the burst that finished the other
+    // two campaigns' bosses just breaks his guard instead.
     e5: {
       level: 5,
+      objective: {
+        text: 'Take the Night Cartographer\'s final bow',
+        win: [{ kind: 'units_dead', enemyKeys: ['night_cartographer'] }],
+      },
       enemies: ['night_cartographer', 'silverthread_mender', 'starstep_duelist', 'mooncap_marksman'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
+      // Court pulled in: at a 5-tile gap melee sat at 52-58% on EASY (under the
+      // 60 wall) while ranged hit 100%, because the boss pulls and kites. Start
+      // distance is the SPREAD lever; hpScale only moved everyone together, and
+      // no scale gave melee >=60 with a mean <=95.
+      enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 3 }, { x: 4, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.71, medium: 0.87, hard: 0.93, nightmare: 1.06 },
+      goals: [
+        { slug: 'final_bow', name: 'The Final Bow', description: 'Let the hero personally land the blow that ends the show.', check: { kind: 'killing_blow_by_main' } },
+      ],
+      // ⚠ easy is cliff-y: 0.58->100 · 0.63->100 · 0.66->84 (melee 52, under the
+      // 60 wall) · 0.71->86. Melee runs low here by construction — the
+      // Cartographer is a warlock who pulls and kites — so easy is parked where
+      // melee clears the wall.
+      hpScaleOverride: { easy: 0.76, medium: 0.86, hard: 1.10, nightmare: 1.28 },
     },
   },
 

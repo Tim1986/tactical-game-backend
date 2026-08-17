@@ -2091,13 +2091,20 @@ export class OptimalBrain implements AIBrain {
     // committed — the engine rejects END_TURN without a commitment.
     if (initiative.isRound1) {
       const committed = new Set(initiative.order);
-      let uncommitted = state.units.filter(
+      const allUncommitted = state.units.filter(
         (u) => u.ownerPlayerId === myPlayerId && !committed.has(u.instanceId),
       );
-      // CAMPAIGN allies (A5): the party commits first; allies take the tail
-      // of the player's half. Only consider allies once no party unit remains.
-      const nonAlly = uncommitted.filter((u) => !state.allies?.[u.instanceId]);
-      if (nonAlly.length > 0) uncommitted = nonAlly;
+      // CAMPAIGN allies (A5): the party commits first; allies take the tail of
+      // the player's half. The preference must test USABILITY, not mere
+      // presence — with a frozen/doomed party unit left and a healthy ally,
+      // preferring "any non-ally" left the brain with nothing committable and
+      // it emitted a bare END_TURN, which round 1 rejects ("Must commit a unit").
+      // The harness pre-flight can't rescue that either: it sees the usable
+      // ally and correctly declines to force-commit.
+      const committable = (u: UnitInstance) =>
+        u.isAlive && !hasStatus(u, 'frozen') && !willDieToOwnTick(u);
+      const nonAlly = allUncommitted.filter((u) => !state.allies?.[u.instanceId]);
+      const uncommitted = nonAlly.some(committable) ? nonAlly : allUncommitted;
 
       // Group 1 — usable this round (alive, not frozen): always preferred.
       // Commit the unit whose best turn scores highest, which naturally
