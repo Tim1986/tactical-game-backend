@@ -128,7 +128,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'sparkcap_slinger'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 4, y: 3 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.08, medium: 1.22, hard: 1.50, nightmare: 1.50 },
+      hpScaleOverride: { easy: 1.08, medium: 1.30, hard: 1.50, nightmare: 1.50 },
     },
 
     // e3 — Amrun Ferry Relay (race). The Bellrunner is carrying the clapper to
@@ -137,22 +137,34 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e3: {
       level: 3,
       objective: {
-        text: 'Stop the Bellrunner before the ferry casts off (4 rounds)',
-        win: [{ kind: 'units_dead', enemyKeys: ['bellrunner'] }],
-        loss: [{ kind: 'round_reached', round: 4 }],
+        text: 'Clear the relay before the ferry casts off (11 rounds)',
+        win: [{ kind: 'all_enemies_dead' }],
+        loss: [{ kind: 'round_reached', round: 11 }],
       },
-      terrain: {
-        // The ferry-house wall. Blocks the shooting lane to the courier without
-        // adding much walking distance — you go round either end.
-        blocked: [{ x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }],
-      },
+      // No terrain: the stall wall existed only to deny a shooting lane to the
+      // courier, which the new win condition makes moot — and it taxed melee's
+      // approach for nothing. Open ground, tight clock.
       enemies: ['bellrunner', 'bluecap_pathfinder', 'kettlehelm_orc', 'patchcoat_mender'],
-      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 5, y: 6 }, { x: 6, y: 4 }],
+      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
-      // NOTE: hpScale is nearly inert on this encounter — the target is a
-      // 35-HP courier who dies to any unit that reaches him, so difficulty
-      // lives entirely in the clock and the screen. Left near default.
-      hpScaleOverride: { easy: 0.73, medium: 0.93, hard: 1.28, nightmare: 1.68 },
+      // ⚠ A kill-all ON A TIGHT CLOCK is chaotic to tune. Enemy HP converts
+      // directly into rounds-to-clear, so clock and scale multiply, and cells
+      // sitting near the "can we finish in time" threshold flip in bulk:
+      //   8 rounds: 0.73 -> 81% · 0.93 -> 56% · 1.10 -> 16% · 1.30 -> 0.2%
+      //   9 rounds: easy 70% BELOW medium 75%, and 0.98 -> 54% vs 0.99 -> 25%
+      // — a 28-point swing on 0.01 of scale, plus non-monotonic difficulty.
+      // Resolution: make the clock GENEROUS (11 rounds) so it catches only
+      // genuinely slow parties, and let hpScale carry difficulty the normal
+      // way. The deadline stays a real pressure the objective text shapes play
+      // around, without being the thing that decides most matches.
+      // Interpolated from measured points on the 11-round clock:
+      //   0.85 -> 88% · 1.10 -> 37% · 1.35 -> 8% · 1.55 -> 0.5%
+      // (~50 points per 0.25 — still steeper than an untimed encounter.)
+      // NOTE nightmare sits BELOW hard on purpose: every enemy here carries a
+      // `nightmare` block (acBonus / hpBonus / warded), and measurement showed
+      // those alone are worth ~28 points (hard 0.98 -> 54% vs nightmare
+      // 0.99 -> 25%). The scale must give that back.
+      hpScaleOverride: { easy: 0.85, medium: 0.93, hard: 1.01, nightmare: 0.97 },
     },
 
     // e4 — The Bell-Arch (rooms). THE flagship: the gate is room 1, the city
@@ -174,13 +186,19 @@ export const goblinopolisCampaign: CampaignDefinition = {
           // Room 2: inside the ribbon-strung city. The party enters at the gate
           // edge and the garrison is already formed up.
           terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+          // Garrison size is a COARSE lever here — dropping this from 3 to 2
+          // swung medium 53% -> 98%. Keep three and tune with hpScale; HP and
+          // cooldowns carry across the door, so this room is fought with
+          // whatever room 1 left the party.
           enemies: ['kettlehelm_orc', 'bellrunner', 'bluecap_scout'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 1 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.84, medium: 0.95, hard: 1.02, nightmare: 1.13 },
+      // Two-room attrition is harsher than the raw enemy count suggests, so
+      // these run well below a single-room encounter's scales.
+      hpScaleOverride: { easy: 0.73, medium: 0.78, hard: 0.90, nightmare: 1.00 },
     },
 
     // e5 — Gurm's War-Camp (boss, on a clock). Kill-target on Gurm, with the
