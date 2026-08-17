@@ -306,9 +306,11 @@ function applyGameActionInternal(
 
   // CAMPAIGN (A4): spawn triggers (door/round/room_cleared) fire after every
   // action — BEFORE the win check, so a cleared board spawns its wave rather
-  // than ending the match — then door-driven room transitions.
+  // than ending the match. Room transitions do NOT fire here: a mid-turn
+  // transition teleports the mover and orphans the rest of its queued turn
+  // (the D2 Goblinopolis bug — "Target out of range" on the queued ability).
+  // They fire at END of the acting unit's turn in finalizeTurnInternal.
   checkSpawnTriggers(ws, events, wasMove ? actingUnit : undefined);
-  if (wasMove) maybeRoomTransition(ws, actingUnit, events);
 
   const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (winCheck.isOver) {
@@ -343,6 +345,18 @@ function finalizeTurnInternal(
     // Decrement the acting unit's status durations now that its turn is over.
     // (Frozen units that never act are ticked in advanceSlot.)
     decrementStatusDurations(actingUnit, events);
+  }
+
+  // CAMPAIGN (A4): door-driven room transition fires at END of the acting
+  // unit's turn — every queued action has resolved in the room it was aimed
+  // at, and stepping through the door is the turn's last act. Requires that
+  // the unit actually moved this turn (startPos differs — covers MOVE, CHARGE
+  // and move_self landings) and survived it (thorns/burn can kill mid-turn).
+  // Must run BEFORE advanceSlot/buildFinalOrder: abandoning enemies edits
+  // initiative.order.
+  if (!forcedCommit && actingUnit.isAlive
+    && (actingUnit.position.x !== startPos.x || actingUnit.position.y !== startPos.y)) {
+    maybeRoomTransition(ws, actingUnit, events);
   }
 
   if (isRound1) {

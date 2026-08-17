@@ -130,7 +130,9 @@ export function checkSpawnTriggers(state: MatchState, events: GameEvent[], mover
 }
 
 /**
- * Room transition: a party unit ended a move on an active exit door.
+ * Room transition: a party unit ENDED ITS TURN on an active exit door,
+ * having moved this turn (the caller enforces both — see finalizeTurnInternal;
+ * firing mid-turn orphaned the rest of the mover's queued actions).
  * on_clear doors require the board clear of living enemies (room_cleared
  * waves fire BEFORE this check, so a clear that spawns a wave shuts the door
  * again); 'always' doors work mid-fight and abandon whoever is left behind

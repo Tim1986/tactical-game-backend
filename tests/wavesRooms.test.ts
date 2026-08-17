@@ -176,3 +176,68 @@ describe('A4 — room transitions', () => {
     expect(maybeRoomTransition(st, e1, [])).toBe(false);
   });
 });
+
+describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
+  it('MOVE onto a door + queued ability: ability resolves in the OLD room, transition fires at end of turn', async () => {
+    const { processTurn } = await import('../src/game/turnProcessor.js');
+    const { buildAbilityMap } = await import('../src/ai/defaultData.js');
+    const map = buildAbilityMap();
+    // Party unit with heal, standing 2 from the door; wounded ally beside the
+    // door's OLD-room neighborhood. Board clear -> on_clear door is active.
+    const healer = mk(P, 5, 3, { abilities: ['heal'], cooldowns: { heal: 0 }, movementRange: 3 });
+    const buddy  = mk(P, 6, 2, { currentHealth: 20 });
+    const g1 = mk(E, 0, 0);
+    const ep = progress({
+      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      rooms: [{
+        units: [g1], placement: [{ x: 6, y: 3 }], waves: [],
+        exitDoors: [], doorMode: 'on_clear',
+        entryTiles: [{ x: 1, y: 3 }, { x: 1, y: 4 }],
+      }],
+    }, [healer.instanceId, buddy.instanceId]);
+    const st = mkState([healer, buddy], ep);
+    // Real builds always synthesize an objective when encounterProgress exists
+    // (pending-content suppression lives there) — mirror that.
+    st.objective = { partyId: P, enemyId: E, mainId: healer.instanceId, text: 'x', win: [{ kind: 'all_enemies_dead' }], loss: [] } as never;
+    st.turnContext = undefined;
+    st.initiative.activeUnitId = healer.instanceId;
+    // The exact failing shape: MOVE ends on the door, heal targets a tile that
+    // only exists in the old room's geometry. Pre-fix this threw
+    // "Target out of range" because the transition teleported the healer first.
+    const r = processTurn(st, [
+      { type: 'MOVE', unitInstanceId: healer.instanceId, destination: { x: 7, y: 3 } },
+      { type: 'USE_ABILITY', unitInstanceId: healer.instanceId, abilitySlug: 'heal', target: { x: 6, y: 2 } },
+      { type: 'END_TURN' },
+    ] as never, P, P, E, map);
+    const ws = r.updatedState;
+    const healedBuddy = ws.units.find((u) => u.instanceId === buddy.instanceId)!;
+    expect(healedBuddy.currentHealth).toBe(47);                       // 20 + 27, resolved pre-transition
+    expect(ws.encounterProgress!.roomIndex).toBe(1);                  // transition DID fire...
+    expect(r.events.findIndex((e) => e.type === 'ROOM_ENTERED'))
+      .toBeGreaterThan(r.events.findIndex((e) => e.type === 'HEALING_DONE')); // ...after the heal
+    const movedHealer = ws.units.find((u) => u.instanceId === healer.instanceId)!;
+    expect(movedHealer.position).toEqual({ x: 1, y: 3 });             // party entered room 2
+  });
+
+  it('a unit that merely ENDS its turn on a door without moving does not transition', async () => {
+    const { processTurn } = await import('../src/game/turnProcessor.js');
+    const { buildAbilityMap } = await import('../src/ai/defaultData.js');
+    const map = buildAbilityMap();
+    const sitter = mk(P, 7, 3, { movementRange: 3 });   // starts ON the door
+    const buddy  = mk(P, 5, 3);
+    const g1 = mk(E, 0, 0);
+    const ep = progress({
+      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      rooms: [{ units: [g1], placement: [{ x: 6, y: 3 }], waves: [], exitDoors: [], doorMode: 'on_clear', entryTiles: [{ x: 1, y: 3 }, { x: 1, y: 4 }] }],
+    }, [sitter.instanceId, buddy.instanceId]);
+    const st = mkState([sitter, buddy], ep);
+    st.objective = { partyId: P, enemyId: E, mainId: sitter.instanceId, text: 'x', win: [{ kind: 'all_enemies_dead' }], loss: [] } as never;
+    st.turnContext = undefined;
+    st.initiative.activeUnitId = sitter.instanceId;
+    const r = processTurn(st, [
+      { type: 'MOVE', unitInstanceId: sitter.instanceId, destination: { x: 7, y: 3 } }, // hold position
+      { type: 'END_TURN' },
+    ] as never, P, P, E, map);
+    expect(r.updatedState.encounterProgress!.roomIndex).toBe(0);      // no move, no transition
+  });
+});
