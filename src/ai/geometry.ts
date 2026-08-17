@@ -233,12 +233,16 @@ export function findPath(
   to: BoardPosition,
   unit: UnitInstance,
   allUnits: UnitInstance[],
+  terrain?: TerrainState,
 ): BoardPosition[] | null {
   if (samePos(fromPos, to)) return [];
   const key = (p: BoardPosition) => p.x * BOARD_SIZE + p.y;
   const visited = new Set<number>([key(fromPos)]);
   const parent = new Map<number, BoardPosition>();
   let frontier: BoardPosition[] = [fromPos];
+  // CAMPAIGN-ONLY: walls block paths (phasing may traverse but the walk
+  // animation still shouldn't END there; destinations are validated upstream).
+  const phasing = !!unit.moveFlags?.includes('phasing');
 
   while (frontier.length > 0) {
     const next: BoardPosition[] = [];
@@ -249,6 +253,8 @@ export function findPath(
         const k = key(n);
         if (visited.has(k)) continue;
         visited.add(k);
+
+        if (isTerrainBlocked(terrain, n) && !phasing) continue;
 
         const occupant = allUnits.find(
           (u) =>
