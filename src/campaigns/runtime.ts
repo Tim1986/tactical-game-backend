@@ -9,7 +9,7 @@ import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
 import { DEFAULT_UNITS } from '../ai/defaultData.js';
-import { CampaignDefinition, CampaignDifficulty, CampaignEnemy } from './types.js';
+import { CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy } from './types.js';
 
 /** Enemy HP multiplier per difficulty (applied to campaign enemies only). */
 export const CAMPAIGN_HP_SCALE: Record<CampaignDifficulty, number> = {
@@ -138,6 +138,45 @@ export interface EncounterBuild {
 }
 
 /**
+ * ENCOUNTER-GRAMMAR FEATURE GUARD (CAMPAIGN_ROADMAP.md Phase A / A1).
+ *
+ * The schema in types.ts intentionally runs AHEAD of the runtime: content can
+ * be authored against grammar the engine doesn't play yet. This guard makes
+ * that safe — an encounter using an unimplemented feature throws at build
+ * time (both here and in campaignSim, which shares this function) instead of
+ * silently no-oping into a fake fight. As each roadmap step lands it deletes
+ * its entry from UNIMPLEMENTED below; when the list is empty, delete the
+ * guard.
+ */
+const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
+  { step: 'A2', name: 'terrain', used: (_c, e) => !!e.terrain },
+  { step: 'A3', name: 'objective', used: (_c, e) => !!e.objective },
+  { step: 'A4', name: 'waves', used: (_c, e) => !!e.waves?.length },
+  { step: 'A4', name: 'rooms', used: (_c, e) => !!e.rooms?.length },
+  { step: 'A5', name: 'allies', used: (_c, e) => !!e.allies && Object.keys(e.allies).length > 0 },
+  { step: 'A6', name: 'campaign abilities', used: (c, _e) => !!c.abilities && Object.keys(c.abilities).length > 0 },
+  { step: 'A6', name: 'enemy kit override', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.abilities?.length) },
+  { step: 'A6', name: 'enemy artKey', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.artKey) },
+  { step: 'A2', name: 'phasing moveFlags', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.moveFlags?.length) },
+  { step: 'A5', name: 'enemy aiHints', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.aiHints) },
+  { step: 'A7', name: 'battle goals', used: (_c, e) => !!e.goals?.length },
+  { step: 'A7', name: 'boons', used: (c, _e) => !!c.boons && Object.keys(c.boons).length > 0 },
+];
+
+export function assertEncounterSupported(campaign: CampaignDefinition, encounterId: string): void {
+  const enc = campaign.encounters[encounterId];
+  if (!enc) return; // buildEncounterState raises the proper unknown-encounter error
+  const used = UNIMPLEMENTED.filter((f) => f.used(campaign, enc));
+  if (used.length > 0) {
+    throw new Error(
+      `Encounter "${encounterId}" uses grammar not implemented yet: `
+      + used.map((f) => `${f.name} (roadmap ${f.step})`).join(', ')
+      + '. See CAMPAIGN_ROADMAP.md — the schema deliberately leads the runtime.',
+    );
+  }
+}
+
+/**
  * Builds the full MatchState for a campaign encounter. Placements are
  * ABSOLUTE (unlike buildInitialState, which mirrors p2 across the board).
  * The human always moves first (same deadlock rationale as local PvE).
@@ -155,6 +194,7 @@ export function buildEncounterState(
 ): EncounterBuild {
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
+  assertEncounterSupported(campaign, encounterId);
   // The four extreme corners are removed from the board (60-tile cross) —
   // fail fast on authoring mistakes instead of erroring mid-match.
   for (const p of [...enc.playerPlacement, ...enc.enemyPlacement]) {
