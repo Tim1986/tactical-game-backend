@@ -117,6 +117,7 @@ export function buildCampaignEnemyInstance(
     armorClass, movementRange, abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
+    ...(enemy.moveFlags?.length ? { moveFlags: [...enemy.moveFlags] } : {}),
   };
 }
 
@@ -135,6 +136,8 @@ export interface EncounterBuild {
   unitNames: Record<string, string>;
   /** Ability cooldown overrides for this match (L6 double-special), or null. */
   cooldownOverrides: Record<string, number> | null;
+  /** Tile-art palette for the board renderer (TerrainSpec.theme), if any. */
+  theme?: string;
 }
 
 /**
@@ -149,7 +152,6 @@ export interface EncounterBuild {
  * guard.
  */
 const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
-  { step: 'A2', name: 'terrain', used: (_c, e) => !!e.terrain },
   { step: 'A3', name: 'objective', used: (_c, e) => !!e.objective },
   { step: 'A4', name: 'waves', used: (_c, e) => !!e.waves?.length },
   { step: 'A4', name: 'rooms', used: (_c, e) => !!e.rooms?.length },
@@ -157,7 +159,6 @@ const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition,
   { step: 'A6', name: 'campaign abilities', used: (c, _e) => !!c.abilities && Object.keys(c.abilities).length > 0 },
   { step: 'A6', name: 'enemy kit override', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.abilities?.length) },
   { step: 'A6', name: 'enemy artKey', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.artKey) },
-  { step: 'A2', name: 'phasing moveFlags', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.moveFlags?.length) },
   { step: 'A5', name: 'enemy aiHints', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.aiHints) },
   { step: 'A7', name: 'battle goals', used: (_c, e) => !!e.goals?.length },
   { step: 'A7', name: 'boons', used: (c, _e) => !!c.boons && Object.keys(c.boons).length > 0 },
@@ -204,6 +205,29 @@ export function buildEncounterState(
   }
   const hpScale = enc.hpScaleOverride?.[difficulty] ?? CAMPAIGN_HP_SCALE[difficulty];
 
+  // Terrain content validation (A2): walls/hazards in bounds, hazards never on
+  // walls, and no unit placed on a wall or hazard — authoring mistakes fail at
+  // build time, not mid-match.
+  const terrainBlocked = enc.terrain?.blocked ?? [];
+  const terrainHazards = enc.terrain?.hazards ?? [];
+  for (const b of terrainBlocked) {
+    if (!isInBounds(b)) throw new Error(`Encounter ${encounterId}: wall (${b.x},${b.y}) is out of bounds`);
+  }
+  for (const h of terrainHazards) {
+    if (!isInBounds(h.pos)) throw new Error(`Encounter ${encounterId}: hazard (${h.pos.x},${h.pos.y}) is out of bounds`);
+    if (terrainBlocked.some((b) => b.x === h.pos.x && b.y === h.pos.y)) {
+      throw new Error(`Encounter ${encounterId}: hazard (${h.pos.x},${h.pos.y}) sits on a wall`);
+    }
+  }
+  for (const p of [...enc.playerPlacement, ...enc.enemyPlacement]) {
+    if (terrainBlocked.some((b) => b.x === p.x && b.y === p.y)) {
+      throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a wall`);
+    }
+    if (terrainHazards.some((h) => h.pos.x === p.x && h.pos.y === p.y)) {
+      throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a hazard`);
+    }
+  }
+
   const unitNames: Record<string, string> = {};
   const playerUnits = partySlugs.map((slug, i) => {
     const def = DEFAULT_UNITS[slug];
@@ -240,6 +264,10 @@ export function buildEncounterState(
     units: [...playerUnits, ...enemyUnits],
     turnNumber: 1, roundNumber: 1,
     activePlayerId: humanId, phase: 'action', initiative,
+    // CAMPAIGN-ONLY terrain (A2). Theme is renderer-only and travels on
+    // EncounterBuild, not MatchState.
+    ...(enc.terrain && (terrainBlocked.length || terrainHazards.length)
+      ? { terrain: { blocked: terrainBlocked, hazards: terrainHazards } } : {}),
   };
-  return { state, unitNames, cooldownOverrides };
+  return { state, unitNames, cooldownOverrides, ...(enc.terrain?.theme ? { theme: enc.terrain.theme } : {}) };
 }

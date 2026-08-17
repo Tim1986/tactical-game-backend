@@ -10,6 +10,7 @@ import {
   getUnitsInRadius, isInAoe, getLineTiles,
   calculatePullOptions, calculatePushOptions, getUnitAtPosition, isInBounds, manhattanDistance,
 } from './boardUtils.js';
+import { isTerrainBlocked, wallsBlockLine } from '../ai/geometry.js';
 
 export interface ExecutionContext {
   state: MatchState;
@@ -55,6 +56,31 @@ export const BURNING_DAMAGE_PER_STACK = 7;
 
 function hasStatusEffect(unit: UnitInstance, slug: string): boolean {
   return unit.statusEffects.some((se) => se.slug === slug);
+}
+
+/** Burning applied by ENDING a move/displacement on a fire hazard (A2). */
+const FIRE_HAZARD_BURN_TURNS = 2;
+
+/**
+ * CAMPAIGN-ONLY (ENCOUNTER_SPEC A2): apply hazard effects to a unit that just
+ * ENDED a move, displacement, or leap on a hazard tile. Environment damage —
+ * no shield interaction, no Stalwart resist (Burning is never resisted), no
+ * caster attribution beyond the log line. No terrain = no-op (arena).
+ */
+export function applyEntryHazard(state: MatchState, unit: UnitInstance, events: GameEvent[]): void {
+  if (!unit.isAlive) return;
+  const hz = state.terrain?.hazards?.find((h) => h.pos.x === unit.position.x && h.pos.y === unit.position.y);
+  if (!hz) return;
+  if (hz.type === 'fire') {
+    const existing = unit.statusEffects.find((se) => se.slug === 'burning');
+    if (existing) {
+      existing.turnsRemaining = Math.max(existing.turnsRemaining, FIRE_HAZARD_BURN_TURNS);
+      existing.stacks = Math.min(existing.stacks + 1, 3);
+    } else {
+      unit.statusEffects.push({ slug: 'burning', turnsRemaining: FIRE_HAZARD_BURN_TURNS, stacks: 1, sourceUnitInstanceId: unit.instanceId });
+    }
+    events.push({ type: 'STATUS_APPLIED', sourceUnitInstanceId: unit.instanceId, targetUnitInstanceId: unit.instanceId, statusSlug: 'burning', message: 'Scorched by the flames' });
+  }
 }
 
 export function executeAbility(ctx: ExecutionContext): void {
@@ -167,10 +193,17 @@ function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
       let hits = aliveUnits.filter((u) => isInAoe(center, u.position, ability.areaRadius, ability.areaShape));
       if (ability.range === 0) hits = hits.filter((u) => u.instanceId !== caster.instanceId);
       if (ability.excludeAllies) hits = hits.filter((u) => u.ownerPlayerId !== caster.ownerPlayerId);
+      // CAMPAIGN-ONLY (A2): the effect spreads FROM THE CENTER and never
+      // crosses walls — an affected tile needs wall-clear sight from the eye.
+      // Units never block the spread; no terrain = no filter (arena).
+      hits = hits.filter((u) => !wallsBlockLine(center, u.position, state.terrain));
       return hits;
     }
     case 'line': {
-      const tiles = getLineTiles(caster.position, targetPosition, ability.range);
+      // CAMPAIGN-ONLY (A2): the ray stops at the first wall (walls eat arrows
+      // and flame). Default predicate is a no-op in arena.
+      const tiles = getLineTiles(caster.position, targetPosition, ability.range,
+        (p) => isTerrainBlocked(state.terrain, p));
       return aliveUnits.filter((u) => tiles.some((t) => t.x === u.position.x && t.y === u.position.y));
     }
     case 'cone': return getUnitsInRadius(targetPosition, 1, aliveUnits);
@@ -441,6 +474,7 @@ function applyPush(ctx: ExecutionContext, target: UnitInstance, effect: PushEffe
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PUSHED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
+  applyEntryHazard(ctx.state, target, ctx.events); // shoved into the fire (A2)
 }
 
 function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffect): void {
@@ -459,6 +493,7 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
   if (finalPos.x === target.position.x && finalPos.y === target.position.y) return;
   target.position = finalPos;
   ctx.events.push({ type: 'UNIT_PULLED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, position: finalPos });
+  applyEntryHazard(ctx.state, target, ctx.events); // dragged into the fire (A2)
 }
 
 /**
@@ -476,6 +511,8 @@ function applyPull(ctx: ExecutionContext, target: UnitInstance, effect: PullEffe
 function applyMoveSelf(ctx: ExecutionContext): void {
   const dest = ctx.targetPosition;
   if (!isInBounds(dest)) return;
+  // A leap passes OVER walls but may not LAND on one (A2).
+  if (isTerrainBlocked(ctx.state.terrain, dest)) return;
   const occupant = getUnitAtPosition(ctx.state.units.filter((u) => u.isAlive), dest);
   if (occupant && occupant.instanceId !== ctx.caster.instanceId) return;
   if (dest.x === ctx.caster.position.x && dest.y === ctx.caster.position.y) return;
@@ -486,6 +523,7 @@ function applyMoveSelf(ctx: ExecutionContext): void {
     targetUnitInstanceId: ctx.caster.instanceId,
     position: { x: dest.x, y: dest.y },
   });
+  applyEntryHazard(ctx.state, ctx.caster, ctx.events); // leapt into the fire (A2)
 }
 
 function applyModifyCooldown(_ctx: ExecutionContext, target: UnitInstance, effect: ModifyCooldownEffect): void {
@@ -498,7 +536,7 @@ function applyModifyCooldown(_ctx: ExecutionContext, target: UnitInstance, effec
  * the blocker predicate both push and pull hand to the boardUtils walkers.
  */
 function blockedFor(ctx: ExecutionContext, target: UnitInstance): (p: BoardPosition) => boolean {
-  return (p) => ctx.state.units.some(
+  return (p) => isTerrainBlocked(ctx.state.terrain, p) || ctx.state.units.some(
     (u) => u.isAlive && u.instanceId !== target.instanceId && u.position.x === p.x && u.position.y === p.y,
   );
 }

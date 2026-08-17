@@ -38,6 +38,21 @@ export interface UnitInstance {
   hasActedThisTurn: boolean;
   cooldowns: Record<string, number>;
   statusEffects: ActiveStatusEffect[];
+  /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
+   *  (never ends on them). Arena builds never set this. */
+  moveFlags?: string[];
+}
+
+/**
+ * CAMPAIGN-ONLY static terrain (ENCOUNTER_SPEC A2). Arena states never carry
+ * this field — every consumer treats `undefined` as "no terrain" and behaves
+ * exactly as before (the arena-untouched invariant).
+ */
+export interface TerrainState {
+  /** Impassable, sight-blocking tiles (walls/pillars). */
+  blocked?: BoardPosition[];
+  /** Tiles that apply an effect to a unit ENDING a move/displacement on them. */
+  hazards?: { pos: BoardPosition; type: 'fire' }[];
 }
 
 export type MatchPhase = 'action';
@@ -64,6 +79,8 @@ export interface MatchState {
   activePlayerId: UUID;
   phase: MatchPhase;
   initiative: InitiativeState;
+  /** CAMPAIGN-ONLY board terrain — absent in every arena match (see TerrainState). */
+  terrain?: TerrainState;
   /**
    * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
    * order (one entry per roll attempt; multi-hit attacks consume one entry per

@@ -6,9 +6,9 @@ import {
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds, calculatePullOptions, calculatePushOptions } from './boardUtils.js';
-import { reachableFrom, hasLineOfSight } from '../ai/geometry.js';
+import { reachableFrom, hasLineOfSight, isTerrainBlocked, wallsBlockLine } from '../ai/geometry.js';
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
-import { executeAbility } from './abilityExecutor.js';
+import { executeAbility, applyEntryHazard } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 
 export class TurnValidationError extends Error {
@@ -518,8 +518,8 @@ function processCharge(state: MatchState, action: ChargeAction, playerId: string
   if (isTileOccupied(state.units.filter((u) => u.instanceId !== unit.instanceId), action.destination)) throw new TurnValidationError('Destination tile is occupied');
   const distance = manhattanDistance(unit.position, action.destination);
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Charge destination out of movement range');
-  const chargeReachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
-  if (!chargeReachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Charge destination is not reachable (path blocked by enemy)');
+  const chargeReachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3, state.terrain);
+  if (!chargeReachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Charge destination is not reachable (path blocked)');
   unit.position = action.destination;
   unit.hasActedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination, message: `${unit.definitionSlug} charged` });
@@ -538,12 +538,15 @@ function processMove(state: MatchState, action: MoveAction, playerId: string, ev
   if (unit.statusEffects.some((se) => se.slug === 'frozen')) throw new TurnValidationError('Unit is frozen and cannot act');
   if (distance > (unit.movementRange ?? 3)) throw new TurnValidationError('Destination out of movement range');
   if (distance > 0) {
-    const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3);
-    if (!reachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Destination is not reachable (path blocked by enemy)');
+    // CAMPAIGN-ONLY terrain folds in here: walls block (phasing passes
+    // through), and reachableFrom never yields a wall as a destination.
+    const reachable = reachableFrom(unit.position, unit, state.units, unit.movementRange ?? 3, state.terrain);
+    if (!reachable.some((p) => p.x === action.destination.x && p.y === action.destination.y)) throw new TurnValidationError('Destination is not reachable (path blocked)');
   }
   unit.position = action.destination;
   unit.hasMovedThisTurn = true;
   events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: unit.instanceId, position: action.destination });
+  applyEntryHazard(state, unit, events); // walked into a hazard (A2)
 }
 
 function processUseAbility(state: MatchState, action: UseAbilityAction, playerId: string, events: GameEvent[], abilityMap: Map<string, AbilityDefinition>): void {
@@ -573,6 +576,24 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     if (occupant && occupant.instanceId !== unit.instanceId) {
       throw new TurnValidationError('Cannot leap onto an occupied tile');
     }
+    if (isTerrainBlocked(state.terrain, action.target)) {
+      throw new TurnValidationError('Cannot leap onto a wall');
+    }
+  }
+  // CAMPAIGN-ONLY (A2): a placed AoE needs wall-clear sight to its CENTER (the
+  // eye of the storm), and the eye itself cannot be a wall. Units never block
+  // area placement (arena rule preserved); walls do. No terrain = no checks.
+  // LEAPS are exempt from the sight rule — a leap passes OVER walls and its
+  // blast is centred where the caster LANDS (landing-on-wall is rejected above;
+  // the blast still spreads wall-aware from the landing tile).
+  if (ability.targetingType === 'aoe' && ability.range > 0 && state.terrain
+    && !ability.effects.some((e) => e.type === 'move_self')) {
+    if (isTerrainBlocked(state.terrain, action.target)) {
+      throw new TurnValidationError('Cannot centre an area effect on a wall');
+    }
+    if (wallsBlockLine(unit.position, action.target, state.terrain)) {
+      throw new TurnValidationError('No sight to the centre tile (blocked by a wall)');
+    }
   }
   if (ability.targetingType === 'single') {
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
@@ -582,7 +603,7 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     // never blocked. Push abilities (Fear) are exempt — mirrors the client's
     // targeting UI exactly. Line/AoE/self are LOS-free by design.
     const hasPushEffect = ability.effects.some((e) => e.type === 'push');
-    if (!hasPushEffect && !hasLineOfSight(unit.position, action.target, state.units, [unit.instanceId, targetUnit.instanceId])) {
+    if (!hasPushEffect && !hasLineOfSight(unit.position, action.target, state.units, [unit.instanceId, targetUnit.instanceId], state.terrain)) {
       throw new TurnValidationError('No line of sight to target');
     }
   }
@@ -598,7 +619,7 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
     }
     const displaced = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
     if (!displaced) throw new TurnValidationError('No unit at target position');
-    const blocked = (p: BoardPosition) => state.units.some(
+    const blocked = (p: BoardPosition) => isTerrainBlocked(state.terrain, p) || state.units.some(
       (u) => u.isAlive && u.instanceId !== displaced.instanceId && u.position.x === p.x && u.position.y === p.y,
     );
     const distance = (disp as { distance: number }).distance;

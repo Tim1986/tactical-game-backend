@@ -11,6 +11,7 @@
  */
 
 import { BoardPosition, UnitInstance } from './types';
+import { TerrainState } from '../types/matchState.js';
 // Displacement geometry lives in the engine so brain and executor share ONE
 // implementation. boardUtils imports only types, so there is no cycle even
 // though game/turnProcessor imports this module.
@@ -99,9 +100,13 @@ export function hasLineOfSight(
   targetPos: BoardPosition,
   allUnits: UnitInstance[],
   ignoreIds: string[] = [],
+  terrain?: TerrainState,
 ): boolean {
   if (!isAligned(casterPos, targetPos)) return true;
   for (const tile of tilesBetween(casterPos, targetPos)) {
+    // CAMPAIGN-ONLY: a wall on an intervening tile blocks sight exactly like a
+    // living unit (ENCOUNTER_SPEC A2). Arena states carry no terrain.
+    if (isTerrainBlocked(terrain, tile)) return false;
     const blocker = allUnits.find(
       (u) =>
         u.isAlive &&
@@ -111,6 +116,27 @@ export function hasLineOfSight(
     if (blocker) return false;
   }
   return true;
+}
+
+/** Is this tile a campaign wall? `undefined` terrain = never (arena). */
+export function isTerrainBlocked(terrain: TerrainState | undefined, pos: BoardPosition): boolean {
+  return !!terrain?.blocked?.some((b) => b.x === pos.x && b.y === pos.y);
+}
+
+/**
+ * CAMPAIGN-ONLY wall-opaque sight (ENCOUNTER_SPEC A2): true when a WALL sits
+ * on the straight line between a and b. Units never matter here. Used for
+ * placed-AoE center sight and the from-center effect spread — both care about
+ * walls only. Non-aligned pairs are never blocked (same alignment rule as
+ * unit LoS, ABL-3). With no terrain this is always false (arena-inert).
+ */
+export function wallsBlockLine(a: BoardPosition, b: BoardPosition, terrain?: TerrainState): boolean {
+  if (!terrain?.blocked?.length) return false;
+  if (!isAligned(a, b)) return false;
+  for (const tile of tilesBetween(a, b)) {
+    if (isTerrainBlocked(terrain, tile)) return true;
+  }
+  return false;
 }
 
 /**
@@ -148,11 +174,15 @@ export function reachableFrom(
   unit: UnitInstance,
   allUnits: UnitInstance[],
   range: number,
+  terrain?: TerrainState,
 ): BoardPosition[] {
   const key = (p: BoardPosition) => p.x * BOARD_SIZE + p.y;
   const out: BoardPosition[] = [];
   const visited = new Set<number>([key(fromPos)]);
   let frontier: BoardPosition[] = [fromPos];
+  // CAMPAIGN-ONLY: walls hard-block movement; a 'phasing' unit (Wraith) may
+  // pass THROUGH a wall but never end on it (ENCOUNTER_SPEC A2).
+  const phasing = !!unit.moveFlags?.includes('phasing');
 
   for (let step = 1; step <= range && frontier.length > 0; step++) {
     const next: BoardPosition[] = [];
@@ -163,6 +193,12 @@ export function reachableFrom(
         const k = key(n);
         if (visited.has(k)) continue;
         visited.add(k);
+
+        if (isTerrainBlocked(terrain, n)) {
+          if (!phasing) continue;      // wall: hard block
+          next.push(n);                 // phasing: continue through…
+          continue;                     // …but never a destination
+        }
 
         const occupant = allUnits.find(
           (u) =>
@@ -246,16 +282,17 @@ export function reachableTiles(
   unit: UnitInstance,
   allUnits: UnitInstance[],
   range: number,
+  terrain?: TerrainState,
 ): BoardPosition[] {
-  return reachableFrom(unit.position, unit, allUnits, range);
+  return reachableFrom(unit.position, unit, allUnits, range, terrain);
 }
 
 /**
  * Blocker predicate matching the engine's: any living unit other than the one
  * being displaced occupies the tile.
  */
-function displacementBlocker(allUnits: UnitInstance[], movingUnitId: string) {
-  return (p: BoardPosition) => allUnits.some(
+function displacementBlocker(allUnits: UnitInstance[], movingUnitId: string, terrain?: TerrainState) {
+  return (p: BoardPosition) => isTerrainBlocked(terrain, p) || allUnits.some(
     (u) => u.isAlive && u.instanceId !== movingUnitId && samePos(u.position, p),
   );
 }
@@ -274,9 +311,10 @@ export function pushDestination(
   distance: number,
   allUnits: UnitInstance[],
   movingUnitId: string,
+  terrain?: TerrainState,
 ): BoardPosition {
   return calculatePushOptions(
-    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId),
+    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId, terrain),
   )[0];
 }
 
@@ -292,12 +330,13 @@ export function pullDestination(
   distance: number,
   allUnits: UnitInstance[],
   movingUnitId: string,
+  terrain?: TerrainState,
 ): BoardPosition {
   // DELEGATES to the engine's calculatePullOptions — one budget model (diagonal
   // costs 2), one set of stop conditions, so brain and executor cannot drift.
   // A diagonally-adjacent drag offers two corner-cutting tiles for the human to
   // pick between; the brain takes the first, matching the executor's fallback.
   return calculatePullOptions(
-    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId),
+    targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId, terrain),
   )[0];
 }

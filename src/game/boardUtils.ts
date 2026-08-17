@@ -198,7 +198,12 @@ export function calculatePullOptions(
  * to the target meant tapping the 2nd unit in a queue of 5 hit only 2 of them
  * (COMBAT_AUDIT C22b item 11). The target tile only picks the DIRECTION.
  */
-export function getLineTiles(from: BoardPosition, to: BoardPosition, maxRange: number): BoardPosition[] {
+export function getLineTiles(
+  from: BoardPosition,
+  to: BoardPosition,
+  maxRange: number,
+  isBlocked: (p: BoardPosition) => boolean = () => false,
+): BoardPosition[] {
   const tiles: BoardPosition[] = [];
   const stepX = Math.sign(to.x - from.x);
   const stepY = Math.sign(to.y - from.y);
@@ -207,6 +212,10 @@ export function getLineTiles(from: BoardPosition, to: BoardPosition, maxRange: n
     const x = from.x + stepX * i;
     const y = from.y + stepY * i;
     if (!isInBounds({ x, y })) break;
+    // CAMPAIGN-ONLY (walls): the ray stops at the first blocked tile — walls
+    // eat arrows and flame (ENCOUNTER_SPEC A2). The wall tile itself is not
+    // swept. Default predicate never blocks (arena unchanged).
+    if (isBlocked({ x, y })) break;
     tiles.push({ x, y });
   }
   return tiles;

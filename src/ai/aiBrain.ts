@@ -62,6 +62,8 @@ import {
   reachableFrom,
   pushDestination,
   pullDestination,
+  isTerrainBlocked,
+  wallsBlockLine,
 } from './geometry';
 // Shared AOE shape predicate — the engine's resolveTargets uses the SAME
 // function, so brain hit prediction can never diverge from engine resolution.
@@ -837,6 +839,7 @@ function scoreEffectsOnTarget(
           eff.distance,
           ctx.state.units,
           target.instanceId,
+          ctx.state.terrain,
         );
         // Manhattan: displacement is valued in TILES OF GROUND, and a diagonal
         // is two of those (MOV-1). Chebyshev scored a diagonal shove as 1.
@@ -844,6 +847,11 @@ function scoreEffectsOnTarget(
         projectedPos = dest;
         pushedDistance += moved;
         s += moved * (isMelee(target, map) ? WEIGHTS.pushMeleePerTile : WEIGHTS.pushRangedPerTile);
+        // CAMPAIGN terrain (A2): shoving an enemy onto a fire hazard is worth
+        // the burn it inflicts (discounted like burn damage).
+        if (moved > 0 && ctx.state.terrain?.hazards?.some((h) => h.pos.x === dest.x && h.pos.y === dest.y)) {
+          s += BURNING_DAMAGE_PER_STACK * WEIGHTS.burningFactor * WEIGHTS.damage;
+        }
         break;
       }
 
@@ -857,6 +865,7 @@ function scoreEffectsOnTarget(
           eff.distance,
           ctx.state.units,
           target.instanceId,
+          ctx.state.terrain,
         );
         // Manhattan for the same reason as push: a diagonal drag covers two
         // tiles of ground, so Chebyshev valued diagonal pulls at half.
@@ -876,6 +885,11 @@ function scoreEffectsOnTarget(
             }
           }
           s += moved * WEIGHTS.pullPerTile + exploit * WEIGHTS.pullExploitFactor;
+        // CAMPAIGN terrain (A2): dragging someone onto a fire hazard — a bonus
+        // against enemies, a real cost when repositioning an ally (Rescue).
+        if (moved > 0 && ctx.state.terrain?.hazards?.some((h) => h.pos.x === dest.x && h.pos.y === dest.y)) {
+          s += (isEnemy ? 1 : -1) * BURNING_DAMAGE_PER_STACK * WEIGHTS.burningFactor * WEIGHTS.damage;
+        }
           // Dragging a RANGED enemy out of its safe pocket is extra tempo.
           if (!isMelee(target, map)) s += moved * 1.5;
         } else {
@@ -1033,7 +1047,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             !hasLineOfSight(casterPos, tPos, units, [
               caster.instanceId,
               t.instanceId,
-            ])
+            ], ctx.state.terrain)
           ) {
             continue;
           }
@@ -1079,6 +1093,12 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
               const c = { x, y };
               if (!isInBounds(c)) continue;
               if (manhattanDistance(casterPos, c) > def.range) continue;
+              // CAMPAIGN terrain (A2): the engine rejects wall centres and
+              // wall-blocked centre sight — never propose them. Leaps are
+              // exempt from the sight rule (they sail over walls); a wall can
+              // still never be the landing/centre tile.
+              if (isTerrainBlocked(ctx.state.terrain, c)) continue;
+              if (!isLeap && wallsBlockLine(casterPos, c, ctx.state.terrain)) continue;
               if (isLeap && units.some((u) => u.isAlive
                 && u.instanceId !== caster.instanceId
                 && effPos(ctx, u).x === c.x && effPos(ctx, u).y === c.y)) continue;
@@ -1097,6 +1117,9 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             // Self-centered AOE (Whirlwind) hits everything adjacent but not the caster.
             if ((def.range === 0 || isLeap) && t.instanceId === caster.instanceId) continue;
             if (!isInAoe(c, effPos(ctx, t), def.areaRadius, def.areaShape)) continue;
+            // CAMPAIGN terrain (A2): the blast spreads from the centre and
+            // never crosses walls — mirror the executor exactly.
+            if (wallsBlockLine(c, effPos(ctx, t), ctx.state.terrain)) continue;
             // AOE ally exclusion (e.g. Roar): filter allies out entirely
             // before any scoring, matching the engine's resolveTargets.
             if (def.excludeAllies && t.ownerPlayerId === caster.ownerPlayerId) continue;
@@ -1293,6 +1316,12 @@ function positionScore(
 
   let s = 0;
 
+  // CAMPAIGN terrain (A2): ending a move on a fire hazard costs a burn stack —
+  // charge it like taking that damage (discounted the same way burn is).
+  if (state.terrain?.hazards?.some((h) => h.pos.x === pos.x && h.pos.y === pos.y)) {
+    s -= BURNING_DAMAGE_PER_STACK * WEIGHTS.burningFactor * WEIGHTS.selfDamage;
+  }
+
   // Danger term (scalable: the cornered-unit fallback zeroes this out when
   // no reachable tile is meaningfully safer than any other).
   if (dangerScale > 0) {
@@ -1432,7 +1461,7 @@ export function planBestTurn(
   const rooted = willBlockOwnAction(unit, 'rooted'); // end-of-turn tick: any rooted duration blocks this turn
   const moveTiles = rooted
     ? []
-    : reachableTiles(unit, state.units, unit.movementRange);
+    : reachableTiles(unit, state.units, unit.movementRange, state.terrain);
 
   // Cornered-unit fallback (anti-kiting): when this is our LAST living unit
   // and no reachable tile is meaningfully safer than any other, retreating
@@ -1576,8 +1605,8 @@ export function planBestTurn(
         const ideal =
           dispEffect.type === 'push'
             ? act.pushDestination ??
-              pushDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId)
-            : pullDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId);
+              pushDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId, state.terrain)
+            : pullDestination(unit.position, targetUnit.position, dispEffect.distance, state.units, targetUnit.instanceId, state.terrain);
         const segment: BoardPosition[] = [{ ...targetUnit.position }];
         {
           const sx = Math.sign(ideal.x - targetUnit.position.x);
@@ -1592,7 +1621,7 @@ export function planBestTurn(
           ...state.units.filter((u) => u.instanceId !== targetUnit.instanceId),
           ...segment.map((pos, k) => ({ ...targetUnit, instanceId: `${targetUnit.instanceId}#seg${k}`, position: pos })),
         ];
-        const validTiles = reachableTiles(unit, adjustedUnits, unit.movementRange);
+        const validTiles = reachableTiles(unit, adjustedUnits, unit.movementRange, state.terrain);
         retreat = null;
         retreatScore = -Infinity;
         for (const pos of validTiles) {
@@ -1637,7 +1666,7 @@ export function planBestTurn(
   //    Charge is legal in every round (the 10-round cap was removed with the
   //    endgame drain rule).
   for (const posA of moveTiles) {
-    const fromA = reachableFrom(posA, unit, state.units, unit.movementRange);
+    const fromA = reachableFrom(posA, unit, state.units, unit.movementRange, state.terrain);
     for (const posB of fromA) {
       consider(pScore(posB) - 2 * WEIGHTS.moveTax, [
         { type: 'MOVE', unitInstanceId: unit.instanceId, destination: posA },
@@ -1888,7 +1917,7 @@ export class OptimalBrain implements AIBrain {
         let fbCost = Infinity;
         for (const c of usable) {
           if (willBlockOwnAction(c, 'rooted')) continue;
-          for (const t of reachableTiles(c, state.units, c.movementRange)) {
+          for (const t of reachableTiles(c, state.units, c.movementRange, state.terrain)) {
             if (samePos(t, c.position)) continue;
             const cost =
               dangerAt(state, c, t, myPlayerId, abilityMap) * 10 +
@@ -1946,7 +1975,7 @@ export class OptimalBrain implements AIBrain {
                 if (!t.isAlive || t.ownerPlayerId === myPlayerId) continue;
                 if (manhattanDistance(c.position, t.position) > def.range) continue;
                 if (!hasPush && LOS_ENFORCED &&
-                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId])) continue;
+                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId], state.terrain)) continue;
                 target = t.position;
                 break;
               }
@@ -1957,7 +1986,12 @@ export class OptimalBrain implements AIBrain {
                 const d = def.targetingType === 'line'
                   ? chebyshevDistance(c.position, t.position)
                   : manhattanDistance(c.position, t.position);
-                if (d <= def.range) { target = t.position; break; }
+                if (d > def.range) continue;
+                // CAMPAIGN terrain (A2): the engine rejects wall-blocked AoE
+                // centres — the fallback must not propose an invalid cast.
+                if (def.targetingType === 'aoe' && def.range > 0
+                  && (isTerrainBlocked(state.terrain, t.position) || wallsBlockLine(c.position, t.position, state.terrain))) continue;
+                target = t.position; break;
               }
             }
             if (!target) continue;
@@ -1983,7 +2017,7 @@ export class OptimalBrain implements AIBrain {
                 if (!t.isAlive || t.ownerPlayerId !== myPlayerId || t.instanceId === c.instanceId) continue;
                 if (manhattanDistance(c.position, t.position) > def.range) continue;
                 if (LOS_ENFORCED &&
-                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId])) continue;
+                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId], state.terrain)) continue;
                 if (t.currentHealth > bestAllyHp) {
                   bestAllyHp = t.currentHealth;
                   fcAction = { type: 'USE_ABILITY', unitInstanceId: c.instanceId, abilitySlug: slug, target: t.position };
@@ -2048,7 +2082,7 @@ export class BaselineBrain implements AIBrain {
 
     // Step toward the nearest enemy if out of range.
     if (manhattanDistance(pos, nearest.position) > range && !isRooted(unit)) {
-      const tiles = reachableTiles(unit, state.units, unit.movementRange);
+      const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
       let bestTile: BoardPosition | null = null;
       let bestDist = manhattanDistance(pos, nearest.position);
       for (const t of tiles) {
@@ -2075,7 +2109,7 @@ export class BaselineBrain implements AIBrain {
       hasLineOfSight(pos, nearest.position, state.units, [
         unit.instanceId,
         nearest.instanceId,
-      ])
+      ], state.terrain)
     ) {
       actions.push({
         type: 'USE_ABILITY',
