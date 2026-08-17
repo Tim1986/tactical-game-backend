@@ -100,9 +100,17 @@ export const lanternCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
       // Easy sits above band by design — tutorial exemption (near-certain first win).
-      // ⚠ Breakpoint cliff between 1.17 and 1.38: medium mean fell 83% -> 40%
-      // and ranged 82% -> 38% in one step. Park just below it.
-      hpScaleOverride: { easy: 0.93, medium: 1.24, hard: 1.32, nightmare: 1.28 },
+      // ⚠ Breakpoint cliff on this encounter is STEEP — calibration walk:
+      //   medium: 1.17 -> 83% · 1.24 -> 52% · 1.38 -> 40%   (~31 pts per 0.07)
+      //   hard:   1.22 -> 70% · 1.32 -> 37% · 1.52 -> 26%   (~33 pts per 0.10)
+      // Three scrappers all die to the same breakpoints, so the whole cell
+      // moves at once. Values interpolated to band midpoints.
+      // e1's three identical scrappers share breakpoints, so the whole cell
+      // moves at once and the walk is steep:
+      //   medium: 1.17 -> 82% · 1.20 -> 69% · 1.24 -> 52% · 1.38 -> 40%
+      //   hard:   1.22 -> 70% · 1.23 -> 57% · 1.26 -> 45% · 1.32 -> 37%
+      // 1.20/1.23 are the best-centred rungs available on that ladder.
+      hpScaleOverride: { easy: 0.93, medium: 1.20, hard: 1.23, nightmare: 1.28 },
     },
 
     // e2 — The Old Mill (carve). Two millstone rows leave a central aisle: the
@@ -121,7 +129,7 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 0, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 1.12, medium: 1.44, hard: 1.55, nightmare: 1.68 },
+      hpScaleOverride: { easy: 1.20, medium: 1.44, hard: 1.55, nightmare: 1.68 },
     },
 
     // e3 — Runners at Dusk (siege). Three runners hit immediately, two more
@@ -159,7 +167,12 @@ export const lanternCampaign: CampaignDefinition = {
         },
       ],
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
-      hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.39, nightmare: 1.63 },
+      // Scale is the fine lever here (round count is the coarse one, already
+      // set at 7). Walk: hard 1.39 -> 68% · 1.52 -> 43-46% across two runs.
+      // 1.52 parked the cell ON the 45% band edge, where ±7pt noise flips
+      // PASS/FAIL run to run — centre it instead (CAMPAIGNS.md: tune to the
+      // band MIDPOINT, never an edge). nightmare 1.63 -> 54%, 1.95 -> 26-29%.
+      hpScaleOverride: { easy: 1.13, medium: 1.38, hard: 1.46, nightmare: 1.95 },
     },
 
     // e4 — The Cave Mouth (escape). A rock wall with a two-tile throat; the
@@ -203,6 +216,12 @@ export const lanternCampaign: CampaignDefinition = {
       // high relative to a kill-all encounter's scales — but 1.30/1.60 overshot
       // (medium 84% -> 59%, hard 80% -> 40%), so they are not weakly sensitive
       // either. Split the difference.
+      // ⚠ medium is the stubborn cell: 1.10 -> 63-68% (melee 54-59), but easing
+      // to 1.00 -> 64% with melee at 31%, i.e. UNDER the 35 wall. Easing the
+      // encounter hurt melee because a slacker escape lets the enemy pack chase
+      // the party through the throat instead of dying at it. 1.10 is the right
+      // rung; the mean rides the band's lower edge and occasionally reads 1-2
+      // points under on a noisy run. Documented rather than chased.
       hpScaleOverride: { easy: 0.88, medium: 1.10, hard: 1.28, nightmare: 1.70 },
     },
 
@@ -222,7 +241,10 @@ export const lanternCampaign: CampaignDefinition = {
       enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_scrapper'],
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 2 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.72, medium: 0.88, hard: 1.00, nightmare: 1.13 },
+      // Calibration walk (medium): 0.78 -> 86% · 0.88 -> 88% · 0.95 -> 54%.
+      // Flat then a cliff — the King's effective HP crosses a focus-fire
+      // breakpoint between 0.88 and 0.95. Park just inside it.
+      hpScaleOverride: { easy: 0.72, medium: 0.90, hard: 0.92, nightmare: 1.13 },
     },
   },
 
