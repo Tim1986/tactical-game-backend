@@ -294,7 +294,7 @@ export function takeDamage(
   if (outcome === 'undying') {
     events.push({ type: 'UNDYING_TRIGGERED', sourceUnitInstanceId, targetUnitInstanceId: unit.instanceId, message: 'Clings to life!' });
   } else if (outcome === 'died') {
-    events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId });
+    events.push({ type: 'UNIT_DIED', targetUnitInstanceId: unit.instanceId, sourceUnitInstanceId });
   }
   return actual;
 }

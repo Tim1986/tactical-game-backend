@@ -224,6 +224,7 @@ function beginTurnInternal(
     const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
     if (afterTickWin.isOver) {
       events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined, ...(afterTickWin.reason ? { message: afterTickWin.reason } : {}) });
+      updateGoalStats(ws, events);
       return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
     }
   } else if (actingUnit.statusEffects.some((se) => se.slug === 'frozen')) {
@@ -244,6 +245,7 @@ function beginTurnInternal(
     const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
     if (afterTickWin.isOver) {
       events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined, ...(afterTickWin.reason ? { message: afterTickWin.reason } : {}) });
+      updateGoalStats(ws, events);
       return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
     }
   }
@@ -441,6 +443,29 @@ function finalizeTurnInternal(
 // Composed from the three phase internals above so there is exactly ONE
 // implementation of the turn rules. Offline, puzzles, campaign, legacy online,
 // and the whole test/solver battery depend on this staying identical.
+
+/**
+ * CAMPAIGN battle goals (A7): fold this turn's events into the running facts
+ * goals are judged on. No-op without state.goalStats — arena never carries it.
+ */
+function updateGoalStats(ws: MatchState, events: GameEvent[]): void {
+  const gs = ws.goalStats;
+  const obj = ws.objective;
+  if (!gs || !obj) return;
+  const allySet = new Set(obj.allyIds ?? []);
+  for (const e of events) {
+    if (e.type === 'DAMAGE_DEALT' && e.targetUnitInstanceId === obj.mainId && (e.value ?? 0) > 0) {
+      gs.mainTookDamage = true;
+    }
+    if (e.type === 'UNIT_DIED' && e.targetUnitInstanceId) {
+      const dead = ws.units.find((u) => u.instanceId === e.targetUnitInstanceId);
+      if (!dead) continue;
+      if (dead.ownerPlayerId === obj.partyId && !allySet.has(dead.instanceId)) gs.partyDeaths += 1;
+      if (dead.ownerPlayerId === obj.enemyId) gs.lastEnemyKillerId = e.sourceUnitInstanceId;
+    }
+  }
+}
+
 export function processTurn(
   state: MatchState,
   submittedActions: TurnAction[],
@@ -482,7 +507,8 @@ export function processTurn(
   // Safety: the single-shot path always finalizes within one call, so turnContext
   // must never leak into its output (a mid-action win breaks before END_TURN).
   if (ws.turnContext) delete ws.turnContext;
-  return { success: true, updatedState: ws, events, matchOver, winnerId };
+  updateGoalStats(ws, events);
+      return { success: true, updatedState: ws, events, matchOver, winnerId };
 }
 
 // ─── Incremental API (roll-on-demand online: ROD3 calls these across HTTP) ─────
@@ -507,7 +533,8 @@ export function beginTurn(
   const gameActions = firstAction ? [firstAction] : [];
   const early = beginTurnInternal(ws, gameActions, submittingPlayerId, playerOneId, playerTwoId, events);
   if (early) { delete ws.turnContext; return early; }
-  return { success: true, updatedState: ws, events, matchOver: false, winnerId: null };
+  updateGoalStats(ws, events);
+      return { success: true, updatedState: ws, events, matchOver: false, winnerId: null };
 }
 
 /** Resolve ONE action against the open turn. The server rolls here. */
@@ -524,7 +551,8 @@ export function applyAction(
   if (ws.activePlayerId !== submittingPlayerId) throw new TurnValidationError('It is not your turn');
   if (!ws.turnContext) throw new TurnValidationError('No turn in progress — call beginTurn first');
   const r = applyGameActionInternal(ws, action, submittingPlayerId, playerOneId, playerTwoId, abilityMap, events);
-  return { success: true, updatedState: ws, events, matchOver: r.matchOver, winnerId: r.winnerId };
+  updateGoalStats(ws, events);
+      return { success: true, updatedState: ws, events, matchOver: r.matchOver, winnerId: r.winnerId };
 }
 
 /** Finalize the open turn and advance initiative. */
@@ -539,7 +567,8 @@ export function endTurn(
   if (ws.activePlayerId !== submittingPlayerId) throw new TurnValidationError('It is not your turn');
   if (!ws.turnContext) throw new TurnValidationError('No turn in progress — call beginTurn first');
   const r = finalizeTurnInternal(ws, submittingPlayerId, playerOneId, playerTwoId, events);
-  return { success: true, updatedState: ws, events, matchOver: r.matchOver, winnerId: r.winnerId };
+  updateGoalStats(ws, events);
+      return { success: true, updatedState: ws, events, matchOver: r.matchOver, winnerId: r.winnerId };
 }
 
 // ─── Action processors (unchanged from before) ────────────────────────────────
@@ -724,5 +753,6 @@ function processLegacyTurn(
       break;
     }
   }
-  return { success: true, updatedState: ws, events, matchOver, winnerId };
+  updateGoalStats(ws, events);
+      return { success: true, updatedState: ws, events, matchOver, winnerId };
 }

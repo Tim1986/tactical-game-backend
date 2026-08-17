@@ -9,7 +9,7 @@ import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
-import { CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy, TerrainSpec, WaveSpec } from './types.js';
+import { BoonDef, CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy, TerrainSpec, WaveSpec } from './types.js';
 
 /** Enemy HP multiplier per difficulty (applied to campaign enemies only). */
 export const CAMPAIGN_HP_SCALE: Record<CampaignDifficulty, number> = {
@@ -163,10 +163,10 @@ export interface EncounterBuild {
  * its entry from UNIMPLEMENTED below; when the list is empty, delete the
  * guard.
  */
-const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
-  { step: 'A7', name: 'battle goals', used: (_c, e) => !!e.goals?.length },
-  { step: 'A7', name: 'boons', used: (c, _e) => !!c.boons && Object.keys(c.boons).length > 0 },
-];
+// A2–A7 all landed; the list is empty but the SEAM stays: A6's demand-driven
+// effect kinds (summon/teleport/on-death) re-add entries here the moment their
+// schema lands ahead of their executor.
+const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [];
 
 export function assertEncounterSupported(campaign: CampaignDefinition, encounterId: string): void {
   const enc = campaign.encounters[encounterId];
@@ -203,6 +203,57 @@ function validateCampaignAbilities(campaign: CampaignDefinition): void {
   }
 }
 
+/** [A7] Goals are TEAM-level, 0-2 per encounter; boons are flavor-sized
+ *  run-scoped perks. Both fail loudly on authoring mistakes. */
+function validateGoalsAndBoons(campaign: CampaignDefinition, enc: CampaignEncounter, encounterId: string): void {
+  const goals = enc.goals ?? [];
+  if (goals.length > 2) throw new Error(`Encounter ${encounterId}: at most 2 battle goals (got ${goals.length})`);
+  const seen = new Set<string>();
+  for (const g of goals) {
+    if (seen.has(g.slug)) throw new Error(`Encounter ${encounterId}: duplicate goal slug "${g.slug}"`);
+    seen.add(g.slug);
+    if (g.check.kind === 'win_by_round' && g.check.round < 1) throw new Error(`Encounter ${encounterId}: goal "${g.slug}" round must be >= 1`);
+  }
+  for (const [key, b] of Object.entries(campaign.boons ?? {})) {
+    if (b.slug !== key) throw new Error(`Boon "${key}": slug field must match its key (got "${b.slug}")`);
+    const fx = b.effects;
+    if (fx.partyMaxHp === undefined && !fx.unitMaxHp && !fx.startShielded) {
+      throw new Error(`Boon "${key}": effects must set at least one of partyMaxHp/unitMaxHp/startShielded`);
+    }
+    if (fx.unitMaxHp && !DEFAULT_UNITS[fx.unitMaxHp.classSlug]) {
+      throw new Error(`Boon "${key}": unitMaxHp.classSlug "${fx.unitMaxHp.classSlug}" is not a class`);
+    }
+    if (fx.startShielded === 'any') {
+      throw new Error(`Boon "${key}": startShielded scope must be 'main' or 'all'`);
+    }
+  }
+}
+
+/** [A7] Apply a run's earned boons to the built party (rest-of-run perks). */
+function applyBoons(partyUnits: UnitInstance[], boons: BoonDef[]): void {
+  for (const b of boons) {
+    const fx = b.effects;
+    const bumpHp = (u: UnitInstance, amount: number) => {
+      u.maxHealth = Math.max(1, u.maxHealth + amount);
+      u.currentHealth = Math.max(1, u.currentHealth + amount);
+    };
+    if (fx.partyMaxHp) for (const u of partyUnits) bumpHp(u, fx.partyMaxHp);
+    if (fx.unitMaxHp) {
+      for (const u of partyUnits) {
+        if (u.definitionSlug === fx.unitMaxHp.classSlug) bumpHp(u, fx.unitMaxHp.amount);
+      }
+    }
+    if (fx.startShielded) {
+      const targets = fx.startShielded === 'main' ? partyUnits.slice(0, 1) : partyUnits;
+      for (const u of targets) {
+        if (!u.statusEffects.some((e) => e.slug === 'shielded')) {
+          u.statusEffects.push({ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: u.instanceId });
+        }
+      }
+    }
+  }
+}
+
 /**
  * Builds the full MatchState for a campaign encounter. Placements are
  * ABSOLUTE (unlike buildInitialState, which mirrors p2 across the board).
@@ -218,11 +269,19 @@ export function buildEncounterState(
   humanId: string,
   enemyOwnerId: string,
   mainName?: string,
+  /** [A7] Boon keys the run has earned (grantBoon choices), applied to the party. */
+  boonKeys?: string[],
 ): EncounterBuild {
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
   assertEncounterSupported(campaign, encounterId);
   validateCampaignAbilities(campaign);
+  validateGoalsAndBoons(campaign, enc, encounterId);
+  const runBoons = (boonKeys ?? []).map((k) => {
+    const b = campaign.boons?.[k];
+    if (!b) throw new Error(`Encounter ${encounterId}: run carries unknown boon "${k}"`);
+    return b;
+  });
   // A6: every kit slug (enemy overrides, ally kits) must resolve in the merged
   // ability pool — engine abilities plus this campaign's own definitions.
   const abilityPool = new Set([
@@ -284,6 +343,7 @@ export function buildEncounterState(
     if (i === 0 && mainName) unitNames[inst.instanceId] = mainName;
     return inst;
   });
+  applyBoons(playerUnits, runBoons);
   // ── A5: AI allies — party-owned NPCs with a doctrine, never controllable.
   // Built before enemies so ally objective conditions and enemy aiHints can
   // resolve against their ids. No difficulty scaling (they ride the player's
@@ -470,7 +530,7 @@ export function buildEncounterState(
       ...(allyIds.length ? { allyIds } : {}),
       text: spec.text, win, loss,
     };
-  } else if (encounterProgress || allyUnits.length > 0) {
+  } else if (encounterProgress || allyUnits.length > 0 || enc.goals?.length) {
     // A4: waves/rooms with no authored objective get the default kill-all as
     // an EXPLICIT objective, because the legacy kill-all check would end the
     // match on a clear board with content still pending. all_enemies_dead is
@@ -513,6 +573,8 @@ export function buildEncounterState(
     ...(encounterProgress ? { encounterProgress } : {}),
     // CAMPAIGN-ONLY ally doctrines (A5).
     ...(allyIds.length ? { allies: allyBehaviors } : {}),
+    // CAMPAIGN-ONLY battle-goal facts (A7) — only when the encounter has goals.
+    ...(enc.goals?.length ? { goalStats: { mainTookDamage: false, partyDeaths: 0 } } : {}),
   };
   const campaignAbilities = campaign.abilities && Object.keys(campaign.abilities).length > 0
     ? campaign.abilities : null;

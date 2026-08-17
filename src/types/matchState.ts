@@ -183,6 +183,8 @@ export interface MatchState {
   encounterProgress?: EncounterProgressState;
   /** CAMPAIGN-ONLY ally doctrines by instance id — absent in arena (A5). */
   allies?: Record<UUID, AllyBehaviorState>;
+  /** CAMPAIGN-ONLY battle-goal facts — absent in every arena match (A7). */
+  goalStats?: GoalStatsState;
   /**
    * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
    * order (one entry per roll attempt; multi-hit attacks consume one entry per
@@ -271,6 +273,15 @@ export type GameEventType =
   | 'UNDYING_TRIGGERED' | 'STATUS_RESISTED'
   /** CAMPAIGN-ONLY (A4): a wave/room enemy entered the board / a room began. */
   | 'UNIT_SPAWNED' | 'ROOM_ENTERED';
+
+/** CAMPAIGN-ONLY (A7): running facts battle goals are judged on. Created by
+ *  buildEncounterState when the encounter has goals; arena never carries it. */
+export interface GoalStatsState {
+  mainTookDamage: boolean;
+  partyDeaths: number;
+  /** Killer of the most recently slain ENEMY unit (killing_blow_by_main). */
+  lastEnemyKillerId?: string;
+}
 
 export interface GameEvent {
   type: GameEventType;

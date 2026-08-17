@@ -235,6 +235,24 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   not a build-around).
 - campaignSim balances encounters WITHOUT boons (they're bonuses on top);
   a boon-inclusive sanity run is optional per campaign.
+- IMPLEMENTED SEMANTICS (A7, recorded per protocol):
+  - Goals are TEAM-level (owner call 2026-08-17) — every GoalCheck judges the
+    party as a whole; there is no per-unit goal juggling on mobile.
+  - The engine maintains `goalStats` on MatchState during play (created only
+    when the encounter has goals; arena never carries it): damage to the
+    main, party deaths (allies excluded), and the killer of the most recent
+    enemy death (`killing_blow_by_main` = the kill that ends the fight).
+  - An encounter with goals but no authored objective gets the synthesized
+    default objective (goals are judged via objective.mainId/partyId).
+  - Evaluation (`campaigns/goals.ts`) runs on WON encounters only; achieved
+    goals merge into runAchievements; the encounter intro lists goals under
+    the story text; a win surfaces the achieved ones.
+  - Boons: `run.boons` accumulates grantBoon choices; buildEncounterState
+    takes the keys and applies BoonEffect to the built party (partyMaxHp,
+    unitMaxHp, startShielded 'main'/'all' — scope 'any' is rejected at
+    validation). Unknown keys/dud effects fail loudly at build.
+  - The UNIMPLEMENTED guard list is now EMPTY; the seam stays for A6's
+    demand-driven effect kinds when their schema lands ahead of executors.
 
 ## A8 — campaignSim v2 (built for Opus to operate)
 
