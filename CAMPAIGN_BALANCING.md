@@ -165,6 +165,40 @@ converge):**
    reread the mechanism (usually it's a breakpoint cliff or a spread problem
    wearing a mean costume).
 
+5. **⚠ CENTRE EVERY NEAR-EDGE CELL IN ONE PASS — do not chase them one at a
+   time.** This is the single biggest time sink found in the D2 Lantern
+   retrofit. With ±7-pt noise, any cell sitting within ~5 points of a band
+   edge flips PASS/FAIL run to run, so a battery reports a *different*
+   marginal cell each time. Fixing them singly is whack-a-mole: three
+   consecutive batteries each "failed" on a different edge-parked cell that
+   had passed in the run before.
+
+   **The drill, once the structural work is done:**
+   ```bash
+   # after any passing-ish battery, list every cell by distance from its band edge
+   # (mean, band, midpoint, margin) and treat margin < 5 as needing a nudge
+   ```
+   Then move ALL of them toward their band midpoints in a single edit and
+   re-run once. `campaignTune.ts` exists precisely because the midpoint —
+   never an edge — is the correct target; this rule is the manual version of
+   the same idea applied to a whole campaign at once.
+
+   **Caveat that cost a pass:** centring is not automatic. Verify each nudge
+   against the per-party numbers, because on a steep ladder a small scale
+   change can jump the cell past the midpoint entirely (lantern e1/medium:
+   1.20 -> 69%, 1.17 -> 82%, a 13-pt swing for 0.03), and on some encounters
+   easing the mean *breaks a floor* (lantern e4/medium: easing 1.10 -> 1.00
+   moved the mean 1 pt but dropped melee 57% -> 31%, under the wall, because
+   a slacker escape lets the enemy pack chase the party through the throat
+   instead of dying at it). When centring and the floors disagree, **the
+   floor wins** — park on the better rung and document the mean riding an
+   edge, rather than trading a 2-pt mean miss for a real wall.
+
+6. **Know when to stop.** A cell whose band falls inside a breakpoint cliff
+   has no value that lands mid-band; take the nearest safe rung, write the
+   calibration walk into the encounter's comment, and move on. "Documented
+   and on the best available rung" is a finished cell, not a failure.
+
 Campaign-grammar knobs (A2–A7 content) are legal too, with design intent in
 mind: wave trigger rounds and sizes, room garrison composition, door mode,
 hazard placement, escort HP/route, objective deadlines, `aiHints` hunts
@@ -204,6 +238,27 @@ weight in the next) lives exactly in the space this harness does not sweep.
    no content knob changes that.
 6. Suspicion the brain can't play a mechanic the encounter leans on (the
    sim then measures a floor, not the truth — e.g. conditional passives).
+
+## Suggested loop shape (from the D2 Lantern retrofit)
+
+Measured cost of that retrofit: **2 structural passes + 1 centring pass**
+after the criteria were right — versus 5 thrashing passes before. Aim for:
+
+1. **Design pass.** Set the palette, objectives, terrain, compositions. Do
+   NOT tune numbers yet.
+2. **Smoke + battery.** Read the *mechanism histograms* first, not the win
+   rates: is each encounter being decided by its own objective? An escape
+   that resolves as "Every enemy has fallen" isn't an escape yet. Fix design
+   before touching a scale.
+3. **Structural pass(es).** One lever at a time, for cells whose problem is
+   shape (spread, walls, an objective that's the wrong difficulty *kind*).
+   Expect 1–2 of these. Log each calibration walk in the encounter comment.
+4. **Centring pass.** Once means are roughly right, nudge every cell within
+   ~5 points of a band edge toward its midpoint IN ONE EDIT (rule 5 above).
+5. **Final battery.** PASS, or a documented rung for anything cliff-locked.
+
+The expensive mistake is doing (4) one cell at a time, and the wasteful one
+is doing (3) before (2)'s histograms confirm the design works at all.
 
 ## Per-campaign checklist (done = all boxes)
 
