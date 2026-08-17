@@ -42,13 +42,28 @@ export const REPRESENTATIVE_PARTIES: Record<string, string[]> = {
 const DIFFICULTIES: CampaignDifficulty[] = ['easy', 'medium', 'hard', 'nightmare'];
 
 const TARGET_BANDS: Record<CampaignDifficulty, [number, number]> = {
-  easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.25, 0.45],
+  // Nightmare's mean band is wide ON PURPOSE: with real comp differentiation
+  // the mean can legitimately sit low while the right comp wins plenty — the
+  // NIGHTMARE_BEST_MIN solvability check is the binding constraint there.
+  easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.15, 0.45],
 };
 
-/** No representative party may fall below this — a party pick must never be bricked. */
+/**
+ * DIFFICULTY PHILOSOPHY (owner, 2026-08-17 — the Gloomhaven bar):
+ * easy is beatable with basic strategy by ANY reasonable comp; from there,
+ * comp tolerance NARROWS with difficulty until nightmare is only beatable
+ * with the right strategies. A comp having a rough encounter is IDENTITY
+ * (the campaign's comp-building metagame); a comp hitting a retry WALL is a
+ * bug, because the party is locked for the whole campaign and cannot
+ * re-comp around it. Floors encode "no walls", NOT "comp-neutral".
+ */
 const PARTY_FLOOR: Record<CampaignDifficulty, number> = {
-  easy: 0.60, medium: 0.40, hard: 0.15, nightmare: 0.0,
+  easy: 0.60, medium: 0.35, hard: 0.10, nightmare: 0.0,
 };
+
+/** Nightmare is judged on SOLVABILITY, not comp-neutral means: at least one
+ *  representative party must genuinely crack the encounter. */
+const NIGHTMARE_BEST_MIN = 0.40;
 
 /**
  * Per-unit choices matching the live level-up schedule (specials front-loaded):
@@ -272,9 +287,14 @@ if (isMain) {
       const floor = PARTY_FLOOR[diff];
       const floorBreak = cells.filter((c) => c.winRate < floor);
       const meanOk = mean >= lo && mean <= hi;
-      console.log(`     mean ${pct(mean)}  [${pct(lo)},${pct(hi)}]${meanOk ? ' ✓' : ' ⚠'}${floorBreak.length ? `  ⚠ below floor(${pct(floor)}): ${floorBreak.map((c) => c.party).join(',')}` : ''}`);
-      if (cells.length >= 3 && (!meanOk || floorBreak.length > 0)) {
-        outOfBand.push(`${encId}/${diff}: mean ${pct(mean)}${meanOk ? '' : ' out of band'}${floorBreak.length ? `, below floor: ${floorBreak.map((c) => c.party).join(',')}` : ''}`);
+      const best = Math.max(...cells.map((c) => c.winRate));
+      // Nightmare solvability: identity spread is fine, but SOME comp must
+      // genuinely crack the fight (owner: nightmare may demand the right
+      // strategy — it may not be unbeatable for everyone).
+      const solvableOk = diff !== 'nightmare' || best >= NIGHTMARE_BEST_MIN;
+      console.log(`     mean ${pct(mean)}  [${pct(lo)},${pct(hi)}]${meanOk ? ' ✓' : ' ⚠'}${floorBreak.length ? `  ⚠ WALL below floor(${pct(floor)}): ${floorBreak.map((c) => c.party).join(',')}` : ''}${solvableOk ? '' : `  ⚠ UNSOLVABLE: best party ${pct(best)} < ${pct(NIGHTMARE_BEST_MIN)}`}`);
+      if (cells.length >= 3 && (!meanOk || floorBreak.length > 0 || !solvableOk)) {
+        outOfBand.push(`${encId}/${diff}: mean ${pct(mean)}${meanOk ? '' : ' out of band'}${floorBreak.length ? `, WALL for: ${floorBreak.map((c) => c.party).join(',')}` : ''}${solvableOk ? '' : `, unsolvable (best ${pct(best)})`}`);
       }
     }
     console.log('');

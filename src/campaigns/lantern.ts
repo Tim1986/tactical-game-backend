@@ -60,90 +60,169 @@ export const lanternCampaign: CampaignDefinition = {
     },
     king_grubnash: {
       // Barbarian chassis = orc art: Grubnash is a huge orc the goblins crowned.
+      // D2: as a KILL-TARGET (e5 objective) he is the only enemy that must die,
+      // so the other three become ignorable and a ranged party was bursting him
+      // down in ~17 turns (100% at every difficulty on the first smoke). A
+      // kill-target boss has to be a fight on his own, not a shared HP bar:
+      // +30 HP, and `undying` so the kill needs a real follow-through instead of
+      // one alpha strike. (`undying` was on CAMPAIGN_BEATS §6's never-used list —
+      // this is the dramatic boss beat it was waiting for.)
       baseClass: 'barbarian', name: 'King Grubnash',
-      maxHealth: 80, armorClass: 10,
-      passiveFlags: ['immovable'],
-      nightmare: {},
+      maxHealth: 110, armorClass: 10,
+      passiveFlags: ['immovable', 'undying'],
+      nightmare: { hpBonus: 8 },
     },
   },
 
   encounters: {
-    // e1 — Road Ambush: two scrappers pincer the party from front AND rear.
+    // ═══ D2 RETROFIT (2026-08-17) ═══════════════════════════════════════════
+    // Palette: e1 kill-all · e2 carve · e3 siege · e4 escape · e5 boss.
+    // Five distinct types, none consecutive (CAMPAIGNS.md §8). Lantern is the
+    // TERRAIN showcase of the free three — e2/e4/e5 are carved boards, and the
+    // roadmap's "finale boss (kill-target)" lands on e5.
+    //
+    // Two D1 must-fixes are addressed by DESIGN, not tuning:
+    //  · e3 was bricked for ranged (40/28/10% vs floors 60/40/15) because four
+    //    fast melee runners on an open board must be out-damaged. As a `siege`
+    //    with a survive-the-clock win, a ranged party can hold and kite instead
+    //    of racing a damage check it cannot win.
+    //  · e5 was the boss+healer pattern the beats registry bans on measured
+    //    grounds (too easy at medium+ in all three campaigns). Now a kill-target:
+    //    the shaman is a complication you may deal with or race past, not a gate.
+    // ════════════════════════════════════════════════════════════════════════
+
+    // e1 — Road Ambush (kill-all). Tutorial: deliberately no terrain and no
+    // objective. The first fight teaches the base game; the grammar starts at e2.
     e1: {
       level: 1,
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_scrapper'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 1, y: 4 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
-      // Tutorial fight: green goblins, softer than their later appearances.
-      // Easy sits ~96% — above band, allowed under the tutorial exemption
-      // (near-certain first win is correct UX).
-      hpScaleOverride: { easy: 0.93, medium: 1.17, hard: 1.22, nightmare: 1.28 },
+      // Easy sits above band by design — tutorial exemption (near-certain first win).
+      // ⚠ Breakpoint cliff between 1.17 and 1.38: medium mean fell 83% -> 40%
+      // and ranged 82% -> 38% in one step. Park just below it.
+      hpScaleOverride: { easy: 0.93, medium: 1.24, hard: 1.32, nightmare: 1.28 },
     },
-    // e2 — The Old Mill: scrappers up front, a slinger perched behind them.
+
+    // e2 — The Old Mill (carve). Two millstone rows leave a central aisle: the
+    // slinger's long sightline down that aisle is the threat, and the stones are
+    // the answer. Teaches "the board has shape" one fight before it matters.
     e2: {
       level: 2,
+      // ⚠ Hard-won: a wall between melee and a RANGED enemy shields the shooter
+      // and taxes only the crosser. Three layouts that did exactly that took
+      // melee from 52% -> 35% -> 4% while ranged sat near 100%. Cover must sit
+      // on the APPROACH so the party advances behind it — two millstones on the
+      // crossing lane, nothing screening the goblins.
+      terrain: {
+        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }],
+      },
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
-      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 7, y: 3 }],
+      enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 0, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 1.26, medium: 1.44, hard: 1.55, nightmare: 1.68 },
+      hpScaleOverride: { easy: 1.12, medium: 1.44, hard: 1.55, nightmare: 1.68 },
     },
-    // e3 — Runners at Dusk: four fast wolfpelt goblins converging from three directions.
+
+    // e3 — Runners at Dusk (siege). Three runners hit immediately, two more
+    // arrive at round 3; the party must LAST, not clear. Trees give a ranged
+    // party something to hold behind — the fix for the D1 ranged brick.
     e3: {
       level: 3,
-      enemies: ['wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner'],
-      // Runners start CLOSE. Four fast goblins crossing an open board was a
-      // free-shot gallery for a ranged party and a 4-on-4 dogpile for a melee
-      // one: melee 57% / ranged 100% at medium, a 43-point spread that put
-      // melee under the floor once the mean was tuned into band. hpScale
-      // cannot fix a spread — it moves every party together. Starting them
-      // inside charge range removes the approach phase that caused it
-      // (spread 43 -> 5 at medium), and suits "Runners at Dusk" better:
-      // these are the fast ones, they should be on you immediately.
-      // Measured alternatives: swapping a runner for a slinger made the
-      // spread WORSE (82pts) — a ranged enemy punishes the melee party more,
-      // since melee must cross to reach it. Dropping to 3 runners trivialised
-      // the fight (100% every party).
-      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }, { x: 4, y: 1 }],
-      // ⚠ BRICKED FOR RANGED — D1 diagnostic 2026-08-17, 200 games/cell.
-      // The stat rework (player AC 13-17 -> 8-12, player HP +15-20%) FLIPPED
-      // which party this encounter starves. The comment above describes moving
-      // the runners closer to rescue MELEE from under the floor; ranged now sits
-      // at 40%/28%/10% on easy/medium/hard against floors of 60/40/15. Same
-      // lever, opposite end. This is a SPREAD failure — hpScale cannot fix it;
-      // re-sweep start distance with spreadSweep.ts. Deliberately left unfixed:
-      // Phase D2 re-places this encounter when it adds terrain, so tuning now is
-      // throwaway. See CAMPAIGN_ROADMAP.md D2 must-fix #1.
-      // Nightmare sits ~47% — a breakpoint cliff between 1.35 and 1.45 collapses
-      // it to ~24%, so we take the nearest band edge (2026-07 rebalance).
-      hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.39, nightmare: 1.63 },
+      terrain: {
+        theme: 'forest',
+        blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 1 }, { x: 2, y: 2 }],
+      },
+      objective: {
+        text: 'Hold out until the pack breaks off (7 rounds)',
+        win: [{ kind: 'round_reached', round: 7 }],
+      },
+      enemies: ['wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner'],
+      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }],
+      // Calibration history: survive-5 + one wave was a coast (99-100%);
+      // survive-8 + two full waves overcorrected hard (51% mean, melee 24%).
+      // Round count and wave size are the real levers here — hpScale barely moves
+      // a survive objective, since tankier runners live longer but do not kill
+      // faster. Calibration walk (mean across parties): 5rd/1wave 99% ·
+      // 8rd/2full 51% · 6rd/1.5 90% · 7rd/2full 64% · 6rd/2full 88% · 7rd/1.5 —
+      // this. Round count moves ~25 points per step, so it brackets coarsely.
+      waves: [
+        {
+          enemies: ['wolfpelt_runner', 'wolfpelt_runner'],
+          placement: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          trigger: { on: 'round', round: 3 },
+        },
+        {
+          enemies: ['wolfpelt_runner'],
+          placement: [{ x: 0, y: 2 }],
+          trigger: { on: 'round', round: 5 },
+        },
+      ],
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
+      hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.39, nightmare: 1.63 },
     },
-    // e4 — The Cave Mouth: an unmovable orc bruiser blocks the path, scrappers flank.
+
+    // e4 — The Cave Mouth (escape). A rock wall with a two-tile throat; the
+    // immovable bruiser plugs half of it. The win is getting THROUGH, not
+    // killing him — which is what the story always said and the mechanics never
+    // did. Six exit tiles so a full party isn't puzzle-locked out of its own win.
     e4: {
       level: 4,
+      terrain: {
+        theme: 'cave',
+        blocked: [
+          { x: 5, y: 0 }, { x: 5, y: 1 }, { x: 5, y: 2 },
+          { x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 },
+        ],
+      },
+      objective: {
+        text: 'Push past the cave mouth — get everyone through',
+        win: [{
+          kind: 'units_at_tiles', scope: 'all',
+          tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
+        }],
+      },
       enemies: ['orc_bruiser', 'goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
-      // Enemies start FARTHER back. At the old 3-tile gap a ranged party was rushed
-      // before it could establish any standoff — ranged 15% at medium, 5% at hard,
-      // an 85-point spread. hpScale cannot close a spread. Backing them off to a
-      // ~6-tile gap restores the approach phase ranged play needs: ranged 15% -> 85%,
-      // spread 85 -> 27, mean still in band. (See CAMPAIGNS.md — start distance is
-      // the dominant driver of party spread, and it cuts both ways.)
-      enemyPlacement: [{ x: 5, y: 6 }, { x: 6, y: 3 }, { x: 4, y: 2 }, { x: 7, y: 6 }],
-      playerPlacement: [{ x: 0, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 1, y: 7 }],
-      hpScaleOverride: { easy: 0.78, medium: 0.91, hard: 0.98, nightmare: 1.04 },
+      // Slinger moved from (6,3) to (6,6): behind the wall line, so it threatens
+      // the exit run rather than free-firing the whole approach. Ranged sat at
+      // 14% on hard (floor 15) when it could contest the march.
+      enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 1 }, { x: 6, y: 4 }, { x: 6, y: 6 }],
+      // Walking the party to the far edge was nearly free (90-97%). Committing
+      // to the throat now springs the ambush the story always described: two
+      // scrappers drop in BEHIND, which is what makes an all-must-escape win
+      // bite — the straggler is the one who gets caught.
+      waves: [
+        {
+          enemies: ['goblin_scrapper', 'goblin_scrapper', 'wolfpelt_runner'],
+          placement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 2, y: 4 }],
+          trigger: { on: 'door', tile: { x: 5, y: 4 } },
+        },
+      ],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
+      // Escape is weakly HP-sensitive (you are not killing them), so these run
+      // high relative to a kill-all encounter's scales — but 1.30/1.60 overshot
+      // (medium 84% -> 59%, hard 80% -> 40%), so they are not weakly sensitive
+      // either. Split the difference.
+      hpScaleOverride: { easy: 0.88, medium: 1.10, hard: 1.28, nightmare: 1.70 },
     },
-    // e5 — The Lantern Court: the Goblin King, kept alive by his shaman.
+
+    // e5 — The Lantern Court (boss). Kill-target: only Grubnash must fall.
+    // The shaman still heals him, so ignoring her is a real gamble rather than
+    // a scripted "kill the healer first" — that telegraph is retired.
     e5: {
       level: 5,
+      terrain: {
+        theme: 'cave',
+        blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 6 }, { x: 2, y: 1 }],
+      },
+      objective: {
+        text: 'Bring down King Grubnash',
+        win: [{ kind: 'units_dead', enemyKeys: ['king_grubnash'] }],
+      },
       enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_scrapper'],
-      // Enemies start one tile CLOSER. The opposite failure to e4: at a 5.5-tile gap a
-      // melee party crossed open ground under fire and arrived shattered — melee 23%
-      // at medium, a 77-point spread. Closing the gap gives melee a fight instead of
-      // a march: melee 23% -> 95%, spread 77 -> 38.
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 2 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.00, nightmare: 1.13 },
+      hpScaleOverride: { easy: 0.72, medium: 0.88, hard: 1.00, nightmare: 1.13 },
     },
   },
 
@@ -186,7 +265,7 @@ export const lanternCampaign: CampaignDefinition = {
     },
     e3_pre: {
       kind: 'encounter', encounter: 'e3',
-      preText: 'The pack bursts from the trees — goblins in wolf pelts, sprinting on all fours, coming from three directions at once. The pelts have button eyes sewn on. The daggers are real. Keep the party tight or be picked apart!',
+      preText: 'The pack bursts from the trees — goblins in wolf pelts, sprinting on all fours, coming from three directions at once. The pelts have button eyes sewn on. The daggers are real.\n\nAnd they keep howling for friends. You will not clear this hollow, {mainName} — you only have to still be standing when they lose their nerve. Put the trees at your back and HOLD.',
       next: 'lv4',
     },
     lv4: { kind: 'levelup', level: 4, next: 'cave_approach' },
@@ -197,18 +276,18 @@ export const lanternCampaign: CampaignDefinition = {
     },
     e4_pre: {
       kind: 'encounter', encounter: 'e4',
-      preText: 'The snoring stops. An orc bruiser fills the cave mouth like a boulder with shoulders, and he does not intend to move. Scrappers slip along the walls to surround you in the cramped dark.',
+      preText: 'The snoring stops. An orc bruiser fills the cave mouth like a boulder with shoulders, and he does not intend to move — so do not waste the evening trying to make him.\n\nThe gap beside him is barely wide enough for one. Scrappers slip along the walls to catch you in the squeeze. Get the whole party through to the far side, {mainName}, and let the doorman keep his door.',
       next: 'lv5',
     },
     lv5: { kind: 'levelup', level: 5, next: 'court_approach' },
     court_approach: {
       kind: 'story',
-      text: 'Beyond the bruiser\'s post, the cave opens into a moss-lit court. There, atop a throne of stolen chairs, sits King Grubnash — an orc twice the size of his goblin subjects, wearing the Harvest Lantern as a crown, very pleased with himself.\n\n"MINE," he announces. "Prettiest hat in the Bramblewood."\n\n"{mainName}," whispers your companion, "watch the shaman by the throne. As long as it stands, the King will not fall."',
+      text: 'Beyond the bruiser\'s post, the cave opens into a moss-lit court. There, atop a throne of stolen chairs, sits King Grubnash — an orc twice the size of his goblin subjects, wearing the Harvest Lantern as a crown, very pleased with himself.\n\n"MINE," he announces. "Prettiest hat in the Bramblewood."\n\n"{mainName}," whispers your companion, "it is the crown we came for, not the court. Drop the King and the rest of this lot will scatter — but mind the shaman by the throne. Every wound you open, she closes."',
       next: 'e5_pre',
     },
     e5_pre: {
       kind: 'encounter', encounter: 'e5',
-      preText: 'King Grubnash rises, lantern-crown blazing. His moss shaman begins to chant, ready to knit the King\'s wounds closed. Bring down the shaman first — or the King will outlast you!',
+      preText: 'King Grubnash rises, lantern-crown blazing. His moss shaman begins to chant, ready to knit the King\'s wounds closed.\n\nOnly the King has to fall. Silence the shaman first and take your time, or throw everything at the throne and hope he drops before she can mend him — your call, {mainName}.',
       next: 'finale',
     },
     finale: {

@@ -61,16 +61,32 @@ e3   L3   hard      melee      52%    [ 45%, 65%]    23
 RESULT: PASS | FAIL
 ```
 
-- **Acceptance = per encounter/difficulty: MEAN across the 3 representative
-  parties in band AND no party below its floor.** Individual parties out of
-  band are fine (flavored encounters have inherent ±30-pt party spread).
+- **THE DIFFICULTY PHILOSOPHY (owner, 2026-08-17 — read this before tuning
+  anything).** The bar is Gloomhaven's: easy is beatable with basic strategy
+  by ANY reasonable comp; comp tolerance narrows with difficulty; **nightmare
+  may legitimately be beatable only with the right comps and strategies.**
+  A comp having a rough encounter is IDENTITY — the campaign-level
+  comp-building metagame (a tool that cracks one encounter and dead-weights
+  the next is a feature) is the game. A comp hitting a retry WALL is a bug,
+  because the party is locked for the whole campaign and cannot re-comp
+  around it. Floors mean "no walls", never "comp-neutral". **Do NOT tune an
+  encounter's identity away to equalize parties** — if satisfying a floor
+  requires sanding off the carve/wave/objective that makes the fight itself,
+  flag it instead of flattening it.
 
-  | difficulty | mean band | per-party floor |
-  |---|---|---|
-  | easy | 80–95% | 60% |
-  | medium | 65–80% | 40% |
-  | hard | 45–65% | 15% |
-  | nightmare | 25–45% | 0% |
+- **Acceptance = per encounter/difficulty: MEAN in band, no party below its
+  floor, and (nightmare only) at least one party ≥ 40% (solvability).**
+
+  | difficulty | mean band | per-party floor | extra |
+  |---|---|---|---|
+  | easy | 80–95% | 60% | — |
+  | medium | 65–80% | 35% | — |
+  | hard | 45–65% | 10% | — |
+  | nightmare | 15–45% | none | best party ≥ 40% |
+
+  Nightmare's wide mean band is deliberate: with real comp differentiation
+  the mean may sit low while the right comp wins plenty. The solvability
+  check is the binding constraint there.
 
 - **The `└ reasons` line is the mechanism check** (printed for smoke,
   out-of-band, or stalling cells; always in `--json`). Verify the fight is
@@ -113,10 +129,41 @@ Expected effect sizes (measured, 2026-08):
   melee runner for a ranged slinger to punish standoffs made spread WORSE
   (43→82 pts): ranged enemies punish the melee party more.
 
+Objective-type levers (measured during the D2 Lantern retrofit, 2026-08-17):
+
+- **Survive objectives are nearly hpScale-immune** — tankier attackers live
+  longer but don't kill faster. The levers are ROUND COUNT (very coarse:
+  ~25 pts per round) and WAVE SIZE (~10–15 pts per unit). Log a calibration
+  walk in the encounter comment; expect to bracket.
+- **Escape objectives are semi-hpScale-sensitive** — you fight through, so HP
+  matters, but less than in a kill-all. Expect scales well above kill-all
+  norms, and watch for overshoot.
+- **Kill-target bosses must be fights on their own.** Once the chaff is
+  ignorable, the target's own HP pool is nearly the whole difficulty;
+  `undying` makes the kill need follow-through instead of one alpha window.
+- **⚠ Walls between melee and a RANGED enemy shield the shooter and tax only
+  the crosser.** Three successive e2 layouts did this; melee fell 52% → 35%
+  → 4% while ranged sat near 100%. Cover belongs on the APPROACH lane so the
+  party advances behind it — never screening the enemy's shooters.
+
 Order of preference: `hpScaleOverride` → enemy maxHealth (breakpoint-aware)
 → count/composition (measured) → AC → placement (for spread). **Changing
 placement invalidates the encounter's `hpScaleOverride` — re-tune HP after
 moving anyone, then re-verify at 200 games.**
+
+**Anti-oscillation discipline (added after the D2 Lantern loop failed to
+converge):**
+
+1. **One lever per battery.** Moving round count AND wave size AND walls,
+   then reading one battery, tells you nothing about any of them. The e3
+   walk (99→51→90→64→88) is what multi-lever "bracketing" looks like.
+2. **200 games/cell has ±7-pt noise.** Never chase a delta under ~10 pts
+   with another content change; re-run first if it matters.
+3. **Log the calibration walk in the encounter's comment** (lever → mean) so
+   the next session brackets instead of rediscovering.
+4. **Two overshoots in a row on the same lever = wrong lever.** Stop and
+   reread the mechanism (usually it's a breakpoint cliff or a spread problem
+   wearing a mean costume).
 
 Campaign-grammar knobs (A2–A7 content) are legal too, with design intent in
 mind: wave trigger rounds and sizes, room garrison composition, door mode,
@@ -124,6 +171,18 @@ hazard placement, escort HP/route, objective deadlines, `aiHints` hunts
 (NOTE: hints attach to an enemy DEFINITION key — every instance of that key
 hunts; give hunters their own key). Goals and boons are OUTSIDE the loop:
 balance without boons (they're bonuses on top), goals never gate acceptance.
+
+## Known measurement limits (do not over-trust the floors)
+
+The three representative parties fight with **default loadouts** (each class's
+first special/passive option — `choicesForLevel` in campaignSim.ts). Nobody
+optimizes a loadout for the encounter. So "ranged 10%" means "ONE default
+ranged build 10%" — the comp might be fine with the right picks, and a
+passing comp might be carried by a lucky default. Before declaring a
+nightmare cell unsolvable or a floor breached, probe 1–2 alternative
+loadouts with `--passives` (specials require a small code change — flag if
+needed). The owner's design intent (fears/roots crack one encounter, dead
+weight in the next) lives exactly in the space this harness does not sweep.
 
 ## What you may not touch
 
