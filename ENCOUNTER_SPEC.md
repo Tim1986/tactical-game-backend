@@ -269,6 +269,21 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   - a tuning playbook: the legal knobs (HP, AC, counts, placement, rounds,
     hpScaleOverride) with expected effect sizes.
 - Fable reviews once per campaign (spot-check, not in the per-encounter loop).
+- IMPLEMENTED SEMANTICS (A8, recorded per protocol):
+  - Operator manual: `CAMPAIGN_BALANCING.md` (operator = Opus 5, pinned in
+    CAMPAIGN_ROADMAP.md). Loop: smoke → full battery → PASS/FAIL → tune by
+    lever → re-smoke. Tools: campaignSim.ts (bands), campaignTune.ts
+    (hpScaleOverride midpoint search), spreadSweep.ts (start-distance sweep).
+  - Pitfalls-as-code: full batteries REFUSE without a smoke pass on a
+    content-identical campaign (SHA marker in `.sim-smoke/`, gitignored);
+    full runs self-caffeinate on macOS; objective kinds outside
+    BRAIN_MODELED_WIN/LOSS throw at cell start; validation errors auto-FAIL;
+    >10% draws flag a stall.
+  - Mechanism check: MatchResult carries the MATCH_OVER reason; each cell
+    reports a "W:/L:/DRAW" reason histogram (printed when it matters, always
+    in --json) so the operator can verify a fight tests its design pressure.
+  - `--json <path>` writes machine-readable results (pass, outOfBand, cells
+    with reasons) for reports and cross-run comparison.
 
 ---
 

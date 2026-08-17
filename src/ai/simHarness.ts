@@ -186,6 +186,9 @@ export interface MatchResult {
   deaths: { slug: string; turn: number }[];
   /** Slugs of units whose once-per-game special was spent (see caveat in code). */
   specialsSpent: string[];
+  /** CAMPAIGN (A8): the objective reason the match ended with ("Your charge
+   *  has fallen"), from the MATCH_OVER event. Undefined for arena/kill-all. */
+  reason?: string;
 }
 
 export interface SimResult {
@@ -407,7 +410,7 @@ export function runMatch(
     }
   };
 
-  const finish = (winnerId: string | null): MatchResult => {
+  const finish = (winnerId: string | null, reason?: string): MatchResult => {
     const survivors = state.units.filter((u) => u.isAlive);
     const p1Surv = survivors.filter((u) => u.ownerPlayerId === p1Id);
     const p2Surv = survivors.filter((u) => u.ownerPlayerId === p2Id);
@@ -447,6 +450,7 @@ export function runMatch(
       firstBloodTurn: deaths.length > 0 ? deaths[0].turn : null,
       deaths,
       specialsSpent,
+      ...(reason ? { reason } : {}),
     };
   };
 
@@ -571,7 +575,8 @@ export function runMatch(
     state = result.updatedState;
     recordDeaths();
     if (result.matchOver) {
-      return finish(result.winnerId);
+      const over = result.events.find((e) => e.type === 'MATCH_OVER' && e.message);
+      return finish(result.winnerId, over?.message);
     }
   }
 

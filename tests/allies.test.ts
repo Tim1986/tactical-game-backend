@@ -168,3 +168,26 @@ describe('A5 — runtime build', () => {
     expect(() => buildEncounterState(bad, encKey(), party, choices, 1, 'medium', 'H', 'E')).toThrow('unknown ally');
   });
 });
+
+describe('A8 — harness surfaces the objective reason', () => {
+  it('an escort loss reaches MatchResult.reason', async () => {
+    const { runMatch } = await import('../src/ai/simHarness.js');
+    const { buildAbilityMap } = await import('../src/ai/defaultData.js');
+    const { OptimalBrain } = await import('../src/ai/aiBrain.js');
+    const c = JSON.parse(JSON.stringify(lanternCampaign));
+    const encKey = Object.keys(c.encounters)[0];
+    // A 1-HP VIP parked next to enemy spawns: dies fast, loss reason fires.
+    c.encounters[encKey].allies = {
+      vip: { name: 'Doomed', baseClass: 'cleric', maxHealth: 1, abilities: [], behavior: { mode: 'hold' }, placement: { x: 5, y: 3 } },
+    };
+    c.encounters[encKey].objective = {
+      text: 'x', win: [{ kind: 'all_enemies_dead' }], loss: [{ kind: 'ally_dead', allyKey: 'vip' }],
+    };
+    const party = ['fighter', 'cleric', 'ranger', 'rogue'];
+    const stateFactory = () => buildEncounterState(c, encKey, party, [undefined, undefined, undefined, undefined], 1, 'nightmare', 'H', 'E').state;
+    const r = runMatch(party, c.encounters[encKey].enemies, buildAbilityMap(), new OptimalBrain(), new OptimalBrain(), {
+      p1Id: 'H', p2Id: 'E', forceFirstPlayerId: 'H', stateFactory,
+    });
+    expect(r.reason).toBeTruthy(); // whichever side wins, the objective names why
+  });
+});
