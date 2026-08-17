@@ -174,7 +174,7 @@ export function simEncounterCell(
       );
       return state;
     };
-    const r = runMatch(partySlugs, enc.enemies, abilityMap, brain1, brain2, {
+    const r = runMatch(partySlugs, enc.enemies ?? enc.rooms?.[0]?.enemies ?? [], abilityMap, brain1, brain2, {
       p1Id: HUMAN, p2Id: ENEMY,
       forceFirstPlayerId: HUMAN, // campaign matches are always human-first
       stateFactory,

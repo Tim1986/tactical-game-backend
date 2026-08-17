@@ -300,8 +300,11 @@ export function buildEncounterState(
   if (enc.rooms && enc.rooms.length === 0) throw new Error(`Encounter ${encounterId}: rooms must not be empty`);
   const room0 = enc.rooms?.[0];
   const effTerrainSpec: TerrainSpec | undefined = room0 ? room0.terrain : enc.terrain;
-  const effEnemies = room0 ? room0.enemies : enc.enemies;
-  const effEnemyPlacement = room0 ? room0.enemyPlacement : enc.enemyPlacement;
+  if (!room0 && !enc.enemies) {
+    throw new Error(`Encounter ${encounterId}: needs either enemies+enemyPlacement or rooms`);
+  }
+  const effEnemies = room0 ? room0.enemies : enc.enemies!;
+  const effEnemyPlacement = room0 ? room0.enemyPlacement : enc.enemyPlacement!;
   const effNoSpecials = room0 ? !!room0.noSpecials : !!enc.noSpecials;
   // The four extreme corners are removed from the board (60-tile cross) —
   // fail fast on authoring mistakes instead of erroring mid-match.

@@ -67,7 +67,9 @@ describe('buildEncounterState', () => {
     for (const campaign of Object.values(CAMPAIGNS)) {
       for (const encId of Object.keys(campaign.encounters)) {
         const { state } = buildEncounterState(campaign, encId, party, choices, campaign.encounters[encId].level, 'nightmare', 'h', 'e');
-        expect(state.units.length).toBe(4 + campaign.encounters[encId].enemies.length);
+        const enc0 = campaign.encounters[encId];
+        const opening = enc0.rooms ? enc0.rooms[0].enemies : enc0.enemies!;
+        expect(state.units.length).toBe(4 + opening.length);
       }
     }
   });
@@ -120,9 +122,16 @@ describe('campaign content sanity (all registered campaigns)', () => {
       }
       // Encounter enemies + placements are consistent
       for (const [encId, enc] of Object.entries(campaign.encounters)) {
-        expect(enc.enemyPlacement.length).toBe(enc.enemies.length);
+        const encEnemies = enc.rooms ? enc.rooms[0].enemies : enc.enemies!;
+        const encPlacement = enc.rooms ? enc.rooms[0].enemyPlacement : enc.enemyPlacement!;
+        expect(encPlacement.length).toBe(encEnemies.length);
         expect(enc.playerPlacement.length).toBe(4);
-        for (const key of enc.enemies) expect(campaign.enemies[key], `${campaign.slug}:${encId}:${key}`).toBeDefined();
+        const allKeys = [
+          ...encEnemies,
+          ...(enc.rooms ?? []).flatMap((r) => [...r.enemies, ...(r.waves ?? []).flatMap((w) => w.enemies)]),
+          ...(enc.waves ?? []).flatMap((w) => w.enemies),
+        ];
+        for (const key of allKeys) expect(campaign.enemies[key], `${campaign.slug}:${encId}:${key}`).toBeDefined();
       }
     }
   });

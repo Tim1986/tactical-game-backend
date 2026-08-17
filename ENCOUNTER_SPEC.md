@@ -137,6 +137,33 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   - A `units_dead` objective naming an enemy left behind via an 'always'
     door counts it as gone (the spec's "designers pair 'always' doors with
     objectives that don't reward skipping" rule carries the weight here).
+  - ⚠ **OPEN BUG — mid-turn room transition orphans the rest of the turn**
+    (found 2026-08-17, first content to use `rooms` was the D2 Goblinopolis
+    retrofit; nothing shipped exercised this path before).
+    A turn is planned as MOVE + ABILITY together. If the MOVE ends on an exit
+    door, `maybeRoomTransition` fires **mid-turn** and teleports the unit to
+    the next room's `entryTiles`. The already-queued ABILITY is then resolved
+    from the NEW position and throws — reproduced as `Target out of range`
+    11 times in 300 matches on goblinopolis e4:
+    ```
+    MOVE  -> {x:7,y:4}          # an exitDoor of room 0
+    USE_ABILITY heal -> {x:6,y:3}   # target of the OLD room; unit is now in room 1
+    ```
+    Effects: campaignSim counts these as validation errors, which auto-FAIL a
+    battery — so **no rooms encounter can currently be balance-verified**. In
+    live play the same shape would let a player step through a door and then
+    have their queued ability fail or mis-target, and the match screen's
+    dry-run would desync from the engine (COMBAT_AUDIT F2).
+    Candidate fixes (engine call, Fable's lane — A4 was Fable's step):
+    (a) a room transition ENDS the acting unit's turn — drop remaining queued
+        actions silently rather than erroring (probably correct: the door is a
+        deliberate commitment);
+    (b) defer the transition to end-of-turn so the unit finishes acting in the
+        room it started in;
+    (c) teach the brain not to plan post-move actions when the move ends on a
+        door tile (weakest — it fixes the AI but not a human player).
+    Whichever lands needs the four-surfaces treatment: engine + brain + sim +
+    the match screen's dry-run.
 
 ## A5 — AI allies & escorts
 

@@ -199,10 +199,15 @@ export interface CampaignEnemy {
 export interface CampaignEncounter {
   /** Player level when this encounter is normally reached (drives sims and party stats). */
   level: number;
-  /** Keys into CampaignDefinition.enemies, 1–4 entries. */
-  enemies: string[];
-  /** ABSOLUTE board coordinates (8×8) — no mirroring is applied, unlike buildInitialState. */
-  enemyPlacement: BoardPosition[];
+  /** Keys into CampaignDefinition.enemies, 1–4 entries.
+   *  OPTIONAL only when `rooms` is present — rooms[0] supplies the opening
+   *  board and these are ignored entirely (ENCOUNTER_SPEC.md A4). Exactly one
+   *  of (enemies+enemyPlacement) or rooms must be given; the build throws
+   *  otherwise. */
+  enemies?: string[];
+  /** ABSOLUTE board coordinates (8×8) — no mirroring is applied, unlike
+   *  buildInitialState. Optional under the same rule as `enemies`. */
+  enemyPlacement?: BoardPosition[];
   /** ABSOLUTE coordinates for the player's 4 units, in party order (main first). */
   playerPlacement: BoardPosition[];
   /** Per-difficulty enemy HP multiplier override (default CAMPAIGN_HP_SCALE). */

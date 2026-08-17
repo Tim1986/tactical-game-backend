@@ -68,6 +68,10 @@ function main() {
     process.exit(1);
   }
   const enc = campaign.encounters[encId];
+  if (!enc.enemyPlacement) {
+    console.error(`${encId} is a multi-room encounter — start-distance sweeping only applies to single-room encounters (rooms carry their own placements).`);
+    process.exit(1);
+  }
   const orig = enc.enemyPlacement.map((p) => ({ ...p }));
   const centroid = {
     x: Math.round(enc.playerPlacement.reduce((s, p) => s + p.x, 0) / enc.playerPlacement.length),

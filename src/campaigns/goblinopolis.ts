@@ -42,9 +42,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
       nightmare: { acBonus: 1 },
     },
     bellrunner: {
-      // A goblin courier who does nothing but sprint with stolen goods. Fast, fragile.
+      // A goblin courier who does nothing but sprint with stolen goods. Fast,
+      // and fragile RELATIVE to the orcs (47-62) — but not one-shot fragile:
+      // at 35 HP he died to whoever reached him first, which made e3's clock
+      // the only difficulty lever, and a clock is one number shared by all four
+      // difficulties. At 52 he takes a focused turn or two, so hpScale bites.
       baseClass: 'rogue', name: 'Bellrunner',
-      maxHealth: 35, armorClass: 8, movementRange: 5,
+      maxHealth: 52, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
     },
     sparkcap_slinger: {
@@ -84,60 +88,120 @@ export const goblinopolisCampaign: CampaignDefinition = {
     },
     warboss_gurm: {
       // BOSS. A huge orc who swapped both towns' bells to start a war he could rule.
+      // D2: as a KILL-TARGET the other three become ignorable, so he needs to
+      // be a fight on his own (same lesson as Lantern's Grubnash, who was burst
+      // down in 17 turns at 80 HP). The round-9 deadline is his differentiator —
+      // no undying here, the clock is what stops you taking your time.
       baseClass: 'barbarian', name: 'Warboss Gurm',
-      maxHealth: 84, armorClass: 10, specialSlug: 'shockwave',
+      maxHealth: 105, armorClass: 10, specialSlug: 'shockwave',
       passiveFlags: ['immovable'],
-      nightmare: { hpBonus: 6 },
+      nightmare: { hpBonus: 8 },
     },
   },
 
   encounters: {
-    // e1 — Bridge Ambush: a tutorial pincer, two goblin stragglers front and rear.
+    // ═══ D2 RETROFIT (2026-08-17) ═══════════════════════════════════════════
+    // Palette: e1 kill-all · e2 carve · e3 race · e4 rooms · e5 boss.
+    // Five distinct types, none consecutive (CAMPAIGNS.md §8). Goblinopolis is
+    // the DOORS/ROOMS + RACE showcase of the free three.
+    // ════════════════════════════════════════════════════════════════════════
+
+    // e1 — Bridge Ambush (kill-all). Tutorial: no terrain, no objective.
     e1: {
       level: 1,
-      // Composition: bellrunner replaced with sparkcap_slinger (2026-08-06). A full
-      // start-distance sweep showed ranged at 18-35% at EVERY offset with a move-5
-      // bellrunner in the pincer — the flanker closed before ranged could establish
-      // position. Slinger (ranged/stationary) balances the spread without breaking
-      // the pincer shape.
       enemies: ['bluecap_scout', 'sparkcap_slinger', 'bluecap_scout'],
       enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
       noSpecials: true,
-      // Tutorial softening; easy is allowed above band (near-certain first win).
       hpScaleOverride: { easy: 1.13, medium: 1.46, hard: 1.54, nightmare: 1.76 },
     },
-    // e2 — Blue-Ribbon Tollgate: an orc guard + orc bruiser up front, goblin fire behind.
+
+    // e2 — Blue-Ribbon Tollgate (carve). A barricade line with the toll gap on
+    // the direct lane: melee walks straight through, ranged fights for sight.
+    // Cover deliberately sits ON THE APPROACH, never screening the slinger —
+    // the lesson that cost three passes on Lantern e2.
     e2: {
       level: 2,
+      terrain: {
+        blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }],
+      },
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'sparkcap_slinger'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 4, y: 3 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.19, medium: 1.37, hard: 1.50, nightmare: 1.50 },
+      hpScaleOverride: { easy: 1.08, medium: 1.22, hard: 1.50, nightmare: 1.50 },
     },
-    // e3 — Amrun Ferry Relay: a four-role formation with an orc healer in the back.
+
+    // e3 — Amrun Ferry Relay (race). The Bellrunner is carrying the clapper to
+    // the ferry: drop HIM before it casts off. Three guards exist only to cost
+    // you the turns you do not have.
     e3: {
       level: 3,
-      enemies: ['bluecap_pathfinder', 'bellrunner', 'kettlehelm_orc', 'patchcoat_mender'],
-      enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 5 }, { x: 3, y: 2 }, { x: 4, y: 1 }],
-      playerPlacement: [{ x: 3, y: 6 }, { x: 4, y: 6 }, { x: 2, y: 5 }, { x: 5, y: 5 }],
-      hpScaleOverride: { easy: 0.73, medium: 0.93, hard: 0.97, nightmare: 1.13 },
+      objective: {
+        text: 'Stop the Bellrunner before the ferry casts off (4 rounds)',
+        win: [{ kind: 'units_dead', enemyKeys: ['bellrunner'] }],
+        loss: [{ kind: 'round_reached', round: 4 }],
+      },
+      terrain: {
+        // The ferry-house wall. Blocks the shooting lane to the courier without
+        // adding much walking distance — you go round either end.
+        blocked: [{ x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }],
+      },
+      enemies: ['bellrunner', 'bluecap_pathfinder', 'kettlehelm_orc', 'patchcoat_mender'],
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 5, y: 6 }, { x: 6, y: 4 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
+      // NOTE: hpScale is nearly inert on this encounter — the target is a
+      // 35-HP courier who dies to any unit that reaches him, so difficulty
+      // lives entirely in the clock and the screen. Left near default.
+      hpScaleOverride: { easy: 0.73, medium: 0.93, hard: 1.28, nightmare: 1.68 },
     },
-    // e4 — The Bell-Arch: an immovable orc warden blocks the city gate, goblins flank.
+
+    // e4 — The Bell-Arch (rooms). THE flagship: the gate is room 1, the city
+    // behind it is room 2. Clear the arch, step through the door, and the board
+    // re-carves with the party entering from the gate edge — HP, cooldowns and
+    // the round counter all carry across.
     e4: {
       level: 4,
-      enemies: ['ironbell_warden', 'sparkcap_slinger', 'bellrunner', 'bluecap_scout'],
-      enemyPlacement: [{ x: 4, y: 2 }, { x: 6, y: 1 }, { x: 2, y: 1 }, { x: 5, y: 4 }],
-      playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-      hpScaleOverride: { easy: 0.84, medium: 0.91, hard: 1.02, nightmare: 1.13 },
+      rooms: [
+        {
+          // Room 1: the arch itself. Wall stubs make it a gate, not a field.
+          terrain: { blocked: [{ x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 6 }] },
+          enemies: ['ironbell_warden', 'sparkcap_slinger'],
+          enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
+          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          doorMode: 'on_clear',
+        },
+        {
+          // Room 2: inside the ribbon-strung city. The party enters at the gate
+          // edge and the garrison is already formed up.
+          terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+          enemies: ['kettlehelm_orc', 'bellrunner', 'bluecap_scout'],
+          enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 1 }],
+          entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+        },
+      ],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
+      hpScaleOverride: { easy: 0.84, medium: 0.95, hard: 1.02, nightmare: 1.13 },
     },
-    // e5 — Gurm's War-Camp: the boss orc, kept standing by his mender, ringed by guards.
+
+    // e5 — Gurm's War-Camp (boss, on a clock). Kill-target on Gurm, with the
+    // story's own threat as the loss condition: he rings the last bell standing
+    // and the war starts. Retires the boss+healer gate — the mender is a
+    // problem you may solve or outrun, not a scripted prerequisite.
     e5: {
       level: 5,
+      terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+      objective: {
+        text: 'Bring down Warboss Gurm before he rings the bell (9 rounds)',
+        win: [{ kind: 'units_dead', enemyKeys: ['warboss_gurm'] }],
+        loss: [{ kind: 'round_reached', round: 9 }],
+      },
+      // Court pulled two tiles closer. At a 6-tile gap melee sat at 20-39%
+      // (walled at easy/medium) while ranged plinked Gurm at 100% — start
+      // distance is the dominant spread driver and a far start bricks melee.
       enemies: ['warboss_gurm', 'patchcoat_mender', 'kettlehelm_orc', 'bluecap_pathfinder'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
+      enemyPlacement: [{ x: 4, y: 3 }, { x: 5, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.80, medium: 0.87, hard: 0.97, nightmare: 0.91 },
+      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.17, nightmare: 1.18 },
     },
   },
 

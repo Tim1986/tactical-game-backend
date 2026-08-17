@@ -44,6 +44,9 @@ const VARIANTS: Variant[] = [
 function main() {
   const games = parseInt(process.argv[2] ?? '60', 10);
   const enc = CAMPAIGNS.lantern.encounters.e3;
+  if (!enc.enemies || !enc.enemyPlacement) {
+    throw new Error('e3Variants sweeps a single-room encounter; lantern e3 now uses rooms.');
+  }
   const origEnemies = [...enc.enemies];
   const origEnemyPl = [...enc.enemyPlacement];
   const origPlayerPl = [...enc.playerPlacement];
