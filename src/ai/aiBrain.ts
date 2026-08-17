@@ -566,6 +566,14 @@ function scoreEffectsOnTarget(
         const effective = Math.min(raw, target.currentHealth);
         if (isEnemy) {
           s += effective * WEIGHTS.damage;
+          // CAMPAIGN objective (A3): a named kill-target (units_dead) draws the
+          // party's focus — extra weight on damaging and finishing it.
+          const objK = ctx.state.objective;
+          if (objK && caster.ownerPlayerId === objK.partyId
+            && objK.win.some((w) => w.kind === 'units_dead' && w.unitIds.includes(target.instanceId))) {
+            s += effective * WEIGHTS.damage * 0.5;
+            if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.5;
+          }
           if (effective > 0) {
             s -= thornsCost(projectedPos);
             s += siphonHeal * WEIGHTS.heal; // Siphon: leech 1 per landing damage effect
@@ -1322,6 +1330,34 @@ function positionScore(
     s -= BURNING_DAMAGE_PER_STACK * WEIGHTS.burningFactor * WEIGHTS.selfDamage;
   }
 
+  // CAMPAIGN objective (A3): tile conditions shape positioning.
+  //  - Party side: units the condition covers are pulled to the marked tiles
+  //    (a big on-tile bonus + a distance gradient toward the nearest tile).
+  //  - Enemy side: standing ON a marked tile denies it (tiles are win
+  //    conditions for the party; a body on one blocks the landing).
+  const objP = state.objective;
+  if (objP) {
+    const tileWins = objP.win.filter((w) => w.kind === 'units_at_tiles');
+    if (tileWins.length > 0) {
+      if (unit.ownerPlayerId === objP.partyId) {
+        for (const w of tileWins) {
+          if (w.kind !== 'units_at_tiles') continue;
+          const applies = w.scope === 'any' || w.scope === 'all'
+            || (w.scope === 'main' && unit.instanceId === objP.mainId);
+          if (!applies) continue;
+          const onTile = w.tiles.some((t) => t.x === pos.x && t.y === pos.y);
+          const nearest = Math.min(...w.tiles.map((t) => manhattanDistance(pos, t)));
+          s += onTile ? 25 : -nearest * 1.2;
+        }
+      } else {
+        for (const w of tileWins) {
+          if (w.kind !== 'units_at_tiles') continue;
+          if (w.tiles.some((t) => t.x === pos.x && t.y === pos.y)) s += 15;
+        }
+      }
+    }
+  }
+
   // Danger term (scalable: the cornered-unit fallback zeroes this out when
   // no reachable tile is meaningfully safer than any other).
   if (dangerScale > 0) {
@@ -1479,6 +1515,20 @@ export function planBestTurn(
       if (d > hi) hi = d;
     }
     if (hi - lo < WEIGHTS.corneredDangerSpread) dangerScale = 0;
+  }
+
+  // CAMPAIGN objective (A3): posture follows the objective.
+  //  - Party surviving to a round: caution up (living IS winning).
+  //  - Party racing a deadline: caution down (stalling IS losing).
+  //  - An enemy unit the party must kill (units_dead): self-preservation up.
+  const obj = state.objective;
+  if (obj && dangerScale > 0) {
+    if (myPlayerId === obj.partyId) {
+      if (obj.win.some((w) => w.kind === 'round_reached')) dangerScale *= 1.5;
+      if (obj.loss.some((l) => l.kind === 'round_reached')) dangerScale *= 0.6;
+    } else if (obj.win.some((w) => w.kind === 'units_dead' && w.unitIds.includes(unit.instanceId))) {
+      dangerScale *= 1.4;
+    }
   }
 
   const pScore = (pos: BoardPosition, attacking = false) =>

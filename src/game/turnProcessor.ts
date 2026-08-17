@@ -208,7 +208,7 @@ function beginTurnInternal(
     // Check if unit died from a status tick
     const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
     if (afterTickWin.isOver) {
-      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
+      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined, ...(afterTickWin.reason ? { message: afterTickWin.reason } : {}) });
       return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
     }
   } else if (actingUnit.statusEffects.some((se) => se.slug === 'frozen')) {
@@ -227,7 +227,7 @@ function beginTurnInternal(
     });
     const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
     if (afterTickWin.isOver) {
-      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined });
+      events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined, ...(afterTickWin.reason ? { message: afterTickWin.reason } : {}) });
       return { success: true, updatedState: ws, events, matchOver: true, winnerId: afterTickWin.winnerId };
     }
   }
@@ -274,7 +274,7 @@ function applyGameActionInternal(
 
   const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (winCheck.isOver) {
-    events.push({ type: 'MATCH_OVER', winnerId: winCheck.winnerId ?? undefined });
+    events.push({ type: 'MATCH_OVER', winnerId: winCheck.winnerId ?? undefined, ...(winCheck.reason ? { message: winCheck.reason } : {}) });
     return { matchOver: true, winnerId: winCheck.winnerId };
   }
   return { matchOver: false, winnerId: null };
@@ -385,7 +385,7 @@ function finalizeTurnInternal(
   const endTurnWinCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (endTurnWinCheck.isOver) {
     matchOver = true; winnerId = endTurnWinCheck.winnerId;
-    events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined });
+    events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined, ...(endTurnWinCheck.reason ? { message: endTurnWinCheck.reason } : {}) });
   }
 
   delete ws.turnContext;
@@ -675,7 +675,7 @@ function processLegacyTurn(
     const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
     if (winCheck.isOver) {
       matchOver = true; winnerId = winCheck.winnerId;
-      events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined });
+      events.push({ type: 'MATCH_OVER', winnerId: winnerId ?? undefined, ...(winCheck.reason ? { message: winCheck.reason } : {}) });
       break;
     }
   }

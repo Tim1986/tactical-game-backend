@@ -44,6 +44,43 @@ export interface UnitInstance {
 }
 
 /**
+ * CAMPAIGN-ONLY resolved objective (ENCOUNTER_SPEC A3). Built by
+ * buildEncounterState from the authored ObjectiveSpec with every reference
+ * resolved to instance ids. Arena states never carry this — checkWinCondition
+ * falls back to classic kill-all when absent (the arena-untouched invariant).
+ */
+export type ResolvedWinCondition =
+  | { kind: 'all_enemies_dead' }
+  /** All listed enemy instances dead (boss + adds resolved from enemyKeys). */
+  | { kind: 'units_dead'; unitIds: string[] }
+  /** Survive: satisfied once round `round` has COMPLETED (roundNumber > round). */
+  | { kind: 'round_reached'; round: number }
+  | { kind: 'units_at_tiles'; scope: 'any' | 'main' | 'all'; tiles: BoardPosition[]; simultaneous?: boolean }
+  /** [A5] An escort instance standing on one of the tiles. */
+  | { kind: 'ally_at_tiles'; unitIds: string[]; tiles: BoardPosition[] };
+
+export type ResolvedLossCondition =
+  /** [A5] Any listed escort instance dead. */
+  | { kind: 'ally_dead'; unitIds: string[] }
+  /** Deadline: round `round` completed without a win = loss. */
+  | { kind: 'round_reached'; round: number }
+  | { kind: 'main_dead' };
+
+export interface ObjectiveState {
+  /** The party's (human's) player id and the opposing side's. */
+  partyId: UUID;
+  enemyId: UUID;
+  /** The main character's instance id (scope 'main' conditions). */
+  mainId: UUID;
+  /** Player-facing objective line for the banner. */
+  text: string;
+  /** ANY satisfied → party wins. */
+  win: ResolvedWinCondition[];
+  /** ANY satisfied → party loses. Party wipe is always an implicit loss. */
+  loss: ResolvedLossCondition[];
+}
+
+/**
  * CAMPAIGN-ONLY static terrain (ENCOUNTER_SPEC A2). Arena states never carry
  * this field — every consumer treats `undefined` as "no terrain" and behaves
  * exactly as before (the arena-untouched invariant).
@@ -81,6 +118,8 @@ export interface MatchState {
   initiative: InitiativeState;
   /** CAMPAIGN-ONLY board terrain — absent in every arena match (see TerrainState). */
   terrain?: TerrainState;
+  /** CAMPAIGN-ONLY objective — absent in every arena match (see ObjectiveState). */
+  objective?: ObjectiveState;
   /**
    * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
    * order (one entry per roll attempt; multi-hit attacks consume one entry per

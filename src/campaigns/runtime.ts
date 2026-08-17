@@ -152,7 +152,11 @@ export interface EncounterBuild {
  * guard.
  */
 const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
-  { step: 'A3', name: 'objective', used: (_c, e) => !!e.objective },
+  { step: 'A5', name: 'objective ally conditions', used: (_c, e) =>
+    !!e.objective && (
+      e.objective.win.some((w) => w.kind === 'ally_at_tiles')
+      || (e.objective.loss ?? []).some((l) => l.kind === 'ally_dead')
+    ) },
   { step: 'A4', name: 'waves', used: (_c, e) => !!e.waves?.length },
   { step: 'A4', name: 'rooms', used: (_c, e) => !!e.rooms?.length },
   { step: 'A5', name: 'allies', used: (_c, e) => !!e.allies && Object.keys(e.allies).length > 0 },
@@ -236,13 +240,59 @@ export function buildEncounterState(
     if (i === 0 && mainName) unitNames[inst.instanceId] = mainName;
     return inst;
   });
+  const enemyIdsByKey = new Map<string, string[]>();
   const enemyUnits = enc.enemies.map((key, i) => {
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Unknown enemy key: ${key}`);
     const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, enc.enemyPlacement[i], difficulty, hpScale, enc.noSpecials);
     unitNames[inst.instanceId] = enemy.name;
+    enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
     return inst;
   });
+
+  // Resolve the authored objective (A3): enemy keys -> instance ids, main ->
+  // party slot 0; tiles validated against bounds and walls. Ally-referencing
+  // conditions are still guarded until A5.
+  let objective: import('../types/matchState.js').ObjectiveState | undefined;
+  if (enc.objective) {
+    const spec = enc.objective;
+    const checkTiles = (tiles: BoardPosition[], what: string) => {
+      for (const t of tiles) {
+        if (!isInBounds(t)) throw new Error(`Encounter ${encounterId}: ${what} tile (${t.x},${t.y}) is out of bounds`);
+        if (terrainBlocked.some((b) => b.x === t.x && b.y === t.y)) {
+          throw new Error(`Encounter ${encounterId}: ${what} tile (${t.x},${t.y}) is on a wall`);
+        }
+      }
+    };
+    const win = spec.win.map((w): import('../types/matchState.js').ResolvedWinCondition => {
+      switch (w.kind) {
+        case 'units_dead': {
+          const unitIds = w.enemyKeys.flatMap((k) => {
+            const ids = enemyIdsByKey.get(k);
+            if (!ids) throw new Error(`Encounter ${encounterId}: objective names unknown enemy key "${k}"`);
+            return ids;
+          });
+          return { kind: 'units_dead', unitIds };
+        }
+        case 'units_at_tiles':
+          checkTiles(w.tiles, 'objective');
+          return { kind: 'units_at_tiles', scope: w.scope, tiles: w.tiles, ...(w.simultaneous ? { simultaneous: true } : {}) };
+        case 'ally_at_tiles':
+          throw new Error(`Encounter ${encounterId}: ally_at_tiles is not available until roadmap A5`);
+        default:
+          return w;
+      }
+    });
+    const loss = (spec.loss ?? []).map((l): import('../types/matchState.js').ResolvedLossCondition => {
+      if (l.kind === 'ally_dead') throw new Error(`Encounter ${encounterId}: ally_dead is not available until roadmap A5`);
+      return l;
+    });
+    objective = {
+      partyId: humanId, enemyId: enemyOwnerId,
+      mainId: playerUnits[0].instanceId,
+      text: spec.text, win, loss,
+    };
+  }
 
   // L6 double-special: override every party special's cooldown in this match's
   // ability map (never mutate shared engine data).
@@ -268,6 +318,8 @@ export function buildEncounterState(
     // EncounterBuild, not MatchState.
     ...(enc.terrain && (terrainBlocked.length || terrainHazards.length)
       ? { terrain: { blocked: terrainBlocked, hazards: terrainHazards } } : {}),
+    // CAMPAIGN-ONLY objective (A3).
+    ...(objective ? { objective } : {}),
   };
   return { state, unitNames, cooldownOverrides, ...(enc.terrain?.theme ? { theme: enc.terrain.theme } : {}) };
 }
