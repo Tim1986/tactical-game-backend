@@ -16,6 +16,7 @@
 import { runMatch, makeRng } from './simHarness.js';
 import { OptimalBrain } from './aiBrain.js';
 import { buildAbilityMap } from './defaultData.js';
+import { applyCooldownOverrides, applyCampaignAbilities } from '../game/abilityOverrides.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
 import { buildEncounterState, CampaignUnitChoice } from '../campaigns/runtime.js';
 import { CampaignDifficulty } from '../campaigns/types.js';
@@ -91,7 +92,13 @@ export function simEncounterCell(
   const level = options.level ?? enc.level;
   const rng = makeRng(options.seed ?? 1);
   const choices = choicesForLevel(partySlugs, level, options.passives);
-  const abilityMap = buildAbilityMap();
+  // A6: the sim must fight with the SAME ability map as the real match —
+  // campaign-scoped abilities merged in, L6 cooldown overrides applied.
+  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY);
+  const abilityMap = applyCooldownOverrides(
+    applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
+    probe.cooldownOverrides,
+  );
   const brain1 = new OptimalBrain();
   const brain2 = new OptimalBrain();
 

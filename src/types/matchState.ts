@@ -47,6 +47,10 @@ export interface UnitInstance {
   /** CAMPAIGN-ONLY (A5): enemy brain bias — hunt the escort ('ally') or the
    *  main character ('main'). Arena builds never set this. */
   aiHints?: { priorityTarget?: 'ally' | 'main' };
+  /** CAMPAIGN-ONLY (A6): art routing — render with this art set (e.g.
+   *  'skeleton') instead of the chassis class art; clients fall back to the
+   *  chassis when the key has no assets. Arena builds never set this. */
+  artKey?: string;
 }
 
 /** CAMPAIGN-ONLY (A5): runtime doctrine of one AI ally. Route progress lives

@@ -197,6 +197,30 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
 - Boss pattern: a single high-HP enemy with a custom kit; the size/footprint
   question (multi-tile bosses) is explicitly OUT of scope until a campaign
   design demands it.
+- IMPLEMENTED SEMANTICS (A6, recorded per protocol):
+  - `applyCampaignAbilities` (abilityOverrides.ts) is the ONE merge seam —
+    executor, campaignSim, and the mobile match/dry-run all apply it (same F2
+    rule as cooldown overrides). A campaign slug colliding with an engine slug
+    replaces it for that match only.
+  - Build-time validation, loud-fail: campaign ability slug must match its
+    key; targetingType and every effect kind must be ones the executor
+    implements (KNOWN_EFFECT_TYPES in runtime.ts — extend it in the same
+    commit as the executor when a new kind lands); every enemy/ally kit slug
+    must resolve in engine ∪ campaign abilities.
+  - A custom kit REPLACES the class kit verbatim and ignores `noSpecials`
+    (it is balanced per-encounter by definition).
+  - The brain needs no special casing for damage/heal/status kits — it
+    scores from effects generically (novel-kit sim probe: 0 validation
+    errors). New effect kinds (summon/teleport/on-death) still land only
+    with executor + brain scoring + sim verification together.
+  - `artKey` rides UnitInstance; the client renders `artKey` art when assets
+    exist and falls back to the chassis class art (Phase B fills the assets).
+  - campaignSim now fights with the SAME merged map as the real match
+    (campaign abilities + L6 cooldown overrides — the latter fixed a latent
+    gap where L6 sims used base cooldowns).
+  - A4 bugfix recorded here: room-0 terrain was dropped when the encounter
+    had no top-level terrain (condition checked `enc.terrain`, not the
+    effective room spec). Fixed in the A6 commit.
 
 ## A7 — Battle goals & boons
 

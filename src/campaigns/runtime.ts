@@ -8,7 +8,7 @@ import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, 
 import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
-import { DEFAULT_UNITS } from '../ai/defaultData.js';
+import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
 import { CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy, TerrainSpec, WaveSpec } from './types.js';
 
 /** Enemy HP multiplier per difficulty (applied to campaign enemies only). */
@@ -89,10 +89,17 @@ export function buildCampaignEnemyInstance(
   if (!def) throw new Error(`Campaign enemy baseClass not found: ${enemy.baseClass}`);
 
   const BANNED_ENEMY_SPECIALS = new Set(['kill_shot', 'assassinate']);
-  const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
-  const rawSpecialSlug = enemy.specialSlug ?? def.specialOptions[0];
-  const specialSlug = (noSpecials || BANNED_ENEMY_SPECIALS.has(rawSpecialSlug)) ? undefined : rawSpecialSlug;
-  const abilities = specialSlug ? [basicSlug, specialSlug] : [basicSlug];
+  // A6: a custom kit (possibly campaign-scoped slugs) replaces the class kit
+  // verbatim — it is balanced per-encounter, so noSpecials does not apply.
+  let abilities: string[];
+  if (enemy.abilities?.length) {
+    abilities = [...enemy.abilities];
+  } else {
+    const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
+    const rawSpecialSlug = enemy.specialSlug ?? def.specialOptions[0];
+    const specialSlug = (noSpecials || BANNED_ENEMY_SPECIALS.has(rawSpecialSlug)) ? undefined : rawSpecialSlug;
+    abilities = specialSlug ? [basicSlug, specialSlug] : [basicSlug];
+  }
 
   const isNightmare = difficulty === 'nightmare';
   const baseHp = enemy.maxHealth ?? def.maxHealth;
@@ -119,6 +126,7 @@ export function buildCampaignEnemyInstance(
     cooldowns, statusEffects: initialStatuses,
     ...(enemy.moveFlags?.length ? { moveFlags: [...enemy.moveFlags] } : {}),
     ...(enemy.aiHints ? { aiHints: { ...enemy.aiHints } } : {}),
+    ...(enemy.artKey ? { artKey: enemy.artKey } : {}),
   };
 }
 
@@ -137,6 +145,9 @@ export interface EncounterBuild {
   unitNames: Record<string, string>;
   /** Ability cooldown overrides for this match (L6 double-special), or null. */
   cooldownOverrides: Record<string, number> | null;
+  /** [A6] Campaign-scoped ability definitions to merge into the match's
+   *  ability map (applyCampaignAbilities), or null. Validated at build. */
+  campaignAbilities: Record<string, import('../types/index.js').AbilityDefinition> | null;
   /** Tile-art palette for the board renderer (TerrainSpec.theme), if any. */
   theme?: string;
 }
@@ -153,9 +164,6 @@ export interface EncounterBuild {
  * guard.
  */
 const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
-  { step: 'A6', name: 'campaign abilities', used: (c, _e) => !!c.abilities && Object.keys(c.abilities).length > 0 },
-  { step: 'A6', name: 'enemy kit override', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.abilities?.length) },
-  { step: 'A6', name: 'enemy artKey', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.artKey) },
   { step: 'A7', name: 'battle goals', used: (_c, e) => !!e.goals?.length },
   { step: 'A7', name: 'boons', used: (c, _e) => !!c.boons && Object.keys(c.boons).length > 0 },
 ];
@@ -170,6 +178,28 @@ export function assertEncounterSupported(campaign: CampaignDefinition, encounter
       + used.map((f) => `${f.name} (roadmap ${f.step})`).join(', ')
       + '. See CAMPAIGN_ROADMAP.md — the schema deliberately leads the runtime.',
     );
+  }
+}
+
+/** [A6] Effect kinds the executor actually implements — a campaign ability
+ *  using anything else must fail at build time, never silently no-op. */
+const KNOWN_EFFECT_TYPES = new Set([
+  'damage', 'heal', 'lifesteal', 'push', 'pull', 'apply_status',
+  'remove_status', 'move_self', 'grant_max_health', 'modify_cooldown',
+]);
+const KNOWN_TARGETING = new Set(['single', 'aoe', 'cone', 'line', 'self']);
+
+function validateCampaignAbilities(campaign: CampaignDefinition): void {
+  for (const [slug, def] of Object.entries(campaign.abilities ?? {})) {
+    if (def.slug !== slug) throw new Error(`Campaign ability "${slug}": slug field must match its key (got "${def.slug}")`);
+    if (!KNOWN_TARGETING.has(def.targetingType)) throw new Error(`Campaign ability "${slug}": unknown targetingType "${def.targetingType}"`);
+    if (!Array.isArray(def.effects) || def.effects.length === 0) throw new Error(`Campaign ability "${slug}": needs at least one effect`);
+    for (const e of def.effects) {
+      if (!KNOWN_EFFECT_TYPES.has(e.type)) throw new Error(`Campaign ability "${slug}": effect type "${e.type}" is not implemented by the executor`);
+    }
+    if (typeof def.range !== 'number' || typeof def.cooldownTurns !== 'number') {
+      throw new Error(`Campaign ability "${slug}": range and cooldownTurns must be numbers`);
+    }
   }
 }
 
@@ -192,6 +222,20 @@ export function buildEncounterState(
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
   assertEncounterSupported(campaign, encounterId);
+  validateCampaignAbilities(campaign);
+  // A6: every kit slug (enemy overrides, ally kits) must resolve in the merged
+  // ability pool — engine abilities plus this campaign's own definitions.
+  const abilityPool = new Set([
+    ...DEFAULT_ABILITIES.map((a) => a.slug),
+    ...Object.keys(campaign.abilities ?? {}),
+  ]);
+  const checkKit = (slugs: string[] | undefined, who: string) => {
+    for (const slug of slugs ?? []) {
+      if (!abilityPool.has(slug)) throw new Error(`Encounter ${encounterId}: ${who} references unknown ability "${slug}"`);
+    }
+  };
+  for (const [key, enemy] of Object.entries(campaign.enemies)) checkKit(enemy.abilities, `enemy "${key}"`);
+  for (const [key, ally] of Object.entries(enc.allies ?? {})) checkKit(ally.abilities, `ally "${key}"`);
   // A4: `rooms` REPLACES the top-level board fields — rooms[0] is the opening
   // board and the encounter playerPlacement is its entry.
   if (enc.rooms && enc.rooms.length === 0) throw new Error(`Encounter ${encounterId}: rooms must not be empty`);
@@ -461,7 +505,7 @@ export function buildEncounterState(
     activePlayerId: humanId, phase: 'action', initiative,
     // CAMPAIGN-ONLY terrain (A2). Theme is renderer-only and travels on
     // EncounterBuild, not MatchState.
-    ...(enc.terrain && (terrainBlocked.length || terrainHazards.length)
+    ...(effTerrainSpec && (terrainBlocked.length || terrainHazards.length)
       ? { terrain: { blocked: terrainBlocked, hazards: terrainHazards } } : {}),
     // CAMPAIGN-ONLY objective (A3).
     ...(objective ? { objective } : {}),
@@ -470,5 +514,7 @@ export function buildEncounterState(
     // CAMPAIGN-ONLY ally doctrines (A5).
     ...(allyIds.length ? { allies: allyBehaviors } : {}),
   };
-  return { state, unitNames, cooldownOverrides, ...(enc.terrain?.theme ? { theme: enc.terrain.theme } : {}) };
+  const campaignAbilities = campaign.abilities && Object.keys(campaign.abilities).length > 0
+    ? campaign.abilities : null;
+  return { state, unitNames, cooldownOverrides, campaignAbilities, ...(effTerrainSpec?.theme ? { theme: effTerrainSpec.theme } : {}) };
 }

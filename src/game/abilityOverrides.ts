@@ -23,3 +23,20 @@ export function applyCooldownOverrides<T extends { cooldownTurns: number }>(
   }
   return out;
 }
+
+/**
+ * [A6] Merge campaign-scoped ability definitions into a match's ability map.
+ * Same contract as applyCooldownOverrides: EVERY consumer for a campaign
+ * match (executor, sim, client dry-run) applies the same merge or they
+ * disagree on legality. Never mutates the shared base map. A campaign slug
+ * that collides with an engine slug REPLACES it for this match only.
+ */
+export function applyCampaignAbilities<T>(
+  map: Map<string, T>,
+  defs?: Record<string, T> | null,
+): Map<string, T> {
+  if (!defs || Object.keys(defs).length === 0) return map;
+  const out = new Map(map);
+  for (const [slug, def] of Object.entries(defs)) out.set(slug, def);
+  return out;
+}
