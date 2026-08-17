@@ -121,6 +121,22 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   encounter has spawned or will spawn in reached rooms; the win typically
   fires in the final room. Tile-based conditions reference the CURRENT
   room's coordinates.
+- IMPLEMENTED SEMANTICS (A4, recorded per protocol):
+  - **Campaign rounds are ORDER-WRAP based** — with spawns the initiative
+    length varies, so `roundNumber` increments each time the order wraps
+    (arena keeps the turnNumber/8 derivation, untouched). Round-trigger
+    waves fire when `roundNumber >= trigger.round`.
+  - Untriggered waves of a room are DISCARDED when the party transitions
+    out (leaving early abandons the ambush that never sprang).
+  - Encounters with waves/rooms but no authored objective get an explicit
+    default kill-all objective, because pending content must suppress the
+    legacy board-clear win; the mercy rule is likewise suppressed while
+    content is pending.
+  - Spawn placement fallback: nearest free, non-wall, non-hazard tile by
+    Manhattan ring (y-then-x within each ring — deterministic for authors).
+  - A `units_dead` objective naming an enemy left behind via an 'always'
+    door counts it as gone (the spec's "designers pair 'always' doors with
+    objectives that don't reward skipping" rule carries the weight here).
 
 ## A5 — AI allies & escorts
 
