@@ -1317,17 +1317,34 @@ function positionScore(
    *  enemy reach without attacking is penalized as a gifted first strike. */
   attacking = false,
 ): number {
-  const enemies = state.units.filter(
-    (u) => u.isAlive && u.ownerPlayerId !== myPlayerId,
-  );
-  if (enemies.length === 0) return 0;
-
   let s = 0;
+
+  // ── CAMPAIGN pulls (A2/A3/A4) come BEFORE the no-enemies early return:
+  // a cleared room is exactly when the door / objective-tile gradient is the
+  // ONLY thing that should move the party (the old `return 0` made every tile
+  // look identical and the party stood still forever).
 
   // CAMPAIGN terrain (A2): ending a move on a fire hazard costs a burn stack —
   // charge it like taking that damage (discounted the same way burn is).
   if (state.terrain?.hazards?.some((h) => h.pos.x === pos.x && h.pos.y === pos.y)) {
     s -= BURNING_DAMAGE_PER_STACK * WEIGHTS.burningFactor * WEIGHTS.selfDamage;
+  }
+
+  // CAMPAIGN rooms (A4): when the current room is done and rooms remain, the
+  // party is pulled toward the ACTIVE exit doors ('always' doors pull as soon
+  // as they exist; 'on_clear' doors once no enemy is left standing). Without
+  // this the sim party clears a room and then mills around forever.
+  const ep = state.encounterProgress;
+  if (ep && ep.rooms.length > 0 && ep.exitDoors.length > 0 && unit.ownerPlayerId === myPlayerId
+    && ep.partyIds.includes(unit.instanceId)) {
+    const partySet = new Set(ep.partyIds);
+    const doorActive = ep.doorMode === 'always'
+      || !state.units.some((u) => u.isAlive && !partySet.has(u.instanceId));
+    if (doorActive) {
+      const onDoor = ep.exitDoors.some((d) => d.x === pos.x && d.y === pos.y);
+      const nearest = Math.min(...ep.exitDoors.map((d) => manhattanDistance(pos, d)));
+      s += onDoor ? 30 : -nearest * 1.5;
+    }
   }
 
   // CAMPAIGN objective (A3): tile conditions shape positioning.
@@ -1357,6 +1374,11 @@ function positionScore(
       }
     }
   }
+
+  const enemies = state.units.filter(
+    (u) => u.isAlive && u.ownerPlayerId !== myPlayerId,
+  );
+  if (enemies.length === 0) return s; // only the campaign pulls matter now
 
   // Danger term (scalable: the cornered-unit fallback zeroes this out when
   // no reachable tile is meaningfully safer than any other).

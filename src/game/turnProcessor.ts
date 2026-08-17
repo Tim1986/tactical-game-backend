@@ -10,6 +10,7 @@ import { reachableFrom, hasLineOfSight, isTerrainBlocked, wallsBlockLine } from 
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
 import { executeAbility, applyEntryHazard } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
+import { checkSpawnTriggers, maybeRoomTransition } from './encounterFlow.js';
 
 export class TurnValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'TurnValidationError'; }
@@ -87,6 +88,16 @@ function advanceSlot(
         sourceUnitInstanceId: uid,
         message: `${unit?.definitionSlug ?? uid} — defeated, turn skipped`,
       });
+      skippedSlots++;
+      slot = (slot + 1) % orderLen;
+      if (slot === 0) newRoundStarted = true;
+      continue;
+    }
+
+    if (unit.skipFirstSlot) {
+      // CAMPAIGN (A4): a surprised spawn sits out the slot it was woven into.
+      delete unit.skipFirstSlot;
+      events.push({ type: 'TURN_SKIPPED', sourceUnitInstanceId: uid, message: `${unit.definitionSlug} is caught off guard — turn skipped` });
       skippedSlots++;
       slot = (slot + 1) % orderLen;
       if (slot === 0) newRoundStarted = true;
@@ -225,6 +236,7 @@ function beginTurnInternal(
       sourceUnitInstanceId: actingUnit.instanceId,
       message: `${actingUnit.definitionSlug} is frozen — turn skipped`,
     });
+    checkSpawnTriggers(ws, events); // CAMPAIGN (A4): tick death may clear the board
     const afterTickWin = checkWinCondition(ws, playerOneId, playerTwoId);
     if (afterTickWin.isOver) {
       events.push({ type: 'MATCH_OVER', winnerId: afterTickWin.winnerId ?? undefined, ...(afterTickWin.reason ? { message: afterTickWin.reason } : {}) });
@@ -268,9 +280,16 @@ function applyGameActionInternal(
     throw new TurnValidationError('Must act with the current initiative unit');
   }
 
+  const wasMove = action.type === 'MOVE' || action.type === 'CHARGE';
   if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
   if (action.type === 'CHARGE') processCharge(ws, action, submittingPlayerId, events);
   if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
+
+  // CAMPAIGN (A4): spawn triggers (door/round/room_cleared) fire after every
+  // action — BEFORE the win check, so a cleared board spawns its wave rather
+  // than ending the match — then door-driven room transitions.
+  checkSpawnTriggers(ws, events, wasMove ? actingUnit : undefined);
+  if (wasMove) maybeRoomTransition(ws, actingUnit, events);
 
   const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (winCheck.isOver) {
@@ -330,7 +349,10 @@ function finalizeTurnInternal(
       initiative.slot = firstSlot.slot;
       initiative.activeUnitId = firstSlot.activeUnitId;
       ws.turnNumber += firstSlot.skippedSlots;
-      ws.roundNumber = roundFromTurn(ws.turnNumber);
+      // CAMPAIGN (A4): with spawns the order length varies, so campaign rounds
+      // are ORDER-WRAP based, not turnNumber/8. Arena keeps roundFromTurn.
+      ws.roundNumber = (ws.objective || ws.encounterProgress) ? 2 : roundFromTurn(ws.turnNumber);
+      checkSpawnTriggers(ws, events); // round-trigger waves due at round 2
       // Reset all turn flags at round boundary
       for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
       const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
@@ -348,6 +370,10 @@ function finalizeTurnInternal(
     const next = advanceSlot(initiative, ws.units, events);
     if (next.newRoundStarted) {
       for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
+      if (ws.objective || ws.encounterProgress) {
+        ws.roundNumber += 1;               // campaign: rounds are order wraps (A4)
+        checkSpawnTriggers(ws, events);    // round-trigger waves due this round
+      }
     }
     initiative.slot = next.slot;
     initiative.activeUnitId = next.activeUnitId;
@@ -359,7 +385,7 @@ function finalizeTurnInternal(
 
   const prevRound = ws.roundNumber;
   ws.turnNumber++;
-  ws.roundNumber = roundFromTurn(ws.turnNumber);
+  if (!(ws.objective || ws.encounterProgress)) ws.roundNumber = roundFromTurn(ws.turnNumber);
   events.push({ type: 'TURN_ENDED' });
 
   // ── Endgame: announce start of round 11, then apply drain ─────────────────
@@ -381,7 +407,9 @@ function finalizeTurnInternal(
 
   // A skipped slot's status tick (advanceSlot ticks frozen units, which now
   // includes burning DoT) can end the match without any MOVE/CHARGE/USE_ABILITY
-  // action being processed this call — check here too.
+  // action being processed this call — check here too. CAMPAIGN (A4): sweep
+  // spawn triggers first for the same reason as the action-site sweep.
+  checkSpawnTriggers(ws, events);
   const endTurnWinCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (endTurnWinCheck.isOver) {
     matchOver = true; winnerId = endTurnWinCheck.winnerId;

@@ -1,4 +1,5 @@
 import { MatchState, UnitInstance, ObjectiveState, ResolvedWinCondition, ResolvedLossCondition, BoardPosition } from '../types/matchState.js';
+import { hasPendingContent } from './encounterFlow.js';
 
 export interface WinCheckResult {
   isOver: boolean;
@@ -43,6 +44,8 @@ const onAnyTile = (u: UnitInstance, tiles: BoardPosition[]): boolean =>
 function winSatisfied(state: MatchState, obj: ObjectiveState, c: ResolvedWinCondition): string | null {
   switch (c.kind) {
     case 'all_enemies_dead':
+      // A4: pending waves/rooms mean the fight is not over on a clear board.
+      if (hasPendingContent(state)) return null;
       return livingOf(state, obj.enemyId).length === 0 ? 'Every enemy has fallen' : null;
     case 'units_dead': {
       const anyAlive = state.units.some((u) => u.isAlive && c.unitIds.includes(u.instanceId));
@@ -96,7 +99,8 @@ function checkObjective(state: MatchState, obj: ObjectiveState): WinCheckResult 
     if (reason) return { isOver: true, winnerId: obj.partyId, loserId: obj.enemyId, reason };
   }
   // Mercy rule: enemy side wiped → nothing can stop the remaining conditions.
-  if (livingOf(state, obj.enemyId).length === 0) {
+  // A4: suppressed while waves/rooms are still pending — more is coming.
+  if (!hasPendingContent(state) && livingOf(state, obj.enemyId).length === 0) {
     return { isOver: true, winnerId: obj.partyId, loserId: obj.enemyId, reason: 'Every enemy has fallen' };
   }
   // Implicit party-wipe loss, then authored losses.

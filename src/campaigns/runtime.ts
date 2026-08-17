@@ -4,12 +4,12 @@
  * (via sync-engine). Whatever this builds is exactly what the player fights —
  * sims are only trustworthy because both sides call this one function.
  */
-import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, BOARD_HEIGHT } from '../types/matchState.js';
+import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, BOARD_HEIGHT, PendingWave, PendingRoom, EncounterProgressState, TerrainState } from '../types/matchState.js';
 import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
 import { DEFAULT_UNITS } from '../ai/defaultData.js';
-import { CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy } from './types.js';
+import { CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy, TerrainSpec, WaveSpec } from './types.js';
 
 /** Enemy HP multiplier per difficulty (applied to campaign enemies only). */
 export const CAMPAIGN_HP_SCALE: Record<CampaignDifficulty, number> = {
@@ -157,8 +157,6 @@ const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition,
       e.objective.win.some((w) => w.kind === 'ally_at_tiles')
       || (e.objective.loss ?? []).some((l) => l.kind === 'ally_dead')
     ) },
-  { step: 'A4', name: 'waves', used: (_c, e) => !!e.waves?.length },
-  { step: 'A4', name: 'rooms', used: (_c, e) => !!e.rooms?.length },
   { step: 'A5', name: 'allies', used: (_c, e) => !!e.allies && Object.keys(e.allies).length > 0 },
   { step: 'A6', name: 'campaign abilities', used: (c, _e) => !!c.abilities && Object.keys(c.abilities).length > 0 },
   { step: 'A6', name: 'enemy kit override', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.abilities?.length) },
@@ -200,9 +198,17 @@ export function buildEncounterState(
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
   assertEncounterSupported(campaign, encounterId);
+  // A4: `rooms` REPLACES the top-level board fields — rooms[0] is the opening
+  // board and the encounter playerPlacement is its entry.
+  if (enc.rooms && enc.rooms.length === 0) throw new Error(`Encounter ${encounterId}: rooms must not be empty`);
+  const room0 = enc.rooms?.[0];
+  const effTerrainSpec: TerrainSpec | undefined = room0 ? room0.terrain : enc.terrain;
+  const effEnemies = room0 ? room0.enemies : enc.enemies;
+  const effEnemyPlacement = room0 ? room0.enemyPlacement : enc.enemyPlacement;
+  const effNoSpecials = room0 ? !!room0.noSpecials : !!enc.noSpecials;
   // The four extreme corners are removed from the board (60-tile cross) —
   // fail fast on authoring mistakes instead of erroring mid-match.
-  for (const p of [...enc.playerPlacement, ...enc.enemyPlacement]) {
+  for (const p of [...enc.playerPlacement, ...effEnemyPlacement]) {
     if (!isInBounds(p)) {
       throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is out of bounds (corners are removed tiles)`);
     }
@@ -212,8 +218,8 @@ export function buildEncounterState(
   // Terrain content validation (A2): walls/hazards in bounds, hazards never on
   // walls, and no unit placed on a wall or hazard — authoring mistakes fail at
   // build time, not mid-match.
-  const terrainBlocked = enc.terrain?.blocked ?? [];
-  const terrainHazards = enc.terrain?.hazards ?? [];
+  const terrainBlocked = effTerrainSpec?.blocked ?? [];
+  const terrainHazards = effTerrainSpec?.hazards ?? [];
   for (const b of terrainBlocked) {
     if (!isInBounds(b)) throw new Error(`Encounter ${encounterId}: wall (${b.x},${b.y}) is out of bounds`);
   }
@@ -223,7 +229,7 @@ export function buildEncounterState(
       throw new Error(`Encounter ${encounterId}: hazard (${h.pos.x},${h.pos.y}) sits on a wall`);
     }
   }
-  for (const p of [...enc.playerPlacement, ...enc.enemyPlacement]) {
+  for (const p of [...enc.playerPlacement, ...effEnemyPlacement]) {
     if (terrainBlocked.some((b) => b.x === p.x && b.y === p.y)) {
       throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a wall`);
     }
@@ -241,14 +247,97 @@ export function buildEncounterState(
     return inst;
   });
   const enemyIdsByKey = new Map<string, string[]>();
-  const enemyUnits = enc.enemies.map((key, i) => {
+  const enemyUnits = effEnemies.map((key, i) => {
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Unknown enemy key: ${key}`);
-    const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, enc.enemyPlacement[i], difficulty, hpScale, enc.noSpecials);
+    const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, effEnemyPlacement[i], difficulty, hpScale, effNoSpecials);
     unitNames[inst.instanceId] = enemy.name;
     enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
     return inst;
   });
+
+  // ── A4: prebuild every wave/room unit (stable ids; names available to the
+  // client from turn one) and assemble encounterProgress. Runs BEFORE
+  // objective resolution so units_dead can name wave/room enemies. ──
+  const wallOf = (t: TerrainSpec | undefined) => t?.blocked ?? [];
+  const buildSpawnGroup = (keys: string[], noSpec: boolean): UnitInstance[] => keys.map((key) => {
+    const enemy = campaign.enemies[key];
+    if (!enemy) throw new Error(`Encounter ${encounterId}: unknown enemy key "${key}" in wave/room`);
+    const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, { x: 0, y: 0 }, difficulty, hpScale, noSpec);
+    unitNames[inst.instanceId] = enemy.name;
+    enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
+    return inst;
+  });
+  const resolveWaves = (waves: WaveSpec[] | undefined, roomTerrain: TerrainSpec | undefined, noSpec: boolean, where: string): PendingWave[] =>
+    (waves ?? []).map((w, wi) => {
+      if (w.enemies.length === 0) throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} has no enemies`);
+      for (const pl of w.placement) {
+        if (!isInBounds(pl)) throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} spawn (${pl.x},${pl.y}) is out of bounds`);
+        if (wallOf(roomTerrain).some((b) => b.x === pl.x && b.y === pl.y)) {
+          throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} spawn (${pl.x},${pl.y}) is on a wall`);
+        }
+      }
+      if (w.trigger.on === 'door') {
+        const t = w.trigger.tile;
+        if (!isInBounds(t) || wallOf(roomTerrain).some((b) => b.x === t.x && b.y === t.y)) {
+          throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} door tile (${t.x},${t.y}) is invalid`);
+        }
+      }
+      return { units: buildSpawnGroup(w.enemies, noSpec), placement: w.placement, trigger: w.trigger, ...(w.surprise ? { surprise: true } : {}) };
+    });
+
+  let encounterProgress: EncounterProgressState | undefined;
+  const partyIds = playerUnits.map((u) => u.instanceId);
+  if (room0) {
+    const later: PendingRoom[] = enc.rooms!.slice(1).map((r, i) => {
+      const idx = i + 1;
+      const rWalls = wallOf(r.terrain);
+      const rHaz = r.terrain?.hazards ?? [];
+      for (const b of rWalls) if (!isInBounds(b)) throw new Error(`Encounter ${encounterId}: room ${idx} wall out of bounds`);
+      for (const h of rHaz) {
+        if (!isInBounds(h.pos)) throw new Error(`Encounter ${encounterId}: room ${idx} hazard out of bounds`);
+        if (rWalls.some((b) => b.x === h.pos.x && b.y === h.pos.y)) throw new Error(`Encounter ${encounterId}: room ${idx} hazard on a wall`);
+      }
+      if (!r.entryTiles?.length) throw new Error(`Encounter ${encounterId}: room ${idx} needs entryTiles`);
+      for (const t of [...r.entryTiles, ...r.enemyPlacement, ...(r.exitDoors ?? [])]) {
+        if (!isInBounds(t)) throw new Error(`Encounter ${encounterId}: room ${idx} tile (${t.x},${t.y}) out of bounds`);
+        if (rWalls.some((b) => b.x === t.x && b.y === t.y)) throw new Error(`Encounter ${encounterId}: room ${idx} tile (${t.x},${t.y}) is on a wall`);
+      }
+      for (const t of r.entryTiles) {
+        if (rHaz.some((h) => h.pos.x === t.x && h.pos.y === t.y)) throw new Error(`Encounter ${encounterId}: room ${idx} entry tile (${t.x},${t.y}) is on a hazard`);
+      }
+      const isLast = idx === enc.rooms!.length - 1;
+      if (!isLast && !(r.exitDoors?.length)) throw new Error(`Encounter ${encounterId}: room ${idx} needs exitDoors (not the last room)`);
+      return {
+        ...(r.terrain ? { terrain: { blocked: r.terrain.blocked ?? [], hazards: r.terrain.hazards ?? [] } } : {}),
+        units: buildSpawnGroup(r.enemies, !!r.noSpecials),
+        placement: r.enemyPlacement,
+        waves: resolveWaves(r.waves, r.terrain, !!r.noSpecials, `room ${idx}`),
+        exitDoors: r.exitDoors ?? [],
+        doorMode: r.doorMode ?? 'on_clear',
+        entryTiles: r.entryTiles,
+        ...(r.surprise ? { surprise: true } : {}),
+      };
+    });
+    if (!(room0.exitDoors?.length)) throw new Error(`Encounter ${encounterId}: room 0 needs exitDoors`);
+    for (const d of room0.exitDoors) {
+      if (!isInBounds(d) || terrainBlocked.some((b) => b.x === d.x && b.y === d.y)) {
+        throw new Error(`Encounter ${encounterId}: room 0 exit door (${d.x},${d.y}) is invalid`);
+      }
+    }
+    encounterProgress = {
+      waves: resolveWaves(room0.waves, room0.terrain, effNoSpecials, 'room 0'),
+      rooms: later,
+      exitDoors: room0.exitDoors,
+      doorMode: room0.doorMode ?? 'on_clear',
+      partyIds, roomIndex: 0,
+    };
+  } else if (enc.waves?.length) {
+    encounterProgress = {
+      waves: resolveWaves(enc.waves, enc.terrain, effNoSpecials, 'encounter'),
+      rooms: [], exitDoors: [], doorMode: 'on_clear', partyIds, roomIndex: 0,
+    };
+  }
 
   // Resolve the authored objective (A3): enemy keys -> instance ids, main ->
   // party slot 0; tiles validated against bounds and walls. Ally-referencing
@@ -292,6 +381,16 @@ export function buildEncounterState(
       mainId: playerUnits[0].instanceId,
       text: spec.text, win, loss,
     };
+  } else if (encounterProgress) {
+    // A4: waves/rooms with no authored objective get the default kill-all as
+    // an EXPLICIT objective, because the legacy kill-all check would end the
+    // match on a clear board with content still pending. all_enemies_dead is
+    // pending-aware; the banner reads sensibly.
+    objective = {
+      partyId: humanId, enemyId: enemyOwnerId,
+      mainId: playerUnits[0].instanceId,
+      text: 'Defeat every enemy', win: [{ kind: 'all_enemies_dead' }], loss: [],
+    };
   }
 
   // L6 double-special: override every party special's cooldown in this match's
@@ -320,6 +419,8 @@ export function buildEncounterState(
       ? { terrain: { blocked: terrainBlocked, hazards: terrainHazards } } : {}),
     // CAMPAIGN-ONLY objective (A3).
     ...(objective ? { objective } : {}),
+    // CAMPAIGN-ONLY waves/rooms (A4).
+    ...(encounterProgress ? { encounterProgress } : {}),
   };
   return { state, unitNames, cooldownOverrides, ...(enc.terrain?.theme ? { theme: enc.terrain.theme } : {}) };
 }

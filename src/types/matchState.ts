@@ -41,6 +41,47 @@ export interface UnitInstance {
   /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
    *  (never ends on them). Arena builds never set this. */
   moveFlags?: string[];
+  /** CAMPAIGN-ONLY (A4): a surprised spawn skips its first initiative slot
+   *  (one-shot; advanceSlot clears it). Arena builds never set this. */
+  skipFirstSlot?: boolean;
+}
+
+/** CAMPAIGN-ONLY (A4): a wave that has not spawned yet. Units are FULLY BUILT
+ *  at encounter build time (stable ids; names already in EncounterBuild's
+ *  unitNames) and live here until their trigger fires. */
+export interface PendingWave {
+  units: UnitInstance[];
+  placement: BoardPosition[];
+  trigger: { on: 'room_cleared' } | { on: 'round'; round: number } | { on: 'door'; tile: BoardPosition };
+  surprise?: boolean;
+}
+
+/** CAMPAIGN-ONLY (A4): a room not yet entered. */
+export interface PendingRoom {
+  terrain?: TerrainState;
+  units: UnitInstance[];
+  placement: BoardPosition[];
+  waves: PendingWave[];
+  exitDoors: BoardPosition[];
+  doorMode: 'on_clear' | 'always';
+  entryTiles: BoardPosition[];
+  surprise?: boolean;
+}
+
+/** CAMPAIGN-ONLY (A4): the encounter's remaining content. While waves or rooms
+ *  remain, board-clear does NOT end the match (kill-all and the mercy rule are
+ *  suppressed). Absent in every arena match. */
+export interface EncounterProgressState {
+  /** Unspawned waves of the CURRENT room. */
+  waves: PendingWave[];
+  /** Rooms not yet entered, in order. */
+  rooms: PendingRoom[];
+  /** Current room's exit doors (empty in the final room). */
+  exitDoors: BoardPosition[];
+  doorMode: 'on_clear' | 'always';
+  /** Party instance ids in party order (entry placement + initiative weave). */
+  partyIds: UUID[];
+  roomIndex: number;
 }
 
 /**
@@ -120,6 +161,8 @@ export interface MatchState {
   terrain?: TerrainState;
   /** CAMPAIGN-ONLY objective — absent in every arena match (see ObjectiveState). */
   objective?: ObjectiveState;
+  /** CAMPAIGN-ONLY waves/rooms progress — absent in every arena match (A4). */
+  encounterProgress?: EncounterProgressState;
   /**
    * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
    * order (one entry per roll attempt; multi-hit attacks consume one entry per
@@ -205,7 +248,9 @@ export type GameEventType =
   | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED'
   | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'PUSH_RESISTED' | 'ATTACK_MISSED' | 'DODGED' | 'SHIELD_ABSORBED'
   | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER' | 'ENDGAME_STARTED' | 'ENDGAME_DRAIN'
-  | 'UNDYING_TRIGGERED' | 'STATUS_RESISTED';
+  | 'UNDYING_TRIGGERED' | 'STATUS_RESISTED'
+  /** CAMPAIGN-ONLY (A4): a wave/room enemy entered the board / a room began. */
+  | 'UNIT_SPAWNED' | 'ROOM_ENTERED';
 
 export interface GameEvent {
   type: GameEventType;
