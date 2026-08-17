@@ -159,6 +159,25 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
 - Ally death: no ability targeting restrictions — AoE friendly fire can hit
   allies (consistent with ABL-10); if an objective lists `ally_dead` it is a
   loss, otherwise the encounter continues without them.
+- IMPLEMENTED SEMANTICS (A5, recorded per protocol):
+  - Allies COMMIT in round 1 like any unit, but drivers (OptimalBrain, the
+    mobile ally auto-driver) only commit an ally once every party unit is
+    committed — so allies naturally land at the tail of the player's half.
+    `buildFinalOrder` now interleaves past 4 units per side (arena is always
+    4v4, byte-identical there). An ally with nothing to do commits via a
+    zero-distance hold-position MOVE.
+  - Party wipe ignores allies (a lone surviving VIP is not a fighting force);
+    room transitions carry allies on the entry tiles after the party.
+  - Party brain protect instinct: with an `ally_dead` loss on the objective,
+    enemies within striking range of a protected ally score +40% damage/kill
+    value for party units.
+  - AUTHORING guardrails (learned from sim probes — escort survivability is
+    CONTENT design): `aiHints` attach to an enemy DEFINITION key, so every
+    instance of it hunts — hunt-hint a dedicated definition, not the shared
+    chaff key. Never place an escort within round-1 reach (movement+range) of
+    enemy spawns: it acts last and a focused alpha-strike beats any defense.
+    A defenseless VIP wants roughly boss-tier HP for its difficulty. Sane
+    probe (40 HP VIP, one route across the top, no universal hunt): 14/15.
 
 ## A6 — Novel monsters & abilities
 

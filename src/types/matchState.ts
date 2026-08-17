@@ -44,7 +44,17 @@ export interface UnitInstance {
   /** CAMPAIGN-ONLY (A4): a surprised spawn skips its first initiative slot
    *  (one-shot; advanceSlot clears it). Arena builds never set this. */
   skipFirstSlot?: boolean;
+  /** CAMPAIGN-ONLY (A5): enemy brain bias — hunt the escort ('ally') or the
+   *  main character ('main'). Arena builds never set this. */
+  aiHints?: { priorityTarget?: 'ally' | 'main' };
 }
+
+/** CAMPAIGN-ONLY (A5): runtime doctrine of one AI ally. Route progress lives
+ *  here (the engine advances routeIndex when the ally reaches its waypoint). */
+export type AllyBehaviorState =
+  | { mode: 'follow' }
+  | { mode: 'hold' }
+  | { mode: 'route'; waypoints: BoardPosition[]; routeIndex: number };
 
 /** CAMPAIGN-ONLY (A4): a wave that has not spawned yet. Units are FULLY BUILT
  *  at encounter build time (stable ids; names already in EncounterBuild's
@@ -113,6 +123,10 @@ export interface ObjectiveState {
   enemyId: UUID;
   /** The main character's instance id (scope 'main' conditions). */
   mainId: UUID;
+  /** [A5] Ally instance ids: party-owned but NOT party members — excluded
+   *  from the implicit party-wipe check (a lone surviving VIP is not a
+   *  fighting force), referenced by ally_* conditions and enemy aiHints. */
+  allyIds?: UUID[];
   /** Player-facing objective line for the banner. */
   text: string;
   /** ANY satisfied → party wins. */
@@ -163,6 +177,8 @@ export interface MatchState {
   objective?: ObjectiveState;
   /** CAMPAIGN-ONLY waves/rooms progress — absent in every arena match (A4). */
   encounterProgress?: EncounterProgressState;
+  /** CAMPAIGN-ONLY ally doctrines by instance id — absent in arena (A5). */
+  allies?: Record<UUID, AllyBehaviorState>;
   /**
    * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
    * order (one entry per roll attempt; multi-hit attacks consume one entry per

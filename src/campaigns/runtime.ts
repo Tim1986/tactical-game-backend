@@ -4,7 +4,7 @@
  * (via sync-engine). Whatever this builds is exactly what the player fights —
  * sims are only trustworthy because both sides call this one function.
  */
-import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, BOARD_HEIGHT, PendingWave, PendingRoom, EncounterProgressState, TerrainState } from '../types/matchState.js';
+import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, BOARD_HEIGHT, PendingWave, PendingRoom, EncounterProgressState, TerrainState, AllyBehaviorState } from '../types/matchState.js';
 import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
@@ -118,6 +118,7 @@ export function buildCampaignEnemyInstance(
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
     ...(enemy.moveFlags?.length ? { moveFlags: [...enemy.moveFlags] } : {}),
+    ...(enemy.aiHints ? { aiHints: { ...enemy.aiHints } } : {}),
   };
 }
 
@@ -152,16 +153,9 @@ export interface EncounterBuild {
  * guard.
  */
 const UNIMPLEMENTED: { step: string; name: string; used: (c: CampaignDefinition, e: CampaignEncounter) => boolean }[] = [
-  { step: 'A5', name: 'objective ally conditions', used: (_c, e) =>
-    !!e.objective && (
-      e.objective.win.some((w) => w.kind === 'ally_at_tiles')
-      || (e.objective.loss ?? []).some((l) => l.kind === 'ally_dead')
-    ) },
-  { step: 'A5', name: 'allies', used: (_c, e) => !!e.allies && Object.keys(e.allies).length > 0 },
   { step: 'A6', name: 'campaign abilities', used: (c, _e) => !!c.abilities && Object.keys(c.abilities).length > 0 },
   { step: 'A6', name: 'enemy kit override', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.abilities?.length) },
   { step: 'A6', name: 'enemy artKey', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.artKey) },
-  { step: 'A5', name: 'enemy aiHints', used: (c, e) => e.enemies.some((k) => !!c.enemies[k]?.aiHints) },
   { step: 'A7', name: 'battle goals', used: (_c, e) => !!e.goals?.length },
   { step: 'A7', name: 'boons', used: (c, _e) => !!c.boons && Object.keys(c.boons).length > 0 },
 ];
@@ -246,6 +240,48 @@ export function buildEncounterState(
     if (i === 0 && mainName) unitNames[inst.instanceId] = mainName;
     return inst;
   });
+  // ── A5: AI allies — party-owned NPCs with a doctrine, never controllable.
+  // Built before enemies so ally objective conditions and enemy aiHints can
+  // resolve against their ids. No difficulty scaling (they ride the player's
+  // side of the fight).
+  const allyIdsByKey = new Map<string, string>();
+  const allyBehaviors: Record<string, AllyBehaviorState> = {};
+  const allyUnits: UnitInstance[] = Object.entries(enc.allies ?? {}).map(([key, ally]) => {
+    const def = DEFAULT_UNITS[ally.baseClass];
+    if (!def) throw new Error(`Encounter ${encounterId}: ally "${key}" has unknown baseClass ${ally.baseClass}`);
+    const pl = ally.placement;
+    if (!isInBounds(pl)) throw new Error(`Encounter ${encounterId}: ally "${key}" placement out of bounds`);
+    if (terrainBlocked.some((b) => b.x === pl.x && b.y === pl.y)) throw new Error(`Encounter ${encounterId}: ally "${key}" placed on a wall`);
+    if (terrainHazards.some((h) => h.pos.x === pl.x && h.pos.y === pl.y)) throw new Error(`Encounter ${encounterId}: ally "${key}" placed on a hazard`);
+    if (ally.behavior.mode === 'route') {
+      if (!ally.behavior.waypoints.length) throw new Error(`Encounter ${encounterId}: ally "${key}" route needs waypoints`);
+      for (const w of ally.behavior.waypoints) {
+        if (!isInBounds(w) || terrainBlocked.some((b) => b.x === w.x && b.y === w.y)) {
+          throw new Error(`Encounter ${encounterId}: ally "${key}" waypoint (${w.x},${w.y}) is invalid`);
+        }
+      }
+    }
+    const abilities = ally.abilities ?? [def.abilities.find((a) => !def.specialOptions.includes(a)) ?? def.abilities[0]];
+    const instanceId = newInstanceId();
+    const inst: UnitInstance = {
+      instanceId, definitionSlug: def.slug, ownerPlayerId: humanId,
+      position: { ...pl },
+      currentHealth: ally.maxHealth ?? def.maxHealth, maxHealth: ally.maxHealth ?? def.maxHealth,
+      armorClass: ally.armorClass ?? def.armorClass,
+      movementRange: ally.movementRange ?? def.movementRange,
+      abilities, passives: [],
+      isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
+      cooldowns: Object.fromEntries(abilities.map((a) => [a, 0])), statusEffects: [],
+    };
+    unitNames[instanceId] = ally.name;
+    allyIdsByKey.set(key, instanceId);
+    allyBehaviors[instanceId] = ally.behavior.mode === 'route'
+      ? { mode: 'route', waypoints: ally.behavior.waypoints.map((w) => ({ ...w })), routeIndex: 0 }
+      : { mode: ally.behavior.mode };
+    return inst;
+  });
+  const allyIds = allyUnits.map((u) => u.instanceId);
+
   const enemyIdsByKey = new Map<string, string[]>();
   const enemyUnits = effEnemies.map((key, i) => {
     const enemy = campaign.enemies[key];
@@ -366,22 +402,31 @@ export function buildEncounterState(
         case 'units_at_tiles':
           checkTiles(w.tiles, 'objective');
           return { kind: 'units_at_tiles', scope: w.scope, tiles: w.tiles, ...(w.simultaneous ? { simultaneous: true } : {}) };
-        case 'ally_at_tiles':
-          throw new Error(`Encounter ${encounterId}: ally_at_tiles is not available until roadmap A5`);
+        case 'ally_at_tiles': {
+          const id = allyIdsByKey.get(w.allyKey);
+          if (!id) throw new Error(`Encounter ${encounterId}: objective names unknown ally "${w.allyKey}"`);
+          checkTiles(w.tiles, 'objective');
+          return { kind: 'ally_at_tiles', unitIds: [id], tiles: w.tiles };
+        }
         default:
           return w;
       }
     });
     const loss = (spec.loss ?? []).map((l): import('../types/matchState.js').ResolvedLossCondition => {
-      if (l.kind === 'ally_dead') throw new Error(`Encounter ${encounterId}: ally_dead is not available until roadmap A5`);
+      if (l.kind === 'ally_dead') {
+        const id = allyIdsByKey.get(l.allyKey);
+        if (!id) throw new Error(`Encounter ${encounterId}: objective names unknown ally "${l.allyKey}"`);
+        return { kind: 'ally_dead', unitIds: [id] };
+      }
       return l;
     });
     objective = {
       partyId: humanId, enemyId: enemyOwnerId,
       mainId: playerUnits[0].instanceId,
+      ...(allyIds.length ? { allyIds } : {}),
       text: spec.text, win, loss,
     };
-  } else if (encounterProgress) {
+  } else if (encounterProgress || allyUnits.length > 0) {
     // A4: waves/rooms with no authored objective get the default kill-all as
     // an EXPLICIT objective, because the legacy kill-all check would end the
     // match on a clear board with content still pending. all_enemies_dead is
@@ -389,6 +434,7 @@ export function buildEncounterState(
     objective = {
       partyId: humanId, enemyId: enemyOwnerId,
       mainId: playerUnits[0].instanceId,
+      ...(allyIds.length ? { allyIds } : {}),
       text: 'Defeat every enemy', win: [{ kind: 'all_enemies_dead' }], loss: [],
     };
   }
@@ -410,7 +456,7 @@ export function buildEncounterState(
   };
   const state: MatchState = {
     board: { width: BOARD_WIDTH, height: BOARD_HEIGHT },
-    units: [...playerUnits, ...enemyUnits],
+    units: [...playerUnits, ...allyUnits, ...enemyUnits],
     turnNumber: 1, roundNumber: 1,
     activePlayerId: humanId, phase: 'action', initiative,
     // CAMPAIGN-ONLY terrain (A2). Theme is renderer-only and travels on
@@ -421,6 +467,8 @@ export function buildEncounterState(
     ...(objective ? { objective } : {}),
     // CAMPAIGN-ONLY waves/rooms (A4).
     ...(encounterProgress ? { encounterProgress } : {}),
+    // CAMPAIGN-ONLY ally doctrines (A5).
+    ...(allyIds.length ? { allies: allyBehaviors } : {}),
   };
   return { state, unitNames, cooldownOverrides, ...(enc.terrain?.theme ? { theme: enc.terrain.theme } : {}) };
 }

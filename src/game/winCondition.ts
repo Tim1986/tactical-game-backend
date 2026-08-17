@@ -103,8 +103,10 @@ function checkObjective(state: MatchState, obj: ObjectiveState): WinCheckResult 
   if (!hasPendingContent(state) && livingOf(state, obj.enemyId).length === 0) {
     return { isOver: true, winnerId: obj.partyId, loserId: obj.enemyId, reason: 'Every enemy has fallen' };
   }
-  // Implicit party-wipe loss, then authored losses.
-  if (livingOf(state, obj.partyId).length === 0) {
+  // Implicit party-wipe loss, then authored losses. Allies (A5) don't count —
+  // a lone surviving escort/VIP is not a fighting force.
+  const allySet = new Set(obj.allyIds ?? []);
+  if (livingOf(state, obj.partyId).filter((u) => !allySet.has(u.instanceId)).length === 0) {
     return { isOver: true, winnerId: obj.enemyId, loserId: obj.partyId, reason: 'Your party has fallen' };
   }
   for (const c of obj.loss) {

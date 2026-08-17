@@ -56,7 +56,11 @@ function buildFinalOrder(
   const p2Full = [...p2Committed, ...p2Dead];
 
   const order: string[] = [];
-  for (let i = 0; i < 4; i++) {
+  // CAMPAIGN (A5): a side can exceed 4 units (allies). Arena is always 4v4,
+  // so extending the bound changes nothing there. Extras interleave on;
+  // allies committed last land at the tail of the player's half.
+  const bound = Math.max(4, p1Full.length, p2Full.length);
+  for (let i = 0; i < bound; i++) {
     if (p1Full[i]) order.push(p1Full[i]);
     if (p2Full[i]) order.push(p2Full[i]);
   }
@@ -284,6 +288,19 @@ function applyGameActionInternal(
   if (action.type === 'MOVE') processMove(ws, action, submittingPlayerId, events);
   if (action.type === 'CHARGE') processCharge(ws, action, submittingPlayerId, events);
   if (action.type === 'USE_ABILITY') processUseAbility(ws, action, submittingPlayerId, events, abilityMap);
+
+  // CAMPAIGN (A5): a routed ally standing on its current waypoint advances to
+  // the next one (loop handles waypoints stacked on the same tile).
+  if (wasMove) {
+    const doctrine = ws.allies?.[actingUnit.instanceId];
+    if (doctrine?.mode === 'route') {
+      while (doctrine.routeIndex < doctrine.waypoints.length) {
+        const wp = doctrine.waypoints[doctrine.routeIndex];
+        if (actingUnit.position.x === wp.x && actingUnit.position.y === wp.y) doctrine.routeIndex += 1;
+        else break;
+      }
+    }
+  }
 
   // CAMPAIGN (A4): spawn triggers (door/round/room_cleared) fire after every
   // action — BEFORE the win check, so a cleared board spawns its wave rather

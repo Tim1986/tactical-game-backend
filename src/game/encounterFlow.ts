@@ -27,8 +27,11 @@ export function hasPendingContent(state: MatchState): boolean {
 }
 
 function livingEnemies(state: MatchState): UnitInstance[] {
-  const partyIds = new Set(state.encounterProgress?.partyIds ?? []);
-  return state.units.filter((u) => u.isAlive && !partyIds.has(u.instanceId));
+  // Ownership-based: allies (A5) are party-OWNED but not party MEMBERS — an
+  // id-based check would count the escort as a living enemy and jam doors.
+  const ep = state.encounterProgress;
+  const partyOwner = state.units.find((u) => ep?.partyIds.includes(u.instanceId))?.ownerPlayerId;
+  return state.units.filter((u) => u.isAlive && u.ownerPlayerId !== partyOwner);
 }
 
 /**
@@ -162,8 +165,10 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
 
   events.push({ type: 'ROOM_ENTERED', message: `The party presses on…`, position: mover.position });
 
-  // Party enters in party order (living members only), on the entry tiles.
-  const living = ep.partyIds
+  // Party enters in party order (living members only), on the entry tiles —
+  // then the allies (A5) file in behind them via the same ring-scan fallback.
+  const allyIds = Object.keys(state.allies ?? {});
+  const living = [...ep.partyIds, ...allyIds]
     .map((id) => state.units.find((u) => u.instanceId === id))
     .filter((u): u is UnitInstance => !!u && u.isAlive);
   living.forEach((u, i) => {

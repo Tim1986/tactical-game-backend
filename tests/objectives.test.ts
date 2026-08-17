@@ -127,13 +127,13 @@ describe('A3 objectives — runtime resolution', () => {
     expect(b.state.objective!.mainId).toBe(b.state.units[0].instanceId);
   });
 
-  it('throws on an unknown enemy key and on ally conditions (A5)', () => {
+  it('throws on an unknown enemy key and on an unknown ally key', () => {
     const c1 = clone();
     c1.encounters[encKey()].objective = { text: 'x', win: [{ kind: 'units_dead', enemyKeys: ['nope'] }] };
     expect(() => buildEncounterState(c1, encKey(), party, choices, 1, 'medium', 'h', 'e')).toThrow('unknown enemy key');
     const c2 = clone();
     c2.encounters[encKey()].objective = { text: 'x', win: [{ kind: 'all_enemies_dead' }], loss: [{ kind: 'ally_dead', allyKey: 'vip' }] };
-    expect(() => buildEncounterState(c2, encKey(), party, choices, 1, 'medium', 'h', 'e')).toThrow('roadmap A5');
+    expect(() => buildEncounterState(c2, encKey(), party, choices, 1, 'medium', 'h', 'e')).toThrow('unknown ally');
   });
 
   it('no objective authored → state carries none (legacy kill-all path)', () => {

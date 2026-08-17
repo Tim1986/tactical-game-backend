@@ -60,6 +60,7 @@ import {
   LOS_ENFORCED,
   reachableTiles,
   reachableFrom,
+  findPath,
   pushDestination,
   pullDestination,
   isTerrainBlocked,
@@ -573,6 +574,31 @@ function scoreEffectsOnTarget(
             && objK.win.some((w) => w.kind === 'units_dead' && w.unitIds.includes(target.instanceId))) {
             s += effective * WEIGHTS.damage * 0.5;
             if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.5;
+          }
+          // CAMPAIGN protect instinct (A5): when losing the escort loses the
+          // encounter (ally_dead), enemies within striking range of a living
+          // protected ally are priority kills for the party.
+          if (objK && caster.ownerPlayerId === objK.partyId
+            && objK.loss.some((l) => l.kind === 'ally_dead')) {
+            const protectedIds = objK.loss.flatMap((l) => l.kind === 'ally_dead' ? l.unitIds : []);
+            const wards = ctx.state.units.filter((u) => u.isAlive && protectedIds.includes(u.instanceId));
+            const threatens = wards.some((w) =>
+              manhattanDistance(target.position, w.position) <= (target.movementRange ?? 3) + 1);
+            if (threatens) {
+              s += effective * WEIGHTS.damage * 0.4;
+              if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.4;
+            }
+          }
+          // CAMPAIGN aiHints (A5): a hunter prioritizes its quarry — the
+          // escort ('ally') or the main character ('main'). Strong bias, not
+          // absolute (free kills elsewhere still outscore chip damage here).
+          if (objK && caster.aiHints?.priorityTarget) {
+            const quarry = caster.aiHints.priorityTarget === 'ally'
+              ? (objK.allyIds ?? []) : [objK.mainId];
+            if (quarry.includes(target.instanceId)) {
+              s += effective * WEIGHTS.damage * 0.6;
+              if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.6;
+            }
           }
           if (effective > 0) {
             s -= thornsCost(projectedPos);
@@ -1347,6 +1373,18 @@ function positionScore(
     }
   }
 
+  // CAMPAIGN aiHints (A5): a hunter drifts toward its quarry even when it
+  // cannot reach it this turn.
+  if (unit.aiHints?.priorityTarget && state.objective) {
+    const objH = state.objective;
+    const quarryIds = unit.aiHints.priorityTarget === 'ally' ? (objH.allyIds ?? []) : [objH.mainId];
+    const quarry = state.units.filter((u) => u.isAlive && quarryIds.includes(u.instanceId));
+    if (quarry.length > 0) {
+      const nearest = Math.min(...quarry.map((q) => manhattanDistance(pos, q.position)));
+      s -= nearest * 0.8;
+    }
+  }
+
   // CAMPAIGN objective (A3): tile conditions shape positioning.
   //  - Party side: units the condition covers are pulled to the marked tiles
   //    (a big on-tile bonus + a distance gradient toward the nearest tile).
@@ -1501,6 +1539,106 @@ export interface TurnPlan {
  * (needed in Round 1 where END_TURN commits a unit and the engine must know
  * which one was selected).
  */
+/**
+ * CAMPAIGN allies (A5): doctrine-driven planning for AI allies. Allies are
+ * NPCs, not soldiers — 'follow' shadows the main character and fights
+ * opportunistically, 'hold' stands and fights, 'route' walks its waypoints
+ * and swings only in self-defense. Dispatched from planBestTurn so every
+ * driver (campaignSim, the mobile local runner) gets it without changes.
+ */
+function planAllyTurn(
+  state: MatchState,
+  unit: UnitInstance,
+  myPlayerId: string,
+  map: Map<string, AbilityDefinition>,
+): TurnPlan {
+  const doctrine = state.allies![unit.instanceId];
+  const END: TurnAction = { type: 'END_TURN' };
+  const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId);
+
+  // Best single-target damage cast available from `pos` (self-defense / kit
+  // swing). Allies keep it simple: damage abilities, range + LoS respected.
+  const bestAttackFrom = (pos: BoardPosition): TurnAction | null => {
+    let best: { score: number; action: TurnAction } | null = null;
+    for (const slug of unit.abilities) {
+      if ((unit.cooldowns[slug] ?? 0) > 0) continue;
+      const def = map.get(slug);
+      if (!def || def.targetingType === 'self') continue;
+      const dmg = def.effects.reduce((acc, e) => acc + ((e.type === 'damage' || e.type === 'lifesteal') ? (e as { value?: number }).value ?? 0 : 0), 0);
+      if (dmg <= 0) continue;
+      for (const t of enemies) {
+        const d = def.targetingType === 'line'
+          ? chebyshevDistance(pos, t.position)
+          : manhattanDistance(pos, t.position);
+        if (d > def.range) continue;
+        if (def.targetingType === 'single' && LOS_ENFORCED
+          && !def.effects.some((e) => e.type === 'push')
+          && !hasLineOfSight(pos, t.position, state.units, [unit.instanceId, t.instanceId], state.terrain)) continue;
+        const score = Math.min(dmg, t.currentHealth) + (dmg >= t.currentHealth ? 20 : 0);
+        if (!best || score > best.score) {
+          best = { score, action: { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: t.position } };
+        }
+      }
+    }
+    return best?.action ?? null;
+  };
+
+  // Walk as far along the path to `goal` as this turn's movement allows;
+  // falls back to the reachable tile that closes the most distance.
+  const stepToward = (goal: BoardPosition): BoardPosition | null => {
+    if (isRooted(unit) || samePos(unit.position, goal)) return null;
+    const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
+    if (tiles.length === 0) return null;
+    const path = findPath(unit.position, goal, unit, state.units, state.terrain);
+    if (path) {
+      for (let i = path.length - 1; i >= 0; i--) {
+        const step = path[i];
+        if (tiles.some((t) => samePos(t, step))) return step;
+      }
+    }
+    let best: BoardPosition | null = null;
+    let bestD = manhattanDistance(unit.position, goal);
+    for (const t of tiles) {
+      const d = manhattanDistance(t, goal);
+      if (d < bestD) { bestD = d; best = t; }
+    }
+    return best;
+  };
+
+  const finish = (move: BoardPosition | null, fight: boolean): TurnPlan => {
+    const pos = move ?? unit.position;
+    const attack = fight ? bestAttackFrom(pos) : null;
+    const actions: TurnAction[] = [];
+    if (move) actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: move });
+    if (attack) actions.push(attack);
+    // Round-1 commitment needs an action; a zero-distance hold-position MOVE
+    // is always legal (MOV-4) and harmless in later rounds.
+    if (actions.length === 0) actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: unit.position });
+    actions.push(END);
+    return { score: 0, actions };
+  };
+
+  if (doctrine.mode === 'hold') return finish(null, true);
+
+  if (doctrine.mode === 'route') {
+    const wps = doctrine.waypoints;
+    const idx = Math.min(doctrine.routeIndex, wps.length - 1);
+    const goal = wps[idx];
+    if (doctrine.routeIndex >= wps.length || samePos(unit.position, goal)) {
+      return finish(null, true); // route complete — hold the spot
+    }
+    // Self-defense only: swing when something is in reach AFTER the march.
+    return finish(stepToward(goal), true);
+  }
+
+  // follow: shadow the main character at <=2 tiles; fight with the kit.
+  const main = state.units.find((u) => u.isAlive && u.instanceId === state.objective?.mainId);
+  if (main && manhattanDistance(unit.position, main.position) > 2) {
+    return finish(stepToward(main.position), true);
+  }
+  return finish(null, true);
+}
+
 export function planBestTurn(
   state: MatchState,
   unit: UnitInstance,
@@ -1508,6 +1646,9 @@ export function planBestTurn(
   map: Map<string, AbilityDefinition>,
   mustAct = false,
 ): TurnPlan {
+  // CAMPAIGN allies (A5): doctrine planning, not battle planning.
+  if (state.allies?.[unit.instanceId]) return planAllyTurn(state, unit, myPlayerId, map);
+
   const allies = state.units.filter(
     (u) => u.isAlive && u.ownerPlayerId === myPlayerId,
   );
@@ -1950,9 +2091,13 @@ export class OptimalBrain implements AIBrain {
     // committed — the engine rejects END_TURN without a commitment.
     if (initiative.isRound1) {
       const committed = new Set(initiative.order);
-      const uncommitted = state.units.filter(
+      let uncommitted = state.units.filter(
         (u) => u.ownerPlayerId === myPlayerId && !committed.has(u.instanceId),
       );
+      // CAMPAIGN allies (A5): the party commits first; allies take the tail
+      // of the player's half. Only consider allies once no party unit remains.
+      const nonAlly = uncommitted.filter((u) => !state.allies?.[u.instanceId]);
+      if (nonAlly.length > 0) uncommitted = nonAlly;
 
       // Group 1 — usable this round (alive, not frozen): always preferred.
       // Commit the unit whose best turn scores highest, which naturally
