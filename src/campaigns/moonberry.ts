@@ -107,6 +107,13 @@ export const moonberryCampaign: CampaignDefinition = {
       hpScaleOverride: { easy: 0.98, medium: 1.24, hard: 1.28, nightmare: 1.35 },
     },
     // e2 — The Silver Arch: an immovable orc doorman, a goblin fire act, an orc mender.
+    // ⚠ TOO HARD, AND BRICKED FOR RANGED — D1 diagnostic 2026-08-17, 200 games/cell.
+    // Means 76/55/27/15 against bands of 80-95/65-80/45-65/25-45 — out of band at
+    // EVERY difficulty, and ranged wins 10% on hard (floor 15). The hpScaleOverride
+    // below is the most cranked in the trilogy (1.26-1.57); it was tuned against the
+    // pre-rework player stat line and is now badly over-tuned. Deliberately left
+    // unfixed: Phase D2 rebuilds this encounter as part of the escort/buttons
+    // redesign. See CAMPAIGN_ROADMAP.md D2 must-fix #2.
     e2: {
       level: 2,
       enemies: ['velvet_gate_guard', 'ember_juggler', 'silverthread_mender'],

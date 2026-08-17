@@ -105,6 +105,15 @@ export const lanternCampaign: CampaignDefinition = {
       // since melee must cross to reach it. Dropping to 3 runners trivialised
       // the fight (100% every party).
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }, { x: 4, y: 1 }],
+      // ⚠ BRICKED FOR RANGED — D1 diagnostic 2026-08-17, 200 games/cell.
+      // The stat rework (player AC 13-17 -> 8-12, player HP +15-20%) FLIPPED
+      // which party this encounter starves. The comment above describes moving
+      // the runners closer to rescue MELEE from under the floor; ranged now sits
+      // at 40%/28%/10% on easy/medium/hard against floors of 60/40/15. Same
+      // lever, opposite end. This is a SPREAD failure — hpScale cannot fix it;
+      // re-sweep start distance with spreadSweep.ts. Deliberately left unfixed:
+      // Phase D2 re-places this encounter when it adds terrain, so tuning now is
+      // throwaway. See CAMPAIGN_ROADMAP.md D2 must-fix #1.
       // Nightmare sits ~47% — a breakpoint cliff between 1.35 and 1.45 collapses
       // it to ~24%, so we take the nearest band edge (2026-07 rebalance).
       hpScaleOverride: { easy: 1.13, medium: 1.28, hard: 1.39, nightmare: 1.63 },
