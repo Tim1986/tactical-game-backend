@@ -319,6 +319,12 @@ export function buildEncounterState(
   mainName?: string,
   /** [A7] Boon keys the run has earned (grantBoon choices), applied to the party. */
   boonKeys?: string[],
+  /** [E2 balancing] Override the difficulty's enemy HP multiplier for THIS
+   *  build only, without touching content. Exists so the calibration walk
+   *  (buildBattery --scale) can probe a dozen rungs per minute instead of
+   *  editing the campaign file and re-verifying contentHash per probe.
+   *  Never set by live play — the mobile runner does not pass it. */
+  hpScaleOverride?: number,
 ): EncounterBuild {
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
@@ -361,7 +367,7 @@ export function buildEncounterState(
       throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is out of bounds (corners are removed tiles)`);
     }
   }
-  const hpScale = enc.hpScaleOverride?.[difficulty] ?? CAMPAIGN_HP_SCALE[difficulty];
+  const hpScale = hpScaleOverride ?? enc.hpScaleOverride?.[difficulty] ?? CAMPAIGN_HP_SCALE[difficulty];
 
   // Terrain content validation (A2): walls/hazards in bounds, hazards never on
   // walls, and no unit placed on a wall or hazard — authoring mistakes fail at

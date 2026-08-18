@@ -194,6 +194,9 @@ export function simEncounterCell(
     /** [E2.0] Boon keys the run has earned (i.e. which fork options were
      *  taken). Applied to the party by buildEncounterState. */
     boonKeys?: string[];
+    /** [E2 balancing] Probe a specific enemy-HP multiplier without editing
+     *  content — the calibration walk's lever. */
+    hpScale?: number;
   } = {},
 ): CampaignCellResult {
   const campaign = CAMPAIGNS[campaignSlug];
@@ -208,7 +211,7 @@ export function simEncounterCell(
   // campaign-scoped abilities merged in. (The old L6 cooldown override is gone —
   // E0's L10 second charge rides UnitInstance.extraCharges inside the built
   // state, so the sim exercises it with no ability-map surgery.)
-  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys);
+  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys, options.hpScale);
   const abilityMap = applyCooldownOverrides(
     applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
     probe.cooldownOverrides,
@@ -228,7 +231,7 @@ export function simEncounterCell(
     const stateFactory = (): MatchState => {
       const { state } = buildEncounterState(
         campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY,
-        undefined, options.boonKeys,
+        undefined, options.boonKeys, options.hpScale,
       );
       return state;
     };
