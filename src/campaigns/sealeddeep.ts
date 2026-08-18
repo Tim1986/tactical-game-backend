@@ -296,7 +296,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
       // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
       // verdict, and 1.55 breaches the wall cap outright.
-      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.45 },
+      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.55 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -434,7 +434,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // (18% -> 44% at 1.85) and the walls with it (48% -> 28%), but the wall
       // share still sits above the tool's 15% cap. Parked to CENTRE the mean —
       // see the nightmare-wall note at the top of this file.
-      hpScaleOverride: { easy: 1.45, medium: 1.62, hard: 1.82, nightmare: 1.95 },
+      hpScaleOverride: { easy: 1.45, medium: 1.55, hard: 1.82, nightmare: 1.95 },
     },
 
     // e7 — The Flooded Stair (escape). The barrow answers the allegiance
