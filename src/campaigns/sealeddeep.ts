@@ -266,11 +266,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       allies: {
         survivor: {
           name: 'The Whistling Survivor', baseClass: 'cleric',
-          // 85, not 60: a DEFENSELESS hold-mode VIP wants boss-tier HP, and a
-          // ranged party has no way to body-block for her. At 60 the cell was
-          // bimodal on easy (mean 69% / median 94%) with 26-41% of builds
-          // walled — she simply died in the builds that could not intercept.
-          maxHealth: 85, abilities: [],
+          // 105, matching e8's crew, after the certified battery. At 60 this was
+          // bimodal with 26-41% walled; 85 fixed EASY (86%, 9% walled) but left
+          // medium at 59% mean with 30% walled — she was still dying in a third
+          // of builds. Same lever, same second step as e8: a defenseless VIP
+          // that ranged parties cannot body-block needs boss-tier HP outright.
+          maxHealth: 105, abilities: [],
           behavior: { mode: 'hold' },
           placement: { x: 6, y: 6 },
         },
@@ -295,7 +296,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
       // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
       // verdict, and 1.55 breaches the wall cap outright.
-      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.38 },
+      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.45 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -560,7 +561,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 0.90 -> 57 · 1.05 -> 20 (32% walled). Seven bodies arriving in waves
       // compound fast. Nightmare sits just BELOW hard because its per-enemy
       // blocks already supply the extra difficulty.
-      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 1.00, nightmare: 0.97 },
+      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 0.955, nightmare: 0.97 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
@@ -588,7 +589,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // Walk: easy 1.30 -> 85 · medium 1.60 -> 77 · 1.90 -> 51 · nm 2.10 -> 24.
       // Walls climbed with scale (36-40% at the top rungs) — addressed by
       // standing the Conductor off above rather than by softening the choir.
-      hpScaleOverride: { easy: 1.27, medium: 1.68, hard: 1.85, nightmare: 2.00 },
+      // ⚠ Certified battery (100 builds) came in well below the 25-build walk:
+      // medium 1.68 -> 59% (walk said 77), hard 1.85 -> 40% (walk said 51),
+      // nm 2.00 -> 22%. That gap IS the walk's documented sampling noise, and
+      // it is why rungs get certified rather than trusted. Pulled down to hit
+      // the band midpoints against the battery's numbers, not the walk's.
+      hpScaleOverride: { easy: 1.27, medium: 1.50, hard: 1.68, nightmare: 1.90 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
