@@ -256,7 +256,7 @@ const SIPHON_HEAL = 1;
  *  caster carries the 'gift_damage' flag. Multi-hit abilities are paid per
  *  effect (Twin Strike 8+8 -> 9+9) — deliberate, mirrors opportunist. PROVISIONAL
  *  value; E0.4's gift harness may revise it. */
-export const GIFT_DAMAGE_BONUS = 1;
+export const GIFT_DAMAGE_BONUS = 2;
 /** Statuses negated by the Stalwart passive. */
 const STALWART_IMMUNE = new Set(['rooted', 'weakened', 'exposed']);
 /** Displacement immunity. Merged Stalwart (2026-08-13) absorbed the old Anchor,

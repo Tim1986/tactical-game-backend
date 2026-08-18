@@ -21,7 +21,7 @@ import { OptimalBrain } from './aiBrain.js';
 import { buildAbilityMap } from './defaultData.js';
 import { applyCooldownOverrides, applyCampaignAbilities } from '../game/abilityOverrides.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
-import { buildEncounterState, CampaignUnitChoice } from '../campaigns/runtime.js';
+import { buildEncounterState, CampaignUnitChoice, DEEP_GIFTS, DeepGiftSlug } from '../campaigns/runtime.js';
 import { CampaignDifficulty } from '../campaigns/types.js';
 import { DEFAULT_UNITS } from './defaultData.js';
 import { MatchState, ResolvedWinCondition, ResolvedLossCondition } from '../types/matchState.js';
@@ -66,13 +66,48 @@ const PARTY_FLOOR: Record<CampaignDifficulty, number> = {
 const NIGHTMARE_BEST_MIN = 0.40;
 
 /**
+ * [E0.4] Which Deep Gift each chassis takes by default in the sim.
+ *
+ * This is the sim's model of a COMPETENT player's pick — it decides what the
+ * back half of a campaign is balanced against, so a bad policy means balancing
+ * against a strawman. Derived from giftHarness.ts measurements (per-party mean
+ * win-rate delta per gift); re-derive by re-running the harness whenever
+ * DEEP_GIFTS values change. Classes absent here fall back to 'damage'.
+ */
+export const DEFAULT_GIFT_BY_CLASS: Record<string, DeepGiftSlug> = {
+  // MEASURED 2026-08-18 (giftHarness, 42 cell/party pairs x 200 games at L8),
+  // at the TUNED values damage +2 / movement +1 / armor +3.
+  //
+  // At those values the melee party prefers armor (+26.8 vs damage +18.9) and
+  // the ranged party prefers damage (+25.3 vs armor +21.5), so the split below
+  // is melee-chassis → armor, ranged/caster-chassis → damage.
+  //
+  // ⚠ HONEST LIMIT: the harness applied each gift UNIFORMLY across the whole
+  // party, so this is a party-level result projected onto classes — per-class
+  // preference was never isolated, and mixed-gift parties were never simmed.
+  // The balanced party (fighter/ranger/cleric/wizard) preferring damage
+  // slightly contradicts the melee half of this split. Re-measure per-class
+  // against campaign 2's own encounters in E2 before trusting it further.
+  fighter: 'armor', barbarian: 'armor', rogue: 'armor', cleric: 'armor',
+  ranger: 'damage', wizard: 'damage', sorcerer: 'damage', warlock: 'damage',
+};
+
+/**
  * Per-unit choices matching the live level-up schedule (specials front-loaded):
  * L2 = main + first companion get specials; L3 = remaining two get specials
  * (all four specialed by fight 2); L4 = main + first companion get passives;
  * L5 = remaining two get passives. Defaults to each class's first option;
  * passiveOverrides (from --passives) replaces the passive picks for comparisons.
  */
-function choicesForLevel(partySlugs: string[], level: number, passiveOverrides?: (string | undefined)[]): CampaignUnitChoice[] {
+export function choicesForLevel(
+  partySlugs: string[],
+  level: number,
+  passiveOverrides?: (string | undefined)[],
+  /** [E0.4] Per-unit gift override. A DeepGiftSlug forces that gift; 'none'
+   *  forces NO gift even at L7+ (the harness baseline); undefined uses the
+   *  measured default policy below. */
+  giftOverrides?: (DeepGiftSlug | 'none' | undefined)[],
+): CampaignUnitChoice[] {
   return partySlugs.map((slug, i) => {
     const def = DEFAULT_UNITS[slug];
     const early = i <= 1; // main + first companion level up first
@@ -80,14 +115,14 @@ function choicesForLevel(partySlugs: string[], level: number, passiveOverrides?:
     const passiveSlug = level >= (early ? 4 : 5)
       ? (passiveOverrides?.[i] ?? def?.passiveOptions[0]?.slug)
       : undefined;
-    // Deep Gifts (E0, L7/L8): STOPGAP policy — melee-ish chassis take armor,
-    // everyone else damage. Exists so an L7+ cell never silently models a
-    // giftless party. E0.4 replaces this with the measured per-party policy
-    // (and the gift-value harness); do not tune content against this default.
-    const MELEE = new Set(['fighter', 'barbarian', 'rogue', 'cleric']);
-    const deepGiftSlug = level >= (early ? 7 : 8)
-      ? ((MELEE.has(slug) ? 'armor' : 'damage') as CampaignUnitChoice['deepGiftSlug'])
-      : undefined;
+    // Deep Gifts (E0, L7/L8). The default is the MEASURED policy in
+    // DEFAULT_GIFT_BY_CLASS (see giftHarness.ts); an override forces a
+    // specific gift, or 'none' for the harness baseline.
+    const eligible = level >= (early ? 7 : 8);
+    const override = giftOverrides?.[i];
+    const deepGiftSlug: DeepGiftSlug | undefined = !eligible ? undefined
+      : override === 'none' ? undefined
+      : override ?? DEFAULT_GIFT_BY_CLASS[slug] ?? 'damage';
     return { specialSlug, passiveSlug, deepGiftSlug };
   });
 }
@@ -147,7 +182,12 @@ export function simEncounterCell(
   difficulty: CampaignDifficulty,
   partyName: string,
   partySlugs: string[],
-  options: { games?: number; level?: number; seed?: number; passives?: (string | undefined)[] } = {},
+  options: {
+    games?: number; level?: number; seed?: number;
+    passives?: (string | undefined)[];
+    /** [E0.4] Per-unit Deep Gift override; 'none' = giftless baseline. */
+    gifts?: (DeepGiftSlug | 'none' | undefined)[];
+  } = {},
 ): CampaignCellResult {
   const campaign = CAMPAIGNS[campaignSlug];
   if (!campaign) throw new Error(`Unknown campaign: ${campaignSlug}`);
@@ -156,7 +196,7 @@ export function simEncounterCell(
   const games = options.games ?? 100;
   const level = options.level ?? enc.level;
   const rng = makeRng(options.seed ?? 1);
-  const choices = choicesForLevel(partySlugs, level, options.passives);
+  const choices = choicesForLevel(partySlugs, level, options.passives, options.gifts);
   // A6: the sim must fight with the SAME ability map as the real match —
   // campaign-scoped abilities merged in. (The old L6 cooldown override is gone —
   // E0's L10 second charge rides UnitInstance.extraCharges inside the built

@@ -263,6 +263,114 @@ loadouts with `--passives` (specials require a small code change — flag if
 needed). The owner's design intent (fears/roots crack one encounter, dead
 weight in the next) lives exactly in the space this harness does not sweep.
 
+## Measuring Deep Gifts (E0.4) — `giftHarness.ts`
+
+The Deep Gift menu (`DEEP_GIFTS` in `campaigns/runtime.ts`) is a CHOICE, and a
+choice is only real if different parties want different things. A gift every
+party always takes — or one nobody ever takes — is a non-choice, the same
+failure that killed the boon menu in E1. So the values are held to a
+measurable bar, not taste:
+
+```bash
+npx tsx src/ai/giftHarness.ts --pilot        # which cells can show a delta at all
+npx tsx src/ai/giftHarness.ts --games 200 --json gifts.json
+```
+
+It reports, per representative party, each gift's mean win-rate delta against
+a **giftless baseline** at the same level, then states plainly whether the menu
+is a real choice (different parties prefer different gifts) or an auto-pick.
+
+⚠ **THE CEILING TRAP — the reason the pilot exists.** Gifts only exist at L7+,
+but every shipped encounter is tuned for L1–L5. Run a gifted party against L3
+content and it wins ~100% of the time, where **no gift can show any value** —
+the run would report "all gifts are worthless" and that number would be a pure
+artifact of the ceiling, not a fact about gifts. Measured: over half of all
+(cell, party) pairs at L8 pin at 93–100% and are useless for measurement. The
+pilot therefore drops every cell whose giftless baseline falls outside
+25–80% and measures only in the rest. **The same trap applies to any future
+player-power measurement** (boons, new passives): if the baseline is not
+mid-band, you are measuring the ceiling.
+
+⚠ **READ THE MEANS, NOT THE ROWS.** At 200 games a single cell's win rate
+carries a binomial standard error of ~3.5 pts, so the *difference* between two
+cells carries ~5 pts of noise — larger than the effect most gifts have. An
+individual row showing "armor +4" is inside noise and means nothing on its own.
+The per-party mean across ~13 cells cuts that to ~1.4 pts, which is why the
+harness aggregates before it ranks. Never revise a gift value off one row.
+
+### What the runs found, and the values they produced (2026-08-18)
+
+Three iterations, 42 cell/party pairs x 200 games each, at L8.
+
+**Run 1 (+1 / +1 / +2 — the design doc's guesses).** Both predictions were
+wrong, in opposite directions. Movement was predicted weakest and measured
+strongest (+20.4); armor was predicted strongest and measured second (+15.0);
+damage measured a distant last (+10.6, significantly behind movement at SE 3.4).
+Every party AND every objective shape preferred movement — an auto-pick.
+
+**Run 2 (damage → +2).** Damage and movement became tied overall (+0.8, SE 3.2),
+and preference split by objective shape.
+
+**Run 3 (armor → +3) — SHIPPED VALUES: damage +2 / movement +1 / armor +3.**
+
+| Gift | overall | melee | ranged | balanced |
+|---|---|---|---|---|
+| Damage +2 (per damage effect) | +21.2 | +18.9 | **+25.3** | **+20.5** |
+| Movement +1 | +20.8 | +23.6 | +21.7 | +16.2 |
+| Armor +3 | +23.3 | **+26.8** | +21.5 | +20.2 |
+
+**All three pairwise gaps are inside noise** (spread 2.5 pts; damage−movement
++0.5 SE 3.3, damage−armor −2.0 SE 1.8, movement−armor −2.5 SE 3.6). No gift is
+an auto-pick and none is dead.
+
+The differentiation lives in the **objective shape**, and it is strong:
+
+| Shape | damage | movement | armor | wants |
+|---|---|---|---|---|
+| escape | +20.1 | **+47.6** | +14.3 | movement, overwhelmingly |
+| escort | **+8.6** | +1.6 | +1.7 | damage — movement is near-worthless here |
+| survive | +19.7 | +23.3 | **+36.4** | armor |
+| boss | +25.6 | +20.8 | **+28.2** | armor |
+| rooms | +20.8 | +15.1 | **+27.0** | armor |
+| hold | +20.5 | +3.0 | **+28.0** | armor |
+| race | **+28.5** | +25.5 | +27.9 | damage (all three strong) |
+| kill-all | +14.4 | **+17.2** | +15.5 | ~tied |
+
+This is the owner's stated bar met exactly: a gift that decides an `escape`
+(+47.6) is nearly worthless in an `escort` (+1.6). Because gifts are picked once
+at L7/L8 and held for the rest of the run, the player is betting on the
+campaign's remaining encounter MIX — a real strategic decision.
+
+⚠ **Carry into E2:** (1) movement is worth ~+48 pts on an `escape`, so tune
+campaign 2's **e7** knowing a movement party trivializes it. (2) Deltas of
++20 pts mean gifts are POWERFUL — the back half must be balanced with the
+ladder modelled, not as an afterthought. (3) Shapes marked thin (n<4: hold,
+hazard) are suggestive only.
+
+Two consequences worth carrying:Two consequences worth carrying:
+
+- The usable cells are proxies — shipped L1–L5 content forced to L8, not
+  content designed for it. **Re-run the harness against campaign 2's own
+  encounters once E2 exists**, and trust those numbers over these.
+- `DEFAULT_GIFT_BY_CLASS` (campaignSim.ts) is the sim's model of a competent
+  player's pick, and it decides what the back half of a long campaign gets
+  balanced against. A bad policy means balancing against a strawman. Re-derive
+  it from the harness whenever the gift values change.
+- **The harness applies each gift UNIFORMLY to the whole party.** It therefore
+  measures party-level preference, never per-class, and never a mixed-gift
+  party — which is what real play produces. `DEFAULT_GIFT_BY_CLASS` projects
+  the party result onto chassis, which is an inference, not a measurement.
+- **The pilot's cell selection is unstable.** It filters at only 30 games, so
+  which cells pass the mid-band gate shifts run to run (42 vs 40 pairs across
+  these runs, and the positional share moved 17→12). Compare runs by their
+  conclusions, not by treating individual numbers as reproducible constants.
+- **Gift values now live in ONE place each** (`GIFT_DAMAGE_BONUS` in
+  abilityExecutor.ts; `GIFT_MOVEMENT_BONUS`/`GIFT_ARMOR_BONUS` in runtime.ts),
+  and `DEEP_GIFTS` builds its player-facing descriptions from them, so text and
+  behaviour cannot drift. The rulebookSpec checks assert against the constants
+  too — but `rulebook.ts` PROSE still states the numbers literally (players read
+  it verbatim), so a value change means editing GFT-1/GFT-2/GFT-3 by hand.
+
 ## What you may not touch
 
 - **Arena data** (`gameData.ts` chassis/abilities/passives) — campaign

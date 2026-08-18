@@ -8,6 +8,7 @@ import { MatchState, UnitInstance, BoardPosition, InitiativeState, BOARD_WIDTH, 
 import { UnitDefinition } from '../ai/types.js';
 import { newInstanceId } from '../game/initialState.js';
 import { isInBounds } from '../game/boardUtils.js';
+import { GIFT_DAMAGE_BONUS } from '../game/abilityExecutor.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
 import { BoonDef, CampaignDefinition, CampaignDifficulty, CampaignEncounter, CampaignEnemy, TerrainSpec, WaveSpec } from './types.js';
 
@@ -45,10 +46,14 @@ export const hasSecondSpecialChargeAtLevel = (level: number): boolean => level >
  *  whole AC spread). Damage is a flag consumed by abilityExecutor's giftBonus
  *  (+GIFT_DAMAGE_BONUS per damage effect); movement/armor are build-time stat
  *  deltas. ONE source of truth — sim, UI copy, and build all read this. */
+export const GIFT_MOVEMENT_BONUS = 1;
+export const GIFT_ARMOR_BONUS = 3;
 export const DEEP_GIFTS = {
-  damage: { name: 'Gift of Fangs', description: '+1 damage on every damaging effect.' },
-  movement: { name: 'Gift of Stride', description: '+1 movement range.', movementRange: 1 },
-  armor: { name: 'Gift of Stone', description: '+2 armor class.', armorClass: 2 },
+  // Descriptions are BUILT from the constants, not typed alongside them — the
+  // player-facing text and the engine's behaviour cannot drift apart.
+  damage: { name: 'Gift of Fangs', description: `+${GIFT_DAMAGE_BONUS} damage on every damaging effect.` },
+  movement: { name: 'Gift of Stride', description: `+${GIFT_MOVEMENT_BONUS} movement range.`, movementRange: GIFT_MOVEMENT_BONUS },
+  armor: { name: 'Gift of Stone', description: `+${GIFT_ARMOR_BONUS} armor class.`, armorClass: GIFT_ARMOR_BONUS },
 } as const;
 export type DeepGiftSlug = keyof typeof DEEP_GIFTS;
 

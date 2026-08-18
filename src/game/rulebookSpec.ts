@@ -27,7 +27,8 @@ import { checkWinCondition } from './winCondition.js';
 import { isInBounds, isCorner } from './boardUtils.js';
 import { reachableFrom, findPath, isCorner as geoIsCorner } from '../ai/geometry.js';
 import { buildUnitInstance } from './initialState.js';
-import { buildCampaignPlayerInstance } from '../campaigns/runtime.js';
+import { buildCampaignPlayerInstance, GIFT_MOVEMENT_BONUS, GIFT_ARMOR_BONUS } from '../campaigns/runtime.js';
+import { GIFT_DAMAGE_BONUS } from './abilityExecutor.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
 import { isInAoe, getLineTiles } from './boardUtils.js';
 
@@ -1139,7 +1140,7 @@ export const RULE_CHECKS: RuleCheck[] = [
       const g = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
       let t = mkUnit(P2, 3, 3);
       cast(mkAbility({ isUnblockable: true }), g, t, [g, t]);
-      assert(t.currentHealth === 100 - 11, 'gift must add +1 to a 10-damage effect');
+      assert(t.currentHealth === 100 - (10 + GIFT_DAMAGE_BONUS), 'gift must add its bonus to a 10-damage effect');
       // multi-hit: two damage effects -> +1 EACH
       const g2 = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
       t = mkUnit(P2, 3, 3);
@@ -1150,7 +1151,7 @@ export const RULE_CHECKS: RuleCheck[] = [
           { type: 'damage', formula: 'flat', value: 8 },
         ],
       } as Partial<AbilityDefinition>), g2, t, [g2, t]);
-      assert(t.currentHealth === 100 - 18, 'gift must add +1 to EACH hit of a multi-hit (8+8 -> 9+9)');
+      assert(t.currentHealth === 100 - (16 + 2 * GIFT_DAMAGE_BONUS), 'gift must add its bonus to EACH hit of a multi-hit');
       // no flag, no bonus
       const plain = mkUnit(P1, 3, 2);
       t = mkUnit(P2, 3, 3);
@@ -1164,7 +1165,7 @@ export const RULE_CHECKS: RuleCheck[] = [
       const def = DEFAULT_UNITS['fighter'];
       const base = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
       const gifted = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'movement' });
-      assert(gifted.movementRange === base.movementRange + 1, 'Stride must be +1 movement over the ungifted build');
+      assert(gifted.movementRange === base.movementRange + GIFT_MOVEMENT_BONUS, 'Stride must add its bonus over the ungifted build');
     },
   },
   {
@@ -1173,7 +1174,7 @@ export const RULE_CHECKS: RuleCheck[] = [
       const def = DEFAULT_UNITS['fighter'];
       const base = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
       const gifted = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'armor' });
-      assert(gifted.armorClass === base.armorClass + 2, 'Stone must be +2 AC over the ungifted build');
+      assert(gifted.armorClass === base.armorClass + GIFT_ARMOR_BONUS, 'Stone must add its bonus over the ungifted build');
     },
   },
   {
