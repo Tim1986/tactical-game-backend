@@ -149,6 +149,42 @@ the kill-all defaults.
 | `rooms` | cumulative attrition | normal but LOW values | 0.75 / 0.80 / 0.90 / 1.00 | garrison size is very coarse (±1 unit ≈ 45 pts); scale is the fine lever |
 | `escort` | hunter pressure vs VIP HP | **NEARLY INERT** (balanced comp held 100% through a 0.70→2.25 sweep) | 0.70 / 1.10 / 1.20 / 1.30 | hunter COUNT is binary (2 = stroll, 3 = walls ranged); hunter SPEED is the fine dial; VIP HP (boss-tier — ranged can't body-block); a LONGER route makes it EASIER |
 
+**Additions measured on campaign 2 (E2, 2026-08-18) — read with the table above:**
+
+- **A `survive` with no waves is a kill-all wearing a survive label.** e5 measured
+  100% at ALL FOUR difficulties: the party simply cleared three enemies and won on
+  the MERCY rule (win reason "Every enemy has fallen"). Pending waves are what
+  suppress the mercy rule, and only then does the round target bind — which is
+  also what makes hpScale bite again, since a tankier enemy deals damage LONGER.
+  If a survive cell reads flat across difficulties, check the win REASON before
+  touching scale.
+- **PHASING enemies cost ~35 pts per wave unit, not the table's 10–15.** Measured
+  on e5: +1 wave unit left easy at 100% (and scale spanned only ~22 pts across
+  0.9→1.6, useless), while +3 units put easy at 27% at the lowest scale probed.
+  Phasers earn it — they ignore the carve, so walls hinder only the party, and
+  `drain` heals them while they work. Budget wave size accordingly for any
+  phasing content.
+- **`escape` is nearly hpScale-INERT without a clock.** e7 moved only 82%→70%
+  across 1.30→2.30 — nearly double the enemy HP for 12 points — because you win
+  by ARRIVING and a tankier interceptor just lives longer. Give an escape a
+  `round_reached` LOSS and enemy HP starts to matter (bodies cost you rounds).
+  The generic lesson: **if the win condition does not require killing, scale is
+  weak; find the lever the win condition actually respects.**
+- **A tight clock walls builds instead of ranking them.** e6 at clock 10 walled
+  24–40% of builds at every rung; 10→13 dropped medium's wall share 24%→8%.
+  When a clock still walls at the top rungs, the required KILL COUNT is usually
+  the real problem — narrowing e6's win from `all_enemies_dead` to `units_dead`
+  on the three chanters cut required damage by a quarter without touching pace.
+- **An unkillable pressure unit is pure wall-maker.** e10's boss never has to
+  die, so hpScale on her only made her more unkillable while she kept hitting —
+  30–40% walled at the top rungs. Stand a not-required-to-die unit OFF at
+  distance instead of softening the units that DO have to die.
+- **`rooms` scale sensitivity goes with garrison size, and the stat floor binds
+  first.** e12 with nine bodies across three rooms needed scale 0.55 for easy —
+  which puts a 52 HP skeleton at 26 HP, under the roster's 28 HP floor and
+  squarely "mook-weak". Trim the garrison (~45 pts/unit) until the scales land
+  in a range that keeps enemies legal, rather than scaling into mook territory.
+
 Cross-cutting measurements:
 
 - **Identical-enemy encounters move in ~30-pt jumps** — every instance shares
