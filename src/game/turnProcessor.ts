@@ -720,7 +720,15 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   }
   events.push({ type: 'ABILITY_USED', sourceUnitInstanceId: unit.instanceId, position: action.target, message: `Used ${ability.name}`, abilitySlug: ability.slug });
   executeAbility({ state, caster: unit, targetPosition: action.target, ability, events, pushDestination: action.pushDestination });
-  if (ability.cooldownTurns > 0) unit.cooldowns[action.abilitySlug] = ability.cooldownTurns;
+  // Charges (campaign E0): while a spare charge remains, spend it instead of
+  // starting the cooldown — the ability stays available (cooldown 0) for the
+  // next use. The LAST use writes the cooldown as normal, which for 99-cooldown
+  // specials means "done for the encounter", same as arena.
+  if (ability.cooldownTurns > 0) {
+    const spare = unit.extraCharges?.[action.abilitySlug] ?? 0;
+    if (spare > 0) unit.extraCharges![action.abilitySlug] = spare - 1;
+    else unit.cooldowns[action.abilitySlug] = ability.cooldownTurns;
+  }
   unit.hasActedThisTurn = true;
 }
 

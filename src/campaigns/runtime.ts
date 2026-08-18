@@ -20,21 +20,43 @@ export const CAMPAIGN_HP_SCALE: Record<CampaignDifficulty, number> = {
  * Player-side max-HP delta relative to arena values, by campaign level.
  * L1 starts stripped down (-8), L2 recovers half, L4 reaches baseline.
  */
-export const PLAYER_HP_DELTA: Record<number, number> = { 1: -8, 2: -4, 3: -4, 4: 0, 5: 0, 6: 0 };
+export const PLAYER_HP_DELTA: Record<number, number> = { 1: -8, 2: -4, 3: -4, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
 
-// Level-up schedule (specials front-loaded) is implemented per-unit in the mobile
-// level-up UI (levelUpKind) and mirrored in campaignSim's choicesForLevel:
-//   L2 main + 1 companion special · L3 other two special · L4/L5 passives · L6 recharge.
-// The player build path honors whatever specialSlug/passiveSlug the party has chosen,
-// so there is no level gate here beyond the double-special perk below.
-export const hasDoubleSpecialAtLevel = (level: number): boolean => level >= 6;
+// Level-up schedule (E0 ladder, settled 2026-08-17). Implemented per-unit in the
+// mobile level-up UI (levelUpKind) and mirrored in campaignSim's choicesForLevel:
+//   L2 main + 1 companion special · L3 other two · L4/L5 passives ·
+//   L6 fork #1 (boon) · L7 main + 1 Deep Gift · L8 other two · L9 fork #2 (boon) ·
+//   L10 specials get a SECOND CHARGE (max level).
+// The build path honors whatever specialSlug/passiveSlug/deepGiftSlug the party
+// has chosen; the only level gates here are the HP delta and the L10 perk.
+export const MAX_CAMPAIGN_LEVEL = 10;
 
-/** Cooldown given to once-per-game specials under the L6 "Special ×2" perk. */
-export const DOUBLE_SPECIAL_COOLDOWN = 7;
+/** L10 perk: every party special gets a second charge — usable twice per
+ *  encounter, back to back if the player likes (owner call 2026-08-17: charges,
+ *  NOT a recharge cooldown — a cooldown forces burning the first use early to
+ *  earn the second, charges reward setup). Implemented via
+ *  UnitInstance.extraCharges; replaces the old dormant cooldown-7 perk. */
+export const hasSecondSpecialChargeAtLevel = (level: number): boolean => level >= MAX_CAMPAIGN_LEVEL;
+
+/** Deep Gifts (L7/L8): each unit picks ONE. Values PROVISIONAL — E0.4's gift
+ *  harness measures them against all three representative parties, and a gift
+ *  no party ever picks (or every party always picks) gets revised (movement's
+ *  suspected buff is +2; armor is suspected strongest at 40% of the roster's
+ *  whole AC spread). Damage is a flag consumed by abilityExecutor's giftBonus
+ *  (+GIFT_DAMAGE_BONUS per damage effect); movement/armor are build-time stat
+ *  deltas. ONE source of truth — sim, UI copy, and build all read this. */
+export const DEEP_GIFTS = {
+  damage: { name: 'Gift of Fangs', description: '+1 damage on every damaging effect.' },
+  movement: { name: 'Gift of Stride', description: '+1 movement range.', movementRange: 1 },
+  armor: { name: 'Gift of Stone', description: '+2 armor class.', armorClass: 2 },
+} as const;
+export type DeepGiftSlug = keyof typeof DEEP_GIFTS;
 
 export interface CampaignUnitChoice {
   passiveSlug?: string;
   specialSlug?: string;
+  /** Deep Gift (L7/L8) — validated against DEEP_GIFTS at build. */
+  deepGiftSlug?: DeepGiftSlug;
 }
 
 /**
@@ -56,13 +78,27 @@ export function buildCampaignPlayerInstance(
   const passive = choice?.passiveSlug
     ? def.passiveOptions.find((p) => p.slug === choice.passiveSlug)
     : undefined;
+  // Deep Gift (E0, L7/L8): one per unit. Unknown slugs throw — a silent no-op
+  // gift would be the passiveFlags-typo bug all over again.
+  const gift = choice?.deepGiftSlug !== undefined
+    ? DEEP_GIFTS[choice.deepGiftSlug] : undefined;
+  if (choice?.deepGiftSlug !== undefined && !gift) {
+    throw new Error(`Unknown Deep Gift "${choice.deepGiftSlug}" for ${def.slug}`);
+  }
   const maxHealth = Math.max(1, def.maxHealth + (PLAYER_HP_DELTA[level] ?? 0) + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0));
-  const armorClass = def.armorClass + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0);
-  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0);
+  const armorClass = def.armorClass + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0)
+    + ((gift as { armorClass?: number } | undefined)?.armorClass ?? 0);
+  const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0)
+    + ((gift as { movementRange?: number } | undefined)?.movementRange ?? 0);
   const passives = passive?.passiveFlag ? [...def.passives, passive.passiveFlag] : [...def.passives];
+  if (choice?.deepGiftSlug === 'damage') passives.push('gift_damage');
 
   const cooldowns: Record<string, number> = {};
   for (const s of abilities) cooldowns[s] = 0;
+  // L10 (E0): the special gets a second charge. Lives on the unit, so it
+  // serializes with match state through every transport untouched.
+  const extraCharges = hasSecondSpecialChargeAtLevel(level) && specialSlug
+    ? { [specialSlug]: 1 } : undefined;
   const instanceId = newInstanceId();
   const initialStatuses = passives.includes('warded')
     ? [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: instanceId }]
@@ -73,6 +109,7 @@ export function buildCampaignPlayerInstance(
     armorClass, movementRange, abilities, passives,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
+    ...(extraCharges ? { extraCharges } : {}),
   };
 }
 
@@ -546,17 +583,12 @@ export function buildEncounterState(
     };
   }
 
-  // L6 double-special: override every party special's cooldown in this match's
-  // ability map (never mutate shared engine data).
-  let cooldownOverrides: Record<string, number> | null = null;
-  if (hasDoubleSpecialAtLevel(level)) {
-    cooldownOverrides = {};
-    for (const slug of partySlugs) {
-      for (const sp of DEFAULT_UNITS[slug]?.specialOptions ?? []) {
-        cooldownOverrides[sp] = DOUBLE_SPECIAL_COOLDOWN;
-      }
-    }
-  }
+  // E0: the L10 "second charge" perk replaced the old cooldown-7 override —
+  // charges live on UnitInstance.extraCharges (set in the player build above),
+  // so nothing here needs the ability map touched. cooldownOverrides stays in
+  // the EncounterBuild shape as an always-null legacy field because the whole
+  // client stack (bridge, offline store, match screen) plumbs it; prune later.
+  const cooldownOverrides: Record<string, number> | null = null;
 
   const initiative: InitiativeState = {
     order: [], slot: 0, round1FirstPlayerId: humanId, activeUnitId: null, isRound1: true,

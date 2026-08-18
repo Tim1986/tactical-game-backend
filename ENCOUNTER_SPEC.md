@@ -318,3 +318,34 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
 4. **UI** — the player can SEE it (terrain art, objective banner, wave
    spawn moment, door affordance) and previews stay honest.
 Then: owner feel-test on device.
+
+## E0 — The L10 ladder: Deep Gifts and the Second Charge (2026-08-17)
+
+**IMPLEMENTED SEMANTICS.** `MAX_CAMPAIGN_LEVEL = 10`. L6/L9 are boon-granting
+`choice` nodes (no new schema); L7/L8 are Deep Gifts; L10 is the Second Charge.
+
+- **Deep Gifts** (`DEEP_GIFTS`, runtime.ts — the single source of truth):
+  `damage` = +1 per damage effect via the `gift_damage` passive flag, consumed by
+  `giftBonus()` in abilityExecutor at BOTH damage call sites (multi-hit pays per
+  effect, mirroring opportunist); `movement` = +1 movementRange and `armor` = +2
+  armorClass, applied as build-time deltas in `buildCampaignPlayerInstance`.
+  Unknown `deepGiftSlug` THROWS at build (unlike passiveFlags, deliberately).
+  Values are provisional pending the E0.4 gift harness.
+- **Second Charge** (`UnitInstance.extraCharges`): while `extraCharges[slug] > 0`,
+  using the ability decrements the counter INSTEAD of writing its cooldown
+  (turnProcessor), so `cooldowns[slug] > 0` remains the single availability gate
+  everywhere — UI, brain, and validation needed zero changes. The L10 build sets
+  `{specialSlug: 1}` on party units. The old `hasDoubleSpecialAtLevel` /
+  `DOUBLE_SPECIAL_COOLDOWN` cooldown-override path is gone; `cooldownOverrides`
+  survives in the EncounterBuild shape as an always-null legacy field because the
+  client stack plumbs it.
+- **Brain**: verified empirically (40 games/cell, lantern e5 hard): L5 = exactly
+  4.00 special casts/game; L10 = 7.58 casts/game with 3.6 of 4 units firing the
+  second charge and ZERO illegal third-use attempts. The perk measured ≈ +7
+  win-rate points in that cell — calibration input for E2.
+- **Rulebook**: GFT-1..4 in rulebook.ts with executable checks in rulebookSpec.
+- **Arena inertness**: `extraCharges` is set only by the campaign player build;
+  grep confirms no arena code path references it. Full suite green.
+- **Sim**: `choicesForLevel` models gifts at L7/L8 with a STOPGAP policy
+  (melee-ish chassis take armor, others damage) — flagged in-code; E0.4 replaces
+  it with the measured per-party policy and the gift-value harness.

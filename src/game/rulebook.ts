@@ -116,6 +116,16 @@ export const RULEBOOK: RuleSection[] = [
     ],
   },
   {
+    id: 'GFT',
+    title: 'Deep Gifts & the Second Charge (campaigns)',
+    rules: [
+      { id: 'GFT-1', text: "Deep Gift of Fangs: this unit deals +1 damage on every damaging effect of its abilities. Abilities that strike more than once benefit on each strike." },
+      { id: 'GFT-2', text: "Deep Gift of Stride: +1 movement range." },
+      { id: 'GFT-3', text: "Deep Gift of Stone: +2 armor class." },
+      { id: 'GFT-4', text: "Second Charge (max level): this unit's special can be used twice per encounter instead of once. The two uses may come on back-to-back turns; after the second, the special is done for the encounter." },
+    ],
+  },
+  {
     id: 'END',
     title: 'Endgame',
     rules: [

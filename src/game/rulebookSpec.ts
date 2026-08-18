@@ -27,6 +27,7 @@ import { checkWinCondition } from './winCondition.js';
 import { isInBounds, isCorner } from './boardUtils.js';
 import { reachableFrom, findPath, isCorner as geoIsCorner } from '../ai/geometry.js';
 import { buildUnitInstance } from './initialState.js';
+import { buildCampaignPlayerInstance } from '../campaigns/runtime.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from '../ai/defaultData.js';
 import { isInAoe, getLineTiles } from './boardUtils.js';
 
@@ -1128,6 +1129,88 @@ export const RULE_CHECKS: RuleCheck[] = [
       const t2 = mkUnit(P2, 3, 3);
       cast(mkAbility({ isUnblockable: true }), full, t2, [full, t2]);
       assert(full.currentHealth === full.maxHealth, 'siphon must not heal above maximum');
+    },
+  },
+
+  // ── GFT (campaign Deep Gifts + Second Charge, E0) ─────────────────────────
+  {
+    rule: 'GFT-1', name: 'Gift of Fangs adds +1 per damage effect, including each hit of a multi-hit',
+    run: () => {
+      const g = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
+      let t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), g, t, [g, t]);
+      assert(t.currentHealth === 100 - 11, 'gift must add +1 to a 10-damage effect');
+      // multi-hit: two damage effects -> +1 EACH
+      const g2 = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
+      t = mkUnit(P2, 3, 3);
+      cast(mkAbility({
+        isUnblockable: true, isMultiHit: true,
+        effects: [
+          { type: 'damage', formula: 'flat', value: 8 },
+          { type: 'damage', formula: 'flat', value: 8 },
+        ],
+      } as Partial<AbilityDefinition>), g2, t, [g2, t]);
+      assert(t.currentHealth === 100 - 18, 'gift must add +1 to EACH hit of a multi-hit (8+8 -> 9+9)');
+      // no flag, no bonus
+      const plain = mkUnit(P1, 3, 2);
+      t = mkUnit(P2, 3, 3);
+      cast(mkAbility({ isUnblockable: true }), plain, t, [plain, t]);
+      assert(t.currentHealth === 100 - 10, 'no gift flag must mean no bonus');
+    },
+  },
+  {
+    rule: 'GFT-2', name: 'Gift of Stride grants +1 movement at campaign build',
+    run: () => {
+      const def = DEFAULT_UNITS['fighter'];
+      const base = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
+      const gifted = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'movement' });
+      assert(gifted.movementRange === base.movementRange + 1, 'Stride must be +1 movement over the ungifted build');
+    },
+  },
+  {
+    rule: 'GFT-3', name: 'Gift of Stone grants +2 armor class at campaign build',
+    run: () => {
+      const def = DEFAULT_UNITS['fighter'];
+      const base = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
+      const gifted = buildCampaignPlayerInstance(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'armor' });
+      assert(gifted.armorClass === base.armorClass + 2, 'Stone must be +2 AC over the ungifted build');
+    },
+  },
+  {
+    rule: 'GFT-4', name: 'Second Charge: special usable twice (back to back allowed), third use rejected',
+    run: () => {
+      const map = new Map([['test_hit', mkAbility({ cooldownTurns: 99, isUnblockable: true })]]);
+      const mk = () => mkUnit(P1, 1, 1, { extraCharges: { test_hit: 1 } });
+      // use 1: spends the spare charge, cooldown stays 0
+      let u = mk();
+      let st = mkLegacyState([u, mkUnit(P2, 2, 1, { currentHealth: 100 })]);
+      let r = processTurn(st, [
+        { type: 'USE_ABILITY', unitInstanceId: u.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, map);
+      let after = r.updatedState.units[0];
+      assert((after.cooldowns['test_hit'] ?? 0) === 0, 'first use must NOT start the cooldown while a spare charge exists');
+      assert((after.extraCharges?.['test_hit'] ?? 0) === 0, 'first use must consume the spare charge');
+      // use 2 (back to back, next turn): allowed, cooldown NOW starts
+      after.hasActedThisTurn = false; after.hasMovedThisTurn = false;
+      st = mkLegacyState([after, mkUnit(P2, 2, 1, { currentHealth: 100 })]);
+      r = processTurn(st, [
+        { type: 'USE_ABILITY', unitInstanceId: after.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, map);
+      after = r.updatedState.units[0];
+      assert(after.cooldowns['test_hit'] === 99, 'second use must start the full cooldown — done for the encounter');
+      // use 3: rejected, exactly like arena after its single use
+      after.hasActedThisTurn = false; after.hasMovedThisTurn = false;
+      assertThrows(() => processTurn(mkLegacyState([after, mkUnit(P2, 2, 1)]), [
+        { type: 'USE_ABILITY', unitInstanceId: after.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, map), 'cooldown', 'third use must be rejected');
+      // L10 build wires the charge on the SPECIAL only
+      const built = buildCampaignPlayerInstance(DEFAULT_UNITS['fighter'], P1, { x: 1, y: 1 }, 10, { specialSlug: 'shield_bash' });
+      assert((built.extraCharges?.['shield_bash'] ?? 0) === 1, 'L10 build must grant one spare charge on the special');
+      const l9 = buildCampaignPlayerInstance(DEFAULT_UNITS['fighter'], P1, { x: 1, y: 1 }, 9, { specialSlug: 'shield_bash' });
+      assert(l9.extraCharges === undefined, 'below L10 there must be no spare charge');
     },
   },
 

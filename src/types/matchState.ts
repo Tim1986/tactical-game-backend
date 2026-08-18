@@ -38,6 +38,14 @@ export interface UnitInstance {
   hasActedThisTurn: boolean;
   cooldowns: Record<string, number>;
   statusEffects: ActiveStatusEffect[];
+  /** CAMPAIGN-ONLY (E0): extra uses remaining for an ability BEYOND the
+   *  current one. While extraCharges[slug] > 0, using the ability decrements
+   *  this instead of writing its cooldown, so `cooldowns[slug] > 0` stays the
+   *  single availability gate everywhere (UI, brain, validation). The L10
+   *  "second charge" perk sets {specialSlug: 1} on party units — two uses,
+   *  back to back if the player likes, then gated exactly like arena's single
+   *  use. Arena builds never set this. */
+  extraCharges?: Record<string, number>;
   /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
    *  (never ends on them). Arena builds never set this. */
   moveFlags?: string[];

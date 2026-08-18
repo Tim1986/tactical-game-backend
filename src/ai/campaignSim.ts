@@ -80,7 +80,15 @@ function choicesForLevel(partySlugs: string[], level: number, passiveOverrides?:
     const passiveSlug = level >= (early ? 4 : 5)
       ? (passiveOverrides?.[i] ?? def?.passiveOptions[0]?.slug)
       : undefined;
-    return { specialSlug, passiveSlug };
+    // Deep Gifts (E0, L7/L8): STOPGAP policy — melee-ish chassis take armor,
+    // everyone else damage. Exists so an L7+ cell never silently models a
+    // giftless party. E0.4 replaces this with the measured per-party policy
+    // (and the gift-value harness); do not tune content against this default.
+    const MELEE = new Set(['fighter', 'barbarian', 'rogue', 'cleric']);
+    const deepGiftSlug = level >= (early ? 7 : 8)
+      ? ((MELEE.has(slug) ? 'armor' : 'damage') as CampaignUnitChoice['deepGiftSlug'])
+      : undefined;
+    return { specialSlug, passiveSlug, deepGiftSlug };
   });
 }
 
@@ -150,7 +158,9 @@ export function simEncounterCell(
   const rng = makeRng(options.seed ?? 1);
   const choices = choicesForLevel(partySlugs, level, options.passives);
   // A6: the sim must fight with the SAME ability map as the real match —
-  // campaign-scoped abilities merged in, L6 cooldown overrides applied.
+  // campaign-scoped abilities merged in. (The old L6 cooldown override is gone —
+  // E0's L10 second charge rides UnitInstance.extraCharges inside the built
+  // state, so the sim exercises it with no ability-map surgery.)
   const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY);
   const abilityMap = applyCooldownOverrides(
     applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),

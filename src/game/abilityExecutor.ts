@@ -252,6 +252,11 @@ export const VENGEFUL_BONUS_BY_CLASS: Record<string, number> = { barbarian: 4 };
 const CHANNELER_BONUS = 2;
 /** Siphon: self-heal when one of the caster's abilities damages an enemy. */
 const SIPHON_HEAL = 1;
+/** Deep Gift (campaign E0, L7/L8): flat bonus per damage effect while the
+ *  caster carries the 'gift_damage' flag. Multi-hit abilities are paid per
+ *  effect (Twin Strike 8+8 -> 9+9) — deliberate, mirrors opportunist. PROVISIONAL
+ *  value; E0.4's gift harness may revise it. */
+export const GIFT_DAMAGE_BONUS = 1;
 /** Statuses negated by the Stalwart passive. */
 const STALWART_IMMUNE = new Set(['rooted', 'weakened', 'exposed']);
 /** Displacement immunity. Merged Stalwart (2026-08-13) absorbed the old Anchor,
@@ -318,6 +323,11 @@ function channelerBonus(ctx: ExecutionContext): number {
   return hasPassive(ctx.caster, 'channeler') && !ctx.caster.hasMovedThisTurn ? CHANNELER_BONUS : 0;
 }
 
+/** Deep Gift of Fangs (campaign E0): flat bonus on every damage effect. */
+function giftBonus(ctx: ExecutionContext): number {
+  return hasPassive(ctx.caster, 'gift_damage') ? GIFT_DAMAGE_BONUS : 0;
+}
+
 /**
  * Break a final damage number into its base and each modifier, so the combat
  * log can explain WHY a hit did what it did. Returns [] when nothing modified
@@ -328,14 +338,16 @@ function damageBreakdown(ctx: ExecutionContext, target: UnitInstance, base: numb
   const opp = opportunistBonus(ctx, target);
   const ven = vengefulBonus(ctx);
   const chan = channelerBonus(ctx);
+  const gift = giftBonus(ctx);
   const weak = hasStatusEffect(ctx.caster, 'weakened')
     ? Math.min(WEAKENED_DAMAGE_REDUCTION, base) : 0;
-  if (opp === 0 && ven === 0 && chan === 0 && weak === 0) return [];
+  if (opp === 0 && ven === 0 && chan === 0 && gift === 0 && weak === 0) return [];
   const parts = [{ label: 'base', amount: base - weak }];
   if (weak > 0) parts[0] = { label: 'Weakened', amount: base - weak };
   if (opp > 0) parts.push({ label: 'Opportunist', amount: opp });
   if (ven > 0) parts.push({ label: 'Vengeful', amount: ven });
   if (chan > 0) parts.push({ label: 'Channeler', amount: chan });
+  if (gift > 0) parts.push({ label: 'Deep Gift', amount: gift });
   return parts;
 }
 
@@ -356,7 +368,7 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     return;
   }
   const isExecute = effect.healthThreshold !== undefined;
-  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx);
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx) + giftBonus(ctx);
   const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     // Only attach the breakdown when the hit was NOT capped by remaining HP —
@@ -381,7 +393,7 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
 }
 
 function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
-  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx);
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + giftBonus(ctx);
   const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     const parts2 = actual === damage ? parts : [];
