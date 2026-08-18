@@ -343,11 +343,19 @@ Campaigns with no boons yield an empty fork state.
 - The report names the **worst walled builds**, which is the actionable output —
   it tells you WHICH archetype a cell bricks, not merely that one exists.
 
-⚠ **THE WALL THRESHOLDS ARE UNRATIFIED.** `WALL_FLOOR` (easy 40 / medium 25 /
-hard 10 / nightmare 5) and `MAX_WALL_SHARE` (15%) are this tool's own invention,
-NOT owner-set like the difficulty bands. They are a first guess at "how many
-bricked builds is too many". Get them ratified before treating a WALLS verdict
-as a blocker.
+**Wall thresholds — ACCEPTED by the owner 2026-08-18, as a best guess.**
+`WALL_FLOOR` (easy 40 / medium 25 / hard 10 / nightmare 5) and `MAX_WALL_SHARE`
+(15%) are ratified enough to block on: a WALLS verdict is a real failure, not a
+suggestion.
+
+⚠ But know what they are. Unlike the difficulty bands — which were calibrated
+against measured play — these were reasoned from the design philosophy, not
+derived from data, and they have never been tested against a campaign actually
+designed for them. **If a WALLS verdict ever feels wrong, suspect the threshold
+before you re-tune the content.** The honest check is the named walled builds
+the report prints: if they are genuinely incoherent parties, the cell is fine
+and the cap is too tight; if they are reasonable parties a player would field,
+the cell really is bricking them. Adjust here, in one place, and say so.
 
 ### Validation against the shipped trilogy (2026-08-18)
 

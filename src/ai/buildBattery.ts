@@ -46,7 +46,12 @@ const TARGET_BANDS: Record<CampaignDifficulty, [number, number]> = {
   easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.15, 0.45],
 };
 /** A build below this is "walled" — it cannot progress, and the party is
- *  locked for the whole campaign so it cannot re-comp around the problem. */
+ *  locked for the whole campaign so it cannot re-comp around the problem.
+ *  Owner-accepted 2026-08-18 as a best guess: reasoned from the difficulty
+ *  philosophy, NOT calibrated from play like the bands above. If a WALLS
+ *  verdict ever looks wrong, check the named walled builds the report prints —
+ *  incoherent parties mean this cap is too tight; parties a player would
+ *  actually field mean the cell really is bricking them. */
 const WALL_FLOOR: Record<CampaignDifficulty, number> = {
   easy: 0.40, medium: 0.25, hard: 0.10, nightmare: 0.05,
 };
