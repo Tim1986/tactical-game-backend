@@ -381,7 +381,13 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // Walk at 8 rounds on the open floor: easy 1.30 -> 88 (8% walled) ·
       // 1.55 -> 74 · 1.80 -> 59; hard 1.80 -> 57 (28% walled) · 2.05 -> 44 ·
       // 2.30 -> 33; nm 2.10 -> 20 (64% walled).
-      hpScaleOverride: { easy: 1.30, medium: 1.55, hard: 1.80, nightmare: 2.00 },
+      // ⚠ e5/hard is the campaign's one accepted marginal cell. Its mean is in
+      // band at 1.70 (56%) but the wall share sits ~30% against a 25% cap, and
+      // the window is closed: any scale low enough to cut the walls pushes the
+      // mean above 65. That is the phaser bimodality — five wall-ignoring
+      // enemies either get answered or wipe a squishy backline, so this cell
+      // splits rather than spreads. Left at the in-band rung and flagged.
+      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.70, nightmare: 2.00 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -492,7 +498,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       //          in band, and the wall share is what pays for it)
       // The easy->nightmare span is wide (0.50 to 2.00) because the objective
       // only became scale-sensitive at all via the death condition.
-      hpScaleOverride: { easy: 0.50, medium: 0.75, hard: 0.90, nightmare: 2.00 },
+      hpScaleOverride: { easy: 0.50, medium: 0.65, hard: 0.90, nightmare: 2.00 },
     },
 
     // e8 — The Long Way Up (escort). Walk the crew out. Guardrails from the
@@ -540,7 +546,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // since waves are not difficulty-conditional. 3.00 already puts a hunter at
       // 120 HP; pushing further buys nothing. Parked at the best available rung
       // and flagged rather than pretending scale can fix it.
-      hpScaleOverride: { easy: 1.25, medium: 1.55, hard: 2.30, nightmare: 3.00 },
+      hpScaleOverride: { easy: 1.25, medium: 1.50, hard: 2.30, nightmare: 3.00 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of

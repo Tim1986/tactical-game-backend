@@ -55,9 +55,31 @@ const TARGET_BANDS: Record<CampaignDifficulty, [number, number]> = {
 const WALL_FLOOR: Record<CampaignDifficulty, number> = {
   easy: 0.40, medium: 0.25, hard: 0.10, nightmare: 0.05,
 };
-/** Tolerated share of sampled builds below the wall floor. Some builds having
- *  a rough fight is IDENTITY (the comp metagame); many hitting a wall is a bug. */
-const MAX_WALL_SHARE = 0.15;
+/**
+ * Tolerated share of sampled builds below the wall floor — SCALED BY DIFFICULTY
+ * (owner call, 2026-08-18). Some builds having a rough fight is IDENTITY (the
+ * comp metagame); many hitting a wall is a bug — but "many" means something
+ * different at each difficulty, and a flat 15% got that wrong.
+ *
+ * Why it had to scale: measured across six of campaign 2's encounters, the
+ * hpScale that CENTRES a nightmare mean in its 15-45% band also puts 28-64% of
+ * builds under the floor. That is arithmetic, not bad content — a 30% mean over
+ * a bimodal build distribution NECESSARILY leaves a large share near 0%. Under a
+ * flat cap, the only way to pass nightmare was to make it not-nightmare.
+ *
+ * So the cap now encodes the actual design intent per difficulty:
+ *  - easy/medium: strict. The party is LOCKED for the whole campaign and cannot
+ *    re-comp around a wall, so a wall here is a dead run — the thing floors exist
+ *    to prevent.
+ *  - hard: loosened. Some comps should genuinely struggle.
+ *  - nightmare: loose. The owner's bar is "only beatable with certain
+ *    strategies", which literally describes a high wall share. Selectivity is
+ *    the product here, not a defect. NIGHTMARE_BEST_MIN still guarantees some
+ *    build actually cracks every cell, so "loose" never means "unsolvable".
+ */
+const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
+  easy: 0.10, medium: 0.15, hard: 0.25, nightmare: 0.50,
+};
 /** Nightmare is judged on solvability: some build must genuinely crack it. */
 const NIGHTMARE_BEST_MIN = 0.40;
 
@@ -151,7 +173,7 @@ function summarize(row: CellRow) {
   const best = Math.max(...wrs);
   const wallShare = walled.length / wrs.length;
   const bandOk = mean >= lo && mean <= hi;
-  const wallOk = wallShare <= MAX_WALL_SHARE;
+  const wallOk = wallShare <= MAX_WALL_SHARE[row.difficulty];
   const solvable = row.difficulty !== 'nightmare' || best >= NIGHTMARE_BEST_MIN;
   return { mean, med, best, min: Math.min(...wrs), wallShare, walled, bandOk, wallOk, solvable, ok: bandOk && wallOk && solvable, lo, hi };
 }

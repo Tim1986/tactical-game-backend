@@ -31,6 +31,12 @@ const BANDS: Record<CampaignDifficulty, [number, number]> = {
 const WALL_FLOOR: Record<CampaignDifficulty, number> = {
   easy: 0.40, medium: 0.25, hard: 0.10, nightmare: 0.05,
 };
+/** Must mirror buildBattery's MAX_WALL_SHARE, or a rung that looks acceptable
+ *  here fails certification (and vice versa). Scaled by difficulty per the
+ *  owner call — see the long note in buildBattery.ts for why. */
+const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
+  easy: 0.10, medium: 0.15, hard: 0.25, nightmare: 0.50,
+};
 
 const [slug, encounter, diffArg, scalesArg, ...rest] = process.argv.slice(2);
 const getArg = (f: string, d: string) => { const i = rest.indexOf(f); return i !== -1 ? rest[i + 1] : d; };
@@ -69,9 +75,10 @@ for (const difficulty of diffs) {
     const med = sorted[Math.floor(sorted.length / 2)];
     const walls = wrs.filter((w) => w < floor).length / wrs.length;
     const inBand = mean >= lo && mean <= hi;
-    const flags = [inBand ? '' : (mean > hi ? 'HIGH' : 'LOW'), walls > 0.15 ? `WALLS ${(walls * 100).toFixed(0)}%` : '']
+    const wallCap = MAX_WALL_SHARE[difficulty];
+    const flags = [inBand ? '' : (mean > hi ? 'HIGH' : 'LOW'), walls > wallCap ? `WALLS ${(walls * 100).toFixed(0)}%` : '']
       .filter(Boolean).join(' ');
-    console.log(`  scale ${scale.toFixed(2)}  mean ${(mean * 100).toFixed(0).padStart(3)}%  median ${(med * 100).toFixed(0).padStart(3)}%  walls ${(walls * 100).toFixed(0).padStart(3)}%  ${inBand && walls <= 0.15 ? '✓ IN BAND' : flags}`);
+    console.log(`  scale ${scale.toFixed(2)}  mean ${(mean * 100).toFixed(0).padStart(3)}%  median ${(med * 100).toFixed(0).padStart(3)}%  walls ${(walls * 100).toFixed(0).padStart(3)}%  ${inBand && walls <= wallCap ? '✓ IN BAND' : flags}`);
   }
   console.log();
 }
