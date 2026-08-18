@@ -147,6 +147,12 @@ export interface BoonEffect {
   unitMaxHp?: { classSlug: string; amount: number };
   /** These units start every remaining encounter with a shield. */
   startShielded?: UnitScope;
+  /** [E0] Movement-range delta for every party unit. Added for campaign 2's
+   *  L9 fork (movement vs armor) — the three effects above could only produce
+   *  ONE genuinely incomparable pairing (shield vs HP), which L6 spends. */
+  partyMovement?: number;
+  /** [E0] Armor-class delta for every party unit. */
+  partyArmorClass?: number;
 }
 
 /** [A7] A permanent run-scoped perk granted by a choice node. */

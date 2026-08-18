@@ -259,8 +259,9 @@ function validateGoalsAndBoons(campaign: CampaignDefinition, enc: CampaignEncoun
   for (const [key, b] of Object.entries(campaign.boons ?? {})) {
     if (b.slug !== key) throw new Error(`Boon "${key}": slug field must match its key (got "${b.slug}")`);
     const fx = b.effects;
-    if (fx.partyMaxHp === undefined && !fx.unitMaxHp && !fx.startShielded) {
-      throw new Error(`Boon "${key}": effects must set at least one of partyMaxHp/unitMaxHp/startShielded`);
+    if (fx.partyMaxHp === undefined && !fx.unitMaxHp && !fx.startShielded
+        && fx.partyMovement === undefined && fx.partyArmorClass === undefined) {
+      throw new Error(`Boon "${key}": effects must set at least one of partyMaxHp/unitMaxHp/startShielded/partyMovement/partyArmorClass`);
     }
     if (fx.unitMaxHp && !DEFAULT_UNITS[fx.unitMaxHp.classSlug]) {
       throw new Error(`Boon "${key}": unitMaxHp.classSlug "${fx.unitMaxHp.classSlug}" is not a class`);
@@ -280,6 +281,11 @@ function applyBoons(partyUnits: UnitInstance[], boons: BoonDef[]): void {
       u.currentHealth = Math.max(1, u.currentHealth + amount);
     };
     if (fx.partyMaxHp) for (const u of partyUnits) bumpHp(u, fx.partyMaxHp);
+    // Floored at 1: a negative boon must never immobilize or make a unit
+    // unhittable-in-reverse. No shipped boon is negative, but the schema
+    // permits it and a 0-movement unit would soft-lock its own turn.
+    if (fx.partyMovement) for (const u of partyUnits) u.movementRange = Math.max(1, u.movementRange + fx.partyMovement);
+    if (fx.partyArmorClass) for (const u of partyUnits) u.armorClass = Math.max(1, u.armorClass + fx.partyArmorClass);
     if (fx.unitMaxHp) {
       for (const u of partyUnits) {
         if (u.definitionSlug === fx.unitMaxHp.classSlug) bumpHp(u, fx.unitMaxHp.amount);

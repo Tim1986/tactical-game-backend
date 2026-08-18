@@ -251,6 +251,54 @@ hazard placement, escort HP/route, objective deadlines, `aiHints` hunts
 hunts; give hunters their own key). Goals and boons are OUTSIDE the loop:
 balance without boons (they're bonuses on top), goals never gate acceptance.
 
+## ⚠ E2 REQUIREMENT — campaign 2 gets a BUILD-SAMPLING battery, not this one
+
+**Owner directive, 2026-08-18:** campaign 2's balance must be measured with
+"significant, meaningful sims — a variety of army compositions, specials, and
+deep gift and fork choices," and a long run is acceptable. **The battery
+described above is NOT sufficient for that**, and its limits are structural,
+not a matter of turning `--games` up:
+
+- It fights with **3 fixed parties** and **default loadouts** (each class's
+  FIRST special and passive option). Raising `--games` shrinks binomial noise
+  around those 3 builds; it tells you nothing about the other builds.
+- With the L10 ladder there are now four more axes it does not sweep at all:
+  special choice, passive choice, Deep Gift choice, and which L6/L9 fork the
+  player took.
+
+**Why exhaustive is impossible, and what to do instead.** Roughly 330 legal
+comps x 81 special combos x 625 passive combos x 81 gift combos x 4 fork states
+is ~10^10 builds per cell. So SAMPLE: draw K random legal builds per cell and
+run G games each, and report the DISTRIBUTION rather than a point estimate.
+
+Sizing, measured at **~70 games/sec** single-threaded on this machine:
+
+| Design | games | wall clock |
+|---|---|---|
+| K=100 builds x G=50 games x 48 cells | 240,000 | **~57 min** |
+| K=150 x G=60 x 48 cells | 432,000 | ~1h 43m |
+
+(12 encounters x 4 difficulties = 48 cells.) Build-to-build spread is the
+dominant variance — D2 measured ~±30 pts of comp spread, versus ~7 pts of
+binomial noise at G=50 — so **spend the budget on more BUILDS, not more games
+per build.** K=100 with build SD ~20 gives a cell mean to about ±2 pts.
+
+**The acceptance criteria change shape too, and get better.** Instead of "mean
+of 3 parties in band, no party below the floor":
+
+- **Band check** on the median win rate across sampled builds.
+- **Wall check**: the fraction of builds falling below a floor — this encodes
+  "no walls" WITHOUT demanding comp-neutrality, which is exactly the owner's
+  philosophy. A campaign where 5% of builds struggle is identity; one where 40%
+  hit a wall is a bug.
+- **Solvability**: the best sampled build clears NIGHTMARE_BEST_MIN.
+- Report the worst-performing sampled builds by name — that is the actionable
+  output, and it is what tells you WHICH archetype a cell is bricking.
+
+This harness does not exist yet. Build it before balancing campaign 2, and
+validate it against the shipped trilogy (whose answers we already know) before
+trusting it on new content.
+
 ## Known measurement limits (do not over-trust the floors)
 
 The three representative parties fight with **default loadouts** (each class's
