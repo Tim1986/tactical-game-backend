@@ -119,7 +119,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
     cultist: {
       baseClass: 'sorcerer', artKey: 'cultist', name: 'Cultist',
       maxHealth: 34, armorClass: 9, specialSlug: 'ffh',
-      nightmare: { passiveFlags: ['warded'] },
+      // acBonus, NOT warded. `warded` negates a whole hit, and e6's win requires
+      // killing all THREE cultists inside a clock — so three shields was three
+      // wasted player turns against a deadline, which walled 48% of builds on
+      // nightmare (and 32% on e4). A flat +1 AC adds nightmare difficulty
+      // without fighting the objective itself.
+      nightmare: { acBonus: 1 },
     },
     // ── The wizard-chassis debut: control, not damage ──
     witch: {
@@ -134,6 +139,17 @@ export const sealedDeepCampaign: CampaignDefinition = {
       maxHealth: 95, armorClass: 10, specialSlug: 'grasp',
       passiveFlags: ['warded'],
       nightmare: { hpBonus: 8 },
+    },
+    // ── e7's reavers get their OWN key purely for nightmare leverage ──
+    // e7's escape objective is nearly hpScale-inert (1.70 -> 62%, 2.30 -> 61%),
+    // and structure is shared across difficulties, so scale and the per-enemy
+    // `nightmare` block are the only per-difficulty levers that exist — and
+    // scale does not work here. This key exists so nightmare can be cranked
+    // HARD without touching skeleton_reaver, which e12's room 1 also fields.
+    stair_reaver: {
+      baseClass: 'barbarian', artKey: 'skeleton_reaver', name: 'Stair Reaver',
+      maxHealth: 55, armorClass: 10, specialSlug: 'whirlwind',
+      nightmare: { hpBonus: 15, acBonus: 2 },
     },
     // ── e8's dedicated escort hunter (own aiHints key, per the escort rule) ──
     barrow_hound: {
@@ -187,7 +203,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
       goals: [
         { slug: 'clean_descent', name: 'Clean Descent', description: 'Clear the barrow steps without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.35 },
+      // Calibration walk (25 builds x 25 games per rung, build-sampled mean):
+      //   easy      1.20 -> 97 · 1.35 -> 91 · 1.50 -> 81
+      //   medium    1.45 -> 86 · 1.60 -> 70 · 1.75 -> 56
+      //   hard      1.15 -> 99 · 1.80 -> 54 · 2.40 -> 14 (60% walled)
+      //   nightmare 1.95 -> 29 · 2.10 -> 16 · 2.25 ->  9
+      // The placeholder 0.85-1.35 read 100/99/98/84 — a tutorial nobody could
+      // lose, even on nightmare. Parked on band midpoints. Note the steepness
+      // (~70 pts per 1.0 of scale): three IDENTICAL warriors share every hit
+      // breakpoint, so the whole cell crosses a cliff at once.
+      hpScaleOverride: { easy: 1.40, medium: 1.58, hard: 1.80, nightmare: 1.95 },
     },
 
     // e2 — The Collapsed Gallery (carve). No objective — the terrain IS the
@@ -205,7 +230,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
       goals: [
         { slug: 'quiet_gallery', name: 'Quiet Gallery', description: 'Carve through the collapsed gallery without the hero taking a scratch.', check: { kind: 'no_damage_to_main' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.3 },
+      // Calibration walk — ONE curve read across difficulties (only the scale
+      // differs between them, so a medium rung and a hard rung sample the same
+      // function): 1.10 -> 88 · 1.30 -> 60 · 1.35 -> 55 · 1.50 -> 38 ·
+      // 1.55 -> 33 · 1.75 -> 17 · 1.95 -> 10.
+      // Roughly TWICE as scale-sensitive as e1 (~28 pts per 0.2) because the
+      // two zombies are 60 HP stalwart bricks and a multiplier bites hardest on
+      // the biggest HP pool. Nightmare sits BELOW the naive 1.57 read for 30%,
+      // because the archers' acBonus and the zombies' hpBonus already add
+      // difficulty that this scale curve does not contain.
+      hpScaleOverride: { easy: 1.10, medium: 1.20, hard: 1.35, nightmare: 1.42 },
     },
 
     // e3 — Whistle in the Dark (protect). The first survivor found, huddled
@@ -217,7 +251,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       allies: {
         survivor: {
           name: 'The Whistling Survivor', baseClass: 'cleric',
-          maxHealth: 60, abilities: [],
+          // 85, not 60: a DEFENSELESS hold-mode VIP wants boss-tier HP, and a
+          // ranged party has no way to body-block for her. At 60 the cell was
+          // bimodal on easy (mean 69% / median 94%) with 26-41% of builds
+          // walled — she simply died in the builds that could not intercept.
+          maxHealth: 85, abilities: [],
           behavior: { mode: 'hold' },
           placement: { x: 6, y: 6 },
         },
@@ -235,7 +273,14 @@ export const sealedDeepCampaign: CampaignDefinition = {
       goals: [
         { slug: 'kept_the_watch', name: 'Kept the Watch', description: 'Keep the whistling survivor alive to the very end.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.2, nightmare: 1.4 },
+      // With the VIP at 85 HP the walls collapsed: easy 0.90 -> 89% and 0%
+      // walled, where 60 HP gave 69% mean with 26% walled. Walk: hard 0.90 -> 81
+      // · 1.10 -> 73 · 1.30 -> 60 (16% walled). Parked below the 1.30 rung
+      // because the wall share was already at the cap there.
+      // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
+      // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
+      // verdict, and 1.55 breaches the wall cap outright.
+      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.38 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -251,7 +296,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       enemies: ['ghoul', 'ghoul', 'ghoul', 'cultist'],
       enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 3 }, { x: 6, y: 6 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.35 },
+      // Walk: nm 0.95 -> 85 · 1.15 -> 56 · 1.35 -> 24 (32% walled). The wall
+      // share was largely the cultist's `warded` nightmare block, now softened
+      // to acBonus at the roster level, so this parks at 1.30 and the battery
+      // certifies the walls.
+      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.30 },
     },
 
     // e5 — What Walks Through Walls (survive). Wraiths/specter get `phasing`
@@ -260,18 +309,51 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // ceiling, not a guarantee.
     e5: {
       level: 4,
-      terrain: {
-        theme: 'crypt',
-        blocked: [{ x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }],
-      },
+      // NO blocked tiles, deliberately. The original carve was meant to read as
+      // "cover that cannot save you", but against PHASING enemies a wall is
+      // pure player downside: the wraiths and specter walk through it while the
+      // party pays full price to path around, which left squishy builds no
+      // counterplay at all and is what produced the wall share. An open floor
+      // gives ranged builds room to kite the thing that ignores walls.
+      terrain: { theme: 'crypt' },
       objective: {
         text: 'Survive until the seal steadies (8 rounds)',
         win: [{ kind: 'round_reached', round: 8 }],
       },
       enemies: ['wraith', 'wraith', 'specter'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 4 }],
+      // Waves are load-bearing, not flavour: without them the party clears
+      // three phasers and wins on the MERCY rule (measured 100% at all four
+      // difficulties, win reason "Every enemy has fallen"). Pending waves
+      // suppress the mercy rule, so the only way out is to last the 8 rounds —
+      // and that is what makes hpScale bite again (lantern e3's lesson: a
+      // tankier enemy deals damage LONGER, so scale differentiates a survive
+      // once clearing is off the table). Thematically it is the campaign's
+      // engine: the dead keep arriving because the door keeps calling them.
+      // ⚠ WAVE SIZE IS THE COARSE LEVER AND PHASERS ARE WORTH ~35 PTS EACH,
+      // not the tuning table's generic 10-15. Measured, at comparable scales:
+      //   +1 wave unit (4 total): 100% on easy AND 92-99% on hard — useless,
+      //     scale gave only ~22 pts of range across 0.9 -> 1.6.
+      //   +3 wave units (6 total): 27% on easy at the LOWEST scale probed.
+      // Three is the right structure — it is the only one whose scale curve
+      // spans the ~58 pts between an easy target and a nightmare target — but
+      // it has to run at LOW scales. Phasers earn the premium: they ignore the
+      // x=4 wall line (so the carve hinders only the party) and `drain` heals
+      // them as they work.
+      // Wave-size walk, all at comparable scales — this is the whole curve:
+      //   +1 unit (4 total): 100% flat, scale spanned ~22 pts. No range at all.
+      //   +3 units (6 total): range existed, but 36-80% of builds WALLED at
+      //     every rung that hit a target mean — six phasers against four simply
+      //     wipe squishy backlines.
+      //   +2 units (5 total), arriving LATER (rounds 4 and 6): the middle rung,
+      //     and where this parks. Later arrivals matter as much as fewer: the
+      //     wipes came from being swarmed before the party had spent anything.
+      waves: [
+        { enemies: ['specter'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 4 } },
+        { enemies: ['wraith'], placement: [{ x: 0, y: 3 }], trigger: { on: 'round', round: 6 } },
+      ],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 1, y: 5 }],
-      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.25, nightmare: 1.5 },
+      hpScaleOverride: { easy: 0.70, medium: 0.85, hard: 1.00, nightmare: 1.20 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -279,9 +361,26 @@ export const sealedDeepCampaign: CampaignDefinition = {
     e6: {
       level: 5,
       objective: {
-        text: 'Silence the counting song before it finishes (10 rounds)',
-        win: [{ kind: 'all_enemies_dead' }],
-        loss: [{ kind: 'round_reached', round: 10 }],
+        // Clock 13, not 10. The tuning table's rule for a `race` is "make the
+        // clock GENEROUS (untimed average + 2-3 rounds), then tune scale
+        // normally" — a tight clock makes the cell hypersensitive and
+        // non-monotonic. At clock 10 every rung walled 24-36% of builds: the
+        // deadline, not the enemies, was doing the killing, and raising scale
+        // only made more builds miss it. At 13 the clock catches genuinely slow
+        // builds and hpScale gets to be the actual difficulty lever.
+        // Win on the CHANTERS, not the room. `all_enemies_dead` meant four
+        // kills inside the clock, and at hard/nightmare scales that was ~65 HP
+        // x4 — so 28-40% of builds were walled by the DEADLINE even after it
+        // went 10 -> 13. Naming the three cultists cuts the required damage by
+        // a quarter and lets the witch live: she is the reason you cannot simply
+        // rush the chant, and killing her was never the point.
+        // Note all three cultists share one enemy key, so `enemyKeys: ['cultist']`
+        // resolves to every cultist instance — exactly the three chanters.
+        // Still a `race` for palette purposes: the deadline is what defines the
+        // type, and the shape classifier keys off the round_reached LOSS.
+        text: 'Silence the three chanters before the counting song ends (13 rounds)',
+        win: [{ kind: 'units_dead', enemyKeys: ['cultist'] }],
+        loss: [{ kind: 'round_reached', round: 13 }],
       },
       enemies: ['cultist', 'cultist', 'cultist', 'witch'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 3 }, { x: 5, y: 4 }],
@@ -289,7 +388,14 @@ export const sealedDeepCampaign: CampaignDefinition = {
       goals: [
         { slug: 'outpaced_the_dead', name: 'Outpaced the Dead', description: 'Win the counting song by round 8.', check: { kind: 'win_by_round', round: 8 } },
       ],
-      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.2, nightmare: 1.4 },
+      // Walk after BOTH fixes (clock 10 -> 13, win narrowed to the chanters):
+      //   easy 1.20 -> 99 · 1.45 -> 88 (4% walled) · 1.70 -> 73 (20% walled)
+      //   hard 1.70 -> 69 (4% walled!) · 1.95 -> 44 · 2.20 -> 26
+      // The kill-count narrowing is what fixed the walls: at hard 1.70 the wall
+      // share went 28% -> 4%. The clock alone (at 13) had left hard/nightmare
+      // walling 28-40%, because four kills inside any deadline was the real
+      // constraint, not the pace.
+      hpScaleOverride: { easy: 1.45, medium: 1.62, hard: 1.82, nightmare: 1.95 },
     },
 
     // e7 — The Flooded Stair (escape). The barrow answers the allegiance
@@ -297,16 +403,43 @@ export const sealedDeepCampaign: CampaignDefinition = {
     e7: {
       level: 6,
       objective: {
-        text: 'Reach the flooded landing before the stair gives way',
+        // The clock is the LEVER, not flavour. Measured: hpScale is nearly
+        // inert on this escape — 1.30 -> 82%, 1.90 -> 73%, 2.30 -> 70%, i.e.
+        // ~12 pts for nearly DOUBLE the enemy HP, because you win by arriving
+        // and a tankier interceptor does not stop you, it just lives longer.
+        // With a deadline, enemy HP finally matters (bodies you must fight
+        // through or path around cost rounds), so difficulty becomes tunable.
+        // The objective text already promised a collapsing stair; now it is real.
+        text: 'Reach the flooded landing before the stair gives way (7 rounds)',
+        // 4 tiles for a 4-unit party under scope:'all' — the documented trap
+        // is listing FEWER tiles than living units, which is unwinnable.
         win: [{
           kind: 'units_at_tiles', scope: 'all',
-          tiles: [{ x: 6, y: 2 }, { x: 6, y: 3 }, { x: 7, y: 3 }, { x: 7, y: 4 }],
+          tiles: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         }],
+        loss: [{ kind: 'round_reached', round: 7 }],
       },
-      enemies: ['skeleton_reaver', 'skeleton_reaver', 'wraith'],
-      enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 4 }],
+      // A wall line at x=5 with gaps at y=0/4/7 turns a two-turn stroll into a
+      // funnel. Measured before it: hard sat at 76-83% across 1.30-1.90 AND the
+      // 7-round clock caught nobody, because six open tiles is two turns for
+      // any build. scope:'all' means the SLOWEST unit gates the win, so a
+      // chokepoint the wave can contest is the lever that actually bites here.
+      terrain: {
+        theme: 'crypt',
+        blocked: [{ x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 5, y: 6 }],
+      },
+      enemies: ['stair_reaver', 'stair_reaver', 'wraith'],
+      enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 6, y: 4 }],
+      // The stair answers you: a wave lands across the approach at round 2, so
+      // the crossing is contested instead of a walk. Without it this measured
+      // 100% at EVERY difficulty — and E0.4 predicted exactly that, since the
+      // movement Deep Gift is worth ~+48 pts on an escape and every sampled
+      // build that took movement simply outran the interceptors.
+      waves: [
+        { enemies: ['skeleton_archer', 'ghoul'], placement: [{ x: 6, y: 2 }, { x: 6, y: 5 }], trigger: { on: 'round', round: 2 } },
+      ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.35 },
+      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.30, nightmare: 1.70 },
     },
 
     // e8 — The Long Way Up (escort). Walk the crew out. Guardrails from the
@@ -317,7 +450,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       allies: {
         crew: {
           name: 'The Survey Crew', baseClass: 'cleric',
-          maxHealth: 62, abilities: [],
+          // 85, matching e3's VIP. At 62 this cell was INERT and walled: 34-35%
+          // mean across scale 1.80-2.40 (a 33% HP swing moved it 1 pt) with
+          // 48-52% of builds walled — i.e. scale did nothing and the crew just
+          // died. Escort difficulty lives in hunter pressure vs VIP HP, so the
+          // VIP is the lever.
+          maxHealth: 85, abilities: [],
           behavior: { mode: 'route', waypoints: [{ x: 3, y: 4 }, { x: 5, y: 4 }, { x: 7, y: 4 }] },
           placement: { x: 0, y: 4 },
         },
@@ -330,8 +468,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // barrow_hound is the dedicated hunter key (own aiHints, not shared with
       // the ghoul chaff key); starts at (6,2), well outside round-1 reach of
       // the crew's (0,4) start.
-      enemies: ['skeleton_berserker', 'barrow_hound', 'skeleton_archer'],
-      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 6, y: 1 }],
+      enemies: ['skeleton_berserker', 'barrow_hound', 'barrow_hound', 'skeleton_archer'],
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 6, y: 6 }, { x: 6, y: 1 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
       goals: [
         { slug: 'crew_intact', name: 'Crew Intact', description: 'Bring the whole survey crew out alive.', check: { kind: 'unit_survives', scope: 'all' } },
@@ -351,7 +489,13 @@ export const sealedDeepCampaign: CampaignDefinition = {
         { enemies: ['skeleton_archer', 'skeleton_archer'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 3 } },
         { enemies: ['ghoul', 'ghoul'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 6 } },
       ],
-      hpScaleOverride: { easy: 0.75, medium: 0.9, hard: 1.05, nightmare: 1.25 },
+      // ⚠ HYPERSENSITIVE — 0.20 of scale swings 45-75 points, so this ladder is
+      // deliberately narrow. Walk: easy 0.75 -> 97 · 0.95 -> 65 · 1.15 -> 20;
+      // hard 0.85 -> 85 · 1.00 -> 53 (8% walled) · 1.15 -> 19 (52% walled);
+      // nm 0.90 -> 57 · 1.05 -> 20 (32% walled). Seven bodies arriving in waves
+      // compound fast. Nightmare sits just BELOW hard because its per-enemy
+      // blocks already supply the extra difficulty.
+      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 1.00, nightmare: 0.97 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
@@ -364,12 +508,22 @@ export const sealedDeepCampaign: CampaignDefinition = {
         win: [{ kind: 'units_dead', enemyKeys: ['chorister_witch', 'chorister_cultist_1', 'chorister_cultist_2'] }],
       },
       enemies: ['chorister_witch', 'chorister_cultist_1', 'chorister_cultist_2', 'necromancer'],
-      enemyPlacement: [{ x: 4, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 4, y: 4 }],
+      // The Conductor moved from (4,4) to (7,4) — back behind her choir.
+      // She never has to die, so hpScale on her 95 HP only ever makes her MORE
+      // unkillable: pure pressure the party cannot answer, which is what walled
+      // 30-40% of builds at hard/nightmare. Standing her off means she spends
+      // the opening rounds closing, so the party gets a real window on the three
+      // targets that DO matter. Distance, not HP — the tuning table's lever for
+      // a boss's comp spread.
+      enemyPlacement: [{ x: 4, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 7, y: 4 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
       goals: [
         { slug: 'final_note', name: 'The Final Note', description: 'Let the hero personally silence the bone choir.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.2, nightmare: 1.45 },
+      // Walk: easy 1.30 -> 85 · medium 1.60 -> 77 · 1.90 -> 51 · nm 2.10 -> 24.
+      // Walls climbed with scale (36-40% at the top rungs) — addressed by
+      // standing the Conductor off above rather than by softening the choir.
+      hpScaleOverride: { easy: 1.27, medium: 1.68, hard: 1.85, nightmare: 2.00 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
@@ -387,7 +541,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       enemies: ['witch', 'witch', 'skeleton_archer', 'skeleton_archer'],
       enemyPlacement: [{ x: 2, y: 1 }, { x: 2, y: 6 }, { x: 5, y: 4 }, { x: 6, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.9, medium: 1.1, hard: 1.3, nightmare: 1.55 },
+      // Walk (hold sits ON the marks, so guards die slowly and scale bites
+      // cleanly): easy 1.20 -> 89 · medium 1.45 -> 68 · hard 1.70 -> 54 (12%
+      // walled) · nm 1.90 -> 29 but 20% walled, so nightmare parks at 1.85 —
+      // one point of mean is not worth breaching the wall cap.
+      hpScaleOverride: { easy: 1.20, medium: 1.40, hard: 1.70, nightmare: 1.85 },
     },
 
     // e12 — The Sealed Deep (rooms). 3 rooms, finale. Room 0 needs exitDoors;
@@ -404,16 +562,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
         {
           // Room 1: the outer vault.
           terrain: { theme: 'crypt', blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }] },
-          enemies: ['skeleton_warrior', 'skeleton_warrior', 'skeleton_archer'],
-          enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 3 }],
+          enemies: ['skeleton_warrior', 'skeleton_archer'],
+          enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 3 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
           doorMode: 'on_clear',
         },
         {
           // Room 2: the inner gallery.
           terrain: { theme: 'crypt', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }] },
-          enemies: ['zombie', 'ghoul', 'ghoul'],
-          enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
+          enemies: ['zombie', 'ghoul'],
+          enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 4 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
           doorMode: 'on_clear',
@@ -427,7 +585,20 @@ export const sealedDeepCampaign: CampaignDefinition = {
         },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: { easy: 0.9, medium: 1.1, hard: 1.35, nightmare: 1.6 },
+      // Garrison trimmed 3/3/3 -> 2/2/3 (nine bodies to seven), because the
+      // alternative was worse. At nine, the walk put easy in band only at scale
+      // 0.55 and hard at 0.75 — and 0.55 puts a skeleton_warrior at 26 HP,
+      // under the roster's 28 HP floor and squarely "mook-weak", which the stat
+      // discipline forbids. Garrison size is the coarse lever here (~45 pts per
+      // unit), so dropping two units buys back roughly 0.4 of scale and lets
+      // these sit in a healthy range instead. Re-walked after the trim.
+      // Post-trim walk (7 bodies): easy 0.80 -> 80 (8% walled) · 0.95 -> 65 ·
+      // hard 1.05 -> 47 (8% walled) · 1.20 -> 20 · 1.35 -> 7 (72% walled).
+      // At 0.75 a skeleton_warrior is 39 HP — legal, where the nine-body version
+      // needed 0.55 and 26 HP. Nightmare sits AT hard's rung deliberately: the
+      // per-enemy nightmare blocks are worth ~28 pts on their own, so matching
+      // scales still lands nightmare a full band below hard.
+      hpScaleOverride: { easy: 0.75, medium: 0.88, hard: 1.00, nightmare: 1.05 },
     },
   },
 
