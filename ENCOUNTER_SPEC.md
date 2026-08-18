@@ -192,6 +192,13 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
     enemy spawns: it acts last and a focused alpha-strike beats any defense.
     A defenseless VIP wants roughly boss-tier HP for its difficulty. Sane
     probe (40 HP VIP, one route across the top, no universal hunt): 14/15.
+  - Round-1 commit-preference fix (found by D2 Moonberry, fixed by Opus,
+    Fable-reviewed 2026-08-17): the party-before-allies preference must test
+    COMMITTABILITY (alive, not frozen, not doomed to its own tick), not mere
+    presence — otherwise a frozen party remainder plus a healthy ally left
+    the brain emitting an illegal bare END_TURN that the harness pre-flight
+    correctly refused to rescue. When NOTHING is committable the brain still
+    returns bare END_TURN and the pre-flight force-commits, unchanged.
 
 ## A6 — Novel monsters & abilities
 

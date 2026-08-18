@@ -129,22 +129,39 @@ Expected effect sizes (measured, 2026-08):
   melee runner for a ranged slinger to punish standoffs made spread WORSE
   (43→82 pts): ranged enemies punish the melee party more.
 
-Objective-type levers (measured during the D2 Lantern retrofit, 2026-08-17):
+### THE OBJECTIVE-TYPE TUNING TABLE (measured across all three D2 retrofits)
 
-- **Survive objectives are nearly hpScale-immune** — tankier attackers live
-  longer but don't kill faster. The levers are ROUND COUNT (very coarse:
-  ~25 pts per round) and WAVE SIZE (~10–15 pts per unit). Log a calibration
-  walk in the encounter comment; expect to bracket.
-- **Escape objectives are semi-hpScale-sensitive** — you fight through, so HP
-  matters, but less than in a kill-all. Expect scales well above kill-all
-  norms, and watch for overshoot.
-- **Kill-target bosses must be fights on their own.** Once the chaff is
-  ignorable, the target's own HP pool is nearly the whole difficulty;
-  `undying` makes the kill need follow-through instead of one alpha window.
+Start every encounter from this table. It compresses ~25 batteries of
+discovery; ignoring it is how a campaign takes nine passes instead of three.
+"Starting scales" are first-guess `hpScaleOverride` values (easy/med/hard/nm)
+from the shipped campaigns — expect to move them, but start there, not at
+the kill-all defaults.
+
+| type | difficulty lives in | hpScale behaviour | starting scales | the real levers |
+|---|---|---|---|---|
+| `kill-all` | damage race | normal (~5–10 pts per 0.05) — but CLIFFY when enemies are identical | 0.95 / 1.20 / 1.30 / 1.30 | scale; count/comp (coarse) |
+| `carve` | approach geometry | normal | like kill-all, +0.1–0.2 | wall layout — cover on the APPROACH, never screening shooters |
+| `boss` (kill-target) | the target's own HP pool | normal | 0.70 / 0.90 / 1.00 / 1.20 | target HP budget (100–110 + a differentiator: `undying` / `warded` / a clock); start distance for the melee-vs-kiter spread |
+| `survive` (siege) | round count × wave size | **NEARLY INERT** | leave near default | round count (~25 pts/round), wave size (~10–15 pts/unit) |
+| `race` (clocked kill-all) | clock × HP product | **HYPERSENSITIVE when the clock is tight** — non-monotonic, 28-pt swings on 0.01 | generous clock first, then 0.85 / 0.95 / 1.00 / 0.97 | the CLOCK. Make it generous (untimed avg + 2–3 rounds) so it catches only slow parties, then tune scale normally |
+| `hold` (buttons) | how long the mark-guards survive | works, but needs BIG values | 1.30 / 1.45 / 1.70 / 2.30 | guards stand ON the marks (unguarded marks = a stroll) |
+| `escape` | crossing under fire | semi — overshoots easily | 0.90 / 1.10 / 1.30 / 1.70 | door-triggered ambush waves; exit-tile count |
+| `rooms` | cumulative attrition | normal but LOW values | 0.75 / 0.80 / 0.90 / 1.00 | garrison size is very coarse (±1 unit ≈ 45 pts); scale is the fine lever |
+| `escort` | hunter pressure vs VIP HP | **NEARLY INERT** (balanced comp held 100% through a 0.70→2.25 sweep) | 0.70 / 1.10 / 1.20 / 1.30 | hunter COUNT is binary (2 = stroll, 3 = walls ranged); hunter SPEED is the fine dial; VIP HP (boss-tier — ranged can't body-block); a LONGER route makes it EASIER |
+
+Cross-cutting measurements:
+
+- **Identical-enemy encounters move in ~30-pt jumps** — every instance shares
+  the same hit-breakpoints, so the whole cell crosses a cliff at once. If you
+  are authoring and want smooth tuning later, mix the composition.
+- **Per-enemy `nightmare` blocks are worth ~28 pts on their own** (measured:
+  hard 0.98 → 54% vs nightmare 0.99 → 25%). A campaign whose enemies all
+  carry them may need its nightmare scale BELOW hard.
 - **⚠ Walls between melee and a RANGED enemy shield the shooter and tax only
-  the crosser.** Three successive e2 layouts did this; melee fell 52% → 35%
-  → 4% while ranged sat near 100%. Cover belongs on the APPROACH lane so the
-  party advances behind it — never screening the enemy's shooters.
+  the crosser** (melee 52% → 35% → 4% across three such layouts while ranged
+  sat at 100%). Cover belongs on the party's approach lane.
+- **Melee-vs-kiting-boss spread is a START DISTANCE problem** — no scale
+  fixes it; pull the court in.
 
 Order of preference: `hpScaleOverride` → enemy maxHealth (breakpoint-aware)
 → count/composition (measured) → AC → placement (for spread). **Changing
@@ -165,6 +182,16 @@ converge):**
    reread the mechanism (usually it's a breakpoint cliff or a spread problem
    wearing a mean costume).
 
+4b. **Iterate per-encounter, accept per-campaign.** While working one
+   encounter, run `--encounter eN --games 200` (~5× faster than the full
+   battery). Full batteries are for the acceptance check and the centring
+   survey — not for reading back a single-encounter change.
+
+4c. **Prove the edit landed before interpreting the run.** Grep the file for
+   the new value, and compare the `contentHash` in the `--json` output with
+   the previous run's — an identical hash means you re-measured unchanged
+   content (a silently-failed edit script cost one full battery this way).
+
 5. **⚠ CENTRE EVERY NEAR-EDGE CELL IN ONE PASS — do not chase them one at a
    time.** This is the single biggest time sink found in the D2 Lantern
    retrofit. With ±7-pt noise, any cell sitting within ~5 points of a band
@@ -173,11 +200,29 @@ converge):**
    consecutive batteries each "failed" on a different edge-parked cell that
    had passed in the run before.
 
-   **The drill, once the structural work is done:**
+   **The drill, once the structural work is done** — run this against the
+   battery's `--json` (it was hand-rewritten a dozen times before it was
+   saved here; don't rewrite it again):
    ```bash
-   # after any passing-ish battery, list every cell by distance from its band edge
-   # (mean, band, midpoint, margin) and treat margin < 5 as needing a nudge
+   python3 - <<'EOF'
+   import json, collections, sys
+   d=json.load(open(sys.argv[1] if len(sys.argv)>1 else 'results.json'))
+   BAND={'easy':(80,95),'medium':(65,80),'hard':(45,65),'nightmare':(15,45)}
+   FLOOR={'easy':60,'medium':35,'hard':10,'nightmare':None}
+   byk=collections.defaultdict(list)
+   for c in d['cells']: byk[(c['encounter'],c['difficulty'])].append(c)
+   for (enc,diff),cells in sorted(byk.items()):
+       r={c['party']:c['winRate']*100 for c in cells}
+       m=sum(r.values())/len(r); lo,hi=BAND[diff]; best=max(r.values())
+       margin=min(m-lo,hi-m); fl=FLOOR[diff]
+       fm=min(v-fl for v in r.values()) if fl is not None else 99
+       uns=diff=='nightmare' and best<40
+       flag=' << NUDGE' if (margin<5 or fm<5 or uns) else ''
+       print(f"{enc}/{diff:<10} mean {m:5.1f} [mid {(lo+hi)/2:.0f}] margin {margin:+5.1f} floorMargin {fm:+4.0f}{' UNSOLV' if uns else ''}{flag}  {r.get('melee',0):.0f}/{r.get('ranged',0):.0f}/{r.get('balanced',0):.0f}")
+   EOF
    ```
+   Treat every `<< NUDGE` row in ONE edit: means toward midpoints, floor
+   margins by the party-specific levers, then a single re-run.
    Then move ALL of them toward their band midpoints in a single edit and
    re-run once. `campaignTune.ts` exists precisely because the midpoint —
    never an edge — is the correct target; this rule is the manual version of
