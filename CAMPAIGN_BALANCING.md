@@ -295,9 +295,81 @@ of 3 parties in band, no party below the floor":
 - Report the worst-performing sampled builds by name — that is the actionable
   output, and it is what tells you WHICH archetype a cell is bricking.
 
-This harness does not exist yet. Build it before balancing campaign 2, and
-validate it against the shipped trilogy (whose answers we already know) before
-trusting it on new content.
+### The tool: `buildBattery.ts` (BUILT 2026-08-18)
+
+```bash
+# two shards in parallel (owner runs at most 2 jobs), then merge
+npx tsx src/ai/buildBattery.ts <campaign> --builds 100 --games 50 --shard 0 --shards 2 --json s0.json
+npx tsx src/ai/buildBattery.ts <campaign> --builds 100 --games 50 --shard 1 --shards 2 --json s1.json
+npx tsx src/ai/buildBattery.ts --merge s0.json s1.json [--json merged.json]
+```
+
+**Sharding is by BUILD INDEX** (build `i` → shard `i % shards`), not by cell, so
+both shards cover every cell and merging is a straight union of build samples.
+Each build's RNG seed derives from `(campaign, encounter, difficulty, index)`,
+so builds are reproducible and **the two shards can never draw the same build**.
+
+⚠ **A single shard's verdict is not the answer** — it is printed only as a
+progress signal and labelled partial. Verdicts genuinely change on merge (in
+testing, a cell read BAND in shard 0, BAND+WALLS in shard 1, and WALLS once
+merged). Always merge before concluding anything.
+
+⚠ **The merge REFUSES shards from different content** (it compares each shard's
+contentHash and exits 2). Both shards must run from the same commit, or you are
+averaging two different games.
+
+**What a build is.** A sampled build draws a legal comp (max 2 per class, same
+cap real players have), then per unit a special, a passive and a Deep Gift —
+each gated by level exactly as `choicesForLevel` gates them — and then a fork
+state read from the campaign's OWN node graph (every boon-granting `choice`
+node contributes one option, so the run is one a real player could have had).
+Campaigns with no boons yield an empty fork state.
+
+**Acceptance, per cell:**
+- **Band**: MEAN win rate across builds is in the difficulty band. ⚠ It must be
+  the mean: the bands were CALIBRATED against the mean of 3 parties, so judging
+  a different statistic against them is not apples-to-apples. Measured on the
+  shipped moonberry, the same 2,000 builds put **12/20 cells in band by mean but
+  only 2/20 by median** — nearly all of that gap was the statistic, not the
+  content. (The first version of this tool used median and produced exactly that
+  false alarm.) The median is still reported, because a large mean/median gap is
+  the **bimodality** signal — the cell is not "medium difficulty", it is easy for
+  some builds and a brick wall for others.
+- **Walls**: at most 15% of builds below the wall floor (easy 40 / medium 25 /
+  hard 10 / nightmare 5). This is the owner's philosophy encoded directly: some
+  builds having a rough fight is IDENTITY, many hitting a wall is a bug, and the
+  party is locked for the campaign so it cannot re-comp around it.
+- **Solvable**: on nightmare, the best sampled build clears 40%.
+- The report names the **worst walled builds**, which is the actionable output —
+  it tells you WHICH archetype a cell bricks, not merely that one exists.
+
+⚠ **THE WALL THRESHOLDS ARE UNRATIFIED.** `WALL_FLOOR` (easy 40 / medium 25 /
+hard 10 / nightmare 5) and `MAX_WALL_SHARE` (15%) are this tool's own invention,
+NOT owner-set like the difficulty bands. They are a first guess at "how many
+bricked builds is too many". Get them ratified before treating a WALLS verdict
+as a blocker.
+
+### Validation against the shipped trilogy (2026-08-18)
+
+Run on moonberry — 2,000 builds (100 per cell x 20 cells, 2 shards x 50 games),
+~15 min per shard in parallel. **The trilogy is materially looser than the
+3-party battery reported: 11 of 20 cells fail, where that battery scored
+moonberry 19/20 PASS.** Two distinct failure modes:
+
+- **Too easy on the low difficulties** (e1/hard mean 73% vs band 45–65, e4 easy
+  through hard all high). The 3 representative parties fight on DEFAULT loadouts
+  — each class's FIRST special and passive — and those defaults are
+  systematically weaker than what a sampled build brings. Content tuned against
+  them is tuned against a strawman, exactly as suspected.
+- **Bimodal nightmare cells** (e2/nm 42% of builds walled, e4/nm 40%, e5/nm
+  55%, all flagged bimodal). These are not "hard" cells; they are cells that a
+  large minority of builds simply cannot beat, which the mean of 3 parties
+  cannot see at all.
+
+This does not mean the shipped trilogy needs re-tuning tomorrow — it is free
+content that plays acceptably — but it does mean **campaign 2 must be balanced
+on this tool, not the old one**, and that any future re-tune of the trilogy
+should use it too.
 
 ## Known measurement limits (do not over-trust the floors)
 

@@ -187,6 +187,13 @@ export function simEncounterCell(
     passives?: (string | undefined)[];
     /** [E0.4] Per-unit Deep Gift override; 'none' = giftless baseline. */
     gifts?: (DeepGiftSlug | 'none' | undefined)[];
+    /** [E2.0] Fully-specified per-unit build, bypassing choicesForLevel
+     *  entirely. The build-sampling battery uses this to fight arbitrary
+     *  legal loadouts rather than the three default ones. */
+    choicesOverride?: CampaignUnitChoice[];
+    /** [E2.0] Boon keys the run has earned (i.e. which fork options were
+     *  taken). Applied to the party by buildEncounterState. */
+    boonKeys?: string[];
   } = {},
 ): CampaignCellResult {
   const campaign = CAMPAIGNS[campaignSlug];
@@ -196,12 +203,12 @@ export function simEncounterCell(
   const games = options.games ?? 100;
   const level = options.level ?? enc.level;
   const rng = makeRng(options.seed ?? 1);
-  const choices = choicesForLevel(partySlugs, level, options.passives, options.gifts);
+  const choices = options.choicesOverride ?? choicesForLevel(partySlugs, level, options.passives, options.gifts);
   // A6: the sim must fight with the SAME ability map as the real match —
   // campaign-scoped abilities merged in. (The old L6 cooldown override is gone —
   // E0's L10 second charge rides UnitInstance.extraCharges inside the built
   // state, so the sim exercises it with no ability-map surgery.)
-  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY);
+  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys);
   const abilityMap = applyCooldownOverrides(
     applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
     probe.cooldownOverrides,
@@ -221,6 +228,7 @@ export function simEncounterCell(
     const stateFactory = (): MatchState => {
       const { state } = buildEncounterState(
         campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY,
+        undefined, options.boonKeys,
       );
       return state;
     };
