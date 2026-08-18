@@ -415,6 +415,43 @@ content that plays acceptably — but it does mean **campaign 2 must be balanced
 on this tool, not the old one**, and that any future re-tune of the trilogy
 should use it too.
 
+## Fable review pass — campaign 2 (2026-08-18)
+
+The end-of-campaign check the roadmap requires: is every mechanic the balance
+numbers depend on actually MODELED, particularly `phasing` and the `protect`
+doctrine, which no prior campaign exercised?
+
+**Verified:**
+- **One geometry, four surfaces.** `reachableFrom`/`findPath` are unit-aware and
+  implement phasing in one place; the brain calls exactly those, the sim runs the
+  brain, and the live client runs the SAME brain from the synced engine copy
+  (`localMatchService` instantiates `OptimalBrain` directly). There is no second
+  movement model to drift. Engine regression test covers walk-through-never-end-on;
+  a live probe on e7's built state confirms the wraith's reachable set crosses the
+  wall line and never terminates on a wall.
+- **The threat model has no phasing blind spot** — `dangerAt` uses raw Manhattan
+  distance and ignores walls, which is exactly correct for phasers and merely
+  conservative (over-cautious) for normal enemies near walls.
+- **Protect doctrine is real on both sides**: the party brain's +40% instinct is
+  gated on `ally_dead` being in the objective (e3 and e8 both list it), hunters
+  carry a 0.6 quarry bias via `aiHints`, and ally `hold`/`route` doctrines are
+  implemented and driven by the same brain in live play.
+- **Charges, gifts and boons all flow through the battery** (charges probed
+  empirically in E0.3; gifts via `choicesOverride`; fork boons sampled from the
+  campaign's own node graph).
+- **Certified numbers reproduce**: e7/hard re-measured 55% against a certified 53,
+  e3/medium 76 against 73 — inside documented noise.
+
+**One modelling gap, documented rather than fixed:** `main_dead` is on
+`BRAIN_MODELED_LOSS`, but unlike `ally_dead` (which earned a +40% protect
+instinct) it adds NO hero-specific caution — the party brain shelters the hero
+only as much as any unit. A human player protects the hero more, so the sim
+slightly UNDERESTIMATES player win rate wherever `main_dead` applies (exactly
+one encounter: e7). The error is small, player-favorable, and fixing it means a
+brain change that invalidates the 48/48 certification — so it waits for the next
+brain revision, and re-certification then. If e7 feels easy on device, this is
+part of why.
+
 ## Known measurement limits (do not over-trust the floors)
 
 The three representative parties fight with **default loadouts** (each class's
