@@ -138,11 +138,19 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'clean_opening', name: 'Clean Opening', description: 'Win the alley without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      // Walk: 0.94->96 · 0.98->83 · 1.24->73 · 1.28->65 · 1.29->68 · 1.30->37.
-      // ⚠ hard is CLIFF-LOCKED: three identical lifters share breakpoints, so
-      // the whole cell moves at once and nothing lands mid-band (65 -> 37 across
-      // 0.01). Parked on 1.28, the nearest safe rung, riding the band's top edge.
-      hpScaleOverride: { easy: 0.98, medium: 1.27, hard: 1.29, nightmare: 1.33 },
+      // CALIBRATION (200 games/cell, run-to-run spread measured at 2-4 pts).
+      // easy walk:  0.90->98 · 0.94->96 · 0.96->95 · 0.98->83  (parked 0.98)
+      // hard walk:  1.24->76 · 1.29->66 · 1.30->37
+      // ⚠ hard is CLIFF-LOCKED and is this campaign's one accepted miss.
+      // The three lifters here are identical, so they share damage breakpoints
+      // and the whole cell moves at once: there is no rung between 66 (1 pt over
+      // the band top) and 37 (8 pts under the bottom). Parked on 1.29, riding the
+      // top edge, because overshooting the band low is the worse failure. Fixing
+      // this properly needs a DESIGN change (differentiate the three lifters so
+      // their breakpoints stagger), not another tuning pass — do not re-walk it.
+      // nightmare walk: 1.28->56 · 1.32->30. Same shared-breakpoint cliff, but
+      // here 1.32 lands cleanly mid-band. Do not nudge it 'to be safe'.
+      hpScaleOverride: { easy: 0.98, medium: 1.26, hard: 1.29, nightmare: 1.32 },
     },
 
     // e2 — The Silver Arch (hold). Two moonstone seals, far apart: the arch
@@ -168,7 +176,7 @@ export const moonberryCampaign: CampaignDefinition = {
       ],
       // A `hold` is gated by how long the seal-guards survive, so its scales run
       // far above a kill-all's. Walk: 1.00->97 · 1.30->78 · 1.70->47 · 2.00->29.
-      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.52, nightmare: 2.30 },
+      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.68, nightmare: 2.55 },
     },
 
     // e3 — Midnight Ferry Stage (hazard). The Ember Juggler's fire is on the
@@ -191,7 +199,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'untouched_by_flame', name: 'Untouched by Flame', description: 'Win the ferry stage without the hero taking a scratch.', check: { kind: 'no_damage_to_main' } },
       ],
-      hpScaleOverride: { easy: 0.72, medium: 0.76, hard: 0.86, nightmare: 0.75 },
+      hpScaleOverride: { easy: 0.65, medium: 0.76, hard: 0.92, nightmare: 0.75 },
     },
 
     // e4 — The Unmarked Road (escort). The stage manager knows the way north;
@@ -235,7 +243,7 @@ export const moonberryCampaign: CampaignDefinition = {
       ],
       // Walk with the final hunter build (move 5 / 38 HP, two of them):
       //   0.70 -> 87% · 1.00 -> 74% · 1.30 -> 41%
-      hpScaleOverride: { easy: 0.70, medium: 1.10, hard: 1.24, nightmare: 1.30 },
+      hpScaleOverride: { easy: 0.64, medium: 1.10, hard: 1.23, nightmare: 1.80 },
     },
 
     // e5 — The Cartographer's Stage (boss). Kill-target: only the mapmaker has
@@ -253,6 +261,10 @@ export const moonberryCampaign: CampaignDefinition = {
       // 60 wall) while ranged hit 100%, because the boss pulls and kites. Start
       // distance is the SPREAD lever; hpScale only moved everyone together, and
       // no scale gave melee >=60 with a mean <=95.
+      // Start distance here is a genuine two-sided tradeoff (the spread lever
+      // cuts both ways): the court at x=5-6 starved MELEE (33% vs a 35 floor,
+      // boss kites), at x=3-4 it starved RANGED (34%, no standoff). x=4-5 is
+      // the balance point — all four means land in band there.
       enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 3 }, { x: 4, y: 5 }, { x: 5, y: 1 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
       goals: [
@@ -262,7 +274,7 @@ export const moonberryCampaign: CampaignDefinition = {
       // 60 wall) · 0.71->86. Melee runs low here by construction — the
       // Cartographer is a warlock who pulls and kites — so easy is parked where
       // melee clears the wall.
-      hpScaleOverride: { easy: 0.76, medium: 0.86, hard: 1.10, nightmare: 1.28 },
+      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 1.20, nightmare: 1.28 },
     },
   },
 
