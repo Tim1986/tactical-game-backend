@@ -240,4 +240,40 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
     ] as never, P, P, E, map);
     expect(r.updatedState.encounterProgress!.roomIndex).toBe(0);      // no move, no transition
   });
+
+  it('units_dead naming a boss in a LATER room does not vacuously win before the boss spawns', () => {
+    // The bug (surfaced by campaign 2's e12): a boss living in the last room is
+    // prebuilt at encounter build (stable id, name known from turn 1), so a
+    // `units_dead` win naming it is legal per the design — but the boss's
+    // UnitInstance isn't spliced into state.units until the party actually
+    // transitions into that room. Before this fix, checking `isAlive` on an
+    // instanceId absent from state.units read as "not alive" -> vacuous win on
+    // turn 1, mirroring the all_enemies_dead mercy rule's own pre-A4 bug.
+    const party  = mk(P, 1, 3);
+    const boss   = mk(E, 0, 0); // exists (has a stable id) but not yet spawned
+    const ep = progress({
+      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      rooms: [{
+        units: [boss], placement: [{ x: 6, y: 3 }], waves: [],
+        exitDoors: [], doorMode: 'on_clear',
+        entryTiles: [{ x: 1, y: 3 }],
+      }],
+    }, [party.instanceId]);
+    const st = mkState([party], ep); // note: boss is NOT in state.units yet
+    st.objective = {
+      partyId: P, enemyId: E, mainId: party.instanceId, text: 'x',
+      win: [{ kind: 'units_dead', unitIds: [boss.instanceId] }], loss: [],
+    } as never;
+    const result = checkWinCondition(st, P, E);
+    expect(result.isOver).toBe(false); // must NOT win while the boss hasn't spawned
+
+    // Once the boss is actually on the board and dead, the same check must win.
+    const spawnedDead = { ...boss, isAlive: false };
+    const st2 = mkState([party, spawnedDead], progress({}, [party.instanceId]));
+    st2.objective = {
+      partyId: P, enemyId: E, mainId: party.instanceId, text: 'x',
+      win: [{ kind: 'units_dead', unitIds: [boss.instanceId] }], loss: [],
+    } as never;
+    expect(checkWinCondition(st2, P, E).isOver).toBe(true);
+  });
 });

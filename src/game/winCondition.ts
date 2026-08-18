@@ -48,6 +48,13 @@ function winSatisfied(state: MatchState, obj: ObjectiveState, c: ResolvedWinCond
       if (hasPendingContent(state)) return null;
       return livingOf(state, obj.enemyId).length === 0 ? 'Every enemy has fallen' : null;
     case 'units_dead': {
+      // A4 bug fix (surfaced by campaign 2's e12, a `units_dead` naming a boss
+      // that lives in the LAST room): named units from a later room/wave don't
+      // exist in state.units until they actually spawn, so `anyAlive` was
+      // false — not because the unit died, but because it was never born yet —
+      // and the fight "won" on turn 1. Mirror all_enemies_dead's guard: while
+      // pending content remains, this can never vacuously satisfy.
+      if (hasPendingContent(state)) return null;
       const anyAlive = state.units.some((u) => u.isAlive && c.unitIds.includes(u.instanceId));
       return anyAlive ? null : 'The target is destroyed';
     }
