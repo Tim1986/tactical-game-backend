@@ -23,7 +23,11 @@ export const moonberryCampaign: CampaignDefinition = {
   free: true,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
-  rewardSkin: { classSlug: 'rogue', skinId: 'moonberry_masquer', name: 'Moonberry Masquer' },
+  // rogue is lantern's goblin now (50101) — retargeted to sorcerer so all
+  // four campaigns get a DISTINCT goblin chassis. '60101' = Set 1
+  // Sorcerer-Goblin; renamed after the troupe's own Ember Juggler, an actual
+  // sorcerer-chassis enemy in this campaign's cast.
+  rewardSkin: { classSlug: 'sorcerer', skinId: '60101', name: 'Ember Juggler' },
 
   achievements: [
     { slug: 'complete_easy',      name: 'Lantern Lighter',   description: 'Complete The Moonberry Masquerade on Easy.' },

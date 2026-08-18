@@ -21,7 +21,10 @@ export const goblinopolisCampaign: CampaignDefinition = {
   free: true,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
-  rewardSkin: { classSlug: 'ranger', skinId: 'bluecap_pathfinder', name: 'Bluecap Pathfinder' },
+  // '40101' = Set 1 Ranger-Goblin. This is literally the Bluecap Pathfinder
+  // enemy's own art (see `bluecap_pathfinder` below) — the closest possible
+  // fit of the four reassignments.
+  rewardSkin: { classSlug: 'ranger', skinId: '40101', name: 'Bluecap Pathfinder' },
 
   achievements: [
     { slug: 'complete_easy',      name: 'Bell-Road Beginner', description: 'Complete The Bell of Goblinopolis on Easy.' },

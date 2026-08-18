@@ -50,7 +50,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
   free: false,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
-  rewardSkin: { classSlug: 'cleric', skinId: 'sealed_deep_warden', name: 'Warden of the Deep' },
+  // Retargeted from cleric — no goblin cleric art exists (Cleric NPCs are
+  // orc-chassis; see SKINS.md's race table). Landed on the one goblin chassis
+  // the other three campaigns didn't claim: '80101' = Set 1 Wizard-Goblin.
+  // No thematic tie to this campaign's undead cast (it has no goblins at
+  // all) — this is a pure stopgap reuse, not a story fit, per the owner.
+  rewardSkin: { classSlug: 'wizard', skinId: '80101', name: 'Goblin Adept' },
 
   achievements: [
     { slug: 'complete_easy',      name: 'Barrow Steps',        description: 'Complete The Sealed Deep on Easy.' },

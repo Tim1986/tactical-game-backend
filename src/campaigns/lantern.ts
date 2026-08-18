@@ -17,7 +17,12 @@ export const lanternCampaign: CampaignDefinition = {
   startNode: 'intro',
   // TODO(skins): no skin system exists yet — unlock is recorded in campaign
   // meta locally; wire to the skin picker when skins ship.
-  rewardSkin: { classSlug: 'rogue', skinId: 'lantern_goblin_king', name: 'Goblin King' },
+  // Reward skin reuses existing enemy art (owner call 2026-08-18: goblin
+  // skins as campaign rewards, for now, rather than commissioning bespoke
+  // art). '50101' = Set 1 Rogue-Goblin, SKINS.md's own identity numbering —
+  // already fully painted, 4 facings, idle-only. The name already fit before
+  // this decision; it's the same skinId scheme going forward on all four.
+  rewardSkin: { classSlug: 'rogue', skinId: '50101', name: 'Goblin King' },
 
   achievements: [
     { slug: 'complete_easy',      name: 'Lantern Lit',       description: 'Complete The Lantern of Elmsworth on Easy.' },
