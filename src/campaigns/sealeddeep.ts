@@ -21,6 +21,21 @@
  * chassis as an enemy and the `protect`/`survive` palette types, and the first to set
  * `artKey` at all — every one of the 11 undead artKeys ships here.
  *
+ * ⚠ NIGHTMARE WALL SHARES — AN OPEN QUESTION FOR THE OWNER (2026-08-18).
+ * Across e4, e5, e6, e7, e8 and e9, the hpScale that CENTRES the nightmare mean
+ * in its 15-45% band also puts 28-64% of sampled builds under the wall floor,
+ * breaching buildBattery's 15% MAX_WALL_SHARE. That is systematic, not six
+ * separate content bugs: if a cell's mean is 30% and its build distribution is
+ * bimodal (the usual shape), a large share of builds necessarily sit near 0%.
+ *
+ * This may mean the CAP is wrong for nightmare rather than the content. The
+ * owner's stated philosophy is "I am really okay with nightmare only being
+ * beatable with certain strategies", which describes a high nightmare wall share
+ * as the DESIGN, and the separate NIGHTMARE_BEST_MIN solvability check already
+ * guarantees some build cracks each cell. A difficulty-scaled cap (tight on
+ * easy/medium where the party is locked in for the run, loose on nightmare)
+ * would encode that. Not changed unilaterally — the thresholds are owner-set.
+ *
  * `free: false` — this is the first paid campaign, but no purchase-gating exists yet
  * in the engine. Today `free: false` only omits a "FREE" badge in the UI; actual
  * paywall enforcement is a separate E4 task, not built here.
@@ -300,6 +315,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // share was largely the cultist's `warded` nightmare block, now softened
       // to acBonus at the roster level, so this parks at 1.30 and the battery
       // certifies the walls.
+      // nm walk after softening the cultist: 1.15 -> 50 (8% walled) ·
+      // 1.30 -> 30 (36%) · 1.45 -> 12 (48%). 1.30 centres the mean exactly;
+      // 1.15 would hold the walls under cap but leave the mean above band.
       hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.30 },
     },
 
@@ -317,6 +335,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // gives ranged builds room to kite the thing that ignores walls.
       terrain: { theme: 'crypt' },
       objective: {
+        // 8 rounds. Tried 6 to cut the wall share and it made the encounter
+        // UN-TUNABLE: 96-100% across scale 2.05, 2.30, 2.55 and 100% at 2.40-3.00
+        // on nightmare — six rounds is simply too short to lose, so no scale
+        // matters. 8 is the shortest duration where the mean still responds to
+        // scale, so it stays, and the wall share is accepted (see the
+        // nightmare-wall note at the top of this file).
         text: 'Survive until the seal steadies (8 rounds)',
         win: [{ kind: 'round_reached', round: 8 }],
       },
@@ -353,7 +377,10 @@ export const sealedDeepCampaign: CampaignDefinition = {
         { enemies: ['wraith'], placement: [{ x: 0, y: 3 }], trigger: { on: 'round', round: 6 } },
       ],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 1, y: 5 }],
-      hpScaleOverride: { easy: 0.70, medium: 0.85, hard: 1.00, nightmare: 1.20 },
+      // Walk at 8 rounds on the open floor: easy 1.30 -> 88 (8% walled) ·
+      // 1.55 -> 74 · 1.80 -> 59; hard 1.80 -> 57 (28% walled) · 2.05 -> 44 ·
+      // 2.30 -> 33; nm 2.10 -> 20 (64% walled).
+      hpScaleOverride: { easy: 1.30, medium: 1.55, hard: 1.80, nightmare: 2.00 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -395,6 +422,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // share went 28% -> 4%. The clock alone (at 13) had left hard/nightmare
       // walling 28-40%, because four kills inside any deadline was the real
       // constraint, not the pace.
+      // nm walk after softening the cultist: 1.85 -> 44 (28% walled) ·
+      // 2.05 -> 23 (40%) · 2.25 -> 16 (40%). Softening moved the mean a long way
+      // (18% -> 44% at 1.85) and the walls with it (48% -> 28%), but the wall
+      // share still sits above the tool's 15% cap. Parked to CENTRE the mean —
+      // see the nightmare-wall note at the top of this file.
       hpScaleOverride: { easy: 1.45, medium: 1.62, hard: 1.82, nightmare: 1.95 },
     },
 
@@ -417,7 +449,18 @@ export const sealedDeepCampaign: CampaignDefinition = {
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         }],
-        loss: [{ kind: 'round_reached', round: 7 }],
+        // `main_dead` is doing real work here, not flavour. Two reasons:
+        //  1) Nightmare was structurally UNREACHABLE without it — 54-56% flat
+        //     across scale 2.00/2.40/2.80, even with a dedicated heavy nightmare
+        //     block, because you win by walking PAST enemies and their HP/AC
+        //     never touch that. A death condition is the one thing enemy DAMAGE
+        //     feeds, and damage does scale with difficulty, so the ladder works.
+        //  2) ⚠ `units_at_tiles scope:'all'` gets EASIER as your party dies —
+        //     it only asks that every LIVING unit stand on a tile, so losing a
+        //     straggler removes the body you were struggling to escort across.
+        //     Without a death loss, sacrificing your slowest unit is a winning
+        //     move. That is a perverse incentive, not a difficulty knob.
+        loss: [{ kind: 'round_reached', round: 7 }, { kind: 'main_dead' }],
       },
       // A wall line at x=5 with gaps at y=0/4/7 turns a two-turn stroll into a
       // funnel. Measured before it: hard sat at 76-83% across 1.30-1.90 AND the
@@ -439,7 +482,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
         { enemies: ['skeleton_archer', 'ghoul'], placement: [{ x: 6, y: 2 }, { x: 6, y: 5 }], trigger: { on: 'round', round: 2 } },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.30, nightmare: 1.70 },
+      // Centring walk AFTER main_dead landed (which moved everything ~30 pts
+      // harder and, crucially, made the ladder respond at all):
+      //   easy   0.35 -> 97 · 0.50 -> 90 (8% walled) · 0.65 -> 79
+      //   medium 0.60 -> 85 · 0.75 -> 69 (16% walled) · 0.90 -> 51
+      //   hard   0.90 -> 60 (8% walled) · 1.15 -> 44 · 1.40 -> 42
+      //   nm     2.00 -> 21 · 2.40 -> 22 · 2.80 -> 22 (still inert up here, but
+      //          in band, and the wall share is what pays for it)
+      // The easy->nightmare span is wide (0.50 to 2.00) because the objective
+      // only became scale-sensitive at all via the death condition.
+      hpScaleOverride: { easy: 0.50, medium: 0.75, hard: 0.90, nightmare: 2.00 },
     },
 
     // e8 — The Long Way Up (escort). Walk the crew out. Guardrails from the
@@ -450,12 +502,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
       allies: {
         crew: {
           name: 'The Survey Crew', baseClass: 'cleric',
-          // 85, matching e3's VIP. At 62 this cell was INERT and walled: 34-35%
-          // mean across scale 1.80-2.40 (a 33% HP swing moved it 1 pt) with
-          // 48-52% of builds walled — i.e. scale did nothing and the crew just
-          // died. Escort difficulty lives in hunter pressure vs VIP HP, so the
-          // VIP is the lever.
-          maxHealth: 85, abilities: [],
+          // 105 — genuinely boss-tier for L7, after two measured steps.
+          // At 62: mean 34-35% flat across scale 1.80-2.40, 48-52% walled.
+          // At 85: easy fixed (90%, 4% walled) but nightmare still inert
+          //        (45-49% across 1.80-2.60) with 28-44% walled.
+          // The escort objective is hpScale-inert BY NATURE (the tuning table
+          // measured a balanced comp holding 100% through a 0.70->2.25 sweep),
+          // so the wall share is the only thing worth chasing here, and it is
+          // entirely "did the crew die". A defenseless NPC that ranged parties
+          // cannot body-block needs the HP of a boss, not of a party member.
+          maxHealth: 105, abilities: [],
           behavior: { mode: 'route', waypoints: [{ x: 3, y: 4 }, { x: 5, y: 4 }, { x: 7, y: 4 }] },
           placement: { x: 0, y: 4 },
         },
@@ -474,7 +530,16 @@ export const sealedDeepCampaign: CampaignDefinition = {
       goals: [
         { slug: 'crew_intact', name: 'Crew Intact', description: 'Bring the whole survey crew out alive.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.8, medium: 1.0, hard: 1.2, nightmare: 1.4 },
+      // Walk with the 105 HP crew: easy 1.25 -> 90 (4% walled) ·
+      // hard 1.70 -> 72 · 2.00 -> 65 · 2.30 -> 58 (24% walled) ·
+      // nm 2.20 -> 58 · 2.60 -> 52 · 3.00 -> 48 (40% walled).
+      // ⚠ NIGHTMARE IS STRUCTURALLY CAPPED at ~48% here. Escort is hpScale-inert
+      // by nature (the tuning table measured a comp holding 100% across a
+      // 0.70->2.25 sweep) and this campaign cannot add bodies on nightmare only,
+      // since waves are not difficulty-conditional. 3.00 already puts a hunter at
+      // 120 HP; pushing further buys nothing. Parked at the best available rung
+      // and flagged rather than pretending scale can fix it.
+      hpScaleOverride: { easy: 1.25, medium: 1.55, hard: 2.30, nightmare: 3.00 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of
