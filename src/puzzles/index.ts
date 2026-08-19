@@ -47,30 +47,34 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
  * Interleaved focus / pull / reach so consecutive days feel different.
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
-  PUZZLE_003, // focus  (wizard)
-  PUZZLE_007, // pull   (sorcerer)   — v2 PASS
-  PUZZLE_008, // reach  (wizard)
-  PUZZLE_004, // focus  (ranger)
-  PUZZLE_009, // pull   (ranger)     — v2 PASS
-  PUZZLE_015, // tempo  (ranger)     — v2 PASS  (new; took 010's slot)
-  PUZZLE_012, // pull   (sorcerer)   — v2 PASS
-  PUZZLE_011, // reach  (barbarian)
-  PUZZLE_006, // focus  (fighter)
-  PUZZLE_013, // pull   (wizard)     — v2 PASS
-  PUZZLE_014, // focus  (warlock)
-  PUZZLE_001, // camouflage picker
+  PUZZLE_007, // pull  (sorcerer) — v2 PASS, depth 1
+  PUZZLE_015, // tempo (ranger)   — v2 PASS, depth 1
+  PUZZLE_009, // pull  (ranger)   — v2 PASS, depth 1
+  PUZZLE_012, // pull  (sorcerer) — v2 PASS, depth 1
+  PUZZLE_013, // pull  (wizard)   — v2 PASS, depth 1
 ];
 
 /**
- * PULLED FROM ROTATION 2026-08-19 — do not re-add without a solver re-run:
- *   PUZZLE_005 ("Concentrate Fire", target 21 HP) and
- *   PUZZLE_010 ("One Step Closer",  target 22 HP)
- * are UNSOLVABLE. Both were authored 2026-07-27 with the target's HP set to the
+ * ROTATION SHORTENED TO THE v2-PASSING SET (owner ruling 2026-08-19): a short
+ * rotation of good puzzles beats a long one padded with arithmetic. Every entry
+ * above passes the v2 bar — goal-greedy fails, min win depth >= 1.
+ *
+ * OFF the rotation, still REGISTERED (the solver keeps scoring them and old
+ * share links still resolve):
+ *
+ *   UNSOLVABLE — never re-add without a solver re-run:
+ *     PUZZLE_005 ("Concentrate Fire", target 21 HP)
+ *     PUZZLE_010 ("One Step Closer",  target 22 HP) Both were authored 2026-07-27 with the target's HP set to the
  * exact sum of available player damage; pass21 balance values shipped into
  * gameData 2026-08-05 (a4c2bed), damage numbers moved, and an exact-sum puzzle
- * dies the moment any value shifts by one. They stay REGISTERED (so the solver
- * keeps scoring them and old share links still resolve) but are off the daily
- * rotation. See GAMEPLAN PZ-BROKEN and PUZZLES_AND_INVITES.md.
+ * dies the moment any value shifts by one.
+ *   ARITHMETIC (v2 depth 0 — the goal-greedy player solves them by counting):
+ *     PUZZLE_003, PUZZLE_004, PUZZLE_006, PUZZLE_008, PUZZLE_011, PUZZLE_014
+ *   MUDDY special-combo shapes:
+ *     PUZZLE_001, PUZZLE_002
+ *
+ * PZ3 replaces the arithmetic six; as each replacement passes the bar it joins
+ * the array above. See GAMEPLAN PZ3/PZ-BROKEN and PUZZLES_AND_INVITES.md.
  *
  * Standing rule this established: re-run `npx tsx src/ai/puzzleSolver.ts`
  * after ANY gameData balance change.
