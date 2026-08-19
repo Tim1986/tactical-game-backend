@@ -42,7 +42,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'shockwave',
     name: 'Ground Slam',
-    description: 'Slams the ground for 13 unblockable damage to all units directly adjacent, including allies, and roots them for 2 turns.',
+    description: 'Deals 13 unblockable damage to all units directly adjacent, including allies, and roots them for 2 turns.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -324,7 +324,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'ffh',
     name: 'Ring of Fire',
-    description: 'Deals 14 unblockable damage in a ring around any tile within 5 — every unit next to that tile is burned, allies included. The centre tile itself is the calm eye and is never hit.',
+    description: 'Deals 14 unblockable damage in a ring around any tile within 5, allies included. The centre tile is spared.',
     targeting_type: 'aoe',
     range: 5,
     area_radius: 1,
@@ -447,7 +447,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Ring of Frost',
-    description: 'Freezes every unit in a ring around any tile within 3 for 1 turn, allies included. The centre tile itself is the calm eye and is never frozen.',
+    description: 'Freezes every unit in a ring around any tile within 3 for 1 turn, allies included. The centre tile is spared.',
     targeting_type: 'aoe',
     range: 3,
     area_radius: 1,
