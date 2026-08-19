@@ -48,19 +48,33 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_003, // focus  (wizard)
-  PUZZLE_007, // pull   (sorcerer)
+  PUZZLE_007, // pull   (sorcerer)   — v2 PASS
   PUZZLE_008, // reach  (wizard)
   PUZZLE_004, // focus  (ranger)
-  PUZZLE_009, // pull   (ranger)
-  PUZZLE_010, // reach  (sorcerer)
-  PUZZLE_005, // focus  (barbarian)
-  PUZZLE_012, // pull   (sorcerer)
+  PUZZLE_009, // pull   (ranger)     — v2 PASS
+  PUZZLE_015, // tempo  (ranger)     — v2 PASS  (new; took 010's slot)
+  PUZZLE_012, // pull   (sorcerer)   — v2 PASS
   PUZZLE_011, // reach  (barbarian)
   PUZZLE_006, // focus  (fighter)
-  PUZZLE_013, // pull   (wizard)
+  PUZZLE_013, // pull   (wizard)     — v2 PASS
   PUZZLE_014, // focus  (warlock)
   PUZZLE_001, // camouflage picker
 ];
+
+/**
+ * PULLED FROM ROTATION 2026-08-19 — do not re-add without a solver re-run:
+ *   PUZZLE_005 ("Concentrate Fire", target 21 HP) and
+ *   PUZZLE_010 ("One Step Closer",  target 22 HP)
+ * are UNSOLVABLE. Both were authored 2026-07-27 with the target's HP set to the
+ * exact sum of available player damage; pass21 balance values shipped into
+ * gameData 2026-08-05 (a4c2bed), damage numbers moved, and an exact-sum puzzle
+ * dies the moment any value shifts by one. They stay REGISTERED (so the solver
+ * keeps scoring them and old share links still resolve) but are off the daily
+ * rotation. See GAMEPLAN PZ-BROKEN and PUZZLES_AND_INVITES.md.
+ *
+ * Standing rule this established: re-run `npx tsx src/ai/puzzleSolver.ts`
+ * after ANY gameData balance change.
+ */
 
 const MS_PER_DAY = 86_400_000;
 
