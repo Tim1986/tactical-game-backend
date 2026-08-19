@@ -29,6 +29,7 @@ import { PUZZLE_012 } from './puzzles/puzzle-012.js';
 import { PUZZLE_013 } from './puzzles/puzzle-013.js';
 import { PUZZLE_014 } from './puzzles/puzzle-014.js';
 import { PUZZLE_015 } from './puzzles/puzzle-015.js';
+import { PUZZLE_016 } from './puzzles/puzzle-016.js';
 
 /** Every registered puzzle, keyed by id. */
 export const PUZZLES: Record<string, PuzzleDefinition> = {
@@ -39,7 +40,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_009.id]: PUZZLE_009, [PUZZLE_010.id]: PUZZLE_010,
   [PUZZLE_011.id]: PUZZLE_011, [PUZZLE_012.id]: PUZZLE_012,
   [PUZZLE_013.id]: PUZZLE_013, [PUZZLE_014.id]: PUZZLE_014,
-  [PUZZLE_015.id]: PUZZLE_015,
+  [PUZZLE_015.id]: PUZZLE_015, [PUZZLE_016.id]: PUZZLE_016,
 };
 
 /**
@@ -52,6 +53,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_009, // pull  (ranger)   — v2 PASS, depth 1
   PUZZLE_012, // pull  (sorcerer) — v2 PASS, depth 1
   PUZZLE_013, // pull  (wizard)   — v2 PASS, depth 1
+  PUZZLE_016, // free-the-finisher (sorcerer) — v2 PASS, depth 1
 ];
 
 /**
