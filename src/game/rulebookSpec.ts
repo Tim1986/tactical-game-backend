@@ -605,27 +605,27 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'ABL-7', name: 'push/pull slides straight and stops early at edges, corners, and occupied tiles',
+    rule: 'ABL-7', name: 'a push travels one cardinal direction; an exactly-diagonal target lets the caster pick',
     run: () => {
-      const pusher = mkUnit(P1, 3, 3);
       const pushAb = mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 3 }] });
-      // stops at board edge
-      let t = mkUnit(P2, 3, 6);
-      cast(pushAb, pusher, t, [pusher, t]);
-      assert(t.position.x === 3 && t.position.y === 7, `push must stop at the edge (got ${t.position.x},${t.position.y})`);
-      // stops before an occupied tile
-      t = mkUnit(P2, 3, 4);
-      const wall = mkUnit(P2, 3, 6);
-      cast(pushAb, pusher, t, [pusher, t, wall]);
-      assert(t.position.y === 5, 'push must stop on the last free tile before an occupant');
-      // never lands on a removed corner
-      const cornerPusher = mkUnit(P1, 3, 7);
-      t = mkUnit(P2, 5, 7);
-      cast(pushAb, cornerPusher, t, [cornerPusher, t]);
-      assert(t.position.x === 6 && t.position.y === 7, 'push toward a removed corner must stop before it');
-      // pull
+      // A push is CARDINAL, never diagonal: an exactly-diagonal target offers
+      // both cardinals and the caster picks. Without a choice the first is used,
+      // and either way one axis must stay put.
+      const diagPusher = mkUnit(P1, 3, 3);
+      let dp = mkUnit(P2, 4, 4);
+      cast(pushAb, diagPusher, dp, [diagPusher, dp]);
+      assert(dp.position.x === 4 || dp.position.y === 4,
+        `diagonal push must travel one cardinal, not diagonally (got ${dp.position.x},${dp.position.y})`);
+      dp = mkUnit(P2, 4, 4);
+      cast(pushAb, diagPusher, dp, [diagPusher, dp], { x: 4, y: 7 });
+      assert(dp.position.x === 4 && dp.position.y === 7, `caster's chosen cardinal must be honoured (got ${dp.position.x},${dp.position.y})`);
+    },
+  },
+  {
+    rule: 'ABL-13', name: 'a pull drags toward the caster, diagonals cost two, and stops one tile short',
+    run: () => {
       const puller = mkUnit(P1, 1, 1);
-      t = mkUnit(P2, 5, 1);
+      let t = mkUnit(P2, 5, 1);
       const pull2 = mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] });
       cast(pull2, puller, t, [puller, t]);
       assert(t.position.x === 3 && t.position.y === 1, 'orthogonal pull must draw the target 2 tiles toward the caster');
@@ -644,18 +644,6 @@ export const RULE_CHECKS: RuleCheck[] = [
       cast(pull3, d3Puller, d3t, [d3Puller, d3t]);
       assert(d3t.position.x === 3 && d3t.position.y === 4, `diagonal pull-3 must land 1 diagonal + 1 straight (got ${d3t.position.x},${d3t.position.y})`);
 
-      // A push is CARDINAL, never diagonal: an exactly-diagonal target offers
-      // both cardinals and the caster picks. Without a choice the first is used,
-      // and either way one axis must stay put.
-      const diagPusher = mkUnit(P1, 3, 3);
-      let dp = mkUnit(P2, 4, 4);
-      cast(pushAb, diagPusher, dp, [diagPusher, dp]);
-      assert(dp.position.x === 4 || dp.position.y === 4,
-        `diagonal push must travel one cardinal, not diagonally (got ${dp.position.x},${dp.position.y})`);
-      dp = mkUnit(P2, 4, 4);
-      cast(pushAb, diagPusher, dp, [diagPusher, dp], { x: 4, y: 7 });
-      assert(dp.position.x === 4 && dp.position.y === 7, `caster's chosen cardinal must be honoured (got ${dp.position.x},${dp.position.y})`);
-
       // A diagonally-adjacent target CAN be pulled: it cuts the corner onto one
       // of the two tiles beside the caster, and the caster picks which.
       const adjPuller = mkUnit(P1, 3, 3);
@@ -673,7 +661,27 @@ export const RULE_CHECKS: RuleCheck[] = [
       assert(!(ap.position.x === 7 && ap.position.y === 7), 'a bogus displacement destination must never be honoured');
     },
   },
-
+  {
+    rule: 'ABL-14', name: 'displacement stops early at edges, removed corners, and occupied tiles',
+    run: () => {
+      const pusher = mkUnit(P1, 3, 3);
+      const pushAb = mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 3 }] });
+      // stops at board edge
+      let t = mkUnit(P2, 3, 6);
+      cast(pushAb, pusher, t, [pusher, t]);
+      assert(t.position.x === 3 && t.position.y === 7, `push must stop at the edge (got ${t.position.x},${t.position.y})`);
+      // stops before an occupied tile
+      t = mkUnit(P2, 3, 4);
+      const wall = mkUnit(P2, 3, 6);
+      cast(pushAb, pusher, t, [pusher, t, wall]);
+      assert(t.position.y === 5, 'push must stop on the last free tile before an occupant');
+      // never lands on a removed corner
+      const cornerPusher = mkUnit(P1, 3, 7);
+      t = mkUnit(P2, 5, 7);
+      cast(pushAb, cornerPusher, t, [cornerPusher, t]);
+      assert(t.position.x === 6 && t.position.y === 7, 'push toward a removed corner must stop before it');
+    },
+  },
   {
     rule: 'ABL-8', name: 'AOE shape: default blasts include diagonals; orthogonal blasts never do (parity sweep over all real AOE abilities)',
     run: () => {
