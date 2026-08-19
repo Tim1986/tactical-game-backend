@@ -943,6 +943,22 @@ export const RULE_CHECKS: RuleCheck[] = [
       assert(burn.stacks === 2, 'reapply must add stacks');
     },
   },
+  {
+    rule: 'STA-7', name: 'only burning uses its stack count; weakened/frozen/rooted stacks are inert',
+    run: () => {
+      // Burning DOES scale with stacks: two stacks tick for 14, not 7.
+      const burner = mkUnit(P2, 5, 5, { statusEffects: [{ slug: 'burning', turnsRemaining: 2, stacks: 2, sourceUnitInstanceId: 'x' }] });
+      const before = burner.currentHealth;
+      applyStartOfTurnStatusDamage(burner, []);
+      assert(before - burner.currentHealth === 14, 'two burning stacks must tick for 14');
+
+      // Weakened does NOT: two stacks still reduce outgoing damage by 4, not 8.
+      const weak = mkUnit(P1, 1, 1, { statusEffects: [{ slug: 'weakened', turnsRemaining: 2, stacks: 2, sourceUnitInstanceId: 'x' }] });
+      const t = mkUnit(P2, 2, 1);
+      cast(mkAbility({ isUnblockable: true }), weak, t); // 10 base
+      assert(t.currentHealth === 94, 'two weakened stacks must still reduce by only 4 (10 -> 6)');
+    },
+  },
 
   // ── PAS ────────────────────────────────────────────────────────────────────
   {

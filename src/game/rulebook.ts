@@ -98,6 +98,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'STA-4', text: "FROZEN: the unit's turns are skipped completely while frozen." },
       { id: 'STA-5', text: "WEAKENED: the unit's outgoing damage is reduced by 4 (never below 0)." },
       { id: 'STA-6', text: "Reapplying a status refreshes its duration to the longer of the two, and adds stacks (up to the cap of 3)." },
+      { id: 'STA-7', text: "Only BURNING uses its stack count for anything: each stack adds 7 damage per tick (STA-2). For FROZEN, ROOTED and WEAKENED the stack count is inert — a second application refreshes the duration (STA-6) but the extra stack changes nothing, so weakened stays −4 and frozen/rooted stay all-or-nothing no matter how many times they are re-applied." },
     ],
   },
   {
