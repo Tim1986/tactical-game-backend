@@ -116,3 +116,51 @@ branch*. Recommended workflow: before merging any significant backend change
 (new endpoint, auth/session logic, SQL, dependency bump), run `/security-review` on the
 branch and address anything it flags. It complements this manual pass; it doesn't replace
 periodic `npm audit` on the dependency tree.
+
+---
+
+# Addendum — retrospective pass on the OFF1/OFF2 auth changes (2026-08-19, Fable)
+
+Scope: the offline-session work (mobile `authStore.ts`, `client.ts`) that
+changed when tokens are cleared, added a 15s request timeout, and introduced an
+AsyncStorage profile cache. Reviewed against this audit's original threat areas.
+
+## Findings
+
+1. **[FIXED in this pass] PII in unencrypted storage.** The new profile cache
+   stored the account email in AsyncStorage. Tokens are correctly in
+   SecureStore; AsyncStorage is plaintext and rides device backups. The email
+   was the only PII in the cached object and nothing offline renders it, so it
+   is now stripped before caching (Profile shows a blank line until the next
+   online load).
+
+2. **[FIXED in this pass] Cached profile could outlive its session.** When
+   `apiFetch` itself destroys a session mid-run (401 + failed refresh clears
+   tokens), the cache was never read again — loadUser's no-token path returned
+   early — but never deleted either: orphaned identity data persisting
+   indefinitely. loadUser's no-token path now clears it. Verified the cache can
+   never RESURRECT a session: it is only read when a live token exists and the
+   server was unreachable.
+
+3. **[ACCEPTED, by design] Offline revocation gap.** Keeping tokens on
+   NETWORK_ERROR means a server-side revocation (password change elsewhere)
+   is not enforced while the device is offline. This is inherent to offline
+   support; enforcement happens at the next successful contact (401 → refresh
+   fails → clearTokens). Standard behavior, documented here so it reads as a
+   decision rather than an oversight.
+
+4. **[NOTED, pre-existing, availability not security] Refresh under timeout.**
+   A token refresh that exceeds the new 15s deadline returns null on the
+   401-retry path and logs the user out. Pre-existing failure mode (any refresh
+   error did this); the timeout adds one more trigger. Cost is a re-login, not
+   a compromise.
+
+5. **[FLAG for WEB1, pre-existing] Web tokens in localStorage.** On web,
+   `storeSet` falls back to localStorage — XSS-readable, unlike SecureStore.
+   Irrelevant while web is dev-only; MUST be revisited before WEB1 ships any
+   authenticated browser surface (httpOnly cookie session or in-memory tokens).
+
+Net: the OFF1 change *narrowed* the destructive path (only a genuine
+UNAUTHORIZED clears the session now — previously any transient error did),
+and the timeout removed an unbounded-hang path. Both are security-positive;
+the two findings above were the cost, and both are fixed.
