@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { query, withTransaction } from '../db/pool.js';
 import { PublicUser, User } from '../types/index.js';
