@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 import { Errors } from '../utils/response.js';
+import { captureError } from '../observability/sentry.js';
 
 export function errorHandler(
   err: unknown,
@@ -10,6 +11,7 @@ export function errorHandler(
   _next: NextFunction
 ): void {
   logger.error({ err, path: req.path, method: req.method }, 'Unhandled error');
+  captureError(err, { path: req.path, method: req.method });
   Errors.internal(res);
 }
 

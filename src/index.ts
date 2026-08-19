@@ -1,3 +1,4 @@
+import { initSentry, captureError, flushSentry } from './observability/sentry.js';
 import { createApp } from './app.js';
 import { config } from './config/index.js';
 import { checkDatabaseConnection } from './db/pool.js';
@@ -5,6 +6,7 @@ import { startBackgroundJobs } from './jobs/backgroundJobs.js';
 import { logger } from './utils/logger.js';
 
 async function main(): Promise<void> {
+  initSentry(); // no-op unless SENTRY_DSN is set
   await checkDatabaseConnection();
   const app = createApp();
   app.listen(config.port, () => {
@@ -33,13 +35,16 @@ async function main(): Promise<void> {
 // stay visible rather than becoming invisible swallowed failures.
 process.on('unhandledRejection', (reason) => {
   logger.error({ err: reason }, 'UNHANDLED REJECTION — server kept alive, investigate');
+  captureError(reason, { kind: 'unhandledRejection' });
 });
 
 // An uncaught exception, by contrast, leaves the process in an undefined state.
 // Log it and let the platform restart us cleanly.
 process.on('uncaughtException', (err) => {
   logger.fatal({ err }, 'UNCAUGHT EXCEPTION — exiting for a clean restart');
-  process.exit(1);
+  captureError(err, { kind: 'uncaughtException' });
+  // Flush the crash report before the process dies, then exit.
+  void flushSentry().finally(() => process.exit(1));
 });
 
 main().catch((err) => {
