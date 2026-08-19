@@ -131,7 +131,19 @@ export function enumeratePlayerTurns(state: MatchState): TurnAction[][] {
 // Tree walk
 // ---------------------------------------------------------------------------
 
-interface StepResult { state: MatchState; outcome: 'won' | 'lost' | 'ongoing' }
+interface StepResult {
+  state: MatchState;
+  outcome: 'won' | 'lost' | 'ongoing';
+  /**
+   * State immediately after the PLAYER's own actions, before any enemy reply.
+   * The v2 goal-greedy bot scores THIS, not the post-reply state: a human on
+   * their first attempt judges "what did my move accomplish", they do not
+   * pre-compute the enemy's answer. Scoring the post-reply state made greedy
+   * clairvoyant — it would pick a setup move because it could already see the
+   * heal it prevented, which is precisely the insight the puzzle is testing for.
+   */
+  playerState: MatchState;
+}
 
 /** Apply one player turn then all enemy replies. null = illegal turn. */
 function applyPlayerTurn(
@@ -147,21 +159,39 @@ function applyPlayerTurn(
     return null; // illegal candidate — engine rejected it
   }
   let cur = result.updatedState;
+  const playerState = cur;
   // Goal met during the player's own turn = immediate win.
-  if (checkPuzzleGoal(def, cur, ids) === 'won') return { state: cur, outcome: 'won' };
+  if (checkPuzzleGoal(def, cur, ids) === 'won') return { state: cur, outcome: 'won', playerState };
   if (result.matchOver) {
-    return { state: cur, outcome: result.winnerId === PUZZLE_PLAYER_ID ? 'won' : 'lost' };
+    return { state: cur, outcome: result.winnerId === PUZZLE_PLAYER_ID ? 'won' : 'lost', playerState };
   }
   // Enemy replies until it's the player's turn again.
   while (cur.activePlayerId === PUZZLE_ENEMY_ID) {
     const enemyActions = brain.selectActions(cur, PUZZLE_ENEMY_ID, abilityMap);
     const r = processTurn(cur, enemyActions, PUZZLE_ENEMY_ID, PUZZLE_PLAYER_ID, PUZZLE_ENEMY_ID, abilityMap);
     cur = r.updatedState;
-    if (checkPuzzleGoal(def, cur, ids) === 'won') return { state: cur, outcome: 'won' }; // e.g. burning tick kills the target
-    if (r.matchOver) return { state: cur, outcome: r.winnerId === PUZZLE_PLAYER_ID ? 'won' : 'lost' };
+    if (checkPuzzleGoal(def, cur, ids) === 'won') return { state: cur, outcome: 'won', playerState }; // e.g. burning tick kills the target
+    if (r.matchOver) return { state: cur, outcome: r.winnerId === PUZZLE_PLAYER_ID ? 'won' : 'lost', playerState };
   }
-  if (checkPuzzleGoal(def, cur, ids) === 'lost') return { state: cur, outcome: 'lost' };
-  return { state: cur, outcome: 'ongoing' };
+  if (checkPuzzleGoal(def, cur, ids) === 'lost') return { state: cur, outcome: 'lost', playerState };
+  return { state: cur, outcome: 'ongoing', playerState };
+}
+
+/**
+ * Best (lowest) remaining goal HP seen on any line that did NOT win, during the
+ * exhaustive walk. A value <= 4 means a plausible line fails by a hair, which
+ * is the retry hook v2 wants. Approximate by design: the walk short-circuits on
+ * the first win, so this reflects what the search actually saw.
+ */
+const nearMiss = { bestRemaining: Infinity };
+
+function remainingToGoal(def: PuzzleDefinition, ids: Record<string, string>, state: MatchState): number {
+  if (def.goal === 'eliminate_target') {
+    const t = state.units.find((u) => u.instanceId === ids[def.targetUnitId!]);
+    return !t || !t.isAlive ? 0 : t.currentHealth;
+  }
+  return state.units.filter((u) => u.ownerPlayerId === PUZZLE_ENEMY_ID && u.isAlive)
+    .reduce((acc, u) => acc + u.currentHealth, 0);
 }
 
 /** Does ANY line win from this state with `turnsLeft` player turns? */
@@ -171,7 +201,10 @@ function subtreeWins(
   state: MatchState,
   turnsLeft: number,
 ): boolean {
-  if (turnsLeft <= 0) return false;
+  if (turnsLeft <= 0) {
+    nearMiss.bestRemaining = Math.min(nearMiss.bestRemaining, remainingToGoal(def, ids, state));
+    return false;
+  }
   for (const plan of enumeratePlayerTurns(state)) {
     const step = applyPlayerTurn(def, ids, state, plan);
     if (!step) continue;
@@ -180,6 +213,118 @@ function subtreeWins(
     if (subtreeWins(def, ids, step.state, turnsLeft - 1)) return true;
   }
   return false;
+}
+
+// ---------------------------------------------------------------------------
+// v2 metrics — the human proxy (PUZZLES_AND_INVITES.md "Authoring v2")
+// ---------------------------------------------------------------------------
+
+/**
+ * How close is this state to the PUZZLE GOAL (not to winning the fight)?
+ *
+ * This is the piece v1 lacked. OptimalBrain plays to win the battle and never
+ * reads the goal, so any puzzle whose goal diverges from fight-winning passed
+ * "greedy fails" for free — while the human, who reads the goal in a banner,
+ * was never fooled. Scoring states by GOAL progress models that human.
+ *
+ * Damage dominates proximity so "hit the target" always outranks "walk at it";
+ * kills dominate damage for eliminate_all.
+ */
+function goalScore(def: PuzzleDefinition, ids: Record<string, string>, state: MatchState): number {
+  if (def.goal === 'eliminate_target') {
+    const t = state.units.find((u) => u.instanceId === ids[def.targetUnitId!]);
+    if (!t) return 1e6;
+    if (!t.isAlive) return 1e6;
+    const dmg = t.maxHealth - t.currentHealth;
+    const dists = state.units
+      .filter((u) => u.isAlive && u.ownerPlayerId === PUZZLE_PLAYER_ID)
+      .map((u) => cdist(u.position, t.position));
+    const nearest = dists.length ? Math.min(...dists) : 99;
+    return dmg * 100 - nearest;
+  }
+  const enemies = state.units.filter((u) => u.ownerPlayerId === PUZZLE_ENEMY_ID);
+  const alive = enemies.filter((u) => u.isAlive);
+  if (alive.length === 0) return 1e6;
+  const dmg = enemies.reduce((acc, u) => acc + (u.maxHealth - u.currentHealth), 0);
+  const kills = enemies.length - alive.length;
+  const dists = state.units
+    .filter((u) => u.isAlive && u.ownerPlayerId === PUZZLE_PLAYER_ID)
+    .flatMap((p) => alive.map((e) => cdist(p.position, e.position)));
+  return kills * 10000 + dmg * 100 - (dists.length ? Math.min(...dists) : 99);
+}
+
+interface ScoredPlan { step: StepResult; score: number; key: string; wins: boolean }
+
+/** Every legal plan from `state`, scored by resulting goal progress, deduped by idea. */
+function scoredPlans(def: PuzzleDefinition, ids: Record<string, string>, state: MatchState): ScoredPlan[] {
+  // Group by idea key, keeping the BEST variant of each idea — never the first
+  // one seen. Two plans can share an idea key ("longshot@(7,4)" with and
+  // without a follow-up reposition) and have completely different outcomes;
+  // deduping before evaluation silently discarded winning variants.
+  const best = new Map<string, ScoredPlan>();
+  for (const plan of enumeratePlayerTurns(state)) {
+    const step = applyPlayerTurn(def, ids, state, plan);
+    if (!step) continue;
+    if (step.outcome === 'lost') continue;
+    const key = planIdeaKey(plan);
+    const wins = step.outcome === 'won';
+    const cand: ScoredPlan = { step, key, wins, score: wins ? 1e9 : goalScore(def, ids, step.playerState) };
+    const prev = best.get(key);
+    if (!prev || cand.score > prev.score) best.set(key, cand);
+  }
+  return [...best.values()];
+}
+
+/** Max branching explored per greedy step when several plans tie for best. */
+const GREEDY_TIE_CAP = 8;
+
+/**
+ * THE V2 GATE: does a player who reads the goal and always makes the most
+ * goal-advancing play win? If yes, the puzzle is arithmetic — the solver
+ * rejects it no matter how well it scores on v1's metrics.
+ *
+ * Ties are all explored (capped) rather than broken arbitrarily, so the
+ * verdict never hinges on an incidental ordering.
+ */
+function goalGreedyWins(
+  def: PuzzleDefinition, ids: Record<string, string>, state: MatchState, turnsLeft: number,
+): boolean {
+  if (turnsLeft <= 0) return false;
+  const scored = scoredPlans(def, ids, state);
+  if (scored.length === 0) return false;
+  if (scored.some((p) => p.wins)) return true; // a winning blow is the greediest play there is
+  const max = Math.max(...scored.map((p) => p.score));
+  for (const best of scored.filter((p) => p.score === max).slice(0, GREEDY_TIE_CAP)) {
+    if (goalGreedyWins(def, ids, best.step.state, turnsLeft - 1)) return true;
+  }
+  return false;
+}
+
+/**
+ * Minimum number of NON-greedy moves any winning line requires — the puzzle's
+ * "aha count". Depth 0 means goal-greedy solves it (arithmetic). Dailies want
+ * 1-2: at least one move whose purpose is only visible on the second look.
+ *
+ * Branch-and-bound: prune as soon as accumulated deviations reach the best
+ * complete line found so far.
+ */
+function minWinDepth(
+  def: PuzzleDefinition, ids: Record<string, string>, state: MatchState,
+  turnsLeft: number, spent = 0, best = { v: Infinity },
+): number {
+  if (spent >= best.v) return Infinity;      // cannot improve — prune
+  if (turnsLeft <= 0) return Infinity;
+  const scored = scoredPlans(def, ids, state);
+  if (scored.length === 0) return Infinity;
+  const max = Math.max(...scored.map((p) => (p.wins ? 1e9 : p.score)));
+  for (const p of scored) {
+    const cost = spent + ((p.wins ? 1e9 : p.score) === max ? 0 : 1);
+    if (cost >= best.v) continue;
+    if (p.wins) { best.v = cost; continue; }
+    const d = minWinDepth(def, ids, p.step.state, turnsLeft - 1, cost, best);
+    if (d < best.v) best.v = d;
+  }
+  return best.v;
 }
 
 // ---------------------------------------------------------------------------
@@ -199,10 +344,17 @@ export interface SolverReport {
   /** Human-readable description of each winning first idea. */
   winningFirstMoveDescriptions: string[];
   greedyWins: boolean;
+  /** v2: a goal-AWARE greedy player (the human's first attempt) wins. Fatal. */
+  goalGreedyWins: boolean;
+  /** v2: fewest non-greedy moves any winning line needs. 0 = arithmetic. */
+  minWinDepth: number;
+  /** v2: lowest goal HP reached by a non-winning line (<= 4 = "so close"). */
+  nearMissRemaining: number;
   randomWinRate: number;   // 0..1 over `randomTrials` playouts
   randomTrials: number;
   passes: boolean;
   failures: string[];
+  warnings: string[];
 }
 
 function describePlan(plan: TurnAction[]): string {
@@ -239,6 +391,7 @@ export function solvePuzzle(
   specialOverrides?: Record<string, string>,
 ): SolverReport {
   const { state: initial, instanceIdBySpecId: ids } = buildPuzzleState(def, specialOverrides);
+  nearMiss.bestRemaining = Infinity;
 
   // 1+2. Exhaustive: which first moves lead to a win?
   const firstPlans = enumeratePlayerTurns(initial);
@@ -275,6 +428,10 @@ export function solvePuzzle(
     }
   }
 
+  // 3b. v2 GATE — goal-aware greedy (the human proxy) and the aha count.
+  const gGreedy = goalGreedyWins(def, ids, initial, def.maxPlayerTurns);
+  const depth = solvable ? minWinDepth(def, ids, initial, def.maxPlayerTurns, 0, { v: Infinity }) : Infinity;
+
   // 4. Random lines (uniform over legal candidates each turn).
   let randomWins = 0;
   for (let trial = 0; trial < randomTrials; trial++) {
@@ -295,17 +452,32 @@ export function solvePuzzle(
   const randomWinRate = randomWins / randomTrials;
 
   const failures: string[] = [];
+  const warnings: string[] = [];
   if (!solvable) failures.push('NOT SOLVABLE — no winning line exists');
   if (winningFirstIdeas > 2) failures.push(`too easy: ${winningFirstIdeas} distinct winning first ideas (bar: ≤ 2)`);
-  if (greedyWins) failures.push('too obvious: the greedy/brain line wins');
+  // NOTE (v2, 2026-08-19): brain-greedy is REPORTED but no longer fatal.
+  // v1 used it as a proxy for "the obvious line", but OptimalBrain is a
+  // perfect-search tactician, not a human reading a goal banner — the two
+  // diverge in both directions. It let batch #1 through (the brain chases the
+  // bait a human ignores) AND it rejects genuinely good puzzles (it finds a
+  // freeze-the-healer tempo line instantly). goal-greedy replaced it as the
+  // gate. A daily is allowed to be solvable by a strong tactician; it must not
+  // be solvable by someone who just reads the goal and swings.
+  if (greedyWins) warnings.push('note: brain-greedy (perfect-search tactician) also finds a win — informational, not a failure');
+  // v2 gates
+  if (gGreedy) failures.push('ARITHMETIC: goal-greedy wins — a player who just reads the goal and plays direct solves it');
+  if (solvable && depth === 0) failures.push('no indirection: every winning line is pure goal-greedy (depth 0)');
   if (randomWinRate >= 0.05) failures.push(`degenerate: random lines win ${(randomWinRate * 100).toFixed(1)}% (bar: < 5%)`);
 
   return {
     puzzleId: def.id,
     solvable, legalFirstMoves, winningFirstMoves, winningFirstIdeas, winningFirstMoveDescriptions,
-    greedyWins, randomWinRate, randomTrials,
+    greedyWins, goalGreedyWins: gGreedy,
+    minWinDepth: Number.isFinite(depth) ? depth : -1,
+    nearMissRemaining: Number.isFinite(nearMiss.bestRemaining) ? nearMiss.bestRemaining : -1,
+    randomWinRate, randomTrials,
     passes: failures.length === 0,
-    failures,
+    failures, warnings,
   };
 }
 
@@ -353,7 +525,10 @@ if (isMain) {
       console.log(`    solvable:            ${r.solvable ? '✓' : '✗'}`);
       console.log(`    winning first moves: ${r.winningFirstMoves} raw → ${r.winningFirstIdeas} distinct ideas`);
       for (const d of r.winningFirstMoveDescriptions.slice(0, 4)) console.log(`        · ${d}`);
-      console.log(`    greedy line wins:    ${r.greedyWins ? '✗' : 'no ✓'}`);
+      console.log(`    brain-greedy wins:   ${r.greedyWins ? '✗' : 'no ✓'}`);
+      console.log(`    GOAL-greedy wins:    ${r.goalGreedyWins ? '✗ ARITHMETIC' : 'no ✓'}   (v2 gate — the human proxy)`);
+      console.log(`    min win depth:       ${r.minWinDepth}${r.minWinDepth === 0 ? ' ✗ (no indirection)' : r.minWinDepth > 0 ? ' ✓' : ''}`);
+      console.log(`    near-miss remaining: ${r.nearMissRemaining}${r.nearMissRemaining >= 0 && r.nearMissRemaining <= 4 ? ' ✓ (close-call hook)' : ''}`);
       console.log(`    random win rate:     ${(r.randomWinRate * 100).toFixed(1)}%`);
     }
     // ── Overall verdict ──
