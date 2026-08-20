@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pool_js_1 = require("./pool.js");
 const logger_js_1 = require("../utils/logger.js");
 const gameData_js_1 = require("../config/gameData.js");
+const fableTeams_js_1 = require("../config/fableTeams.js");
+const initialState_js_1 = require("../game/initialState.js");
 // =============================================================
 // STATUS EFFECTS
 // =============================================================
@@ -68,17 +70,22 @@ const UNITS = gameData_js_1.UNIT_DEFS;
 // =============================================================
 // ACHIEVEMENTS
 // condition types:
-//   { type: 'match_count', threshold: N }  — completed N matches
-//   { type: 'win_count',   threshold: N }  — won N matches
-//   { type: 'elo_reached', threshold: N }  — reached ELO ≥ N
-//   { type: 'pve_difficulty_clear', difficulty: 'easy'|'hard'|'nightmare' }  — future
+//   { type: 'match_count',   threshold: N }  — completed N matches (Fable OK)
+//   { type: 'win_count',     threshold: N }  — won N matches (Fable OK; only first_win)
+//   { type: 'win_count_pvp', threshold: N }  — won N matches vs humans (is_pve=false)
+//   { type: 'win_streak',    threshold: N }  — won last N PvP matches in a row
+//   { type: 'elo_reached',   threshold: N }  — reached ELO ≥ N
+//   { type: 'leaderboard_top_n', n: N }      — in top N on daily leaderboard
 // =============================================================
 const ACHIEVEMENTS = [
-    // PvP — participation
-    { slug: 'first_match', name: 'First Blood', description: 'Complete your first match.', icon_key: 'ach_sword', condition: { type: 'match_count', threshold: 1 }, sort_order: 10 },
-    { slug: 'first_win', name: 'Victory!', description: 'Win your first match.', icon_key: 'ach_trophy', condition: { type: 'win_count', threshold: 1 }, sort_order: 20 },
-    { slug: 'wins_10', name: 'Seasoned Warrior', description: 'Win 10 matches.', icon_key: 'ach_shield', condition: { type: 'win_count', threshold: 10 }, sort_order: 30 },
-    { slug: 'wins_50', name: 'Veteran', description: 'Win 50 matches.', icon_key: 'ach_crown', condition: { type: 'win_count', threshold: 50 }, sort_order: 40 },
+    // PvP — participation & wins
+    { slug: 'first_match', name: 'First Steps', description: 'Play your first match.', icon_key: 'ach_sword', condition: { type: 'match_count', threshold: 1 }, sort_order: 10 },
+    { slug: 'first_win', name: 'Victory!', description: 'Win any match.', icon_key: 'ach_trophy', condition: { type: 'win_count', threshold: 1 }, sort_order: 20 },
+    { slug: 'first_pvp_win', name: 'Real Competition', description: 'Win any match against a human.', icon_key: 'ach_sword', condition: { type: 'win_count_pvp', threshold: 1 }, sort_order: 25 },
+    { slug: 'wins_10', name: 'Seasoned Warrior', description: 'Win 10 matches against human opponents.', icon_key: 'ach_shield', condition: { type: 'win_count_pvp', threshold: 10 }, sort_order: 30 },
+    { slug: 'wins_50', name: 'Veteran', description: 'Win 50 matches against human opponents.', icon_key: 'ach_crown', condition: { type: 'win_count_pvp', threshold: 50 }, sort_order: 40 },
+    { slug: 'win_streak_3', name: 'On a Roll', description: 'Win 3 matches in a row against human opponents.', icon_key: 'ach_flame', condition: { type: 'win_streak', threshold: 3 }, sort_order: 45 },
+    { slug: 'win_streak_5', name: 'Unstoppable', description: 'Win 5 matches in a row against human opponents.', icon_key: 'ach_star', condition: { type: 'win_streak', threshold: 5 }, sort_order: 46 },
     // PvP — ladder
     { slug: 'elo_1300', name: 'Rising Threat', description: 'Reach 1300 ELO.', icon_key: 'ach_flame', condition: { type: 'elo_reached', threshold: 1300 }, sort_order: 50 },
     { slug: 'elo_1500', name: 'Elite Commander', description: 'Reach 1500 ELO.', icon_key: 'ach_star', condition: { type: 'elo_reached', threshold: 1500 }, sort_order: 60 },
@@ -87,10 +94,7 @@ const ACHIEVEMENTS = [
     { slug: 'leaderboard_top10', name: 'Top 10', description: 'Appear in the top 10 on the daily leaderboard.', icon_key: 'ach_board', condition: { type: 'leaderboard_top_n', n: 10 }, sort_order: 80 },
     { slug: 'leaderboard_top3', name: 'Podium', description: 'Reach the top 3 on the daily leaderboard.', icon_key: 'ach_podium', condition: { type: 'leaderboard_top_n', n: 3 }, sort_order: 85 },
     { slug: 'leaderboard_top1', name: '#1', description: 'Reach #1 on the daily leaderboard.', icon_key: 'ach_crown', condition: { type: 'leaderboard_top_n', n: 1 }, sort_order: 90 },
-    // PvE — placeholder until PvE is built
-    { slug: 'pve_easy', name: 'Dungeon Delver', description: 'Clear all Easy encounters.', icon_key: 'ach_door', condition: { type: 'pve_difficulty_clear', difficulty: 'easy' }, sort_order: 110 },
-    { slug: 'pve_hard', name: 'Monster Slayer', description: 'Clear all Hard encounters.', icon_key: 'ach_axe', condition: { type: 'pve_difficulty_clear', difficulty: 'hard' }, sort_order: 120 },
-    { slug: 'pve_nightmare', name: 'Nightmare Cleared', description: 'Clear all Nightmare encounters. Few have.', icon_key: 'ach_skull', condition: { type: 'pve_difficulty_clear', difficulty: 'nightmare' }, sort_order: 130 },
+    // pve_easy / pve_hard / pve_nightmare removed — see migration 0022
 ];
 // =============================================================
 // SEED RUNNER
@@ -120,8 +124,8 @@ async function seed() {
         logger_js_1.logger.info('Seeding abilities...');
         for (const ab of ABILITIES) {
             await client.query(`INSERT INTO ability_definitions
-           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, effects)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           (slug, name, description, targeting_type, range, area_radius, cooldown_turns, is_special, is_unblockable, exclude_allies, is_multi_hit, effects)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (slug) DO UPDATE SET
            name           = EXCLUDED.name,
            description    = EXCLUDED.description,
@@ -132,10 +136,12 @@ async function seed() {
            is_special     = EXCLUDED.is_special,
            is_unblockable = EXCLUDED.is_unblockable,
            exclude_allies = EXCLUDED.exclude_allies,
+           is_multi_hit   = EXCLUDED.is_multi_hit,
            effects        = EXCLUDED.effects`, [ab.slug, ab.name, ab.description, ab.targeting_type,
                 ab.range, ab.area_radius, ab.cooldown_turns, ab.is_special,
                 ab.is_unblockable ?? false,
                 ab.exclude_allies ?? false,
+                ab.is_multi_hit ?? false,
                 JSON.stringify(ab.effects)]);
         }
         logger_js_1.logger.info(`Seeded ${ABILITIES.length} abilities`);
@@ -177,6 +183,37 @@ async function seed() {
                 JSON.stringify(ach.condition), ach.sort_order]);
         }
         logger_js_1.logger.info(`Seeded ${ACHIEVEMENTS.length} achievements`);
+        // Fable's own rosters
+        //
+        // These are real rows in `teams` owned by the Fable bot user, because
+        // `matches.player_two_team` is a FK to teams(id) — a PvE match against a
+        // roster needs a persisted team to point at. IDs are fixed in
+        // config/fableTeams.ts and must never change: historical matches reference
+        // them. Slugs resolve to unit_definition UUIDs here (units are seeded
+        // above, in the same transaction), and placement comes from the same
+        // planner the balance sims used.
+        logger_js_1.logger.info('Seeding Fable rosters...');
+        for (const team of fableTeams_js_1.FABLE_TEAMS) {
+            const unitIds = [];
+            for (const slug of team.slugs) {
+                const r = await client.query('SELECT id FROM unit_definitions WHERE slug = $1', [slug]);
+                if (!r.rows[0])
+                    throw new Error(`Fable roster "${team.name}": no unit_definition for slug "${slug}"`);
+                unitIds.push(r.rows[0].id);
+            }
+            await client.query(`INSERT INTO teams (id, user_id, name, unit_ids, placement, unit_customizations, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+         ON CONFLICT (id) DO UPDATE SET
+           name                = EXCLUDED.name,
+           unit_ids            = EXCLUDED.unit_ids,
+           placement           = EXCLUDED.placement,
+           unit_customizations = EXCLUDED.unit_customizations,
+           is_active           = EXCLUDED.is_active`, [team.id, initialState_js_1.FABLE_PLAYER_ID, team.name,
+                JSON.stringify(unitIds),
+                JSON.stringify((0, fableTeams_js_1.fablePlacement)(team)),
+                JSON.stringify((0, fableTeams_js_1.fableCustomizations)(team))]);
+        }
+        logger_js_1.logger.info(`Seeded ${fableTeams_js_1.FABLE_TEAMS.length} Fable rosters`);
         await client.query('COMMIT');
         logger_js_1.logger.info('Seed complete');
     }

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isoDate = isoDate;
 exports.getLeaderboard = getLeaderboard;
 exports.refreshLeaderboardSnapshot = refreshLeaderboardSnapshot;
 exports.isUserInTopN = isUserInTopN;
@@ -8,6 +9,17 @@ const pool_js_1 = require("../db/pool.js");
 // Get the most recent daily snapshot (top 10)
 // Falls back to live query if no snapshot exists yet.
 // ---------------------------------------------------------------
+/**
+ * pg returns TIMESTAMP columns as Date objects, not strings. This row type used
+ * to declare `snapshotted_at: string`, which the compiler believed, so
+ * `.split('T')` shipped and threw `r.snapshotted_at.split is not a function` on
+ * every call. Because the only caller is a fire-and-forget achievement check,
+ * that surfaced as the whole server dying after each completed match. Accept
+ * both shapes and normalise.
+ */
+function isoDate(v) {
+    return (v instanceof Date ? v.toISOString() : String(v)).split('T')[0];
+}
 async function getLeaderboard() {
     // Try latest snapshot first
     const snapshotResult = await (0, pool_js_1.query)(`SELECT rank, user_id, username, elo, win_count, match_count, snapshotted_at
@@ -23,7 +35,7 @@ async function getLeaderboard() {
             elo: r.elo,
             winCount: r.win_count,
             matchCount: r.match_count,
-            snapshotDate: r.snapshotted_at.split('T')[0],
+            snapshotDate: isoDate(r.snapshotted_at),
         }));
     }
     // No snapshot yet — fall back to live query

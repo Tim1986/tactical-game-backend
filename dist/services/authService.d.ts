@@ -29,7 +29,19 @@ export declare function login(input: LoginInput): Promise<LoginResult>;
 export declare function refresh(token: string): Promise<TokenPair>;
 export declare function logoutAll(userId: string): Promise<void>;
 export declare function logout(_userId: string): Promise<void>;
+/**
+ * Start a password reset. ALWAYS resolves without revealing whether the email
+ * has an account (prevents enumeration). If the account exists, a 6-digit
+ * code is stored (hashed) and emailed.
+ */
+export declare function requestPasswordReset(email: string): Promise<void>;
+/**
+ * Complete a password reset: verify the emailed code, set the new password,
+ * and revoke every existing session (token_version bump).
+ */
+export declare function resetPassword(email: string, code: string, newPassword: string): Promise<void>;
 export declare function savePushToken(userId: string, token: string, platform: 'ios' | 'android'): Promise<void>;
+export declare function devLogin(): Promise<LoginResult>;
 export declare class AuthError extends Error {
     constructor(message: string);
 }

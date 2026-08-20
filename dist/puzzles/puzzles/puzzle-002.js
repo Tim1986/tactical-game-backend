@@ -32,6 +32,7 @@ exports.PUZZLE_002 = {
     goal: 'eliminate_target',
     targetUnitId: 'vex',
     maxPlayerTurns: 2,
+    expert: true,
     rollScript: ['miss'],
     fateText: 'Fate is sealed: the first blockable strike in this battle will go wide. Unblockable arts ignore fate entirely.',
     units: [

@@ -16,7 +16,7 @@ exports.DEFAULT_ABILITIES = gameData_js_1.ABILITY_DEFS.map((a) => ({
     id: a.slug,
     slug: a.slug,
     name: a.name,
-    description: '',
+    description: a.description,
     targetingType: a.targeting_type,
     range: a.range,
     areaRadius: a.area_radius,
@@ -24,6 +24,14 @@ exports.DEFAULT_ABILITIES = gameData_js_1.ABILITY_DEFS.map((a) => ({
     isSpecial: a.is_special,
     isUnblockable: a.is_unblockable,
     excludeAllies: a.exclude_allies ?? false,
+    areaShape: a.area_shape ?? 'chebyshev',
+    // Without this every offline/AI cast of Twin Strike took the SINGLE-hit path:
+    // one dodge roll decided both daggers and both 8-damage effects then landed
+    // together, contradicting DGE-4 and the ability's own "each blow is rolled
+    // separately". It also left the dry-run with one roll for two damage events,
+    // which is why the combat log fell back to "hits X and X" with no die lines.
+    isMultiHit: a.is_multi_hit ?? false,
+    selfStatus: a.self_status,
     effects: a.effects,
 }));
 function buildAbilityMap(abilities = exports.DEFAULT_ABILITIES) {

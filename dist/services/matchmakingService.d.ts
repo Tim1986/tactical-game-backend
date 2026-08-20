@@ -13,7 +13,7 @@ export declare class TeamNotFoundError extends Error {
 export declare class ChallengeError extends Error {
     constructor(message: string);
 }
-export declare function enterQueue(userId: string, teamId: string): Promise<{
+export declare function enterQueue(userId: string, teamId: string, appVersion?: string): Promise<{
     position: number;
 }>;
 export declare function leaveQueue(userId: string): Promise<void>;

@@ -1,11 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChallengeError = exports.ChallengeAccessError = exports.ChallengeNotFoundError = void 0;
+exports.InviteError = exports.InviteNotFoundError = exports.ChallengeError = exports.ChallengeAccessError = exports.ChallengeNotFoundError = void 0;
 exports.issueChallenge = issueChallenge;
 exports.acceptChallenge = acceptChallenge;
 exports.declineChallenge = declineChallenge;
+exports.createInvite = createInvite;
+exports.getInviteInfo = getInviteInfo;
+exports.claimInvite = claimInvite;
 exports.getChallenges = getChallenges;
 const uuid_1 = require("uuid");
+const node_crypto_1 = __importDefault(require("node:crypto"));
 const pool_js_1 = require("../db/pool.js");
 const matchService_js_1 = require("./matchService.js");
 const notificationService_js_1 = require("./notificationService.js");
@@ -103,12 +110,83 @@ async function declineChallenge(challengeId, decliningUserId) {
     await (0, pool_js_1.query)('UPDATE challenges SET status = $1 WHERE id = $2', ['declined', challengeId]);
     logger_js_1.logger.info({ challengeId }, 'Challenge declined');
 }
+// ── Challenge invites (open-token flow) ──────────────────────────────────────
+class InviteNotFoundError extends Error {
+    constructor() { super('Invite not found or expired'); this.name = 'InviteNotFoundError'; }
+}
+exports.InviteNotFoundError = InviteNotFoundError;
+class InviteError extends Error {
+    constructor(message) { super(message); this.name = 'InviteError'; }
+}
+exports.InviteError = InviteError;
+function generateToken() {
+    return node_crypto_1.default.randomBytes(9).toString('base64url'); // 12 url-safe chars
+}
+async function createInvite(challengerId, teamId) {
+    // Verify team ownership
+    const teamResult = await (0, pool_js_1.query)('SELECT id FROM teams WHERE id = $1 AND user_id = $2 AND is_active = TRUE', [teamId, challengerId]);
+    if (!teamResult.rows[0])
+        throw new InviteError('Team not found');
+    const token = generateToken();
+    await (0, pool_js_1.query)(`INSERT INTO challenge_invites (token, challenger_id, challenger_team_id)
+     VALUES ($1, $2, $3)`, [token, challengerId, teamId]);
+    const webBase = (process.env['WEB_BASE_URL'] ?? 'https://dungeoncombat.app');
+    const shareUrl = `${webBase}/l/i/${token}`;
+    logger_js_1.logger.info({ challengerId, token }, 'Challenge invite created');
+    return { token, shareUrl };
+}
+async function getInviteInfo(token) {
+    // Expire stale invites
+    await (0, pool_js_1.query)(`UPDATE challenge_invites SET status = 'expired'
+     WHERE status = 'open' AND expires_at < NOW()`, []);
+    const result = await (0, pool_js_1.query)(`SELECT ci.*, u.username AS challenger_username
+     FROM challenge_invites ci JOIN users u ON u.id = ci.challenger_id
+     WHERE ci.token = $1`, [token]);
+    const inv = result.rows[0];
+    if (!inv)
+        throw new InviteNotFoundError();
+    return { challengerUsername: inv.challenger_username, status: inv.status, expiresAt: inv.expires_at };
+}
+async function claimInvite(token, claimerId, claimerTeamId) {
+    return (0, pool_js_1.withTransaction)(async (client) => {
+        const result = await client.query(`SELECT ci.*, u.username AS challenger_username
+       FROM challenge_invites ci JOIN users u ON u.id = ci.challenger_id
+       WHERE ci.token = $1 FOR UPDATE`, [token]);
+        const inv = result.rows[0];
+        if (!inv)
+            throw new InviteNotFoundError();
+        if (inv.status === 'claimed')
+            throw new InviteError('This invite has already been claimed');
+        if (inv.status === 'expired' || new Date(inv.expires_at) < new Date()) {
+            await client.query(`UPDATE challenge_invites SET status = 'expired' WHERE id = $1`, [inv.id]);
+            throw new InviteError('This invite has expired');
+        }
+        if (inv.challenger_id === claimerId)
+            throw new InviteError('You cannot accept your own challenge');
+        // Verify claimer team ownership
+        const teamResult = await client.query('SELECT id FROM teams WHERE id = $1 AND user_id = $2 AND is_active = TRUE', [claimerTeamId, claimerId]);
+        if (!teamResult.rows[0])
+            throw new InviteError('Team not found');
+        const { matchId } = await (0, matchService_js_1.createMatch)(inv.challenger_id, claimerId, inv.challenger_team_id, claimerTeamId, index_js_1.config.game.turnDeadlineHours);
+        await client.query(`UPDATE challenge_invites SET status = 'claimed', claimed_by = $1, match_id = $2 WHERE id = $3`, [claimerId, matchId, inv.id]);
+        setImmediate(() => {
+            void (0, notificationService_js_1.notifyUser)(inv.challenger_id, 'CHALLENGE_ACCEPTED', { matchId, opponentUsername: '' });
+        });
+        logger_js_1.logger.info({ token, claimerId, matchId }, 'Challenge invite claimed');
+        return { matchId };
+    });
+}
 // Get all pending challenges for a user (both sent and received)
 async function getChallenges(userId) {
-    // Expire old challenges first
-    await (0, pool_js_1.query)('UPDATE challenges SET status = $1 WHERE status = $2 AND expires_at < NOW()', ['expired', 'pending']);
+    // Expire old challenges and invites
+    await Promise.all([
+        (0, pool_js_1.query)('UPDATE challenges SET status = $1 WHERE status = $2 AND expires_at < NOW()', ['expired', 'pending']),
+        (0, pool_js_1.query)(`UPDATE challenge_invites SET status = 'expired' WHERE status = 'open' AND expires_at < NOW()`, []),
+    ]);
     const received = await (0, pool_js_1.query)('SELECT * FROM challenges WHERE opponent_id = $1 AND status = $2 ORDER BY created_at DESC', [userId, 'pending']);
     const sent = await (0, pool_js_1.query)('SELECT * FROM challenges WHERE challenger_id = $1 AND status IN ($2, $3) ORDER BY created_at DESC LIMIT 10', [userId, 'pending', 'accepted']);
-    return { received: received.rows, sent: sent.rows };
+    const sentInvites = await (0, pool_js_1.query)(`SELECT * FROM challenge_invites WHERE challenger_id = $1
+     AND status IN ('open', 'claimed') ORDER BY created_at DESC LIMIT 10`, [userId]);
+    return { received: received.rows, sent: sent.rows, sentInvites: sentInvites.rows };
 }
 //# sourceMappingURL=challengeService.js.map

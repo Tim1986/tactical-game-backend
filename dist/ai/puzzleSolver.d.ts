@@ -38,10 +38,17 @@ export interface SolverReport {
     /** Human-readable description of each winning first idea. */
     winningFirstMoveDescriptions: string[];
     greedyWins: boolean;
+    /** v2: a goal-AWARE greedy player (the human's first attempt) wins. Fatal. */
+    goalGreedyWins: boolean;
+    /** v2: fewest non-greedy moves any winning line needs. 0 = arithmetic. */
+    minWinDepth: number;
+    /** v2: lowest goal HP reached by a non-winning line (<= 4 = "so close"). */
+    nearMissRemaining: number;
     randomWinRate: number;
     randomTrials: number;
     passes: boolean;
     failures: string[];
+    warnings: string[];
 }
 export declare function solvePuzzle(def: PuzzleDefinition, randomTrials?: number, 
 /** Player special selections (from specialChoices) to solve under. */

@@ -40,21 +40,32 @@ const teamService = __importStar(require("../services/teamService.js"));
 const userService = __importStar(require("../services/userService.js"));
 const auth_js_1 = require("../middleware/auth.js");
 const response_js_1 = require("../utils/response.js");
+const fableTeams_js_1 = require("../config/fableTeams.js");
 exports.teamRouter = (0, express_1.Router)();
 exports.teamRouter.use(auth_js_1.requireAuth);
 // ---------------------------------------------------------------
 // Input schemas
 // ---------------------------------------------------------------
-const PlacementSchema = zod_1.z.array(zod_1.z.object({ x: zod_1.z.number().int().min(0).max(3), y: zod_1.z.number().int().min(0).max(7) })).length(4).optional();
+// x max is 2, not 3: the deployment zone is the left three COLUMNS (x 0–2), which
+// is what the team builder enforces and what planPlacement()/mirrorPlacement()
+// assume. Accepting x=3 let an API caller save a team deployed mid-board — and a
+// mirrored P2 team at x=4, right on the human zone's edge.
+const PlacementSchema = zod_1.z.array(zod_1.z.object({ x: zod_1.z.number().int().min(0).max(2), y: zod_1.z.number().int().min(0).max(7) })).length(4).optional();
+const UnitCustomizationSchema = zod_1.z.object({
+    specialSlug: zod_1.z.string(),
+    passiveSlug: zod_1.z.string().nullable(),
+});
 const CreateTeamSchema = zod_1.z.object({
     name: zod_1.z.string().min(1).max(40),
     unitIds: zod_1.z.array(zod_1.z.string().uuid()).length(4, 'Team must have exactly 4 units'),
     placement: PlacementSchema,
+    unitCustomizations: zod_1.z.array(UnitCustomizationSchema).length(4).optional(),
 });
 const UpdateTeamSchema = zod_1.z.object({
     name: zod_1.z.string().min(1).max(40).optional(),
     unitIds: zod_1.z.array(zod_1.z.string().uuid()).length(4).optional(),
     placement: PlacementSchema,
+    unitCustomizations: zod_1.z.array(UnitCustomizationSchema).length(4).optional(),
 });
 // Helper to get account level for the current user
 async function getAccountLevel(userId) {
@@ -67,6 +78,21 @@ async function getAccountLevel(userId) {
 exports.teamRouter.get('/', async (req, res) => {
     const teams = await teamService.getUserTeams(req.user.id);
     (0, response_js_1.sendSuccess)(res, { teams });
+});
+// ---------------------------------------------------------------
+// GET /teams/fable — Fable's own rosters, for the "Fable's Own Roster"
+// picker. Static config, not user data, so no per-user query. Declared
+// before any '/:id' route so 'fable' is never read as an id.
+// ---------------------------------------------------------------
+exports.teamRouter.get('/fable', async (_req, res) => {
+    (0, response_js_1.sendSuccess)(res, {
+        teams: fableTeams_js_1.FABLE_TEAMS.map((t) => ({
+            id: t.id,
+            name: t.name,
+            style: t.style,
+            slugs: t.slugs,
+        })),
+    });
 });
 // ---------------------------------------------------------------
 // POST /teams

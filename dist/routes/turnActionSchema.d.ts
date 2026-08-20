@@ -279,4 +279,168 @@ export declare const SubmitTurnSchema: z.ZodObject<{
         };
     })[];
 }>;
+export declare const SubmitRodActionSchema: z.ZodObject<{
+    action: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+        type: z.ZodLiteral<"MOVE">;
+        unitInstanceId: z.ZodString;
+        destination: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            y: number;
+            x: number;
+        }, {
+            y: number;
+            x: number;
+        }>;
+    }, "strip", z.ZodTypeAny, {
+        type: "MOVE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    }, {
+        type: "MOVE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"CHARGE">;
+        unitInstanceId: z.ZodString;
+        destination: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            y: number;
+            x: number;
+        }, {
+            y: number;
+            x: number;
+        }>;
+    }, "strip", z.ZodTypeAny, {
+        type: "CHARGE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    }, {
+        type: "CHARGE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"USE_ABILITY">;
+        unitInstanceId: z.ZodString;
+        abilitySlug: z.ZodString;
+        target: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            y: number;
+            x: number;
+        }, {
+            y: number;
+            x: number;
+        }>;
+        pushDestination: z.ZodOptional<z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            y: number;
+            x: number;
+        }, {
+            y: number;
+            x: number;
+        }>>;
+    }, "strip", z.ZodTypeAny, {
+        target: {
+            y: number;
+            x: number;
+        };
+        type: "USE_ABILITY";
+        unitInstanceId: string;
+        abilitySlug: string;
+        pushDestination?: {
+            y: number;
+            x: number;
+        } | undefined;
+    }, {
+        target: {
+            y: number;
+            x: number;
+        };
+        type: "USE_ABILITY";
+        unitInstanceId: string;
+        abilitySlug: string;
+        pushDestination?: {
+            y: number;
+            x: number;
+        } | undefined;
+    }>]>;
+    seq: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    action: {
+        type: "MOVE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    } | {
+        target: {
+            y: number;
+            x: number;
+        };
+        type: "USE_ABILITY";
+        unitInstanceId: string;
+        abilitySlug: string;
+        pushDestination?: {
+            y: number;
+            x: number;
+        } | undefined;
+    } | {
+        type: "CHARGE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    };
+    seq: number;
+}, {
+    action: {
+        type: "MOVE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    } | {
+        target: {
+            y: number;
+            x: number;
+        };
+        type: "USE_ABILITY";
+        unitInstanceId: string;
+        abilitySlug: string;
+        pushDestination?: {
+            y: number;
+            x: number;
+        } | undefined;
+    } | {
+        type: "CHARGE";
+        unitInstanceId: string;
+        destination: {
+            y: number;
+            x: number;
+        };
+    };
+    seq: number;
+}>;
 //# sourceMappingURL=turnActionSchema.d.ts.map

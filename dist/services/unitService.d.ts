@@ -1,4 +1,8 @@
 import { UnitDefinition, AbilityDefinition } from '../types/index.js';
+export declare function isBeneficialAbility(targetingType: string, effects: ReadonlyArray<{
+    type: string;
+    statusSlug?: string;
+}>): boolean;
 export declare function getUnlockedUnits(accountLevel: number): Promise<{
     units: UnitDefinition[];
     abilities: AbilityDefinition[];

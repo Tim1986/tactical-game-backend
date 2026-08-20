@@ -1,6 +1,7 @@
-import { MatchState, TurnAction } from '../types/matchState.js';
+import { MatchState, TurnAction, GameEvent, MoveAction, ChargeAction, UseAbilityAction } from '../types/matchState.js';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
-export declare const FABLE_PLAYER_ID = "00000000-0000-0000-0000-000000000001";
+import { FABLE_PLAYER_ID, FABLE_HP_SCALE } from '../game/initialState.js';
+export { FABLE_PLAYER_ID };
 export declare class MatchNotFoundError extends Error {
     constructor();
 }
@@ -9,6 +10,12 @@ export declare class MatchAccessError extends Error {
 }
 export declare class MatchNotActiveError extends Error {
     constructor();
+}
+export declare class NotYourTurnError extends Error {
+    constructor();
+}
+export declare class SeqMismatchError extends Error {
+    constructor(expected: number, got: number);
 }
 export { TurnValidationError };
 interface MatchRow {
@@ -30,12 +37,14 @@ interface MatchRow {
     updated_at: string;
     completed_at: string | null;
     is_pve: boolean;
+    is_ranked: boolean;
 }
-export declare function createPveMatch(humanPlayerId: string, humanTeamId: string, fableTeamId: string): Promise<{
+export type FableDifficulty = keyof typeof FABLE_HP_SCALE;
+export declare function createPveMatch(humanPlayerId: string, humanTeamId: string, fableTeamId: string, difficulty?: FableDifficulty): Promise<{
     matchId: string;
     state: MatchState;
 }>;
-export declare function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number): Promise<{
+export declare function createMatch(playerOneId: string, playerTwoId: string, playerOneTeamId: string, playerTwoTeamId: string, turnDeadlineHours: number, isRanked?: boolean): Promise<{
     matchId: string;
     state: MatchState;
 }>;
@@ -51,6 +60,19 @@ export declare function getUserMatches(userId: string): Promise<(MatchRow & {
 })[]>;
 export declare function submitTurn(matchId: string, submittingPlayerId: string, actions: TurnAction[]): Promise<{
     result: ReturnType<typeof processTurn>;
+    match: MatchRow;
+}>;
+export declare function submitRodAction(matchId: string, submittingPlayerId: string, action: MoveAction | ChargeAction | UseAbilityAction, seq: number): Promise<{
+    events: GameEvent[];
+    updatedState: MatchState;
+    matchOver: boolean;
+    winnerId: string | null;
+}>;
+export declare function submitRodEndTurn(matchId: string, submittingPlayerId: string): Promise<{
+    events: GameEvent[];
+    updatedState: MatchState;
+    matchOver: boolean;
+    winnerId: string | null;
     match: MatchRow;
 }>;
 export declare function forfeitMatch(matchId: string, forfeitingPlayerId: string): Promise<void>;

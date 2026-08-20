@@ -25,7 +25,26 @@ function buildPayload(type, data) {
             return { title: 'Achievement unlocked!', body: data.achievementName ?? 'You earned a new achievement.', data: { type, achievementSlug: data.achievementSlug ?? '' } };
     }
 }
+/**
+ * Send a push notification. NEVER REJECTS — and that is a hard guarantee the
+ * callers depend on.
+ *
+ * Every call site is fire-and-forget (`void notifyUser(...)`, often inside
+ * setImmediate). An unhandled promise rejection is fatal in Node 20, so any
+ * path out of here that throws would take the whole server down — which is
+ * exactly how a Date-vs-string bug in the achievement path produced a string of
+ * HTTP 502s. The token lookup below is a database call and can fail on its own,
+ * so the guard has to wrap the entire body, not just the send.
+ */
 async function notifyUser(userId, type, data = {}) {
+    try {
+        await sendPush(userId, type, data);
+    }
+    catch (err) {
+        logger_js_1.logger.error({ err, userId, type }, 'Push notification failed (non-fatal)');
+    }
+}
+async function sendPush(userId, type, data) {
     const payload = buildPayload(type, data);
     if (!index_js_1.config.expo.accessToken) {
         logger_js_1.logger.info({ userId, type, payload }, '[DEV] Push notification (not sent - no EXPO_ACCESS_TOKEN)');

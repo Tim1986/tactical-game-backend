@@ -35,7 +35,7 @@
  */
 import { TurnValidationError } from '../game/turnProcessor.js';
 import { AIBrain } from './aiBrain.js';
-import { MatchState } from '../types/matchState.js';
+import { MatchState, BoardPosition } from '../types/matchState.js';
 import { AbilityDefinition, UnitCustomization } from '../types/index.js';
 export interface MatchResult {
     winnerId: string | null;
@@ -71,6 +71,9 @@ export interface MatchResult {
     }[];
     /** Slugs of units whose once-per-game special was spent (see caveat in code). */
     specialsSpent: string[];
+    /** CAMPAIGN (A8): the objective reason the match ended with ("Your charge
+     *  has fallen"), from the MATCH_OVER event. Undefined for arena/kill-all. */
+    reason?: string;
 }
 export interface SimResult {
     p1Slugs: string[];
@@ -112,9 +115,28 @@ export interface MatchOptions {
     /** Per-slot special/passive loadout for each team (parallel to p1Slugs/p2Slugs). Omit for default loadouts. */
     p1Customizations?: (UnitCustomization | undefined)[];
     p2Customizations?: (UnitCustomization | undefined)[];
+    /** Starting tiles (parallel to slugs). Omit for the fixed default pattern. */
+    p1Placement?: BoardPosition[];
+    p2Placement?: BoardPosition[];
+    /** RNG for random placement generation. Omit for fixed default placement. */
+    rng?: () => number;
     /** Called on every recovered validation error (for logging/diagnosis). */
     onValidationError?: (err: TurnValidationError, actions: unknown[], state: MatchState) => void;
+    /**
+     * Fully custom initial state (campaign encounters: custom instances, uneven
+     * teams, absolute placements). When present, slugs/placements/customizations
+     * are ignored for state building (slugs still label stats) and the legal-comp
+     * check is skipped — campaign encounters aren't player-buildable teams.
+     * Must set round1FirstPlayerId to forceFirstPlayerId when provided.
+     */
+    stateFactory?: (forceFirstPlayerId?: string) => MatchState;
 }
+/** Deterministic LCG so sim runs are reproducible for a given seed. */
+export declare function makeRng(seed: number): () => number;
+/** Draw `count` distinct P1-zone tiles. Mirror with x → WIDTH-1-x for P2. */
+export declare function randomPlacement(rng: () => number, count?: number): BoardPosition[];
+export declare function mirrorPlacement(placement: BoardPosition[]): BoardPosition[];
+export declare function assertLegalComp(slugs: string[], label: string): void;
 export declare function runMatch(p1Slugs: string[], p2Slugs: string[], abilityMap: Map<string, AbilityDefinition>, brain1: AIBrain, brain2: AIBrain, options?: MatchOptions): MatchResult;
 export declare function runSim(p1Slugs: string[], p2Slugs: string[], options?: {
     games?: number;
@@ -131,5 +153,15 @@ export declare function runSim(p1Slugs: string[], p2Slugs: string[], options?: {
      * first-mover bias deterministically. 'random': engine coin flip.
      */
     firstPlayerMode?: 'alternate' | 'random';
+    /**
+     * 'brain' (default): the placement planner picks starting tiles per comp
+     * (melee forward-center, ranged mid, healers backline, AoE-denial
+     * spacing) — deterministic per comp. 'fixed': the historical fixed pattern.
+     * 'random': each game draws fresh placements per side (both from the
+     * seeded rng) — placement-space stress testing, not realistic play.
+     */
+    placementMode?: 'fixed' | 'random' | 'brain';
+    /** RNG seed for 'random' placements (default 1). Same seed → same games. */
+    seed?: number;
 }): SimResult;
 //# sourceMappingURL=simHarness.d.ts.map

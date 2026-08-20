@@ -1,0 +1,28 @@
+import type { PuzzleDefinition } from '../types.js';
+/**
+ * Puzzle #16 — "Break the Bindings" (v2 texture: FREE THE FINISHER).
+ *
+ * Your Barbarian is the only unit whose axe reaches 12 — and it is ROOTED two
+ * tiles short of the Sorcerer, so it cannot close. Your Cleric is standing
+ * right next to the target with a mace in its hand, and swinging it is the
+ * obvious play: 11 damage, one hp short, and the Barbarian still cannot move.
+ * Purify is the answer — spend the Cleric's turn dealing no damage at all.
+ *
+ * v2 shape: the winning first move deals ZERO damage to the goal target while
+ * a legal 11-damage attack is available and in range, so a goal-aware greedy
+ * player swings and finishes one HP short. That last point is the retry hook —
+ * the failing line ends with the Sorcerer on 1.
+ *
+ * Narrow by construction (the lesson from the rejected #16 displacement draft):
+ * exactly one action wins — Purify on the Barbarian. There is no direction to
+ * get right and no second target worth cleansing, so flailing does not land it.
+ *
+ * The Barbarian's special is Ground Slam (range 0) on purpose: Leaping Slam
+ * explicitly leaps "even if rooted" (ABL-12), which hands a rooted unit a
+ * 2-tile escape hatch and breaks the whole premise. The solver caught exactly
+ * that on the first draft.
+ *
+ * Vocabulary 2 (rooted stops movement; Purify removes it). Tier-0 fate. 2v1.
+ */
+export declare const PUZZLE_016: PuzzleDefinition;
+//# sourceMappingURL=puzzle-016.d.ts.map

@@ -32,9 +32,13 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRouter = void 0;
 const express_1 = require("express");
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const zod_1 = require("zod");
 const userService = __importStar(require("../services/userService.js"));
 const auth_js_1 = require("../middleware/auth.js");
@@ -42,6 +46,16 @@ const response_js_1 = require("../utils/response.js");
 exports.userRouter = (0, express_1.Router)();
 // All user routes require authentication
 exports.userRouter.use(auth_js_1.requireAuth);
+// Account deletion re-verifies the password, so throttle it like an auth route
+// to prevent brute-forcing via this endpoint.
+const deleteAccountLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many attempts, please try again later' } },
+});
+const DeleteMeSchema = zod_1.z.object({ password: zod_1.z.string().min(1, 'Password is required') });
 const UpdateMeSchema = zod_1.z.object({
     username: zod_1.z
         .string()
@@ -82,6 +96,28 @@ exports.userRouter.put('/me', async (req, res) => {
     catch (err) {
         if (err instanceof userService.UsernameConflictError) {
             response_js_1.Errors.conflict(res, err.message);
+            return;
+        }
+        throw err;
+    }
+});
+// ---------------------------------------------------------------
+// DELETE /users/me  — permanently delete the authenticated account
+// Body: { password }. Re-auth required.
+// ---------------------------------------------------------------
+exports.userRouter.delete('/me', deleteAccountLimiter, async (req, res) => {
+    const parsed = DeleteMeSchema.safeParse(req.body);
+    if (!parsed.success) {
+        response_js_1.Errors.validation(res, 'Password is required', parsed.error.flatten());
+        return;
+    }
+    try {
+        await userService.deleteAccount(req.user.id, parsed.data.password);
+        (0, response_js_1.sendSuccess)(res, { message: 'Account deleted' });
+    }
+    catch (err) {
+        if (err instanceof userService.AccountDeletionAuthError) {
+            (0, response_js_1.sendError)(res, 401, 'INVALID_PASSWORD', 'Password is incorrect');
             return;
         }
         throw err;

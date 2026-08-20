@@ -39,6 +39,7 @@ const zod_1 = require("zod");
 const authService = __importStar(require("../services/authService.js"));
 const auth_js_1 = require("../middleware/auth.js");
 const response_js_1 = require("../utils/response.js");
+const index_js_1 = require("../config/index.js");
 exports.authRouter = (0, express_1.Router)();
 // ---------------------------------------------------------------
 // Input schemas (Zod validates all incoming data)
@@ -65,6 +66,17 @@ const RefreshSchema = zod_1.z.object({
 const PushTokenSchema = zod_1.z.object({
     token: zod_1.z.string().min(1, 'Token is required'),
     platform: zod_1.z.enum(['ios', 'android']),
+});
+const ForgotPasswordSchema = zod_1.z.object({
+    email: zod_1.z.string().email('Invalid email address'),
+});
+const ResetPasswordSchema = zod_1.z.object({
+    email: zod_1.z.string().email('Invalid email address'),
+    code: zod_1.z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+    newPassword: zod_1.z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(128, 'Password must be at most 128 characters'),
 });
 // ---------------------------------------------------------------
 // POST /auth/register
@@ -128,6 +140,52 @@ exports.authRouter.post('/refresh', async (req, res) => {
         }
         throw err;
     }
+});
+// ---------------------------------------------------------------
+// POST /auth/forgot-password
+// Always 200 — never reveals whether the email has an account.
+// ---------------------------------------------------------------
+exports.authRouter.post('/forgot-password', async (req, res) => {
+    const parsed = ForgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+        response_js_1.Errors.validation(res, 'Invalid email address');
+        return;
+    }
+    await authService.requestPasswordReset(parsed.data.email);
+    (0, response_js_1.sendSuccess)(res, { message: 'If that email has an account, a reset code is on its way.' });
+});
+// ---------------------------------------------------------------
+// POST /auth/reset-password
+// ---------------------------------------------------------------
+exports.authRouter.post('/reset-password', async (req, res) => {
+    const parsed = ResetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+        response_js_1.Errors.validation(res, 'Invalid reset data', parsed.error.flatten());
+        return;
+    }
+    try {
+        const { email, code, newPassword } = parsed.data;
+        await authService.resetPassword(email, code, newPassword);
+        (0, response_js_1.sendSuccess)(res, { message: 'Password updated. You can now log in.' });
+    }
+    catch (err) {
+        if (err instanceof authService.AuthError) {
+            (0, response_js_1.sendError)(res, 400, 'INVALID_RESET_CODE', err.message);
+            return;
+        }
+        throw err;
+    }
+});
+// ---------------------------------------------------------------
+// POST /auth/dev-login  (development only — no password required)
+// ---------------------------------------------------------------
+exports.authRouter.post('/dev-login', async (req, res) => {
+    if (!index_js_1.config.isDevelopment) {
+        response_js_1.Errors.notFound(res);
+        return;
+    }
+    const result = await authService.devLogin();
+    (0, response_js_1.sendSuccess)(res, result);
 });
 // ---------------------------------------------------------------
 // POST /auth/logout  (single device)

@@ -32,15 +32,20 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.challengeRouter = void 0;
 const express_1 = require("express");
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const zod_1 = require("zod");
 const challengeService = __importStar(require("../services/challengeService.js"));
 const auth_js_1 = require("../middleware/auth.js");
 const response_js_1 = require("../utils/response.js");
 exports.challengeRouter = (0, express_1.Router)();
 exports.challengeRouter.use(auth_js_1.requireAuth);
+const inviteLimiter = (0, express_rate_limit_1.default)({ windowMs: 24 * 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, keyGenerator: (req) => req.user?.id ?? req.ip ?? 'unknown' });
 const IssueChallengeSchema = zod_1.z.object({
     opponentUsername: zod_1.z.string().min(3).max(20),
     teamId: zod_1.z.string().uuid(),
@@ -48,9 +53,9 @@ const IssueChallengeSchema = zod_1.z.object({
 const AcceptChallengeSchema = zod_1.z.object({
     teamId: zod_1.z.string().uuid(),
 });
-// GET /challenges — get pending received + recent sent challenges
+// GET /challenges — get pending received + recent sent challenges + open sent invites
 exports.challengeRouter.get('/', async (req, res) => {
-    const { received, sent } = await challengeService.getChallenges(req.user.id);
+    const { received, sent, sentInvites } = await challengeService.getChallenges(req.user.id);
     (0, response_js_1.sendSuccess)(res, {
         challenges: received.map((c) => ({
             id: c.id,
@@ -69,6 +74,13 @@ exports.challengeRouter.get('/', async (req, res) => {
             status: c.status,
             matchId: c.match_id,
             createdAt: c.created_at,
+        })),
+        sentInvites: sentInvites.map((inv) => ({
+            token: inv.token,
+            status: inv.status,
+            matchId: inv.match_id,
+            expiresAt: inv.expires_at,
+            createdAt: inv.created_at,
         })),
     });
 });
@@ -134,6 +146,65 @@ exports.challengeRouter.post('/:id/decline', async (req, res) => {
             return;
         }
         if (err instanceof challengeService.ChallengeError) {
+            response_js_1.Errors.conflict(res, err.message);
+            return;
+        }
+        throw err;
+    }
+});
+// ── Invite (open-token) routes ────────────────────────────────────────────────
+const InviteCreateSchema = zod_1.z.object({ teamId: zod_1.z.string().uuid() });
+const InviteClaimSchema = zod_1.z.object({ teamId: zod_1.z.string().uuid() });
+// POST /challenges/invite — create an open challenge invite link
+exports.challengeRouter.post('/invite', inviteLimiter, async (req, res) => {
+    const parsed = InviteCreateSchema.safeParse(req.body);
+    if (!parsed.success) {
+        response_js_1.Errors.validation(res, 'teamId required', parsed.error.flatten());
+        return;
+    }
+    try {
+        const result = await challengeService.createInvite(req.user.id, parsed.data.teamId);
+        (0, response_js_1.sendSuccess)(res, result);
+    }
+    catch (err) {
+        if (err instanceof challengeService.InviteError) {
+            response_js_1.Errors.conflict(res, err.message);
+            return;
+        }
+        throw err;
+    }
+});
+// GET /challenges/invite/:token — public metadata (challenger username + status)
+exports.challengeRouter.get('/invite/:token', async (req, res) => {
+    try {
+        const info = await challengeService.getInviteInfo(req.params.token);
+        (0, response_js_1.sendSuccess)(res, info);
+    }
+    catch (err) {
+        if (err instanceof challengeService.InviteNotFoundError) {
+            response_js_1.Errors.notFound(res, 'Invite');
+            return;
+        }
+        throw err;
+    }
+});
+// POST /challenges/invite/:token/claim — authenticated; first claimer wins
+exports.challengeRouter.post('/invite/:token/claim', async (req, res) => {
+    const parsed = InviteClaimSchema.safeParse(req.body);
+    if (!parsed.success) {
+        response_js_1.Errors.validation(res, 'teamId required', parsed.error.flatten());
+        return;
+    }
+    try {
+        const result = await challengeService.claimInvite(req.params.token, req.user.id, parsed.data.teamId);
+        (0, response_js_1.sendSuccess)(res, result);
+    }
+    catch (err) {
+        if (err instanceof challengeService.InviteNotFoundError) {
+            response_js_1.Errors.notFound(res, 'Invite');
+            return;
+        }
+        if (err instanceof challengeService.InviteError) {
             response_js_1.Errors.conflict(res, err.message);
             return;
         }

@@ -21,6 +21,7 @@ exports.Errors = {
     notFound: (res, resource = 'Resource') => sendError(res, 404, 'NOT_FOUND', `${resource} not found`),
     conflict: (res, message) => sendError(res, 409, 'CONFLICT', message),
     validation: (res, message, details) => sendError(res, 422, 'VALIDATION_ERROR', message, details),
+    upgradeRequired: (res, requiredVersion) => sendError(res, 426, 'VERSION_MISMATCH', `App update required. Please update to version ${requiredVersion}.`),
     internal: (res) => sendError(res, 500, 'INTERNAL_ERROR', 'An unexpected error occurred'),
 };
 //# sourceMappingURL=response.js.map

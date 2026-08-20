@@ -12,6 +12,7 @@ export declare const FABLE_HP_SCALE: {
     readonly easy: 0.8;
     readonly medium: 0.9;
     readonly hard: 1;
+    readonly nightmare: 1.1;
 };
 export type FableDifficulty = keyof typeof FABLE_HP_SCALE;
 export declare function newInstanceId(): string;

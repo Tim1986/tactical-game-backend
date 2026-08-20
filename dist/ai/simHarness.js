@@ -35,12 +35,17 @@
  *   - Round 1→2 interleave sized by team length instead of hardcoded 4.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.makeRng = makeRng;
+exports.randomPlacement = randomPlacement;
+exports.mirrorPlacement = mirrorPlacement;
+exports.assertLegalComp = assertLegalComp;
 exports.runMatch = runMatch;
 exports.runSim = runSim;
 const uuid_1 = require("uuid");
 const turnProcessor_js_1 = require("../game/turnProcessor.js");
 const aiBrain_js_1 = require("./aiBrain.js");
 const defaultData_js_1 = require("./defaultData.js");
+const placement_js_1 = require("./placement.js");
 const matchState_js_1 = require("../types/matchState.js");
 // ─── Placement ────────────────────────────────────────────────────────────────
 const DEFAULT_P1_PLACEMENT = [
@@ -84,8 +89,13 @@ function buildUnitInstance(slug, ownerId, position, customization) {
     const cooldowns = {};
     for (const s of abilities)
         cooldowns[s] = 0;
+    // Warded passive: start the match shielded (see matchService counterpart).
+    const instanceId = (0, uuid_1.v4)();
+    const initialStatuses = passives.includes('warded')
+        ? [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: instanceId }]
+        : [];
     return {
-        instanceId: (0, uuid_1.v4)(),
+        instanceId,
         definitionSlug: def.slug,
         ownerPlayerId: ownerId,
         position,
@@ -99,11 +109,10 @@ function buildUnitInstance(slug, ownerId, position, customization) {
         hasMovedThisTurn: false,
         hasActedThisTurn: false,
         cooldowns,
-        statusEffects: [],
-        fortuneMeter: 0,
+        statusEffects: initialStatuses,
     };
 }
-function buildMatchState(p1Id, p2Id, p1Slugs, p2Slugs, p1Placement = DEFAULT_P1_PLACEMENT, p2Placement = DEFAULT_P2_PLACEMENT, forceFirstPlayerId, p1Customizations, p2Customizations) {
+function buildMatchState(p1Id, p2Id, p1Slugs, p2Slugs, p1Placement = DEFAULT_P1_PLACEMENT, p2Placement = DEFAULT_P2_PLACEMENT, forceFirstPlayerId, p1Customizations, p2Customizations, rng) {
     const units = [
         ...p1Slugs.map((slug, i) => buildUnitInstance(slug, p1Id, p1Placement[i], p1Customizations?.[i])),
         ...p2Slugs.map((slug, i) => buildUnitInstance(slug, p2Id, p2Placement[i], p2Customizations?.[i])),
@@ -173,11 +182,64 @@ function advanceAfterRound1Commit(state, p1Id, p2Id, activeId) {
         state.activePlayerId = activeId === p1Id ? p2Id : p1Id;
     }
 }
+// ─── Placement sampling ───────────────────────────────────────────────────────
+// With fixed placements, a matchup has exactly TWO distinct games (P1-first /
+// P2-first). Randomized placements restore a meaningful sample space (it
+// is also the variance real games have: players choose their placements).
+/** Deterministic LCG so sim runs are reproducible for a given seed. */
+function makeRng(seed) {
+    let s = seed >>> 0;
+    return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 0x100000000;
+    };
+}
+/** All legal P1-zone starting tiles: x 0–2, corners (0,0)/(0,7) excluded. */
+const P1_ZONE = [];
+for (let x = 0; x <= 2; x++) {
+    for (let y = 0; y < matchState_js_1.BOARD_HEIGHT; y++) {
+        if ((x === 0 || x === matchState_js_1.BOARD_WIDTH - 1) && (y === 0 || y === matchState_js_1.BOARD_HEIGHT - 1))
+            continue;
+        P1_ZONE.push({ x, y });
+    }
+}
+/** Draw `count` distinct P1-zone tiles. Mirror with x → WIDTH-1-x for P2. */
+function randomPlacement(rng, count = 4) {
+    const pool = [...P1_ZONE];
+    const out = [];
+    for (let i = 0; i < count; i++) {
+        const idx = Math.floor(rng() * pool.length);
+        out.push(pool.splice(idx, 1)[0]);
+    }
+    return out;
+}
+function mirrorPlacement(placement) {
+    return placement.map((p) => ({ x: matchState_js_1.BOARD_WIDTH - 1 - p.x, y: p.y }));
+}
+/** Mirrors teamService's MAX_DUPLICATES_PER_CLASS — sims must only measure
+ *  comps a real player can field (4-stack mirrors produced degenerate
+ *  balance data: heal-war stalls, meaningless utility valuations). */
+const MAX_PER_CLASS = 2;
+function assertLegalComp(slugs, label) {
+    const counts = {};
+    for (const s of slugs) {
+        counts[s] = (counts[s] ?? 0) + 1;
+        if (counts[s] > MAX_PER_CLASS) {
+            throw new Error(`${label} is not a legal team (${counts[s]}x ${s} — max ${MAX_PER_CLASS} per class): ${slugs.join(',')}`);
+        }
+    }
+}
 function runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, options = {}) {
+    if (!options.stateFactory) {
+        assertLegalComp(p1Slugs, 'p1');
+        assertLegalComp(p2Slugs, 'p2');
+    }
     const p1Id = options.p1Id ?? 'p1';
     const p2Id = options.p2Id ?? 'p2';
     abilityMap = (0, aiBrain_js_1.normalizeAbilityMap)(abilityMap);
-    let state = buildMatchState(p1Id, p2Id, p1Slugs, p2Slugs, DEFAULT_P1_PLACEMENT, DEFAULT_P2_PLACEMENT, options.forceFirstPlayerId, options.p1Customizations, options.p2Customizations);
+    let state = options.stateFactory
+        ? options.stateFactory(options.forceFirstPlayerId)
+        : buildMatchState(p1Id, p2Id, p1Slugs, p2Slugs, options.p1Placement ?? DEFAULT_P1_PLACEMENT, options.p2Placement ?? DEFAULT_P2_PLACEMENT, options.forceFirstPlayerId, options.p1Customizations, options.p2Customizations, options.rng);
     const firstPlayerId = state.initiative.round1FirstPlayerId;
     let turns = 0;
     let validationErrors = 0;
@@ -193,7 +255,7 @@ function runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, options = {}) {
             }
         }
     };
-    const finish = (winnerId) => {
+    const finish = (winnerId, reason) => {
         const survivors = state.units.filter((u) => u.isAlive);
         const p1Surv = survivors.filter((u) => u.ownerPlayerId === p1Id);
         const p2Surv = survivors.filter((u) => u.ownerPlayerId === p2Id);
@@ -233,6 +295,7 @@ function runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, options = {}) {
             firstBloodTurn: deaths.length > 0 ? deaths[0].turn : null,
             deaths,
             specialsSpent,
+            ...(reason ? { reason } : {}),
         };
     };
     while (turns < MAX_TURNS) {
@@ -250,29 +313,17 @@ function runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, options = {}) {
             const canLegallyCommit = (u) => {
                 if (!u.isAlive)
                     return false;
-                // Frozen is checked PRESENCE-based, pre-tick, at the very top of the
-                // engine's round-1 commit gate (turnProcessor.ts) — any turnsRemaining
-                // disqualifies, unlike rooted below which IS tick-first (the engine
-                // ticks the acting unit's own statuses before validating MOVE/ability,
-                // so a rooted(1) unit's root expires before that check runs).
+                // Doomed to its own burning tick: the engine ticks the committing
+                // unit before processing its actions, so every action it could
+                // commit with would execute against a corpse.
+                if ((0, aiBrain_js_1.willDieToOwnTick)(u))
+                    return false;
+                // Frozen is checked PRESENCE-based at the top of the engine's round-1
+                // commit gate — any turnsRemaining disqualifies. Rooted does NOT
+                // disqualify: a zero-distance "hold position" MOVE is legal while
+                // rooted (see processMove), so a rooted unit can always commit.
                 if (remaining(u, 'frozen') >= 1)
                     return false;
-                if (remaining(u, 'rooted') >= 2) {
-                    // Rooted (still active after the tick): cannot move — can only
-                    // commit via an ability, which needs a target in range.
-                    const maxRange = u.abilities.reduce((m, s) => {
-                        const d = abilityMap.get(s);
-                        const ready = (u.cooldowns[s] ?? 0) <= 0;
-                        return d && ready && d.range > m ? d.range : m;
-                    }, 0);
-                    const hasTarget = state.units.some((t) => t.isAlive &&
-                        t.instanceId !== u.instanceId &&
-                        Math.abs(t.position.x - u.position.x) +
-                            Math.abs(t.position.y - u.position.y) <=
-                            maxRange);
-                    if (!hasTarget)
-                        return false;
-                }
                 return true;
             };
             const usable = uncommitted.filter(canLegallyCommit);
@@ -354,7 +405,8 @@ function runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, options = {}) {
         state = result.updatedState;
         recordDeaths();
         if (result.matchOver) {
-            return finish(result.winnerId);
+            const over = result.events.find((e) => e.type === 'MATCH_OVER' && e.message);
+            return finish(result.winnerId, over?.message);
         }
     }
     // Turn limit hit — draw
@@ -378,6 +430,14 @@ function runSim(p1Slugs, p2Slugs, options = {}) {
     const brain2 = options.brain2 ?? new aiBrain_js_1.OptimalBrain();
     const abilityMap = options.abilityMap ?? (0, defaultData_js_1.buildAbilityMap)();
     const firstPlayerMode = options.firstPlayerMode ?? 'alternate';
+    const placementMode = options.placementMode ?? 'brain';
+    const rng = makeRng(options.seed ?? 1);
+    const plannedP1 = placementMode === 'brain'
+        ? (0, placement_js_1.planPlacement)(p1Slugs, (0, aiBrain_js_1.normalizeAbilityMap)(abilityMap), options.p1Customizations)
+        : undefined;
+    const plannedP2 = placementMode === 'brain'
+        ? mirrorPlacement((0, placement_js_1.planPlacement)(p2Slugs, (0, aiBrain_js_1.normalizeAbilityMap)(abilityMap), options.p2Customizations))
+        : undefined;
     let p1Wins = 0;
     let p2Wins = 0;
     let draws = 0;
@@ -391,6 +451,8 @@ function runSim(p1Slugs, p2Slugs, options = {}) {
     const seenErrors = new Set();
     let firstMoverWins = 0;
     let decidedGames = 0;
+    let lastP1Placement;
+    let lastP2Placement;
     const firstBloodTurns = [];
     // slug → { appearances, survivals, specialsSpent, deathTurnSum, deathCount }
     const perSlug = {};
@@ -414,8 +476,22 @@ function runSim(p1Slugs, p2Slugs, options = {}) {
     };
     for (let i = 0; i < games; i++) {
         const forceFirstPlayerId = firstPlayerMode === 'alternate' ? (i % 2 === 0 ? 'p1' : 'p2') : undefined;
+        // Random placements: draw a fresh pair per PAIR of games so the
+        // alternating first-player games i and i+1 share the same board — the
+        // alternation then cancels first-mover bias within each placement draw.
+        let p1Placement = plannedP1;
+        let p2Placement = plannedP2;
+        if (placementMode === 'random') {
+            p1Placement = i % 2 === 0 ? randomPlacement(rng) : lastP1Placement;
+            p2Placement = i % 2 === 0 ? mirrorPlacement(randomPlacement(rng)) : lastP2Placement;
+            lastP1Placement = p1Placement;
+            lastP2Placement = p2Placement;
+        }
         const r = runMatch(p1Slugs, p2Slugs, abilityMap, brain1, brain2, {
             forceFirstPlayerId,
+            p1Placement,
+            p2Placement,
+            rng,
             p1Customizations: options.p1Customizations,
             p2Customizations: options.p2Customizations,
             onValidationError: (err, actions) => {

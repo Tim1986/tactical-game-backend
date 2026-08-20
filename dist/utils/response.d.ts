@@ -7,6 +7,7 @@ export declare const Errors: {
     notFound: (res: Response, resource?: string) => void;
     conflict: (res: Response, message: string) => void;
     validation: (res: Response, message: string, details?: unknown) => void;
+    upgradeRequired: (res: Response, requiredVersion: string) => void;
     internal: (res: Response) => void;
 };
 //# sourceMappingURL=response.d.ts.map

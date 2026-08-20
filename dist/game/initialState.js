@@ -13,7 +13,7 @@ exports.buildUnitInstance = buildUnitInstance;
 exports.buildInitialState = buildInitialState;
 const matchState_js_1 = require("../types/matchState.js");
 exports.FABLE_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
-exports.FABLE_HP_SCALE = { easy: 0.8, medium: 0.9, hard: 1.0 };
+exports.FABLE_HP_SCALE = { easy: 0.8, medium: 0.9, hard: 1.0, nightmare: 1.1 };
 // Simple ID generator — no external dependency so this file is RN-compatible.
 // IDs are unique within a session; format doesn't matter (stored as JSON).
 let _idSeq = 0;
@@ -43,23 +43,27 @@ function buildUnitInstance(def, ownerId, position, customization) {
         position, currentHealth: maxHealth, maxHealth,
         armorClass, movementRange,
         abilities, passives,
+        passiveSlug: customization?.passiveSlug ?? undefined,
         isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
         cooldowns, statusEffects: initialStatuses,
-        fortuneMeter: Math.random(),
     };
 }
 function buildInitialState(playerOneId, playerTwoId, p1Units, p2Units, p1Placement, p2Placement, forceFirstPlayerId, p1Customizations, p2Customizations, fableHpScale = 1) {
+    // Both fallbacks are authored in the P1 frame (x 0–2), because p2Raw — every
+    // source of it, planPlacement() and a team's saved placement alike — is in the
+    // P1 frame and gets mirrored below. A P2-frame fallback (x=6) would mirror to
+    // x=1 and deploy player two INSIDE player one's zone, stacked on their units.
     const p1Fallback = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-    const p2Fallback = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
+    const p2Fallback = [{ x: 1, y: 0 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 1, y: 6 }];
     const p1Positions = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
     const p2Raw = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
-    const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
+    const p2Positions = p2Raw.map(pos => ({ x: matchState_js_1.BOARD_WIDTH - 1 - pos.x, y: pos.y }));
     const units = [
         ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),
         ...p2Units.map((def, i) => {
             const inst = buildUnitInstance(def, playerTwoId, p2Positions[i], p2Customizations?.[i]);
-            if (playerTwoId === exports.FABLE_PLAYER_ID && fableHpScale < 1) {
-                const scaled = Math.max(1, Math.floor(inst.maxHealth * fableHpScale));
+            if (playerTwoId === exports.FABLE_PLAYER_ID && fableHpScale !== 1) {
+                const scaled = Math.max(1, Math.round(inst.maxHealth * fableHpScale));
                 inst.maxHealth = scaled;
                 inst.currentHealth = scaled;
             }

@@ -23,10 +23,17 @@ exports.rayStep = rayStep;
 exports.tilesBetween = tilesBetween;
 exports.aliveUnitAt = aliveUnitAt;
 exports.hasLineOfSight = hasLineOfSight;
+exports.isTerrainBlocked = isTerrainBlocked;
+exports.wallsBlockLine = wallsBlockLine;
 exports.reachableFrom = reachableFrom;
+exports.findPath = findPath;
 exports.reachableTiles = reachableTiles;
 exports.pushDestination = pushDestination;
 exports.pullDestination = pullDestination;
+// Displacement geometry lives in the engine so brain and executor share ONE
+// implementation. boardUtils imports only types, so there is no cycle even
+// though game/turnProcessor imports this module.
+const boardUtils_js_1 = require("../game/boardUtils.js");
 exports.BOARD_SIZE = 8;
 function manhattanDistance(a, b) {
     return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -92,10 +99,14 @@ function aliveUnitAt(pos, units) {
  * (and lets the caller model a hypothetical caster position — the caster's
  * stale recorded tile then can't block its own shot).
  */
-function hasLineOfSight(casterPos, targetPos, allUnits, ignoreIds = []) {
+function hasLineOfSight(casterPos, targetPos, allUnits, ignoreIds = [], terrain) {
     if (!isAligned(casterPos, targetPos))
         return true;
     for (const tile of tilesBetween(casterPos, targetPos)) {
+        // CAMPAIGN-ONLY: a wall on an intervening tile blocks sight exactly like a
+        // living unit (ENCOUNTER_SPEC A2). Arena states carry no terrain.
+        if (isTerrainBlocked(terrain, tile))
+            return false;
         const blocker = allUnits.find((u) => u.isAlive &&
             !ignoreIds.includes(u.instanceId) &&
             samePos(u.position, tile));
@@ -104,15 +115,36 @@ function hasLineOfSight(casterPos, targetPos, allUnits, ignoreIds = []) {
     }
     return true;
 }
+/** Is this tile a campaign wall? `undefined` terrain = never (arena). */
+function isTerrainBlocked(terrain, pos) {
+    return !!terrain?.blocked?.some((b) => b.x === pos.x && b.y === pos.y);
+}
 /**
- * The engine (processUseAbility) does not validate line of sight server-side
- * today — ranged basic attacks work in practice because the mobile client
- * won't let a human select an LOS-blocked tile, and the brain voluntarily
- * respects hasLineOfSight() above when choosing its own actions (this flag
- * documents that choice; it does not change engine behavior). Flip to true
- * only if/when server-side LOS enforcement is added to processUseAbility.
+ * CAMPAIGN-ONLY wall-opaque sight (ENCOUNTER_SPEC A2): true when a WALL sits
+ * on the straight line between a and b. Units never matter here. Used for
+ * placed-AoE center sight and the from-center effect spread — both care about
+ * walls only. Non-aligned pairs are never blocked (same alignment rule as
+ * unit LoS, ABL-3). With no terrain this is always false (arena-inert).
  */
-exports.LOS_ENFORCED = false;
+function wallsBlockLine(a, b, terrain) {
+    if (!terrain?.blocked?.length)
+        return false;
+    if (!isAligned(a, b))
+        return false;
+    for (const tile of tilesBetween(a, b)) {
+        if (isTerrainBlocked(terrain, tile))
+            return true;
+    }
+    return false;
+}
+/**
+ * The engine (processUseAbility) enforces LOS server-side for single-target
+ * abilities WITHOUT a push effect (push abilities like Fear are exempt,
+ * mirroring the client's targeting UI). Line, AoE, and self abilities are
+ * LOS-free by design. This flag keeps the brain's targeting in lockstep with
+ * that engine rule — if the engine rule changes, change both together.
+ */
+exports.LOS_ENFORCED = true;
 const MOVE_DIRECTIONS = [
     [1, 0],
     [-1, 0],
@@ -133,11 +165,14 @@ const MOVE_DIRECTIONS = [
  * free, which also lets planners evaluate movement from a hypothetical
  * position (e.g., Charge planning).
  */
-function reachableFrom(fromPos, unit, allUnits, range) {
+function reachableFrom(fromPos, unit, allUnits, range, terrain) {
     const key = (p) => p.x * exports.BOARD_SIZE + p.y;
     const out = [];
     const visited = new Set([key(fromPos)]);
     let frontier = [fromPos];
+    // CAMPAIGN-ONLY: walls hard-block movement; a 'phasing' unit (Wraith) may
+    // pass THROUGH a wall but never end on it (ENCOUNTER_SPEC A2).
+    const phasing = !!unit.moveFlags?.includes('phasing');
     for (let step = 1; step <= range && frontier.length > 0; step++) {
         const next = [];
         for (const pos of frontier) {
@@ -149,6 +184,12 @@ function reachableFrom(fromPos, unit, allUnits, range) {
                 if (visited.has(k))
                     continue;
                 visited.add(k);
+                if (isTerrainBlocked(terrain, n)) {
+                    if (!phasing)
+                        continue; // wall: hard block
+                    next.push(n); // phasing: continue through…
+                    continue; // …but never a destination
+                }
                 const occupant = allUnits.find((u) => u.isAlive &&
                     u.instanceId !== unit.instanceId &&
                     samePos(u.position, n));
@@ -166,30 +207,81 @@ function reachableFrom(fromPos, unit, allUnits, range) {
     }
     return out;
 }
+/**
+ * Step-by-step path from `fromPos` to `to` under the SAME movement rules as
+ * reachableFrom (orthogonal steps; allies passable, enemies hard-block,
+ * corners/out-of-bounds block). Returns the tile sequence EXCLUDING the start
+ * tile, or null if no legal path exists. This is the one true path used for
+ * both validation-adjacent planning and the client's movement animation — the
+ * UI must never re-implement its own pathing.
+ */
+function findPath(fromPos, to, unit, allUnits, terrain) {
+    if (samePos(fromPos, to))
+        return [];
+    const key = (p) => p.x * exports.BOARD_SIZE + p.y;
+    const visited = new Set([key(fromPos)]);
+    const parent = new Map();
+    let frontier = [fromPos];
+    // CAMPAIGN-ONLY: walls block paths (phasing may traverse but the walk
+    // animation still shouldn't END there; destinations are validated upstream).
+    const phasing = !!unit.moveFlags?.includes('phasing');
+    while (frontier.length > 0) {
+        const next = [];
+        for (const pos of frontier) {
+            for (const [dx, dy] of MOVE_DIRECTIONS) {
+                const n = { x: pos.x + dx, y: pos.y + dy };
+                if (!isInBounds(n))
+                    continue;
+                const k = key(n);
+                if (visited.has(k))
+                    continue;
+                visited.add(k);
+                if (isTerrainBlocked(terrain, n) && !phasing)
+                    continue;
+                const occupant = allUnits.find((u) => u.isAlive &&
+                    u.instanceId !== unit.instanceId &&
+                    samePos(u.position, n));
+                // Enemy tile: hard block — never on a path.
+                if (occupant && occupant.ownerPlayerId !== unit.ownerPlayerId)
+                    continue;
+                parent.set(k, pos);
+                if (samePos(n, to)) {
+                    const path = [];
+                    let node = n;
+                    while (!samePos(node, fromPos)) {
+                        path.unshift(node);
+                        node = parent.get(key(node));
+                    }
+                    return path;
+                }
+                next.push(n);
+            }
+        }
+        frontier = next;
+    }
+    return null;
+}
 /** Reachable tiles from the unit's current position. */
-function reachableTiles(unit, allUnits, range) {
-    return reachableFrom(unit.position, unit, allUnits, range);
+function reachableTiles(unit, allUnits, range, terrain) {
+    return reachableFrom(unit.position, unit, allUnits, range, terrain);
 }
 /**
- * Resolve a push (e.g., Fear): target slides tile-by-tile directly away from
- * the caster (sign-vector direction), stopping early at the board edge, a
- * removed corner, or an occupied tile. Returns the final position.
+ * Blocker predicate matching the engine's: any living unit other than the one
+ * being displaced occupies the tile.
  */
-function pushDestination(casterPos, targetPos, distance, allUnits, movingUnitId) {
-    const step = rayStep(casterPos, targetPos);
-    let cur = { ...targetPos };
-    for (let i = 0; i < distance; i++) {
-        const next = { x: cur.x + step.x, y: cur.y + step.y };
-        if (!isInBounds(next))
-            break;
-        const occupant = allUnits.find((u) => u.isAlive &&
-            u.instanceId !== movingUnitId &&
-            samePos(u.position, next));
-        if (occupant)
-            break;
-        cur = next;
-    }
-    return cur;
+function displacementBlocker(allUnits, movingUnitId, terrain) {
+    return (p) => isTerrainBlocked(terrain, p) || allUnits.some((u) => u.isAlive && u.instanceId !== movingUnitId && samePos(u.position, p));
+}
+/**
+ * Resolve a push (e.g., Fear). DELEGATES to the engine's calculatePushOptions
+ * so the brain can never predict a landing tile the executor won't produce —
+ * this used to walk a sign vector, which allowed a DIAGONAL push the engine
+ * (cardinal-only, since a diagonal costs two tiles under MOV-1) never performs.
+ * When the target is exactly diagonal both cardinals are legal and the human
+ * picks; the brain takes the first, same as the executor's no-choice fallback.
+ */
+function pushDestination(casterPos, targetPos, distance, allUnits, movingUnitId, terrain) {
+    return (0, boardUtils_js_1.calculatePushOptions)(targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId, terrain))[0];
 }
 /**
  * Resolve a pull (e.g., Rescue, Eldritch Grasp): target slides tile-by-tile
@@ -197,22 +289,11 @@ function pushDestination(casterPos, targetPos, distance, allUnits, movingUnitId)
  * corner, an occupied tile, or the caster's own tile (never lands on top of
  * the caster). Returns the final position.
  */
-function pullDestination(casterPos, targetPos, distance, allUnits, movingUnitId) {
-    const step = rayStep(targetPos, casterPos);
-    let cur = { ...targetPos };
-    for (let i = 0; i < distance; i++) {
-        const next = { x: cur.x + step.x, y: cur.y + step.y };
-        if (!isInBounds(next))
-            break;
-        if (samePos(next, casterPos))
-            break;
-        const occupant = allUnits.find((u) => u.isAlive &&
-            u.instanceId !== movingUnitId &&
-            samePos(u.position, next));
-        if (occupant)
-            break;
-        cur = next;
-    }
-    return cur;
+function pullDestination(casterPos, targetPos, distance, allUnits, movingUnitId, terrain) {
+    // DELEGATES to the engine's calculatePullOptions — one budget model (diagonal
+    // costs 2), one set of stop conditions, so brain and executor cannot drift.
+    // A diagonally-adjacent drag offers two corner-cutting tiles for the human to
+    // pick between; the brain takes the first, matching the executor's fallback.
+    return (0, boardUtils_js_1.calculatePullOptions)(targetPos, casterPos, distance, displacementBlocker(allUnits, movingUnitId, terrain))[0];
 }
 //# sourceMappingURL=geometry.js.map

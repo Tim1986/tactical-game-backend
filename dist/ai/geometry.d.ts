@@ -10,6 +10,7 @@
  *   on; enemies block movement entirely.
  */
 import { BoardPosition, UnitInstance } from './types';
+import { TerrainState } from '../types/matchState.js';
 export declare const BOARD_SIZE = 8;
 export declare function manhattanDistance(a: BoardPosition, b: BoardPosition): number;
 export declare function chebyshevDistance(a: BoardPosition, b: BoardPosition): number;
@@ -36,16 +37,25 @@ export declare function aliveUnitAt(pos: BoardPosition, units: UnitInstance[]): 
  * (and lets the caller model a hypothetical caster position — the caster's
  * stale recorded tile then can't block its own shot).
  */
-export declare function hasLineOfSight(casterPos: BoardPosition, targetPos: BoardPosition, allUnits: UnitInstance[], ignoreIds?: string[]): boolean;
+export declare function hasLineOfSight(casterPos: BoardPosition, targetPos: BoardPosition, allUnits: UnitInstance[], ignoreIds?: string[], terrain?: TerrainState): boolean;
+/** Is this tile a campaign wall? `undefined` terrain = never (arena). */
+export declare function isTerrainBlocked(terrain: TerrainState | undefined, pos: BoardPosition): boolean;
 /**
- * The engine (processUseAbility) does not validate line of sight server-side
- * today — ranged basic attacks work in practice because the mobile client
- * won't let a human select an LOS-blocked tile, and the brain voluntarily
- * respects hasLineOfSight() above when choosing its own actions (this flag
- * documents that choice; it does not change engine behavior). Flip to true
- * only if/when server-side LOS enforcement is added to processUseAbility.
+ * CAMPAIGN-ONLY wall-opaque sight (ENCOUNTER_SPEC A2): true when a WALL sits
+ * on the straight line between a and b. Units never matter here. Used for
+ * placed-AoE center sight and the from-center effect spread — both care about
+ * walls only. Non-aligned pairs are never blocked (same alignment rule as
+ * unit LoS, ABL-3). With no terrain this is always false (arena-inert).
  */
-export declare const LOS_ENFORCED = false;
+export declare function wallsBlockLine(a: BoardPosition, b: BoardPosition, terrain?: TerrainState): boolean;
+/**
+ * The engine (processUseAbility) enforces LOS server-side for single-target
+ * abilities WITHOUT a push effect (push abilities like Fear are exempt,
+ * mirroring the client's targeting UI). Line, AoE, and self abilities are
+ * LOS-free by design. This flag keeps the brain's targeting in lockstep with
+ * that engine rule — if the engine rule changes, change both together.
+ */
+export declare const LOS_ENFORCED = true;
 /**
  * Tiles reachable from an arbitrary origin within `range` movement, via
  * BFS flood-fill (one orthogonal step = 1 movement; diagonal = 2, which the
@@ -60,20 +70,32 @@ export declare const LOS_ENFORCED = false;
  * free, which also lets planners evaluate movement from a hypothetical
  * position (e.g., Charge planning).
  */
-export declare function reachableFrom(fromPos: BoardPosition, unit: UnitInstance, allUnits: UnitInstance[], range: number): BoardPosition[];
-/** Reachable tiles from the unit's current position. */
-export declare function reachableTiles(unit: UnitInstance, allUnits: UnitInstance[], range: number): BoardPosition[];
+export declare function reachableFrom(fromPos: BoardPosition, unit: UnitInstance, allUnits: UnitInstance[], range: number, terrain?: TerrainState): BoardPosition[];
 /**
- * Resolve a push (e.g., Fear): target slides tile-by-tile directly away from
- * the caster (sign-vector direction), stopping early at the board edge, a
- * removed corner, or an occupied tile. Returns the final position.
+ * Step-by-step path from `fromPos` to `to` under the SAME movement rules as
+ * reachableFrom (orthogonal steps; allies passable, enemies hard-block,
+ * corners/out-of-bounds block). Returns the tile sequence EXCLUDING the start
+ * tile, or null if no legal path exists. This is the one true path used for
+ * both validation-adjacent planning and the client's movement animation — the
+ * UI must never re-implement its own pathing.
  */
-export declare function pushDestination(casterPos: BoardPosition, targetPos: BoardPosition, distance: number, allUnits: UnitInstance[], movingUnitId: string): BoardPosition;
+export declare function findPath(fromPos: BoardPosition, to: BoardPosition, unit: UnitInstance, allUnits: UnitInstance[], terrain?: TerrainState): BoardPosition[] | null;
+/** Reachable tiles from the unit's current position. */
+export declare function reachableTiles(unit: UnitInstance, allUnits: UnitInstance[], range: number, terrain?: TerrainState): BoardPosition[];
+/**
+ * Resolve a push (e.g., Fear). DELEGATES to the engine's calculatePushOptions
+ * so the brain can never predict a landing tile the executor won't produce —
+ * this used to walk a sign vector, which allowed a DIAGONAL push the engine
+ * (cardinal-only, since a diagonal costs two tiles under MOV-1) never performs.
+ * When the target is exactly diagonal both cardinals are legal and the human
+ * picks; the brain takes the first, same as the executor's no-choice fallback.
+ */
+export declare function pushDestination(casterPos: BoardPosition, targetPos: BoardPosition, distance: number, allUnits: UnitInstance[], movingUnitId: string, terrain?: TerrainState): BoardPosition;
 /**
  * Resolve a pull (e.g., Rescue, Eldritch Grasp): target slides tile-by-tile
  * directly toward the caster, stopping early at the board edge, a removed
  * corner, an occupied tile, or the caster's own tile (never lands on top of
  * the caster). Returns the final position.
  */
-export declare function pullDestination(casterPos: BoardPosition, targetPos: BoardPosition, distance: number, allUnits: UnitInstance[], movingUnitId: string): BoardPosition;
+export declare function pullDestination(casterPos: BoardPosition, targetPos: BoardPosition, distance: number, allUnits: UnitInstance[], movingUnitId: string, terrain?: TerrainState): BoardPosition;
 //# sourceMappingURL=geometry.d.ts.map

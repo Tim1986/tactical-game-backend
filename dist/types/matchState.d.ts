@@ -22,12 +22,163 @@ export interface UnitInstance {
     movementRange: number;
     abilities: string[];
     passives: string[];
+    passiveSlug?: string;
     isAlive: boolean;
     hasMovedThisTurn: boolean;
     hasActedThisTurn: boolean;
     cooldowns: Record<string, number>;
     statusEffects: ActiveStatusEffect[];
-    fortuneMeter: number;
+    /** CAMPAIGN-ONLY (E0): extra uses remaining for an ability BEYOND the
+     *  current one. While extraCharges[slug] > 0, using the ability decrements
+     *  this instead of writing its cooldown, so `cooldowns[slug] > 0` stays the
+     *  single availability gate everywhere (UI, brain, validation). The L10
+     *  "second charge" perk sets {specialSlug: 1} on party units — two uses,
+     *  back to back if the player likes, then gated exactly like arena's single
+     *  use. Arena builds never set this. */
+    extraCharges?: Record<string, number>;
+    /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
+     *  (never ends on them). Arena builds never set this. */
+    moveFlags?: string[];
+    /** CAMPAIGN-ONLY (A4): a surprised spawn skips its first initiative slot
+     *  (one-shot; advanceSlot clears it). Arena builds never set this. */
+    skipFirstSlot?: boolean;
+    /** CAMPAIGN-ONLY (A5): enemy brain bias — hunt the escort ('ally') or the
+     *  main character ('main'). Arena builds never set this. */
+    aiHints?: {
+        priorityTarget?: 'ally' | 'main';
+    };
+    /** CAMPAIGN-ONLY (A6): art routing — render with this art set (e.g.
+     *  'skeleton') instead of the chassis class art; clients fall back to the
+     *  chassis when the key has no assets. Arena builds never set this. */
+    artKey?: string;
+}
+/** CAMPAIGN-ONLY (A5): runtime doctrine of one AI ally. Route progress lives
+ *  here (the engine advances routeIndex when the ally reaches its waypoint). */
+export type AllyBehaviorState = {
+    mode: 'follow';
+} | {
+    mode: 'hold';
+} | {
+    mode: 'route';
+    waypoints: BoardPosition[];
+    routeIndex: number;
+};
+/** CAMPAIGN-ONLY (A4): a wave that has not spawned yet. Units are FULLY BUILT
+ *  at encounter build time (stable ids; names already in EncounterBuild's
+ *  unitNames) and live here until their trigger fires. */
+export interface PendingWave {
+    units: UnitInstance[];
+    placement: BoardPosition[];
+    trigger: {
+        on: 'room_cleared';
+    } | {
+        on: 'round';
+        round: number;
+    } | {
+        on: 'door';
+        tile: BoardPosition;
+    };
+    surprise?: boolean;
+}
+/** CAMPAIGN-ONLY (A4): a room not yet entered. */
+export interface PendingRoom {
+    terrain?: TerrainState;
+    units: UnitInstance[];
+    placement: BoardPosition[];
+    waves: PendingWave[];
+    exitDoors: BoardPosition[];
+    doorMode: 'on_clear' | 'always';
+    entryTiles: BoardPosition[];
+    surprise?: boolean;
+}
+/** CAMPAIGN-ONLY (A4): the encounter's remaining content. While waves or rooms
+ *  remain, board-clear does NOT end the match (kill-all and the mercy rule are
+ *  suppressed). Absent in every arena match. */
+export interface EncounterProgressState {
+    /** Unspawned waves of the CURRENT room. */
+    waves: PendingWave[];
+    /** Rooms not yet entered, in order. */
+    rooms: PendingRoom[];
+    /** Current room's exit doors (empty in the final room). */
+    exitDoors: BoardPosition[];
+    doorMode: 'on_clear' | 'always';
+    /** Party instance ids in party order (entry placement + initiative weave). */
+    partyIds: UUID[];
+    roomIndex: number;
+}
+/**
+ * CAMPAIGN-ONLY resolved objective (ENCOUNTER_SPEC A3). Built by
+ * buildEncounterState from the authored ObjectiveSpec with every reference
+ * resolved to instance ids. Arena states never carry this — checkWinCondition
+ * falls back to classic kill-all when absent (the arena-untouched invariant).
+ */
+export type ResolvedWinCondition = {
+    kind: 'all_enemies_dead';
+}
+/** All listed enemy instances dead (boss + adds resolved from enemyKeys). */
+ | {
+    kind: 'units_dead';
+    unitIds: string[];
+}
+/** Survive: satisfied once round `round` has COMPLETED (roundNumber > round). */
+ | {
+    kind: 'round_reached';
+    round: number;
+} | {
+    kind: 'units_at_tiles';
+    scope: 'any' | 'main' | 'all';
+    tiles: BoardPosition[];
+    simultaneous?: boolean;
+}
+/** [A5] An escort instance standing on one of the tiles. */
+ | {
+    kind: 'ally_at_tiles';
+    unitIds: string[];
+    tiles: BoardPosition[];
+};
+export type ResolvedLossCondition = 
+/** [A5] Any listed escort instance dead. */
+{
+    kind: 'ally_dead';
+    unitIds: string[];
+}
+/** Deadline: round `round` completed without a win = loss. */
+ | {
+    kind: 'round_reached';
+    round: number;
+} | {
+    kind: 'main_dead';
+};
+export interface ObjectiveState {
+    /** The party's (human's) player id and the opposing side's. */
+    partyId: UUID;
+    enemyId: UUID;
+    /** The main character's instance id (scope 'main' conditions). */
+    mainId: UUID;
+    /** [A5] Ally instance ids: party-owned but NOT party members — excluded
+     *  from the implicit party-wipe check (a lone surviving VIP is not a
+     *  fighting force), referenced by ally_* conditions and enemy aiHints. */
+    allyIds?: UUID[];
+    /** Player-facing objective line for the banner. */
+    text: string;
+    /** ANY satisfied → party wins. */
+    win: ResolvedWinCondition[];
+    /** ANY satisfied → party loses. Party wipe is always an implicit loss. */
+    loss: ResolvedLossCondition[];
+}
+/**
+ * CAMPAIGN-ONLY static terrain (ENCOUNTER_SPEC A2). Arena states never carry
+ * this field — every consumer treats `undefined` as "no terrain" and behaves
+ * exactly as before (the arena-untouched invariant).
+ */
+export interface TerrainState {
+    /** Impassable, sight-blocking tiles (walls/pillars). */
+    blocked?: BoardPosition[];
+    /** Tiles that apply an effect to a unit ENDING a move/displacement on them. */
+    hazards?: {
+        pos: BoardPosition;
+        type: 'fire';
+    }[];
 }
 export type MatchPhase = 'action';
 export interface InitiativeState {
@@ -54,6 +205,60 @@ export interface MatchState {
     activePlayerId: UUID;
     phase: MatchPhase;
     initiative: InitiativeState;
+    /** CAMPAIGN-ONLY board terrain — absent in every arena match (see TerrainState). */
+    terrain?: TerrainState;
+    /** CAMPAIGN-ONLY objective — absent in every arena match (see ObjectiveState). */
+    objective?: ObjectiveState;
+    /** CAMPAIGN-ONLY waves/rooms progress — absent in every arena match (A4). */
+    encounterProgress?: EncounterProgressState;
+    /** CAMPAIGN-ONLY ally doctrines by instance id — absent in arena (A5). */
+    allies?: Record<UUID, AllyBehaviorState>;
+    /** CAMPAIGN-ONLY battle-goal facts — absent in every arena match (A7). */
+    goalStats?: GoalStatsState;
+    /**
+     * Puzzle-only: pre-scripted outcomes for blockable dodge rolls, consumed in
+     * order (one entry per roll attempt; multi-hit attacks consume one entry per
+     * hit). When the script is exhausted, further rolls HIT deterministically —
+     * authors script misses explicitly. Absent in normal matches (random rolls).
+     * The script is disclosed to the player as "fate" text on the puzzle intro.
+     */
+    rollScript?: Array<'hit' | 'miss'>;
+    /** Index of the next rollScript entry to consume. */
+    rollIndex?: number;
+    /**
+     * When present, every dodge roll (random OR scripted) appends its result here
+     * in order. The offline client sets this to `[]` before a dry-run so it can
+     * capture exactly what the engine rolled and replay it at End Turn. Never set
+     * server-side, so it has no effect on online play.
+     */
+    rollLog?: Array<'hit' | 'miss'>;
+    /**
+     * Roll-on-demand (online): mid-turn scaffolding that must survive between the
+     * separate HTTP calls that resolve one action at a time. Set by `beginTurn`,
+     * read by `applyAction`/`endTurn`, CLEARED by `endTurn`. The single-shot
+     * `processTurn` sets and clears it within one call, so it never appears in
+     * that path's output (offline/puzzles/legacy never persist it). Absent means
+     * "no turn in progress".
+     */
+    turnContext?: {
+        /** unit committed to act this turn */
+        actingUnitId: UUID;
+        /** its position at the start of the turn (for the round-11+ drain check) */
+        startPos: BoardPosition;
+        /** round-1 bare-END_TURN forced commit: skips start/end-of-turn ticks */
+        forcedCommit: boolean;
+        /** last applied action sequence number (ROD3 idempotency); -1 before any action */
+        seq: number;
+        /**
+         * Every event emitted by this turn's beginTurn/applyAction calls, in order.
+         * Accumulated by the ROD service layer so end-turn can persist the FULL
+         * turn's events to last_turn_events — without this, the opponent's poll
+         * sees only the end-turn residue (ticks, TURN_ENDED) and their combat log
+         * and replay silently drop the turn's moves/abilities/pushes/statuses.
+         * Dies with the turnContext when endTurn clears it.
+         */
+        events?: GameEvent[];
+    };
 }
 export interface MoveAction {
     type: 'MOVE';
@@ -83,7 +288,17 @@ export interface TurnResult {
     matchOver: boolean;
     winnerId: UUID | null;
 }
-export type GameEventType = 'UNIT_MOVED' | 'ABILITY_USED' | 'DAMAGE_DEALT' | 'HEALING_DONE' | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED' | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'ATTACK_MISSED' | 'SHIELD_ABSORBED' | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER';
+export type GameEventType = 'UNIT_MOVED' | 'ABILITY_USED' | 'DAMAGE_DEALT' | 'HEALING_DONE' | 'STATUS_APPLIED' | 'STATUS_REMOVED' | 'STATUS_TICK' | 'UNIT_DIED' | 'UNIT_PUSHED' | 'UNIT_PULLED' | 'PUSH_RESISTED' | 'ATTACK_MISSED' | 'DODGED' | 'SHIELD_ABSORBED' | 'TURN_ENDED' | 'TURN_SKIPPED' | 'MATCH_OVER' | 'ENDGAME_STARTED' | 'ENDGAME_DRAIN' | 'UNDYING_TRIGGERED' | 'STATUS_RESISTED'
+/** CAMPAIGN-ONLY (A4): a wave/room enemy entered the board / a room began. */
+ | 'UNIT_SPAWNED' | 'ROOM_ENTERED';
+/** CAMPAIGN-ONLY (A7): running facts battle goals are judged on. Created by
+ *  buildEncounterState when the encounter has goals; arena never carries it. */
+export interface GoalStatsState {
+    mainTookDamage: boolean;
+    partyDeaths: number;
+    /** Killer of the most recently slain ENEMY unit (killing_blow_by_main). */
+    lastEnemyKillerId?: string;
+}
 export interface GameEvent {
     type: GameEventType;
     sourceUnitInstanceId?: UUID;
@@ -94,5 +309,13 @@ export interface GameEvent {
     winnerId?: UUID;
     message?: string;
     abilitySlug?: string;
+    /** Damage attribution for a DAMAGE_DEALT event: the base hit plus each
+     *  passive/status modifier that changed it, so the combat log can explain a
+     *  number the player would otherwise find inexplicable (e.g. Opportunist's
+     *  +4 vs a status-afflicted target). Only present when a modifier applied. */
+    damageParts?: {
+        label: string;
+        amount: number;
+    }[];
 }
 //# sourceMappingURL=matchState.d.ts.map

@@ -24,6 +24,8 @@ const winCondition_js_1 = require("./winCondition.js");
 const boardUtils_js_1 = require("./boardUtils.js");
 const geometry_js_1 = require("../ai/geometry.js");
 const initialState_js_1 = require("./initialState.js");
+const runtime_js_1 = require("../campaigns/runtime.js");
+const abilityExecutor_js_3 = require("./abilityExecutor.js");
 const defaultData_js_1 = require("../ai/defaultData.js");
 const boardUtils_js_2 = require("./boardUtils.js");
 // defaultData's UnitDefinition is the slim AI-facing shape; buildUnitInstance
@@ -83,10 +85,16 @@ function mkAbility(over = {}) {
         ...over,
     };
 }
-function cast(ability, caster, target, allUnits) {
+function cast(ability, caster, target, allUnits, pushDestination) {
     const events = [];
     const state = mkLegacyState(allUnits ?? [caster, target]);
-    (0, abilityExecutor_js_1.executeAbility)({ state, caster, targetPosition: target.position, ability, events });
+    (0, abilityExecutor_js_1.executeAbility)({ state, caster, targetPosition: target.position, ability, events, pushDestination });
+    return events;
+}
+/** Cast at a bare TILE rather than at a unit — placed AoEs, rings, leaps. */
+function castAt(ability, caster, targetPosition, allUnits) {
+    const events = [];
+    (0, abilityExecutor_js_1.executeAbility)({ state: mkLegacyState(allUnits), caster, targetPosition, ability, events });
     return events;
 }
 const has = (u, slug) => u.statusEffects.some((se) => se.slug === slug);
@@ -333,7 +341,7 @@ exports.RULE_CHECKS = [
     },
     // ── DGE ────────────────────────────────────────────────────────────────────
     {
-        rule: 'DGE-1', name: 'dodge chance is 5% per AC point above 6; each attack rolls fresh',
+        rule: 'DGE-1', name: 'AC-based hit chance: d20+5 vs AC; each attack rolls fresh',
         run: () => {
             // AC 6 → 0% dodge: must always hit
             const caster = mkUnit(P1, 1, 1);
@@ -383,6 +391,22 @@ exports.RULE_CHECKS = [
             });
             cast(twin, caster, t);
             assert(t.currentHealth === 83, `both hits must land (got HP ${t.currentHealth})`);
+            // The check above builds its OWN ability with isMultiHit hard-coded, so it
+            // passed even while DEFAULT_ABILITIES silently dropped the flag and every
+            // offline/AI Twin Strike ran down the single-hit path (one roll for both
+            // daggers). Assert the flag survives the real gameData → AbilityDefinition
+            // conversion, and that the shipped ability actually rolls twice.
+            const realTwin = defaultData_js_1.DEFAULT_ABILITIES.find((a) => a.slug === 'twin');
+            assert(realTwin, 'twin must exist in DEFAULT_ABILITIES');
+            assert(realTwin.isMultiHit === true, 'shipped Twin Strike must carry isMultiHit through defaultData');
+            const atk = mkUnit(P1, 1, 1);
+            const def = mkUnit(P2, 2, 1, { armorClass: 12 }); // AC > 6 so a dodge roll is actually made
+            const state = mkLegacyState([atk, def]);
+            state.rollLog = [];
+            const events = [];
+            (0, abilityExecutor_js_1.executeAbility)({ state, caster: atk, targetPosition: def.position, ability: realTwin, events });
+            const resolved = events.filter((e) => e.type === 'DAMAGE_DEALT' || e.type === 'DODGED').length;
+            assert(state.rollLog.length === resolved && resolved === 2, `Twin Strike must roll once per blow — got ${state.rollLog.length} roll(s) for ${resolved} resolution(s)`);
         },
     },
     {
@@ -405,6 +429,16 @@ exports.RULE_CHECKS = [
                 ],
             }), caster, t);
             assert(t.currentHealth === 92 && !has(t, 'shielded'), 'shield must absorb only the FIRST hit of a multi-hit');
+            // The absorbed hit takes its whole payload with it: a status carried by
+            // the same damaging attack (Pinning Shot's root) must NOT land.
+            t = shielded();
+            cast(mkAbility({
+                effects: [
+                    { type: 'damage', formula: 'flat', value: 7 },
+                    { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+                ],
+            }), caster, t);
+            assert(t.currentHealth === 100 && !has(t, 'rooted') && !has(t, 'shielded'), 'a status on an absorbed damaging hit must be negated with it (no damage, no root, shield spent)');
         },
     },
     {
@@ -536,7 +570,61 @@ exports.RULE_CHECKS = [
         },
     },
     {
-        rule: 'ABL-7', name: 'push/pull slides straight and stops early at edges, corners, and occupied tiles',
+        rule: 'ABL-7', name: 'a push travels one cardinal direction; an exactly-diagonal target lets the caster pick',
+        run: () => {
+            const pushAb = mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 3 }] });
+            // A push is CARDINAL, never diagonal: an exactly-diagonal target offers
+            // both cardinals and the caster picks. Without a choice the first is used,
+            // and either way one axis must stay put.
+            const diagPusher = mkUnit(P1, 3, 3);
+            let dp = mkUnit(P2, 4, 4);
+            cast(pushAb, diagPusher, dp, [diagPusher, dp]);
+            assert(dp.position.x === 4 || dp.position.y === 4, `diagonal push must travel one cardinal, not diagonally (got ${dp.position.x},${dp.position.y})`);
+            dp = mkUnit(P2, 4, 4);
+            cast(pushAb, diagPusher, dp, [diagPusher, dp], { x: 4, y: 7 });
+            assert(dp.position.x === 4 && dp.position.y === 7, `caster's chosen cardinal must be honoured (got ${dp.position.x},${dp.position.y})`);
+        },
+    },
+    {
+        rule: 'ABL-13', name: 'a pull drags toward the caster, diagonals cost two, and stops one tile short',
+        run: () => {
+            const puller = mkUnit(P1, 1, 1);
+            let t = mkUnit(P2, 5, 1);
+            const pull2 = mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] });
+            cast(pull2, puller, t, [puller, t]);
+            assert(t.position.x === 3 && t.position.y === 1, 'orthogonal pull must draw the target 2 tiles toward the caster');
+            // Diagonal pull counts each diagonal step as 2 tiles of the distance, so a
+            // distance-2 pull moves ONE diagonal tile (not two) — a diagonal drag can
+            // never cover more ground than a straight one of the same tile count.
+            const dPuller = mkUnit(P1, 1, 1);
+            let dt = mkUnit(P2, 5, 5);
+            cast(pull2, dPuller, dt, [dPuller, dt]);
+            assert(dt.position.x === 4 && dt.position.y === 4, `diagonal pull-2 must move exactly one diagonal tile (got ${dt.position.x},${dt.position.y})`);
+            // With 1 budget left after a diagonal, the drag straightens along the
+            // dominant axis: a distance-3 diagonal pull lands 1 diagonal + 1 straight.
+            const d3Puller = mkUnit(P1, 1, 1);
+            let d3t = mkUnit(P2, 5, 5);
+            const pull3 = mkAbility({ slug: 'test_pull3', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 3 }] });
+            cast(pull3, d3Puller, d3t, [d3Puller, d3t]);
+            assert(d3t.position.x === 3 && d3t.position.y === 4, `diagonal pull-3 must land 1 diagonal + 1 straight (got ${d3t.position.x},${d3t.position.y})`);
+            // A diagonally-adjacent target CAN be pulled: it cuts the corner onto one
+            // of the two tiles beside the caster, and the caster picks which.
+            const adjPuller = mkUnit(P1, 3, 3);
+            let ap = mkUnit(P2, 4, 4);
+            cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 4, y: 3 });
+            assert(ap.position.x === 4 && ap.position.y === 3, `chosen corner-cut must be honoured (got ${ap.position.x},${ap.position.y})`);
+            ap = mkUnit(P2, 4, 4);
+            cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 3, y: 4 });
+            assert(ap.position.x === 3 && ap.position.y === 4, `the other corner-cut must also be reachable (got ${ap.position.x},${ap.position.y})`);
+            // An out-of-set destination is ignored by the executor (turnProcessor
+            // rejects it outright); the target must never teleport to it.
+            ap = mkUnit(P2, 4, 4);
+            cast(pull3, adjPuller, ap, [adjPuller, ap], { x: 7, y: 7 });
+            assert(!(ap.position.x === 7 && ap.position.y === 7), 'a bogus displacement destination must never be honoured');
+        },
+    },
+    {
+        rule: 'ABL-14', name: 'displacement stops early at edges, removed corners, and occupied tiles',
         run: () => {
             const pusher = mkUnit(P1, 3, 3);
             const pushAb = mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 3 }] });
@@ -554,11 +642,6 @@ exports.RULE_CHECKS = [
             t = mkUnit(P2, 5, 7);
             cast(pushAb, cornerPusher, t, [cornerPusher, t]);
             assert(t.position.x === 6 && t.position.y === 7, 'push toward a removed corner must stop before it');
-            // pull
-            const puller = mkUnit(P1, 1, 1);
-            t = mkUnit(P2, 5, 1);
-            cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), puller, t, [puller, t]);
-            assert(t.position.x === 3 && t.position.y === 1, 'pull must draw the target 2 tiles toward the caster');
         },
     },
     {
@@ -604,6 +687,110 @@ exports.RULE_CHECKS = [
             }
         },
     },
+    {
+        rule: 'ABL-9', name: 'line abilities sweep the FULL range past the tapped tile, stopping only at the board edge',
+        run: () => {
+            // Owner repro (C22b item 11): 5 units queued in a row, tap the 2nd — all
+            // 5 must be hit. The ray used to stop at the tapped tile, hitting only 2.
+            const caster = mkUnit(P1, 0, 3);
+            const line = [1, 2, 3, 4, 5].map((x) => mkUnit(P2, x, 3));
+            const ab = mkAbility({ slug: 'test_line', targetingType: 'line', range: 6, isUnblockable: true });
+            const ev = cast(ab, caster, line[1], [caster, ...line]); // tap the SECOND unit
+            for (const u of line) {
+                assert(ev.some((e) => e.type === 'DAMAGE_DEALT' && e.targetUnitInstanceId === u.instanceId), `line ability must hit the unit at (${u.position.x},${u.position.y}) — the ray does not stop at the tapped tile`);
+            }
+            // Direction only: the ray extends the ability's full range from the caster.
+            const tiles = (0, boardUtils_js_2.getLineTiles)({ x: 0, y: 3 }, { x: 1, y: 3 }, 6);
+            assert(tiles.length === 6, `full-range ray must be 6 tiles, got ${tiles.length}`);
+            assert(at(tiles, 6, 3), 'ray must reach the 6th tile even though the tap was at distance 1');
+            // Stops at the board edge rather than running off it.
+            const edge = (0, boardUtils_js_2.getLineTiles)({ x: 5, y: 3 }, { x: 6, y: 3 }, 6);
+            assert(edge.every((t) => t.x <= 7), 'ray must not leave the board');
+            assert(edge.length === 2, `ray from x=5 must stop at the edge (2 tiles), got ${edge.length}`);
+            // Data guard: Piercing Shot stays a full-range line ability.
+            const piercing = defaultData_js_1.DEFAULT_ABILITIES.find((a) => a.slug === 'piercing');
+            assert(piercing?.targetingType === 'line', 'piercing must stay targetingType line');
+            assert(piercing.range === 6, 'piercing must keep its 6-tile range');
+        },
+    },
+    {
+        rule: 'ABL-10', name: 'area and line abilities hit allies; a self-centred blast never hits its own caster',
+        run: () => {
+            // Whirlwind: hits the caster's ALLY standing cardinally adjacent.
+            const wwDef = defaultData_js_1.DEFAULT_ABILITIES.find((a) => a.slug === 'whirlwind');
+            const caster = mkUnit(P1, 3, 3);
+            const ally = mkUnit(P1, 3, 2); // cardinal ally — must be hit
+            const enemy = mkUnit(P2, 2, 3); // cardinal enemy — must be hit
+            const ev = cast(wwDef, caster, caster, [caster, ally, enemy]);
+            assert(ev.some((e) => e.targetUnitInstanceId === ally.instanceId), 'Whirlwind must hit the caster\'s own adjacent ally');
+            assert(ev.some((e) => e.targetUnitInstanceId === enemy.instanceId), 'Whirlwind must hit the adjacent enemy');
+            assert(!ev.some((e) => e.targetUnitInstanceId === caster.instanceId), 'a self-centred blast must never hit its own caster');
+            // Piercing Shot: an ally standing in the ray takes the hit too.
+            const shooter = mkUnit(P1, 0, 5);
+            const allyInLine = mkUnit(P1, 1, 5);
+            const foeBehind = mkUnit(P2, 2, 5);
+            const lineAb = mkAbility({ slug: 'test_line2', targetingType: 'line', range: 6, isUnblockable: true });
+            const ev2 = cast(lineAb, shooter, foeBehind, [shooter, allyInLine, foeBehind]);
+            assert(ev2.some((e) => e.targetUnitInstanceId === allyInLine.instanceId), 'a line ability must hit an ally standing in the ray');
+            assert(ev2.some((e) => e.targetUnitInstanceId === foeBehind.instanceId), 'a line ability must hit the enemy behind the ally (the ray does not stop at the first unit)');
+            // Data guard: none of these may quietly gain excludeAllies.
+            for (const slug of ['whirlwind', 'shockwave', 'piercing']) {
+                const def = defaultData_js_1.DEFAULT_ABILITIES.find((a) => a.slug === slug);
+                assert(!def?.excludeAllies, `${slug} must keep hitting allies (excludeAllies must stay falsy)`);
+            }
+        },
+    },
+    {
+        rule: 'ABL-11', name: 'a ring blast covers its radius but spares the centre tile it was aimed at',
+        run: () => {
+            const ring = mkAbility({
+                slug: 'test_ring', targetingType: 'aoe', range: 4, areaRadius: 1,
+                areaShape: 'ring', isUnblockable: true,
+                effects: [{ type: 'damage', formula: 'flat', value: 5 }],
+            });
+            const caster = mkUnit(P1, 0, 0);
+            const eye = mkUnit(P1, 3, 3); // stands in the calm centre — spared
+            const edge = mkUnit(P2, 3, 4); // orthogonal neighbour — hit
+            const corner = mkUnit(P2, 4, 4); // diagonal neighbour — hit
+            const ev = castAt(ring, caster, eye.position, [caster, eye, edge, corner]);
+            assert(!ev.some((e) => e.targetUnitInstanceId === eye.instanceId), 'a ring must NOT hit the unit standing on the tile it was aimed at');
+            assert(ev.some((e) => e.targetUnitInstanceId === edge.instanceId), 'a ring must hit the orthogonal neighbour of its centre');
+            assert(ev.some((e) => e.targetUnitInstanceId === corner.instanceId), 'a ring must hit the diagonal neighbour of its centre');
+        },
+    },
+    {
+        rule: 'ABL-12', name: 'a leap relocates the caster over intervening units; the landing tile must be free',
+        run: () => {
+            const leap = mkAbility({
+                slug: 'test_leap', targetingType: 'aoe', range: 3, areaRadius: 1,
+                areaShape: 'ring', isUnblockable: true,
+                effects: [
+                    { type: 'move_self' },
+                    { type: 'damage', formula: 'flat', value: 6 },
+                ],
+            });
+            // Leaps OVER a blocker: the wall at (3,2) would stop a MOVE dead.
+            const barb = mkUnit(P1, 3, 1);
+            const wall = mkUnit(P2, 3, 2);
+            const victim = mkUnit(P2, 4, 3);
+            const ev = castAt(leap, barb, { x: 3, y: 3 }, [barb, wall, victim]);
+            assert(barb.position.x === 3 && barb.position.y === 3, 'the caster must end the leap standing on the targeted tile');
+            assert(ev.some((e) => e.type === 'UNIT_MOVED' && e.targetUnitInstanceId === barb.instanceId), 'a leap must emit UNIT_MOVED for the caster');
+            // Blast is centred on the LANDING tile, not the take-off tile: the victim
+            // adjacent to (3,3) is hit, and the caster in the calm eye is not.
+            assert(ev.some((e) => e.targetUnitInstanceId === victim.instanceId), 'the blast must resolve around where the caster landed');
+            assert(!ev.some((e) => e.type === 'DAMAGE_DEALT' && e.targetUnitInstanceId === barb.instanceId), 'the leaping caster must land in the calm eye of its own ring');
+            // An occupied landing tile is declined outright — no move, no blast.
+            const barb2 = mkUnit(P1, 1, 1);
+            const squatter = mkUnit(P2, 1, 3);
+            castAt(leap, barb2, squatter.position, [barb2, squatter]);
+            assert(barb2.position.x === 1 && barb2.position.y === 1, 'a leap onto an occupied tile must not move the caster');
+            // Anchor blocks being MOVED by someone else, never self-propelled travel.
+            const anchored = mkUnit(P1, 5, 5, { passives: ['immovable'] });
+            castAt(leap, anchored, { x: 5, y: 3 }, [anchored]);
+            assert(anchored.position.y === 3, 'Anchor must not prevent a unit leaping under its own power');
+        },
+    },
     // ── STA ────────────────────────────────────────────────────────────────────
     {
         rule: 'STA-1', name: 'a status lasting N turns is in force for N of the victim\'s turns and drops at end of the Nth',
@@ -614,7 +801,12 @@ exports.RULE_CHECKS = [
             assert(has(u, 'weakened'), 'status must still be in force at the start of the turn');
             (0, abilityExecutor_js_2.decrementStatusDurations)(u, ev);
             assert(!has(u, 'weakened'), '1-turn status must expire at end of that turn');
-            assert(ev.some((e) => e.type === 'STATUS_REMOVED'), 'expiry must emit STATUS_REMOVED');
+            const expiryRemoved = ev.find((e) => e.type === 'STATUS_REMOVED');
+            assert(!!expiryRemoved, 'expiry must emit STATUS_REMOVED');
+            // Natural expiry carries NO source — that is how the combat log tells it
+            // apart from a deliberate cleanse (Purify) and keeps it silent. If this
+            // ever gains a source, expiring debuffs would spam the log.
+            assert(!expiryRemoved.sourceUnitInstanceId, 'expiry STATUS_REMOVED must have no source unit');
         },
     },
     {
@@ -694,6 +886,21 @@ exports.RULE_CHECKS = [
             assert(burn.stacks === 2, 'reapply must add stacks');
         },
     },
+    {
+        rule: 'STA-7', name: 'only burning uses its stack count; weakened/frozen/rooted stacks are inert',
+        run: () => {
+            // Burning DOES scale with stacks: two stacks tick for 14, not 7.
+            const burner = mkUnit(P2, 5, 5, { statusEffects: [{ slug: 'burning', turnsRemaining: 2, stacks: 2, sourceUnitInstanceId: 'x' }] });
+            const before = burner.currentHealth;
+            (0, abilityExecutor_js_2.applyStartOfTurnStatusDamage)(burner, []);
+            assert(before - burner.currentHealth === 14, 'two burning stacks must tick for 14');
+            // Weakened does NOT: two stacks still reduce outgoing damage by 4, not 8.
+            const weak = mkUnit(P1, 1, 1, { statusEffects: [{ slug: 'weakened', turnsRemaining: 2, stacks: 2, sourceUnitInstanceId: 'x' }] });
+            const t = mkUnit(P2, 2, 1);
+            cast(mkAbility({ isUnblockable: true }), weak, t); // 10 base
+            assert(t.currentHealth === 94, 'two weakened stacks must still reduce by only 4 (10 -> 6)');
+        },
+    },
     // ── PAS ────────────────────────────────────────────────────────────────────
     {
         rule: 'PAS-1', name: 'Swift adds 1 movement and is only offered to melee-basic classes',
@@ -710,25 +917,11 @@ exports.RULE_CHECKS = [
         },
     },
     {
-        rule: 'PAS-2', name: 'Anchor blocks push and pull with visible feedback, and adds no stats',
+        rule: 'PAS-3', name: 'Warded starts the match with a shield that negates the first hit, at a 2 HP cost',
         run: () => {
-            const base = (0, initialState_js_1.buildUnitInstance)(defOf('fighter'), P1, { x: 1, y: 1 });
-            const anchor = (0, initialState_js_1.buildUnitInstance)(defOf('fighter'), P2, { x: 3, y: 3 }, { specialSlug: 'second_wind', passiveSlug: 'anchor' });
-            assert(anchor.maxHealth === base.maxHealth, 'anchor must NOT change max health (the old +6 rider made it strictly dominate)');
-            assert(anchor.passives.includes('immovable'), 'anchor must carry the immovable flag');
-            const pusher = mkUnit(P1, 3, 1);
-            const pushEvents = cast(mkAbility({ slug: 'test_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-            assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pushed');
-            assert(pushEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated push must emit PUSH_RESISTED so the player gets feedback');
-            const pullEvents = cast(mkAbility({ slug: 'test_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), pusher, anchor, [pusher, anchor]);
-            assert(anchor.position.x === 3 && anchor.position.y === 3, 'anchored unit must not be pulled');
-            assert(pullEvents.some((e) => e.type === 'PUSH_RESISTED'), 'a negated pull must emit PUSH_RESISTED so the player gets feedback');
-        },
-    },
-    {
-        rule: 'PAS-3', name: 'Warded starts the match with a shield that negates the first hit',
-        run: () => {
+            const base = (0, initialState_js_1.buildUnitInstance)(defOf('cleric'), P1, { x: 1, y: 2 });
             const warded = (0, initialState_js_1.buildUnitInstance)(defOf('cleric'), P2, { x: 2, y: 1 }, { specialSlug: 'heal', passiveSlug: 'warded' });
+            assert(warded.maxHealth === base.maxHealth - 2, 'warded must cost 2 maximum health');
             assert(has(warded, 'shielded'), 'warded unit must begin shielded');
             const caster = mkUnit(P1, 1, 1);
             cast(mkAbility({ isUnblockable: true }), caster, warded);
@@ -816,10 +1009,16 @@ exports.RULE_CHECKS = [
             t = mkUnit(P2, 3, 3);
             cast(hit, v, t, [v, t]);
             assert(t.currentHealth === t.maxHealth - 13, 'vengeful must deal +3 at or below half health');
+            // Barbarian's Vengeful is +4 (per-class override)
+            const bv = mkUnit(P1, 3, 2, { definitionSlug: 'barbarian', passives: ['vengeful'] });
+            bv.currentHealth = Math.floor(bv.maxHealth / 2);
+            const bt = mkUnit(P2, 3, 3);
+            cast(hit, bv, bt, [bv, bt]);
+            assert(bt.currentHealth === bt.maxHealth - 14, 'barbarian vengeful must deal +4 at or below half health');
         },
     },
     {
-        rule: 'PAS-8', name: 'Stalwart resists rooted/weakened/exposed with feedback; frozen still applies',
+        rule: 'PAS-8', name: 'Stalwart resists push/pull + rooted/weakened/exposed with feedback; frozen still applies; carries a per-class HP rider',
         run: () => {
             const caster = mkUnit(P1, 3, 2);
             const stal = mkUnit(P2, 3, 3, { passives: ['stalwart'] });
@@ -830,10 +1029,21 @@ exports.RULE_CHECKS = [
             }
             cast(mkAbility({ slug: 't_frz', isUnblockable: true, effects: [{ type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 }] }), caster, stal, [caster, stal]);
             assert(has(stal, 'frozen'), 'frozen must still apply through stalwart');
+            // Merged Stalwart also blocks push/pull (absorbed the old Anchor).
+            const pushEv = cast(mkAbility({ slug: 't_push', isUnblockable: true, effects: [{ type: 'push', direction: 'away_from_caster', distance: 2 }] }), caster, stal, [caster, stal]);
+            assert(stal.position.x === 3 && stal.position.y === 3, 'stalwart unit must not be pushed');
+            assert(pushEv.some((e) => e.type === 'PUSH_RESISTED'), 'a negated push must emit PUSH_RESISTED feedback');
+            const pullEv = cast(mkAbility({ slug: 't_pull', isUnblockable: true, effects: [{ type: 'pull', direction: 'toward_caster', distance: 2 }] }), caster, stal, [caster, stal]);
+            assert(stal.position.x === 3 && stal.position.y === 3, 'stalwart unit must not be pulled');
+            assert(pullEv.some((e) => e.type === 'PUSH_RESISTED'), 'a negated pull must emit PUSH_RESISTED feedback');
+            // Per-class HP rider: Wizard's Stalwart is +4 (varies by class).
+            const wBase = (0, initialState_js_1.buildUnitInstance)(defOf('wizard'), P1, { x: 1, y: 1 });
+            const wStal = (0, initialState_js_1.buildUnitInstance)(defOf('wizard'), P2, { x: 5, y: 5 }, { specialSlug: 'blizzard', passiveSlug: 'stalwart' });
+            assert(wStal.maxHealth === wBase.maxHealth + 4, `wizard stalwart must carry +4 max health (got ${wStal.maxHealth - wBase.maxHealth})`);
         },
     },
     {
-        rule: 'PAS-6', name: 'Opportunist deals +4 against targets with any status effect',
+        rule: 'PAS-6', name: 'Opportunist deals +4 against targets with any status effect (Ranger +5)',
         run: () => {
             const opp = mkUnit(P1, 3, 2, { passives: ['opportunist'] });
             // clean target: base damage only
@@ -844,6 +1054,122 @@ exports.RULE_CHECKS = [
             t = mkUnit(P2, 3, 3, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
             cast(mkAbility({ isUnblockable: true }), opp, t, [opp, t]);
             assert(t.currentHealth === t.maxHealth - 14, 'opportunist must deal +4 against a statused target');
+            // Ranger's Opportunist is +5 (per-class override)
+            const rOpp = mkUnit(P1, 3, 2, { definitionSlug: 'ranger', passives: ['opportunist'] });
+            const rt = mkUnit(P2, 3, 3, { statusEffects: [{ slug: 'rooted', turnsRemaining: 1, stacks: 1, sourceUnitInstanceId: 'x' }] });
+            cast(mkAbility({ isUnblockable: true }), rOpp, rt, [rOpp, rt]);
+            assert(rt.currentHealth === rt.maxHealth - 15, 'ranger opportunist must deal +5 against a statused target');
+        },
+    },
+    {
+        rule: 'PAS-9', name: 'Channeler deals +2 with abilities only on a turn the caster did not move',
+        run: () => {
+            const still = mkUnit(P1, 3, 2, { passives: ['channeler'], hasMovedThisTurn: false });
+            let t = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), still, t, [still, t]);
+            assert(t.currentHealth === t.maxHealth - 12, 'channeler must add +2 when the caster has not moved');
+            const moved = mkUnit(P1, 3, 2, { passives: ['channeler'], hasMovedThisTurn: true });
+            t = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), moved, t, [moved, t]);
+            assert(t.currentHealth === t.maxHealth - 10, 'channeler must add nothing on a turn the caster moved');
+        },
+    },
+    {
+        rule: 'PAS-10', name: 'Siphon heals the caster 1 when its ability damages an enemy, capped at max',
+        run: () => {
+            const siph = mkUnit(P1, 3, 2, { passives: ['siphon'] });
+            siph.currentHealth = 50;
+            const t = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), siph, t, [siph, t]);
+            assert(siph.currentHealth === 51, 'siphon must heal 1 on damaging an enemy');
+            // no overheal at full health
+            const full = mkUnit(P1, 3, 2, { passives: ['siphon'] });
+            const t2 = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), full, t2, [full, t2]);
+            assert(full.currentHealth === full.maxHealth, 'siphon must not heal above maximum');
+        },
+    },
+    // ── GFT (campaign Deep Gifts + Second Charge, E0) ─────────────────────────
+    {
+        rule: 'GFT-1', name: 'Gift of Fangs adds +1 per damage effect, including each hit of a multi-hit',
+        run: () => {
+            const g = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
+            let t = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), g, t, [g, t]);
+            assert(t.currentHealth === 100 - (10 + abilityExecutor_js_3.GIFT_DAMAGE_BONUS), 'gift must add its bonus to a 10-damage effect');
+            // multi-hit: two damage effects -> +1 EACH
+            const g2 = mkUnit(P1, 3, 2, { passives: ['gift_damage'] });
+            t = mkUnit(P2, 3, 3);
+            cast(mkAbility({
+                isUnblockable: true, isMultiHit: true,
+                effects: [
+                    { type: 'damage', formula: 'flat', value: 8 },
+                    { type: 'damage', formula: 'flat', value: 8 },
+                ],
+            }), g2, t, [g2, t]);
+            assert(t.currentHealth === 100 - (16 + 2 * abilityExecutor_js_3.GIFT_DAMAGE_BONUS), 'gift must add its bonus to EACH hit of a multi-hit');
+            // no flag, no bonus
+            const plain = mkUnit(P1, 3, 2);
+            t = mkUnit(P2, 3, 3);
+            cast(mkAbility({ isUnblockable: true }), plain, t, [plain, t]);
+            assert(t.currentHealth === 100 - 10, 'no gift flag must mean no bonus');
+        },
+    },
+    {
+        rule: 'GFT-2', name: 'Gift of Stride grants +1 movement at campaign build',
+        run: () => {
+            const def = defaultData_js_1.DEFAULT_UNITS['fighter'];
+            const base = (0, runtime_js_1.buildCampaignPlayerInstance)(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
+            const gifted = (0, runtime_js_1.buildCampaignPlayerInstance)(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'movement' });
+            assert(gifted.movementRange === base.movementRange + runtime_js_1.GIFT_MOVEMENT_BONUS, 'Stride must add its bonus over the ungifted build');
+        },
+    },
+    {
+        rule: 'GFT-3', name: 'Gift of Stone grants +2 armor class at campaign build',
+        run: () => {
+            const def = defaultData_js_1.DEFAULT_UNITS['fighter'];
+            const base = (0, runtime_js_1.buildCampaignPlayerInstance)(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash' });
+            const gifted = (0, runtime_js_1.buildCampaignPlayerInstance)(def, P1, { x: 1, y: 1 }, 8, { specialSlug: 'shield_bash', deepGiftSlug: 'armor' });
+            assert(gifted.armorClass === base.armorClass + runtime_js_1.GIFT_ARMOR_BONUS, 'Stone must add its bonus over the ungifted build');
+        },
+    },
+    {
+        rule: 'GFT-4', name: 'Second Charge: special usable twice (back to back allowed), third use rejected',
+        run: () => {
+            const map = new Map([['test_hit', mkAbility({ cooldownTurns: 99, isUnblockable: true })]]);
+            const mk = () => mkUnit(P1, 1, 1, { extraCharges: { test_hit: 1 } });
+            // use 1: spends the spare charge, cooldown stays 0
+            let u = mk();
+            let st = mkLegacyState([u, mkUnit(P2, 2, 1, { currentHealth: 100 })]);
+            let r = (0, turnProcessor_js_1.processTurn)(st, [
+                { type: 'USE_ABILITY', unitInstanceId: u.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+                { type: 'END_TURN' },
+            ], P1, P1, P2, map);
+            let after = r.updatedState.units[0];
+            assert((after.cooldowns['test_hit'] ?? 0) === 0, 'first use must NOT start the cooldown while a spare charge exists');
+            assert((after.extraCharges?.['test_hit'] ?? 0) === 0, 'first use must consume the spare charge');
+            // use 2 (back to back, next turn): allowed, cooldown NOW starts
+            after.hasActedThisTurn = false;
+            after.hasMovedThisTurn = false;
+            st = mkLegacyState([after, mkUnit(P2, 2, 1, { currentHealth: 100 })]);
+            r = (0, turnProcessor_js_1.processTurn)(st, [
+                { type: 'USE_ABILITY', unitInstanceId: after.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+                { type: 'END_TURN' },
+            ], P1, P1, P2, map);
+            after = r.updatedState.units[0];
+            assert(after.cooldowns['test_hit'] === 99, 'second use must start the full cooldown — done for the encounter');
+            // use 3: rejected, exactly like arena after its single use
+            after.hasActedThisTurn = false;
+            after.hasMovedThisTurn = false;
+            assertThrows(() => (0, turnProcessor_js_1.processTurn)(mkLegacyState([after, mkUnit(P2, 2, 1)]), [
+                { type: 'USE_ABILITY', unitInstanceId: after.instanceId, abilitySlug: 'test_hit', target: { x: 2, y: 1 } },
+                { type: 'END_TURN' },
+            ], P1, P1, P2, map), 'cooldown', 'third use must be rejected');
+            // L10 build wires the charge on the SPECIAL only
+            const built = (0, runtime_js_1.buildCampaignPlayerInstance)(defaultData_js_1.DEFAULT_UNITS['fighter'], P1, { x: 1, y: 1 }, 10, { specialSlug: 'shield_bash' });
+            assert((built.extraCharges?.['shield_bash'] ?? 0) === 1, 'L10 build must grant one spare charge on the special');
+            const l9 = (0, runtime_js_1.buildCampaignPlayerInstance)(defaultData_js_1.DEFAULT_UNITS['fighter'], P1, { x: 1, y: 1 }, 9, { specialSlug: 'shield_bash' });
+            assert(l9.extraCharges === undefined, 'below L10 there must be no spare charge');
         },
     },
     // ── WIN ────────────────────────────────────────────────────────────────────

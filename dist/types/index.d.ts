@@ -28,7 +28,7 @@ export interface PushToken {
 }
 export type TargetingType = 'single' | 'aoe' | 'self' | 'line' | 'cone';
 export type EffectTrigger = 'on_turn_start' | 'on_turn_end' | 'on_hit' | 'on_death';
-export type AbilityEffectType = 'damage' | 'heal' | 'apply_status' | 'remove_status' | 'push' | 'pull' | 'teleport' | 'modify_cooldown' | 'lifesteal';
+export type AbilityEffectType = 'damage' | 'heal' | 'apply_status' | 'remove_status' | 'push' | 'pull' | 'move_self' | 'teleport' | 'modify_cooldown' | 'lifesteal' | 'grant_max_health';
 export interface DamageEffect {
     type: 'damage';
     formula: 'flat';
@@ -38,6 +38,17 @@ export interface DamageEffect {
 export interface HealEffect {
     type: 'heal';
     formula: 'flat';
+    value: number;
+}
+/**
+ * Proactive protection (Ward): permanently raises the target's maximum health
+ * for the match AND grants the same amount as current health. Unlike a heal it
+ * is never wasted on a full-health ally — the design point is that you cast it
+ * BEFORE the ally wades in, not as reactive triage (which Heal/Purify already
+ * do better).
+ */
+export interface GrantMaxHealthEffect {
+    type: 'grant_max_health';
     value: number;
 }
 export interface ApplyStatusEffect {
@@ -60,6 +71,22 @@ export interface PullEffect {
     direction: 'toward_caster';
     distance: number;
 }
+/**
+ * The caster relocates to the targeted tile (Leaping Slam). Unlike MOVE this is
+ * a LEAP: it ignores intervening units entirely — only the destination must be
+ * empty and in range. Range is the ability's own `range` (Manhattan, matching
+ * cast validation), NOT the unit's movementRange, and it costs the action, not
+ * the move.
+ *
+ * Resolved ONCE at cast time, before targets are hit — never per-target — so
+ * the blast lands around where the caster ends up. Pair it with `areaShape:
+ * 'ring'` and the caster settles in the calm eye of its own blast; with a
+ * chebyshev shape it would blow itself up, which is why the shape is the design
+ * and not a nicety (see AC_REWORK.md, the Barbarian placement-freedom problem).
+ */
+export interface MoveSelfEffect {
+    type: 'move_self';
+}
 export interface ModifyCooldownEffect {
     type: 'modify_cooldown';
     abilitySlug: string;
@@ -72,7 +99,7 @@ export interface LifestealEffect {
     value: number;
     healValue: number;
 }
-export type AbilityEffect = DamageEffect | HealEffect | ApplyStatusEffect | RemoveStatusEffect | PushEffect | PullEffect | ModifyCooldownEffect | LifestealEffect;
+export type AbilityEffect = DamageEffect | HealEffect | ApplyStatusEffect | RemoveStatusEffect | PushEffect | PullEffect | MoveSelfEffect | ModifyCooldownEffect | LifestealEffect | GrantMaxHealthEffect;
 export interface AbilityDefinition {
     id: UUID;
     slug: string;
@@ -87,6 +114,18 @@ export interface AbilityDefinition {
     canTargetAlly?: boolean;
     /** AOE abilities only: when true, allies are excluded from the blast (e.g. Roar). Default false — existing AOEs (Whirlwind, Firestorm, Piercing) hit allies unchanged. */
     excludeAllies?: boolean;
+    /** AOE abilities: 'orthogonal' only hits the 4 cardinal neighbors (Manhattan ≤ 1). Default 'chebyshev' includes all 8 surrounding tiles. */
+    areaShape?: 'chebyshev' | 'orthogonal' | 'ring';
+    /** Applied to the CASTER after the ability resolves (e.g. Blizzard's
+     * self-freeze). Note: a status applied during the caster's own turn is
+     * decremented at that turn's end, so durationTurns 2 skips exactly 1 turn. */
+    selfStatus?: {
+        statusSlug: string;
+        stacks: number;
+        durationTurns: number;
+    };
+    /** When true, each damage effect rolls the fortune meter independently (e.g. Twin Strike's two daggers). Shield still blocks the first hit and is consumed; subsequent hits resolve normally. */
+    isMultiHit?: boolean;
     effects: AbilityEffect[];
 }
 export interface StatusEffectDefinition {

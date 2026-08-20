@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.round1LockedUnitId = round1LockedUnitId;
 exports.isTurnComplete = isTurnComplete;
 exports.precheckTurn = precheckTurn;
+exports.dryRunTurnSoFar = dryRunTurnSoFar;
 const turnProcessor_js_1 = require("./turnProcessor.js");
 /** Round 1: once any action is queued, only that unit may act this turn. */
 function round1LockedUnitId(actions) {
@@ -49,5 +50,42 @@ function precheckTurn(state, actions, submittingPlayerId, playerOneId, playerTwo
         // the judge rather than blocking the player on a client-side defect.
         return { ok: true };
     }
+}
+/**
+ * Resolve the turn's actions SO FAR, without ending the turn.
+ *
+ * The offline client needs the engine's real outcome the moment an attack is
+ * made — dice, damage, statuses, cooldowns — while the turn is still open.
+ * It used to ask for this by calling processTurn() with the in-progress action
+ * list, but processTurn requires the list to END with an END_TURN action and
+ * throws 'Turn must end with an END_TURN action' otherwise. That threw on
+ * EVERY player action: the dry run silently failed (a console.warn), so the
+ * player's own attacks never showed a die, never logged a roll line, and never
+ * applied HP/status/cooldown until the turn was submitted. Fable's turns were
+ * unaffected because they replay real server/engine events.
+ *
+ * Appending a synthetic END_TURN would be wrong — that finalizes the turn,
+ * decrementing status durations and advancing initiative a turn early. So use
+ * the same incremental primitives the ROD server path uses (beginTurn opens the
+ * turn, applyAction resolves each action) and simply never finalize.
+ *
+ * Returns the accumulated events and the post-actions state. Throws
+ * TurnValidationError exactly as the real submit would.
+ */
+function dryRunTurnSoFar(state, actions, submittingPlayerId, playerOneId, playerTwoId, abilityMap) {
+    const gameActions = actions.filter((a) => a.type !== 'END_TURN');
+    const events = [];
+    let ws = state;
+    if (!ws.turnContext) {
+        const begun = (0, turnProcessor_js_1.beginTurn)(ws, gameActions[0] ?? null, submittingPlayerId, playerOneId, playerTwoId);
+        events.push(...begun.events);
+        ws = begun.updatedState;
+    }
+    for (const action of gameActions) {
+        const applied = (0, turnProcessor_js_1.applyAction)(ws, action, submittingPlayerId, playerOneId, playerTwoId, abilityMap);
+        events.push(...applied.events);
+        ws = applied.updatedState;
+    }
+    return { events, updatedState: ws };
 }
 //# sourceMappingURL=turnBuilder.js.map

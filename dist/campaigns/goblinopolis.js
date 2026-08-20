@@ -5,15 +5,19 @@ exports.goblinopolisCampaign = {
     slug: 'goblinopolis',
     title: 'The Bell of Goblinopolis',
     blurb: 'A stolen town bell, a trail of blue ribbons, and a goblin city that insists the theft was perfectly legal.',
+    enemyFactionName: 'Bluecaps',
     free: true,
     startNode: 'intro',
     // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
-    rewardSkin: { classSlug: 'ranger', skinId: 'bluecap_pathfinder', name: 'Bluecap Pathfinder' },
+    // '40101' = Set 1 Ranger-Goblin. This is literally the Bluecap Pathfinder
+    // enemy's own art (see `bluecap_pathfinder` below) — the closest possible
+    // fit of the four reassignments.
+    rewardSkin: { classSlug: 'ranger', skinId: '40101', name: 'Bluecap Pathfinder' },
     achievements: [
         { slug: 'complete_easy', name: 'Bell-Road Beginner', description: 'Complete The Bell of Goblinopolis on Easy.' },
         { slug: 'complete_medium', name: 'Buckbridge Deputy', description: 'Complete The Bell of Goblinopolis on Medium.' },
         { slug: 'complete_hard', name: 'Goblinopolis Envoy', description: 'Complete The Bell of Goblinopolis on Hard.' },
-        { slug: 'complete_nightmare', name: 'Ringer of the Impossible Bell', description: 'Complete The Bell of Goblinopolis on Nightmare.' },
+        { slug: 'complete_nightmare', name: 'Ringer of the Impossible Bell', description: 'Complete The Bell of Goblinopolis on Nightmare — unlocks the Bluecap Pathfinder skin.' },
         { slug: 'ribbon_reader', name: 'Follow the Blue', description: 'Track the goblin band by its carefully tied blue ribbons.' },
         { slug: 'polite_pursuit', name: 'Properly Announced', description: 'Begin a goblin pursuit with excellent manners and impressive volume.' },
         { slug: 'cart_before_horse', name: 'Cart Before Horse', description: 'Stop to rescue Dave Tanner\'s runaway supply cart.' },
@@ -23,100 +27,182 @@ exports.goblinopolisCampaign = {
         // ── Goblins (ranger/rogue/sorcerer chassis → goblin art) ──
         bluecap_scout: {
             baseClass: 'ranger', name: 'Bluecap Scout',
-            maxHealth: 36, armorClass: 15,
+            maxHealth: 36, armorClass: 10,
             nightmare: { acBonus: 1 },
         },
         bellrunner: {
-            // A goblin courier who does nothing but sprint with stolen goods. Fast, fragile.
+            // A goblin courier who does nothing but sprint with stolen goods. Fast,
+            // and fragile RELATIVE to the orcs (47-62) — but not one-shot fragile:
+            // at 35 HP he died to whoever reached him first, which made e3's clock
+            // the only difficulty lever, and a clock is one number shared by all four
+            // difficulties. At 52 he takes a focused turn or two, so hpScale bites.
             baseClass: 'rogue', name: 'Bellrunner',
-            maxHealth: 35, armorClass: 13, movementRange: 5,
+            maxHealth: 52, armorClass: 8, movementRange: 5,
             nightmare: { acBonus: 1 },
         },
         sparkcap_slinger: {
             baseClass: 'sorcerer', name: 'Sparkcap Slinger',
-            maxHealth: 36, armorClass: 14, specialSlug: 'ignite',
+            maxHealth: 36, armorClass: 9, specialSlug: 'ignite',
             nightmare: { passiveFlags: ['warded'] },
         },
         bluecap_pathfinder: {
             baseClass: 'ranger', name: 'Bluecap Pathfinder',
-            maxHealth: 40, armorClass: 16, specialSlug: 'pinning',
+            maxHealth: 40, armorClass: 11, specialSlug: 'pinning',
             nightmare: { acBonus: 1 },
         },
         // ── Orcs (barbarian/cleric/fighter chassis → orc art) ──
         // Goblinopolis hires orcs as its heavy muscle; blue sashes mark the city's service.
         kettlehelm_orc: {
             baseClass: 'fighter', name: 'Kettlehelm Orc',
-            maxHealth: 47, armorClass: 17, specialSlug: 'shield_bash',
+            maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
             nightmare: { hpBonus: 6, passiveFlags: ['immovable'] },
         },
         mudboot_bruiser: {
             baseClass: 'barbarian', name: 'Mudboot Bruiser',
-            maxHealth: 46, armorClass: 14, specialSlug: 'shockwave',
+            maxHealth: 46, armorClass: 9, specialSlug: 'shockwave',
             nightmare: { hpBonus: 5 },
         },
         patchcoat_mender: {
             // Orc field-medic in a coat of stitched-together sashes; keeps the brutes standing.
             baseClass: 'cleric', name: 'Patchcoat Mender',
-            maxHealth: 46, armorClass: 16, specialSlug: 'heal',
+            maxHealth: 46, armorClass: 11, specialSlug: 'heal',
             nightmare: { hpBonus: 4 },
         },
         ironbell_warden: {
             // The gate-brute of Goblinopolis — an immovable orc who guards the bell-arch.
             baseClass: 'fighter', name: 'Ironbell Warden',
-            maxHealth: 62, armorClass: 17,
+            maxHealth: 62, armorClass: 12,
             passiveFlags: ['immovable'],
             nightmare: { hpBonus: 6 },
         },
         warboss_gurm: {
             // BOSS. A huge orc who swapped both towns' bells to start a war he could rule.
+            // D2: as a KILL-TARGET the other three become ignorable, so he needs to
+            // be a fight on his own (same lesson as Lantern's Grubnash, who was burst
+            // down in 17 turns at 80 HP). The round-9 deadline is his differentiator —
+            // no undying here, the clock is what stops you taking your time.
             baseClass: 'barbarian', name: 'Warboss Gurm',
-            maxHealth: 84, armorClass: 15, specialSlug: 'shockwave',
+            maxHealth: 105, armorClass: 10, specialSlug: 'shockwave',
             passiveFlags: ['immovable'],
-            nightmare: { hpBonus: 6 },
+            nightmare: { hpBonus: 8 },
         },
     },
     encounters: {
-        // e1 — Bridge Ambush: a tutorial pincer, two goblin stragglers front and rear.
+        // ═══ D2 RETROFIT (2026-08-17) ═══════════════════════════════════════════
+        // Palette: e1 kill-all · e2 carve · e3 race · e4 rooms · e5 boss.
+        // Five distinct types, none consecutive (CAMPAIGNS.md §8). Goblinopolis is
+        // the DOORS/ROOMS + RACE showcase of the free three.
+        // ════════════════════════════════════════════════════════════════════════
+        // e1 — Bridge Ambush (kill-all). Tutorial: no terrain, no objective.
         e1: {
             level: 1,
-            enemies: ['bluecap_scout', 'bellrunner', 'bluecap_scout'],
-            enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 5 }, { x: 6, y: 4 }],
+            enemies: ['bluecap_scout', 'sparkcap_slinger', 'bluecap_scout'],
+            enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
             playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
             noSpecials: true,
-            // Tutorial softening; easy is allowed above band (near-certain first win).
-            hpScaleOverride: { easy: 0.6, medium: 1.15, hard: 1.4, nightmare: 1.45 },
+            hpScaleOverride: { easy: 1.13, medium: 1.46, hard: 1.54, nightmare: 1.76 },
         },
-        // e2 — Blue-Ribbon Tollgate: an orc guard + orc bruiser up front, goblin fire behind.
+        // e2 — Blue-Ribbon Tollgate (carve). A barricade line with the toll gap on
+        // the direct lane: melee walks straight through, ranged fights for sight.
+        // Cover deliberately sits ON THE APPROACH, never screening the slinger —
+        // the lesson that cost three passes on Lantern e2.
         e2: {
             level: 2,
+            terrain: {
+                blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }],
+            },
             enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'sparkcap_slinger'],
             enemyPlacement: [{ x: 6, y: 2 }, { x: 4, y: 3 }, { x: 6, y: 5 }],
             playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-            hpScaleOverride: { easy: 0.98, medium: 1.05, hard: 1.3, nightmare: 1.4 },
+            hpScaleOverride: { easy: 1.08, medium: 1.30, hard: 1.50, nightmare: 1.50 },
         },
-        // e3 — Amrun Ferry Relay: a four-role formation with an orc healer in the back.
+        // e3 — Amrun Ferry Relay (race). The Bellrunner is carrying the clapper to
+        // the ferry: drop HIM before it casts off. Three guards exist only to cost
+        // you the turns you do not have.
         e3: {
             level: 3,
-            enemies: ['bluecap_pathfinder', 'bellrunner', 'kettlehelm_orc', 'patchcoat_mender'],
-            enemyPlacement: [{ x: 1, y: 1 }, { x: 6, y: 5 }, { x: 3, y: 2 }, { x: 4, y: 1 }],
-            playerPlacement: [{ x: 3, y: 6 }, { x: 4, y: 6 }, { x: 2, y: 5 }, { x: 5, y: 5 }],
-            hpScaleOverride: { easy: 0.6, medium: 0.76, hard: 0.95, nightmare: 0.95 },
+            objective: {
+                text: 'Clear the relay before the ferry casts off (11 rounds)',
+                win: [{ kind: 'all_enemies_dead' }],
+                loss: [{ kind: 'round_reached', round: 11 }],
+            },
+            // No terrain: the stall wall existed only to deny a shooting lane to the
+            // courier, which the new win condition makes moot — and it taxed melee's
+            // approach for nothing. Open ground, tight clock.
+            enemies: ['bellrunner', 'bluecap_pathfinder', 'kettlehelm_orc', 'patchcoat_mender'],
+            enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 4 }],
+            playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
+            // ⚠ A kill-all ON A TIGHT CLOCK is chaotic to tune. Enemy HP converts
+            // directly into rounds-to-clear, so clock and scale multiply, and cells
+            // sitting near the "can we finish in time" threshold flip in bulk:
+            //   8 rounds: 0.73 -> 81% · 0.93 -> 56% · 1.10 -> 16% · 1.30 -> 0.2%
+            //   9 rounds: easy 70% BELOW medium 75%, and 0.98 -> 54% vs 0.99 -> 25%
+            // — a 28-point swing on 0.01 of scale, plus non-monotonic difficulty.
+            // Resolution: make the clock GENEROUS (11 rounds) so it catches only
+            // genuinely slow parties, and let hpScale carry difficulty the normal
+            // way. The deadline stays a real pressure the objective text shapes play
+            // around, without being the thing that decides most matches.
+            // Interpolated from measured points on the 11-round clock:
+            //   0.85 -> 88% · 1.10 -> 37% · 1.35 -> 8% · 1.55 -> 0.5%
+            // (~50 points per 0.25 — still steeper than an untimed encounter.)
+            // NOTE nightmare sits BELOW hard on purpose: every enemy here carries a
+            // `nightmare` block (acBonus / hpBonus / warded), and measurement showed
+            // those alone are worth ~28 points (hard 0.98 -> 54% vs nightmare
+            // 0.99 -> 25%). The scale must give that back.
+            hpScaleOverride: { easy: 0.85, medium: 0.93, hard: 1.01, nightmare: 0.97 },
         },
-        // e4 — The Bell-Arch: an immovable orc warden blocks the city gate, goblins flank.
+        // e4 — The Bell-Arch (rooms). THE flagship: the gate is room 1, the city
+        // behind it is room 2. Clear the arch, step through the door, and the board
+        // re-carves with the party entering from the gate edge — HP, cooldowns and
+        // the round counter all carry across.
         e4: {
             level: 4,
-            enemies: ['ironbell_warden', 'sparkcap_slinger', 'bellrunner', 'bluecap_scout'],
-            enemyPlacement: [{ x: 4, y: 2 }, { x: 6, y: 1 }, { x: 2, y: 1 }, { x: 5, y: 4 }],
-            playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
-            hpScaleOverride: { easy: 0.68, medium: 0.74, hard: 0.92, nightmare: 1.05 },
+            rooms: [
+                {
+                    // Room 1: the arch itself. Wall stubs make it a gate, not a field.
+                    terrain: { blocked: [{ x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 6 }] },
+                    enemies: ['ironbell_warden', 'sparkcap_slinger'],
+                    enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
+                    exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+                    doorMode: 'on_clear',
+                },
+                {
+                    // Room 2: inside the ribbon-strung city. The party enters at the gate
+                    // edge and the garrison is already formed up.
+                    terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+                    // Garrison size is a COARSE lever here — dropping this from 3 to 2
+                    // swung medium 53% -> 98%. Keep three and tune with hpScale; HP and
+                    // cooldowns carry across the door, so this room is fought with
+                    // whatever room 1 left the party.
+                    enemies: ['kettlehelm_orc', 'bellrunner', 'bluecap_scout'],
+                    enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 1 }],
+                    entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+                },
+            ],
+            playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
+            // Two-room attrition is harsher than the raw enemy count suggests, so
+            // these run well below a single-room encounter's scales.
+            hpScaleOverride: { easy: 0.73, medium: 0.78, hard: 0.90, nightmare: 1.00 },
         },
-        // e5 — Gurm's War-Camp: the boss orc, kept standing by his mender, ringed by guards.
+        // e5 — Gurm's War-Camp (boss, on a clock). Kill-target on Gurm, with the
+        // story's own threat as the loss condition: he rings the last bell standing
+        // and the war starts. Retires the boss+healer gate — the mender is a
+        // problem you may solve or outrun, not a scripted prerequisite.
         e5: {
             level: 5,
+            terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+            objective: {
+                text: 'Bring down Warboss Gurm before he rings the bell (9 rounds)',
+                win: [{ kind: 'units_dead', enemyKeys: ['warboss_gurm'] }],
+                loss: [{ kind: 'round_reached', round: 9 }],
+            },
+            // Court pulled two tiles closer. At a 6-tile gap melee sat at 20-39%
+            // (walled at easy/medium) while ranged plinked Gurm at 100% — start
+            // distance is the dominant spread driver and a far start bricks melee.
             enemies: ['warboss_gurm', 'patchcoat_mender', 'kettlehelm_orc', 'bluecap_pathfinder'],
-            enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 1 }],
+            enemyPlacement: [{ x: 4, y: 3 }, { x: 5, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 1 }],
             playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-            hpScaleOverride: { easy: 0.65, medium: 0.8, hard: 0.98, nightmare: 1.05 },
+            hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.17, nightmare: 1.18 },
         },
     },
     nodes: {
@@ -132,7 +218,7 @@ exports.goblinopolisCampaign = {
         },
         bridge_ambush_node: {
             kind: 'encounter', encounter: 'e1',
-            preText: 'Two goblin stragglers spring from opposite hedges. "No pursuit without a pursuit permit!" squeaks one. {mainName} has just enough time to wonder whether that is a real law before the daggers come out.',
+            preText: 'Two goblin stragglers spring from opposite hedges. "No pursuit without a pursuit permit!" squeaks one. {mainName} has just enough time to wonder whether that is a real law before an arrow whizzes past and a crackle of sorcerer-fire answers from the other side.',
             next: 'lv2',
         },
         lv2: { kind: 'levelup', level: 2, next: 'first_clue' },

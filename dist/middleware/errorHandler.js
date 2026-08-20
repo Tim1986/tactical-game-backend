@@ -4,10 +4,12 @@ exports.errorHandler = errorHandler;
 exports.notFoundHandler = notFoundHandler;
 const logger_js_1 = require("../utils/logger.js");
 const response_js_1 = require("../utils/response.js");
+const sentry_js_1 = require("../observability/sentry.js");
 function errorHandler(err, req, res, 
 // Express requires all 4 params even if next is unused
 _next) {
     logger_js_1.logger.error({ err, path: req.path, method: req.method }, 'Unhandled error');
+    (0, sentry_js_1.captureError)(err, { path: req.path, method: req.method });
     response_js_1.Errors.internal(res);
 }
 function notFoundHandler(req, res) {

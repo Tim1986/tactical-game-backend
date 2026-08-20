@@ -1,9 +1,5 @@
 /**
  * aiBrain.ts (v7) — AI decision-making for DungeonCombat, updated for:
- *  - FORTUNE METER (V5): deterministic hit prediction via willHit();
- *    per-(ability,target) gating (twin's two hits land or miss together);
- *    dodge-burn scoring for basics; specials NEVER fire into a known miss;
- *    deterministic next-attack danger model.
  *  - 8x8 CROSS BOARD: all board loops use BOARD_SIZE (see geometry.ts —
  *    BOARD_WIDTH=10 was a pre-existing engine bug, now fixed; this brain
  *    always used the correct 8x8 board and never needed BOARD_WIDTH/HEIGHT).
@@ -143,6 +139,55 @@ export declare const WEIGHTS: {
     aoeClusterAvoidance: number;
     /** How much the brain cares about standing in enemy threat range. */
     danger: number;
+    /**
+     * FIRST-STRIKE MODEL (v8): extra danger multiplier on plans that end inside
+     * enemy threat range WITHOUT attacking (a gifted first hit).
+     *
+     * SHIPPED AT 1.0 (DORMANT) — A/B sims (240 games/cell, new-vs-old, mirror
+     * comps incl. 2rogue+2ranger, plus a turtle-proxy opponent) showed every
+     * value above 1 LOSES: 3.0 dropped mirror win rate to ~33% and even
+     * underperformed against the turtle. Caution at the reach boundary cedes
+     * board space and tempo; the aggressor picks where to concentrate. The
+     * anti-bait work is done by unsupportedDangerMult instead. Knob + round
+     * decay kept for future tuning against real human data.
+     */
+    firstStrikeDangerMult: number;
+    /** Round at which the first-strike multiplier starts fading toward 1 —
+     *  someone has to blink or mirror matches stall forever. */
+    firstStrikeDecayStartRound: number;
+    /** Round at which the first-strike multiplier reaches 1 (base danger). */
+    firstStrikeDecayEndRound: number;
+    /**
+     * COORDINATED ADVANCE (v8): danger multiplier when NO living ally is within
+     * supportRadius of the evaluated tile. A lone unit inside enemy threat
+     * range is the overextension a waiting player collapses on ("let the AI
+     * come to you piecemeal" — the Gloomhaven bait). With a teammate in
+     * support range the same tile is a front line, at base danger.
+     *
+     * TUNING (A/B sims): us=2.0 + supportRadius 6 beats a turtle-proxy 66-88%
+     * across comps with NO regression vs the old aggressive brain (~50%
+     * mirrors). Radius 4 was too tight for melee trains (fighter engaging with
+     * backline 5-6 behind is supported in practice — allies arrive next turn)
+     * and cost 14 points in the physical mirror.
+     */
+    unsupportedDangerMult: number;
+    /** Manhattan radius within which an ally counts as supporting a tile (legacy
+     *  fallback, used when supportProjection is 0). */
+    supportRadius: number;
+    /**
+     * PROJECTION-BASED SUPPORT (v9): 1 = an ally supports a tile only if it
+     * could attack an enemy ADJACENT to that tile next turn (its move + basic
+     * range + 1). 0 = legacy flat supportRadius.
+     *
+     * Motivation (exploit battery, SpongeBaitBot): with the flat radius, a
+     * lone fighter round-1 charging into the enemy corner counted a cleric six
+     * tiles behind as "support" — a move-3 melee ally at distance 6 cannot
+     * project any force there next turn, and the corner wall collapsed on the
+     * charger piecemeal (48% bot wins on the melee mirror). Projection makes
+     * melee support tighter (5) and ranged support LONGER (9-10) than the old
+     * radius — support now means "can actually help", not "is near-ish".
+     */
+    supportProjection: number;
     /** Danger multiplier when the incoming expected damage could kill us. */
     dangerLethalMult: number;
     /** Pull toward closing the gap to attackable targets (per tile of gap). */
@@ -151,9 +196,6 @@ export declare const WEIGHTS: {
     approachHpBias: number;
     /** Bonus for chipping an enemy into an ally's execute (Kill Shot) threshold. */
     killShotSetup: number;
-    /** Value of an intentional basic attack into a guaranteed dodge — it
-     *  resets the meter, guaranteeing the NEXT attacker lands. */
-    dodgeBurn: number;
     /** Value of burning an enemy's shielded status with a cheap attack. */
     shieldBurn: number;
     /** Penalty for friendly-fire AOE consuming an ally's shield. */
@@ -166,8 +208,6 @@ export declare const WEIGHTS: {
     burningFactor: number;
     /** Base value of exposing a target (focus mark). */
     exposedBase: number;
-    /** Extra when exposing a target whose meter is about to dodge. */
-    exposedDodgeSteal: number;
     /** Value per tile an enemy is dragged toward us. */
     pullPerTile: number;
     /** Fraction of our reachable melee threat credited to a hostile pull. */
@@ -178,60 +218,41 @@ export declare const WEIGHTS: {
     moveTax: number;
     /** Assumed AC when estimating a unit's generic threat output. */
     referenceAC: number;
+    /**
+     * ENDGAME (round 11+): ending a turn farther (Manhattan) from the nearest
+     * enemy than it started costs the unit 1 HP (engine drain rule). The real
+     * cost is 1, but the penalty is slightly higher because the drain is
+     * deterministic while most danger the brain weighs against it is
+     * probabilistic — a certain loss should outweigh an equal expected loss.
+     */
+    endgameDrainPenalty: number;
 };
-/**
- * GAME RULE (not a heuristic): Charge is only legal during rounds 1-10.
- * After round 10 the AI must not generate Charge candidates.
- */
-export declare const CHARGE_MAX_ROUND = 10;
-/**
- * LONG-RUN hit rate for a blockable ability — kept ONLY for generic threat
- * estimates (threatPerTurn vs referenceAC, killValue), where the fortune
- * meter's long-run average equals the old d20 rate: (26-AC)/20 = 1-(AC-6)/20.
- * NEVER use this for scoring a specific attack — use willHit().
- */
+/** Long-run hit rate for a blockable ability. Complement of missChanceOf. */
 export declare function hitChance(armorClass: number): number;
-/** Fortune meter increment per blockable attack (engine formula, V5). */
-export declare function missChanceOf(target: UnitInstance): number;
-/** Does this ability go through the fortune meter at all? Mirrors the
- *  engine's needsHitRoll exactly (damage OR lifesteal effects gate it). */
-export declare function abilityUsesFortune(def: AbilityDefinition): boolean;
-/**
- * DETERMINISTIC hit prediction (V5): the next fortune-gated attack on this
- * target hits iff meter + missChance stays below 1. 'exposed' targets are
- * always hit (attacks bypass the meter while the status is active).
- */
-export declare function willHit(target: UnitInstance, def: AbilityDefinition): boolean;
-/** Would this unit dodge the next fortune-gated attack against it? */
-export declare function wouldDodgeNext(unit: UnitInstance): boolean;
 /** Patch 1.0.04: the freeze/immobilize status slug is 'frozen' everywhere. */
 export declare function isFrozen(u: UnitInstance): boolean;
 export declare function isRooted(u: UnitInstance): boolean;
 /**
- * TICK-FIRST SEMANTICS (V3 feedback, Bug A): the engine calls
- * tickUnitStatusEffects(actingUnit) BEFORE validating its actions, so a
- * status at 1 turn remaining expires before it can block anything the unit
- * does this turn. A status only blocks the unit's OWN next action when it
- * has >= 2 turns remaining. Planning with the presence-based check was the
- * root cause of the V4 round-1 "Must commit a unit" errors: a Fear-rooted(1)
- * unit CAN legally move on its commit turn, but the brain refused to try.
- *
- * (Presence-based hasStatus/isFrozen/isRooted remain correct for scoring
- * OTHER units — e.g. a frozen enemy is skipped in initiative on presence.)
+ * END-OF-TURN TICK SEMANTICS: the engine applies only burning DoT at the start
+ * of a unit's turn and decrements status durations at the END of that turn, so
+ * a debuff is in force for every turn it is present (turnsRemaining >= 1). A
+ * rooted/weakened unit with any remaining duration is blocked/affected on its
+ * next turn. (Was `>= 2` under the old tick-first engine, which expired a
+ * 1-turn debuff before it could bite.)
  */
 export declare function willBlockOwnAction(u: UnitInstance, slug: string): boolean;
+/**
+ * True if this unit's own start-of-turn status tick will kill it. The engine
+ * ticks the acting unit's statuses BEFORE processing its actions (burning:
+ * 5 dmg/stack), so a doomed unit's queued actions would all throw
+ * "Unit is dead" — it must submit bare END_TURN (round 2+) and cannot be
+ * chosen for a round-1 commitment.
+ */
+export declare function willDieToOwnTick(u: UnitInstance): boolean;
 export interface TurnPlan {
     score: number;
     actions: TurnAction[];
 }
-/**
- * Plan the best full turn for `unit`: some combination of movement, one
- * ability use (or Charge), in either order, ending with END_TURN.
- *
- * `mustAct` forces the plan to contain at least one unit-identifying action
- * (needed in Round 1 where END_TURN commits a unit and the engine must know
- * which one was selected).
- */
 export declare function planBestTurn(state: MatchState, unit: UnitInstance, myPlayerId: string, map: Map<string, AbilityDefinition>, mustAct?: boolean): TurnPlan;
 /**
  * Defensive normalization for DB-seeded ability definitions. Effect JSON

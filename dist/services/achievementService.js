@@ -33,24 +33,45 @@ async function getAchievementsForUser(userId) {
 // ---------------------------------------------------------------
 async function evaluateAchievements(userId) {
     // Load all definitions and already-earned slugs in parallel
-    const [defsResult, earnedResult, statsResult] = await Promise.all([
+    const [defsResult, earnedResult, statsResult, streakResult] = await Promise.all([
         (0, pool_js_1.query)(`SELECT slug, name, condition FROM achievement_definitions`),
         (0, pool_js_1.query)(`SELECT achievement_slug FROM user_achievements WHERE user_id = $1`, [userId]),
         (0, pool_js_1.query)(`SELECT
          u.elo,
-         COUNT(m.id)                                          AS match_count,
-         COUNT(m.id) FILTER (WHERE m.winner_id = $1)         AS win_count
+         COUNT(m.id)                                                          AS match_count,
+         COUNT(m.id) FILTER (WHERE m.winner_id = $1)                         AS win_count,
+         COUNT(m.id) FILTER (WHERE m.winner_id = $1 AND m.is_pve = FALSE)    AS pvp_win_count
        FROM users u
        LEFT JOIN matches m
          ON (m.player_one_id = $1 OR m.player_two_id = $1) AND m.status = 'completed'
        WHERE u.id = $1
        GROUP BY u.elo`, [userId]),
+        // Last 5 completed PvP matches in order — used to compute win streaks
+        (0, pool_js_1.query)(`SELECT winner_id
+       FROM matches
+       WHERE (player_one_id = $1 OR player_two_id = $1)
+         AND status = 'completed'
+         AND is_pve = FALSE
+       ORDER BY completed_at DESC
+       LIMIT 5`, [userId]),
     ]);
     const earnedSlugs = new Set(earnedResult.rows.map((r) => r.achievement_slug));
-    const stats = statsResult.rows[0] ?? { elo: 1200, match_count: '0', win_count: '0' };
+    const stats = statsResult.rows[0] ?? { elo: 1200, match_count: '0', win_count: '0', pvp_win_count: '0' };
     const matchCount = parseInt(stats.match_count, 10);
     const winCount = parseInt(stats.win_count, 10);
+    const pvpWinCount = parseInt(stats.pvp_win_count, 10);
     const elo = stats.elo;
+    // Compute streak lengths from the ordered result (DESC = most recent first)
+    const recentPvp = streakResult.rows;
+    function pvpStreakAtLeast(n) {
+        if (recentPvp.length < n)
+            return false;
+        for (let i = 0; i < n; i++) {
+            if (recentPvp[i].winner_id !== userId)
+                return false;
+        }
+        return true;
+    }
     const newlyUnlocked = [];
     for (const def of defsResult.rows) {
         if (earnedSlugs.has(def.slug))
@@ -63,11 +84,17 @@ async function evaluateAchievements(userId) {
         else if (cond.type === 'win_count' && cond.threshold !== undefined) {
             qualifies = winCount >= cond.threshold;
         }
+        else if (cond.type === 'win_count_pvp' && cond.threshold !== undefined) {
+            qualifies = pvpWinCount >= cond.threshold;
+        }
+        else if (cond.type === 'win_streak' && cond.threshold !== undefined) {
+            qualifies = pvpStreakAtLeast(cond.threshold);
+        }
         else if (cond.type === 'elo_reached' && cond.threshold !== undefined) {
             qualifies = elo >= cond.threshold;
         }
         else if (cond.type === 'pve_difficulty_clear') {
-            qualifies = false; // PvE system pending
+            qualifies = false;
         }
         else if (cond.type === 'leaderboard_top_n' && cond.n !== undefined) {
             qualifies = await (0, leaderboardService_js_1.isUserInTopN)(userId, cond.n);

@@ -41,7 +41,7 @@ const auth_js_1 = require("../middleware/auth.js");
 const response_js_1 = require("../utils/response.js");
 exports.matchmakingRouter = (0, express_1.Router)();
 exports.matchmakingRouter.use(auth_js_1.requireAuth);
-const EnterQueueSchema = zod_1.z.object({ teamId: zod_1.z.string().uuid('Invalid team ID') });
+const EnterQueueSchema = zod_1.z.object({ teamId: zod_1.z.string().uuid('Invalid team ID'), appVersion: zod_1.z.string().optional() });
 const ChallengeSchema = zod_1.z.object({ teamId: zod_1.z.string().uuid('Invalid team ID'), opponentId: zod_1.z.string().uuid('Invalid opponent ID') });
 exports.matchmakingRouter.post('/queue', async (req, res) => {
     const parsed = EnterQueueSchema.safeParse(req.body);
@@ -50,7 +50,7 @@ exports.matchmakingRouter.post('/queue', async (req, res) => {
         return;
     }
     try {
-        const result = await matchmakingService.enterQueue(req.user.id, parsed.data.teamId);
+        const result = await matchmakingService.enterQueue(req.user.id, parsed.data.teamId, parsed.data.appVersion);
         (0, response_js_1.sendSuccess)(res, { message: 'Entered matchmaking queue', position: result.position }, 201);
     }
     catch (err) {

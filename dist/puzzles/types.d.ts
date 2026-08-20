@@ -60,5 +60,13 @@ export interface PuzzleDefinition {
      * a third would go wide."). Never hide the script — fairness depends on it.
      */
     fateText: string;
+    /**
+     * Expert puzzles show FULL enemy detail on the intro (HP + abilities) because
+     * the solver's whole point is figuring out which info matters. Beginner/daily
+     * puzzles (the default, undefined/false) show enemies minimally — portrait,
+     * name, and the TARGET tag only — because for a first-contact "send it to a
+     * friend" puzzle, excess info is death. See PUZZLES_AND_INVITES.md "two poles".
+     */
+    expert?: boolean;
 }
 //# sourceMappingURL=types.d.ts.map

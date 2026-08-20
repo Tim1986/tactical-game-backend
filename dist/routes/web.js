@@ -30,14 +30,19 @@ function esc(s) {
 // ── /site-config.js — env-driven front-end config ──────────────────────────
 // Static HTML stays cacheable; the environment-specific bits live here.
 exports.webRouter.get('/site-config.js', (_req, res) => {
+    // Store URLs are pasted into env by hand — quietly strip any stray
+    // whitespace so a typo ("id 123") doesn't ship a broken store link.
+    const clean = (s) => (s || '').replace(/\s+/g, '');
     const cfg = {
-        appStoreUrl: index_js_1.config.web.appStoreUrl || '',
-        playStoreUrl: index_js_1.config.web.playStoreUrl || '',
-        downloadUrl: index_js_1.config.web.downloadFallbackUrl || '',
-        supportEmail: index_js_1.config.web.supportEmail || '',
+        appStoreUrl: clean(index_js_1.config.web.appStoreUrl),
+        playStoreUrl: clean(index_js_1.config.web.playStoreUrl),
+        downloadUrl: clean(index_js_1.config.web.downloadFallbackUrl),
+        supportEmail: (index_js_1.config.web.supportEmail || '').trim(),
     };
     res.type('application/javascript');
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    // no-store: this is env-driven config — a cached copy (Cloudflare defaults
+    // to hours at the edge) makes store-URL changes invisible for half a day.
+    res.setHeader('Cache-Control', 'no-store');
     res.send(`window.SITE_CONFIG = ${JSON.stringify(cfg)};`);
 });
 // ── POST /api/support — support form → Resend ──────────────────────────────
