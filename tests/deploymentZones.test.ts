@@ -98,3 +98,64 @@ describe('buildInitialState puts the armies on opposite sides', () => {
     }
   });
 });
+
+/**
+ * QA F-20 / F-21 — buildInitialState must survive a placement or customization
+ * the board cannot honour. The zone rule (x 0–2) and the board's SHAPE are
+ * separate constraints, and a corner like (0,0) satisfies the first while
+ * violating the second: the shipped bug deployed a unit onto a tile the board
+ * does not have, where it rendered off-board and could never be selected.
+ */
+describe('malformed placements and customizations', () => {
+  const slugs = ['fighter', 'rogue', 'cleric', 'wizard'];
+  const isCornerTile = (x: number, y: number) =>
+    (x === 0 || x === 7) && (y === 0 || y === 7);
+
+  it('relocates a unit placed on a removed corner', () => {
+    const corners = [{ x: 0, y: 0 }, { x: 0, y: 7 }, { x: 1, y: 3 }, { x: 2, y: 4 }];
+    const state = buildInitialState('p1', 'p2', units(slugs), units(slugs), corners, [], 'p1');
+    for (const u of state.units) {
+      expect(isCornerTile(u.position.x, u.position.y)).toBe(false);
+      expect(u.position.x).toBeGreaterThanOrEqual(0);
+      expect(u.position.x).toBeLessThanOrEqual(7);
+      expect(u.position.y).toBeGreaterThanOrEqual(0);
+      expect(u.position.y).toBeLessThanOrEqual(7);
+    }
+    expect(state.units).toHaveLength(8);
+  });
+
+  it('relocates a unit placed off the board entirely', () => {
+    const offBoard = [{ x: 99, y: 99 }, { x: -3, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 6 }];
+    const state = buildInitialState('p1', 'p2', units(slugs), units(slugs), offBoard, [], 'p1');
+    for (const u of state.units) {
+      expect(u.position.x).toBeGreaterThanOrEqual(0);
+      expect(u.position.x).toBeLessThanOrEqual(7);
+      expect(u.position.y).toBeGreaterThanOrEqual(0);
+      expect(u.position.y).toBeLessThanOrEqual(7);
+      expect(isCornerTile(u.position.x, u.position.y)).toBe(false);
+    }
+  });
+
+  it('never stacks units when the saved placement repeats a tile', () => {
+    const dupes = [{ x: 1, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 1 }];
+    const state = buildInitialState('p1', 'p2', units(slugs), units(slugs), dupes, [], 'p1');
+    const keys = state.units.map((u) => `${u.position.x},${u.position.y}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('falls back to the class default when the special slug is unknown', () => {
+    const defs = units(slugs);
+    const state = buildInitialState(
+      'p1', 'p2', defs, defs, [], [], 'p1',
+      [{ unitId: 'fighter', specialSlug: 'not_a_real_special', passiveSlug: null } as never],
+    );
+    const fighter = state.units.find((u) => u.definitionSlug === 'fighter')!;
+    expect(fighter.abilities).not.toContain('not_a_real_special');
+    // Whatever it settled on must be a real ability of that class.
+    const def = defs.find((d) => d.slug === 'fighter')!;
+    for (const slug of fighter.abilities) {
+      expect([...def.abilities, ...def.specialOptions]).toContain(slug);
+    }
+    expect(Object.keys(fighter.cooldowns)).not.toContain('not_a_real_special');
+  });
+});

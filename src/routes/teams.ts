@@ -5,6 +5,7 @@ import * as userService from '../services/userService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sendSuccess, Errors } from '../utils/response.js';
 import { FABLE_TEAMS } from '../config/fableTeams.js';
+import { isCorner } from '../game/boardUtils.js';
 
 export const teamRouter = Router();
 
@@ -18,7 +19,13 @@ teamRouter.use(requireAuth);
 // is what the team builder enforces and what planPlacement()/mirrorPlacement()
 // assume. Accepting x=3 let an API caller save a team deployed mid-board — and a
 // mirrored P2 team at x=4, right on the human zone's edge.
-const PlacementSchema = z.array(z.object({ x: z.number().int().min(0).max(2), y: z.number().int().min(0).max(7) })).length(4).optional();
+// The zone rule and the board's SHAPE are separate constraints. x<=2 alone still
+// admitted (0,0) and (0,7) — two of the four removed corner tiles — so a saved
+// team could deploy a unit onto a tile the board does not have (QA F-20).
+const PlacementSchema = z.array(
+  z.object({ x: z.number().int().min(0).max(2), y: z.number().int().min(0).max(7) })
+    .refine(p => !isCorner(p.x, p.y), { message: 'placement cannot be a removed corner tile' }),
+).length(4).optional();
 
 const UnitCustomizationSchema = z.object({
   specialSlug: z.string(),

@@ -11,6 +11,44 @@ import {
   BOARD_WIDTH, BOARD_HEIGHT,
 } from '../types/matchState.js';
 import { UnitDefinition, UnitCustomization } from '../types/index.js';
+import { isInBounds } from './boardUtils.js';
+
+/**
+ * Replace any placement the board cannot actually hold with a legal one.
+ *
+ * The deployment-zone rule (x 0–2) and the board's SHAPE are separate
+ * constraints, and only the first was ever enforced on saved placements — so
+ * (0,0) passed validation despite being one of the four removed corner tiles.
+ * A unit deployed there rendered outside the board and could not be selected,
+ * while still counting as a live unit (QA F-20). Duplicates are caught here for
+ * the same reason: two units on one tile is not a state the board can show.
+ *
+ * Positions are sanitized in the P1 frame, before any mirroring — the mirror
+ * (x -> BOARD_WIDTH-1-x) maps legal tiles to legal tiles and corners to corners,
+ * so doing it here fixes both sides.
+ */
+function sanitizePlacements(requested: BoardPosition[], count: number): BoardPosition[] {
+  const taken = new Set<string>();
+  const key = (p: BoardPosition) => `${p.x},${p.y}`;
+  const legalZoneTiles: BoardPosition[] = [];
+  for (let x = 0; x <= 2; x++) {
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+      if (isInBounds({ x, y })) legalZoneTiles.push({ x, y });
+    }
+  }
+  const out: BoardPosition[] = [];
+  for (let i = 0; i < count; i++) {
+    const want = requested[i];
+    const usable = want && isInBounds(want) && !taken.has(key(want));
+    const pos = usable ? want : legalZoneTiles.find(t => !taken.has(key(t)));
+    // legalZoneTiles holds 22 tiles against at most 4 units, so the fallback
+    // can only be undefined if the board constants change underneath us.
+    const chosen = pos ?? { x: 1, y: 1 };
+    taken.add(key(chosen));
+    out.push(chosen);
+  }
+  return out;
+}
 
 export const FABLE_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
 export const FABLE_HP_SCALE = { easy: 0.8, medium: 0.9, hard: 1.0, nightmare: 1.1 } as const;
@@ -30,7 +68,15 @@ export function buildUnitInstance(
   customization?: UnitCustomization,
 ): UnitInstance {
   const basicSlug = def.abilities.find((s) => !def.specialOptions.includes(s)) ?? def.abilities[0];
-  const specialSlug = customization?.specialSlug ?? def.specialOptions[0] ?? def.abilities[1];
+  // A customization's special must be one this class actually offers. An unknown
+  // slug used to be carried into the live unit verbatim (QA F-21), producing a
+  // unit whose ability list named something the engine has no definition for;
+  // fall back to the class default instead, matching how an unknown UNIT slug is
+  // dropped rather than fielded.
+  const chosenSpecial = customization?.specialSlug;
+  const specialSlug = (chosenSpecial && def.specialOptions.includes(chosenSpecial))
+    ? chosenSpecial
+    : def.specialOptions[0] ?? def.abilities[1];
   const abilities = basicSlug && specialSlug ? [basicSlug, specialSlug] : def.abilities;
 
   const passive = customization?.passiveSlug
@@ -78,8 +124,11 @@ export function buildInitialState(
   // x=1 and deploy player two INSIDE player one's zone, stacked on their units.
   const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
   const p2Fallback: BoardPosition[] = [{ x: 1, y: 0 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 1, y: 6 }];
-  const p1Positions = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
-  const p2Raw       = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
+  const p1Requested = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
+  const p2Requested = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
+  // Sanitize before mirroring — see sanitizePlacements.
+  const p1Positions = sanitizePlacements(p1Requested, p1Units.length);
+  const p2Raw       = sanitizePlacements(p2Requested, p2Units.length);
   const p2Positions = p2Raw.map(pos => ({ x: BOARD_WIDTH - 1 - pos.x, y: pos.y }));
 
   const units: UnitInstance[] = [
