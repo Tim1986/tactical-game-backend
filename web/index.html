@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dungeon Combat: Initiative — Tabletop Tactics, No Table</title>
-  <meta name="description" content="Build your party, choose your specials, and outsmart real opponents in quick tactical duels. Turn-based tactics inspired by game night. No pay-to-win, ever." />
+  <meta name="description" content="Build your party of four from eight classes, choose your specials, and outsmart real opponents in five-minute tactical duels. Daily puzzles, story campaigns, and a tournament-grade AI. No pay-to-win, ever." />
   <link rel="canonical" href="https://dungeoncombat.org/" />
   <link rel="icon" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <meta name="theme-color" content="#f1e7c9" />
   <meta property="og:title" content="Dungeon Combat: Initiative" />
   <meta property="og:description" content="Tabletop-style tactics duels. Build your party, outsmart friends. No pay-to-win." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dungeoncombat.org/" />
-  <!-- OG/Twitter image URLs must be ABSOLUTE — social scrapers don't resolve
-       relative paths. This file (og-image.png) still needs to be generated:
-       open /og-template in a browser and screenshot it at 1200x630. -->
+  <!-- OG/Twitter image URLs must be ABSOLUTE — social scrapers don't resolve relative paths. -->
   <meta property="og:image" content="https://dungeoncombat.org/assets/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -23,6 +23,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Dungeon Combat: Initiative",
+    "url": "https://dungeoncombat.org/",
+    "image": "https://dungeoncombat.org/assets/og-image.png",
+    "description": "Turn-based party tactics. Build a party of four from eight classes and duel real opponents on an 8x8 board. Daily puzzles, story campaigns, offline AI. No pay-to-win.",
+    "genre": ["Strategy", "Tactics", "Board"],
+    "gamePlatform": ["iOS", "Android"],
+    "applicationCategory": "Game",
+    "operatingSystem": "iOS, Android",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "playMode": ["SinglePlayer", "MultiPlayer"],
+    "publisher": { "@type": "Organization", "name": "Dungeon Combat", "url": "https://dungeoncombat.org/" }
+  }
+  </script>
 </head>
 <body>
   <header class="topbar">
@@ -32,10 +49,10 @@
         <span class="name">Dungeon Combat</span>
       </a>
       <nav class="navlinks">
+        <a href="/#classes">Classes</a>
         <a href="/#features">Features</a>
         <a href="/support.html">Support</a>
-        <a href="/privacy.html">Privacy</a>
-        <a href="/#get">Get the Game</a>
+        <a class="navlinks-cta" href="/#get">Get the Game</a>
       </nav>
     </div>
   </header>
@@ -45,13 +62,54 @@
       <div class="wrap hero-grid">
         <div>
           <span class="eyebrow">Turn-based party tactics</span>
-          <h1>Dungeon Combat</h1>
+          <h1>Dungeon Combat <span class="sub">Initiative</span></h1>
           <p class="lede">Remember the best part of game night — the moment your plan came together? That moment, in five-minute tactical duels on your phone.</p>
+          <div class="proof-strip">
+            <span>8 classes</span><i>·</i>
+            <span>5-minute duels</span><i>·</i>
+            <span>Daily puzzles</span><i>·</i>
+            <span>No pay-to-win</span>
+          </div>
           <div class="stores" id="get" data-stores></div>
         </div>
         <div class="hero-art">
-          <img src="/assets/icon.png" alt="Dungeon Combat app icon" />
+          <img class="hero-icon" src="/assets/icon.png" alt="Dungeon Combat — a torchlit dungeon door above a checkered battle floor" />
+          <img class="hero-hover hero-hover-l" src="/assets/portraits/fighter.png" alt="" aria-hidden="true" />
+          <img class="hero-hover hero-hover-r" src="/assets/portraits/warlock.png" alt="" aria-hidden="true" />
         </div>
+      </div>
+    </section>
+
+    <section class="band band-dark" id="classes">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Choose your four</h2>
+          <p>Eight classes. Each picks one special and one passive, so your Cleric is not my Cleric — and your opponent won't know your build until it hits them.</p>
+        </div>
+        <div class="classes-grid">
+          <figure class="class-card"><img src="/assets/portraits/fighter.png" alt="Fighter class portrait" loading="lazy" /><figcaption><h3>Fighter</h3><p>The line that holds. Shield bashes, second winds, a wall of steel.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/barbarian.png" alt="Barbarian class portrait" loading="lazy" /><figcaption><h3>Barbarian</h3><p>Ground-shaking slams that punish anyone who stands too close.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/ranger.png" alt="Ranger class portrait" loading="lazy" /><figcaption><h3>Ranger</h3><p>Punishes from six tiles out. Pin them down, pick them apart.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/rogue.png" alt="Rogue class portrait" loading="lazy" /><figcaption><h3>Rogue</h3><p>Finds the opening. Twin strikes, thrown daggers, executions.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/cleric.png" alt="Cleric class portrait" loading="lazy" /><figcaption><h3>Cleric</h3><p>Keeps the party standing — heals, wards, and purifying light.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/wizard.png" alt="Wizard class portrait" loading="lazy" /><figcaption><h3>Wizard</h3><p>Freezes the key piece, and the enemy plan falls apart.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/sorcerer.png" alt="Sorcerer class portrait" loading="lazy" /><figcaption><h3>Sorcerer</h3><p>Sets the board alight with burns that keep on ticking.</p></figcaption></figure>
+          <figure class="class-card"><img src="/assets/portraits/warlock.png" alt="Warlock class portrait" loading="lazy" /><figcaption><h3>Warlock</h3><p>Drags you where you don't want to be. Fear, grasp, drain.</p></figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>How a duel plays</h2>
+          <p>Easy to learn in one match. The depth comes from what your opponent might do.</p>
+        </div>
+        <ol class="steps">
+          <li class="step"><span class="step-n">I</span><h3>Draft your party</h3><p>Pick four classes, their specials and passives, and your opening formation.</p></li>
+          <li class="step"><span class="step-n">II</span><h3>Take initiative</h3><p>Units alternate on the initiative track. Move, strike, or spend your once-a-match special at the perfect moment.</p></li>
+          <li class="step"><span class="step-n">III</span><h3>Break their line</h3><p>Push, root, freeze, and burn. Position is everything — last party standing wins.</p></li>
+        </ol>
       </div>
     </section>
 
@@ -59,19 +117,9 @@
       <div class="wrap">
         <div class="section-head">
           <h2>Every turn is a plan</h2>
-          <p>An 8×8 grid, initiative order, and eight classes with choices that matter. Skill decides — not your wallet.</p>
+          <p>An 8×8 board, an initiative track, and choices that matter. Skill decides — not your wallet.</p>
         </div>
         <div class="features">
-          <div class="card">
-            <div class="ico">🛡️</div>
-            <h3>Build your party</h3>
-            <p>Eight classes, each with meaningful passive and special choices. Your cleric is not my cleric.</p>
-          </div>
-          <div class="card">
-            <div class="ico">♟️</div>
-            <h3>True tactics</h3>
-            <p>Pushes, roots, burns, line-of-play mind games on an 8×8 grid. Position is everything.</p>
-          </div>
           <div class="card">
             <div class="ico">⚔️</div>
             <h3>Duel real people</h3>
@@ -89,9 +137,37 @@
           </div>
           <div class="card">
             <div class="ico">📜</div>
-            <h3>Campaigns</h3>
-            <p>Story-driven encounters against orc and goblin warbands. Free chapter to start.</p>
+            <h3>Story campaigns</h3>
+            <p>Lead a band of heroes through orc and goblin territory. Three campaigns free.</p>
           </div>
+          <div class="card">
+            <div class="ico">♟️</div>
+            <h3>True tactics</h3>
+            <p>Pushes, roots, burns, line-of-sight mind games. Every tile matters.</p>
+          </div>
+          <div class="card">
+            <div class="ico">📖</div>
+            <h3>An honest rulebook</h3>
+            <p>Every rule is written down in-app and machine-checked against the engine. No hidden math.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screenshots: drop files into /assets/screenshots/ (shot-1.png … shot-5.png).
+         The section stays hidden until shot-1.png exists on the server. -->
+    <section class="band" id="screens" hidden>
+      <div class="wrap">
+        <div class="section-head">
+          <h2>See the board</h2>
+          <p>Straight from the game — no mockups.</p>
+        </div>
+        <div class="shots">
+          <img src="/assets/screenshots/shot-1.png" alt="A duel in progress on the 8×8 board" loading="lazy" />
+          <img src="/assets/screenshots/shot-2.png" alt="Building a party in the team builder" loading="lazy" />
+          <img src="/assets/screenshots/shot-3.png" alt="A story campaign encounter" loading="lazy" />
+          <img src="/assets/screenshots/shot-4.png" alt="The daily puzzle" loading="lazy" />
+          <img src="/assets/screenshots/shot-5.png" alt="Victory screen" loading="lazy" />
         </div>
       </div>
     </section>
@@ -101,6 +177,36 @@
         <div class="promise">
           <h2>No pay-to-win. Ever.</h2>
           <p>We sell content — campaigns and character skins — never power. Every fight is decided by the plan you bring to the board.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="faq">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Questions, answered</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Is it free?</summary>
+            <p>Yes — download and duel for free. We sell optional story campaigns and character skins. Nothing you can buy affects a fight.</p>
+          </details>
+          <details>
+            <summary>What platforms?</summary>
+            <p>iPhone, iPad, and Android phones and tablets.</p>
+          </details>
+          <details>
+            <summary>Can I play offline?</summary>
+            <p>Yes. Practice against Fable, play story campaigns, and solve the daily puzzle without a connection. Online duels need one, naturally.</p>
+          </details>
+          <details>
+            <summary>How long is a match?</summary>
+            <p>Around five minutes. Long enough for a plan, short enough for a queue.</p>
+          </details>
+          <details>
+            <summary>Do I have to know tabletop RPGs?</summary>
+            <p>Not at all. If you can plan two moves ahead, you can play. The dice add drama, not homework.</p>
+          </details>
         </div>
       </div>
     </section>

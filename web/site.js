@@ -31,6 +31,15 @@
     holder.appendChild(storeBadge({ glyph: '▶', small: 'Get it on', big: 'Google Play', href: cfg.playStoreUrl }));
   });
 
+  // Screenshots band — hidden in the markup until real screenshots exist on
+  // the server. Probe the first file; reveal the section only if it loads.
+  var screens = document.getElementById('screens');
+  if (screens) {
+    var probe = new Image();
+    probe.onload = function () { screens.hidden = false; };
+    probe.src = '/assets/screenshots/shot-1.png';
+  }
+
   // Support email links
   var email = cfg.supportEmail || '';
   document.querySelectorAll('[data-support-email]').forEach(function (el) {
