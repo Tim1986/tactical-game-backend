@@ -1680,6 +1680,46 @@ export function planBestTurn(
     if (hi - lo < WEIGHTS.corneredDangerSpread) dangerScale = 0;
   }
 
+  // LAST-PAIR STANDOFF (2026-08-20): the cornered fallback above only fires
+  // when danger is UNIFORM across every reachable tile — a unit with room to
+  // keep its distance is never "cornered", so two last survivors who cannot
+  // reach each other this turn both hold, forever. Measured: ~1.7% of
+  // brain-vs-brain games deadlock this way (rogue mirrors worst, highest
+  // movement = widest gap between reach and separation), running past turn
+  // 1500 with neither unit moving. The engine's Endgame drain (END-2) does
+  // not break it: it punishes RETREATING, and holding is explicitly safe.
+  //
+  // In a 1v1 where nobody can strike this turn, caution has no upside —
+  // there is no ally to wait for and no reinforcement coming, so waiting
+  // changes nothing except the turn counter. Zero the danger term and let
+  // the approach term close the gap; whoever the geometry favors still
+  // fights on action value once contact is made.
+  if (allies.length === 1 && enemies.length === 1 && moveTiles.length > 0 && dangerScale > 0) {
+    /** Longest range among a unit's READY damaging abilities (0 = none). */
+    const strikeRange = (u: UnitInstance): number => {
+      let best = -1;
+      for (const slug of u.abilities) {
+        if (!abilityReady(u, slug)) continue;
+        const def = map.get(slug);
+        if (!def) continue;
+        if (!def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal')) continue;
+        if (def.range > best) best = def.range;
+      }
+      return best;
+    };
+    /** Could `a` land a damaging hit on `b` this turn (move included)? */
+    const canStrike = (a: UnitInstance, b: UnitInstance): boolean => {
+      const r = strikeRange(a);
+      if (r < 0) return false;
+      const from = willBlockOwnAction(a, 'rooted')
+        ? [a.position]
+        : [a.position, ...reachableTiles(a, state.units, a.movementRange, state.terrain)];
+      return from.some((pos) => manhattanDistance(pos, b.position) <= r);
+    };
+    const foe = enemies[0];
+    if (!canStrike(unit, foe) && !canStrike(foe, unit)) dangerScale = 0;
+  }
+
   // CAMPAIGN objective (A3): posture follows the objective.
   //  - Party surviving to a round: caution up (living IS winning).
   //  - Party racing a deadline: caution down (stalling IS losing).
