@@ -11,6 +11,7 @@ import { matchRouter } from './routes/matches.js';
 import { matchmakingRouter } from './routes/matchmaking.js';
 import { challengeRouter } from './routes/challenges.js';
 import { achievementRouter } from './routes/achievements.js';
+import { puzzleRouter } from './routes/puzzles.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { versionRouter } from './routes/version.js';
 import { webRouter, WEB_ROOT, webNotFound } from './routes/web.js';
@@ -64,6 +65,9 @@ export function createApp(): express.Application {
   app.use('/matchmaking', apiLimiter, requireAppVersion, matchmakingRouter);
   app.use('/challenges', apiLimiter, requireAppVersion, challengeRouter);
   app.use('/achievements', apiLimiter, achievementRouter);
+  // No requireAppVersion: puzzle progress is a personal record, and an outdated
+  // client must not silently lose a streak while waiting to update.
+  app.use('/puzzles', apiLimiter, puzzleRouter);
   app.use('/leaderboard', apiLimiter, leaderboardRouter);
   app.use('/version', apiLimiter, versionRouter);
   // API paths get a JSON 404; everything else gets the branded web 404.
