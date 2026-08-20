@@ -72,11 +72,15 @@ export function buildInitialState(
   p2Customizations?: UnitCustomization[],
   fableHpScale = 1,
 ): MatchState {
+  // Both fallbacks are authored in the P1 frame (x 0–2), because p2Raw — every
+  // source of it, planPlacement() and a team's saved placement alike — is in the
+  // P1 frame and gets mirrored below. A P2-frame fallback (x=6) would mirror to
+  // x=1 and deploy player two INSIDE player one's zone, stacked on their units.
   const p1Fallback: BoardPosition[] = [{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }];
-  const p2Fallback: BoardPosition[] = [{ x: 6, y: 0 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 6 }];
+  const p2Fallback: BoardPosition[] = [{ x: 1, y: 0 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 1, y: 6 }];
   const p1Positions = p1Placement.length >= p1Units.length ? p1Placement : p1Fallback;
   const p2Raw       = p2Placement.length >= p2Units.length ? p2Placement : p2Fallback;
-  const p2Positions = p2Raw.map(pos => ({ x: 7 - pos.x, y: pos.y }));
+  const p2Positions = p2Raw.map(pos => ({ x: BOARD_WIDTH - 1 - pos.x, y: pos.y }));
 
   const units: UnitInstance[] = [
     ...p1Units.map((def, i) => buildUnitInstance(def, playerOneId, p1Positions[i], p1Customizations?.[i])),

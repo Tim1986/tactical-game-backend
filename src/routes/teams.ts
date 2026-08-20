@@ -14,7 +14,11 @@ teamRouter.use(requireAuth);
 // Input schemas
 // ---------------------------------------------------------------
 
-const PlacementSchema = z.array(z.object({ x: z.number().int().min(0).max(3), y: z.number().int().min(0).max(7) })).length(4).optional();
+// x max is 2, not 3: the deployment zone is the left three COLUMNS (x 0–2), which
+// is what the team builder enforces and what planPlacement()/mirrorPlacement()
+// assume. Accepting x=3 let an API caller save a team deployed mid-board — and a
+// mirrored P2 team at x=4, right on the human zone's edge.
+const PlacementSchema = z.array(z.object({ x: z.number().int().min(0).max(2), y: z.number().int().min(0).max(7) })).length(4).optional();
 
 const UnitCustomizationSchema = z.object({
   specialSlug: z.string(),

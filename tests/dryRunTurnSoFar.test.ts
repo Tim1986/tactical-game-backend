@@ -84,9 +84,16 @@ describe('dryRunTurnSoFar — mid-turn dry run for the offline client', () => {
   it('move-then-attack accumulates both actions', () => {
     const st = mkState();
     const rg = unitOf(st, 'ranger');
-    const foe = st.units.find((u) => u.ownerPlayerId === FABLE_PLAYER_ID)!;
     (st as any).rollLog = [];
     const dest = { x: rg.position.x + 1, y: rg.position.y };
+    // Nearest foe, measured from where the ranger ENDS UP. The armies deploy on
+    // opposite sides (x 0-2 vs x 5-7), so the first foe in unit order is not
+    // necessarily inside arrow's range-6 Manhattan reach.
+    const foe = st.units
+      .filter((u) => u.ownerPlayerId === FABLE_PLAYER_ID)
+      .sort((a, b) =>
+        (Math.abs(a.position.x - dest.x) + Math.abs(a.position.y - dest.y)) -
+        (Math.abs(b.position.x - dest.x) + Math.abs(b.position.y - dest.y)))[0];
     const actions: TurnAction[] = [
       { type: 'MOVE', unitInstanceId: rg.instanceId, destination: dest } as TurnAction,
       { type: 'USE_ABILITY', unitInstanceId: rg.instanceId, abilitySlug: 'arrow', target: foe.position } as TurnAction,
