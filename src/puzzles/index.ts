@@ -77,8 +77,9 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // 2026-08-21: freeze and grasp had quietly reached 30% each, and the solver
   // cannot see that because it scores one puzzle at a time).
   //
-  // Answer tally, 22 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
-  // bolt-the-blocker 2 · purify 1 · cold_snap 1 · sword 1 · (016 tbd).
+  // Answer tally, 23 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
+  // bolt-the-blocker 2 · purify 1 · cold_snap 1 · longshot-the-healer 1 ·
+  // sword 1 · (016 tbd).
   // ⛔ NO new freeze or grasp answers until the rotation reaches ~40.
   PUZZLE_007, // pull              → grasp
   PUZZLE_015, // tempo/heal        → freeze
@@ -92,6 +93,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_024, // camouflage        → grasp (picker; default is a decoy)
   PUZZLE_032, // passive synergy   → COLD SNAP  ← first passive puzzle
   PUZZLE_026, // blocked path      → arrow (the blocker)
+  PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)  ← first of both
   PUZZLE_013, // pull              → grasp
   PUZZLE_027, // tempo/self-heal   → freeze
   PUZZLE_029, // friendly fire     → bolt (the weaker shot)
