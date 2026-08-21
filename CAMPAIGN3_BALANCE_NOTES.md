@@ -1,10 +1,70 @@
-# The Unlit Beacon — balance pass, session notes (Opus 5, 2026-08-20)
+# The Unlit Beacon — balance pass, session notes (Opus 5)
 
 Work-in-progress notes for the campaign-3 balance pass
 (`CAMPAIGN_BALANCING.md` operating procedure, design at
-`mobile/CAMPAIGN3_DESIGN.md` §6.4–6.5). **Stopped mid-pass to cut a build.**
+`mobile/CAMPAIGN3_DESIGN.md` §6.4–6.5).
 
-## STATUS IN ONE LINE
+Sessions: 1 (2026-08-20) runtime verification · 2 (2026-08-21) §6.4 close-out +
+type-table scales, hit the engine blocker · 3 (2026-08-21) blocker fixed,
+structural pass on e2/e6, measured scales for all 12 → **41/48 in band**.
+
+## STATUS IN ONE LINE (session 3, 2026-08-21)
+
+**41 of 48 cells in band.** The engine blocker is FIXED, e2's catastrophe is
+fixed, and every encounter now carries measured scales. `RESULT` is still FAIL:
+7 cells remain, and 3 of them need STRUCTURE, not numbers. Latest battery
+artifact: `balance_runs/unlitbeacon_pass3_200g.json`.
+
+| enc | easy | med | hard | nm | |
+|---|---|---|---|---|---|
+| e1 | 93 | 67 | 65 | 32 | ✓ |
+| e2 | 91 | 71 | 56 | 31* | *nm solvability: best party 36% (<40) |
+| e3 | 75* | 78 | 73* | 70* | **FLAT — structural** |
+| e4 | 91 | 79 | 56 | 50* | nm overshot; wants ~1.12 |
+| e5 | 81 | 73 | 50 | 37 | ✓ |
+| e6 | 93 | 76 | 80* | 83* | **structural — spread** |
+| e7 | 82 | 78 | 51 | 25 | ✓ |
+| e8 | 86 | 70 | 49 | 25 | ✓ |
+| e9 | 88 | 73 | 56 | 52* | **structural — survive is scale-inert up here** |
+| e10 | 91 | 69 | 58 | 36 | ✓ |
+| e11 | 82 | 77 | 52 | 29 | ✓ (all rungs ≥0.89, see cliff note) |
+| e12 | 84 | 72 | 50* | 28 | *hard: WALL for ranged (spread) |
+
+Bands: easy 80–95 · medium 65–80 · hard 45–65 · nightmare 15–45.
+
+### THE 7 REMAINING CELLS, and the lever each needs
+
+1. **e3 easy/hard/nm — FLAT (75/78/73/70).** Barely moves with scale across the
+   whole range, because you win by STANDING on two tiles, not by killing. Per
+   the tuning table a `hold` needs its guards standing ON the marks — e3's
+   pikemen start beside the bridgeheads, not on them. This is a placement/design
+   fix. `ranged` is also walled on easy.
+2. **e6 hard/nm (80/83) — SPREAD, not mean.** The clock (added this session)
+   made scale matter at all, but the `ranged` party crosses ~100% at EVERY
+   scale from 0.9 to 2.4 while melee gets walled — so scale moves the mean
+   without ranking the parties. Enemy START DISTANCE is the documented spread
+   lever; run `spreadSweep.ts`. Do NOT reach for scale again here.
+3. **e9 nightmare (52%).** Raising scale 2.90→3.40 barely moved it — the table
+   is right that `survive` difficulty lives in ROUND COUNT × WAVE SIZE, not HP.
+   Add a wave or a round rather than pushing scale past 3.
+4. **e4 nightmare (50%).** Pure overshoot from this session's centring edit
+   (1.25→1.05 was too big a step). Wants ~1.12. One-line fix, needs a battery.
+5. **e2 nightmare — solvability.** Mean 31% is in band but the best party only
+   reaches 36%, and nightmare requires one party ≥40%. Spread lever.
+6. **e12 hard — `ranged` walled.** Mean 50% is fine; one party is locked out.
+   Spread lever.
+
+### Session 3 also established
+- **e11 has a violent breakpoint CLIFF.** For the ranged party, scale 0.88 → 3%
+  and 0.89 → 100%, on a 100-game sample each — a 100-point swing in one step
+  (wisp HP 29→30 crosses a one-shot threshold and flips the brain's target
+  priority; melee is unaffected at every scale). **Every e11 rung must stay
+  ≥0.89.** The current 1.20/1.45/2.00/2.35 all clear it. Do not let a future
+  tune walk easy below that line — it silently makes EASY the hardest rung.
+- **Body count dominates at low level.** On e2, removing ONE enemy moved a cell
+  from 10% to 93%. Shape matters too: same 4 bodies with two of them present at
+  round 1 instead of arriving later cost ~25 points.
+
 
 **BLOCKED on an engine bug (see next section).** §6.4 runtime verification is
 now **5 of 5 COMPLETE**, and the type-table starting scales are in. But the
@@ -180,17 +240,20 @@ where to look first, nothing more:
 
 ## NEXT STEPS, in order
 
-1. **UNBLOCK e8** — the engine fix above, or an owner ruling. Nothing below can
-   start until `--smoke` reports 0 validation errors. (§6.4 item (d) is DONE.)
-2. Register `unlitbeacon` (needed for the sim — one-line toggle in
-   `src/campaigns/index.ts`, rationale comment is there).
-3. `npx tsx src/ai/campaignSim.ts unlitbeacon --smoke` — re-gate on current content.
-4. `npx tsx src/ai/campaignSim.ts unlitbeacon --games 200 --json results.json`
-   — budget for a long run; the doc warns a full battery is hours.
-5. Read the **mechanism histograms before the win rates** (doc's loop step 2):
-   is each encounter decided by its own objective?
-6. Structural pass → centring pass → final battery, per the doc's loop.
-7. Unregister again if stopping before `RESULT: PASS`; register permanently
-   once it passes.
-8. Then the rest of the per-campaign checklist: boss on nightmare first,
-   deviations documented, balance report in delivery notes, Fable review.
+1. **e3 structure** — stand the bridgehead guards ON the marks (tuning table's
+   `hold` rule). Re-battery; expect scale to start biting afterwards.
+2. **e6 spread** — `npx tsx src/ai/spreadSweep.ts`, move enemy start distance.
+   Scale is exhausted here; do not touch it again first.
+3. **e9 nightmare** — add a wave or a round, not scale.
+4. **e4 nightmare** — scale 1.05 → ~1.12 (pure overshoot).
+5. **e2 nightmare / e12 hard** — spread lever for the walled party.
+6. Re-run the 200-game battery until `RESULT: PASS`, saving `--json`.
+7. Boss encounters (e11, e12) simmed on nightmare first, then all difficulties.
+8. Verify e12's Standard-tile win path BY HAND (see the measurement-limit
+   section — the sim always takes the kill path and cannot answer it).
+9. Register `unlitbeacon` (one-line toggle in `src/campaigns/index.ts`) as the
+   LAST step, once the battery passes.
+10. Balance report into the campaign's delivery notes; Fable review.
+
+**Fable also owes a review of the engine fix in `5fc1aad`** (door-triggered
+waves moved to end-of-turn) — owner asked for that explicitly when approving it.

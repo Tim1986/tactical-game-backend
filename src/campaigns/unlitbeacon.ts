@@ -48,19 +48,14 @@
  */
 import { CampaignDefinition } from './types.js';
 
-// Starting scales come from CAMPAIGN_BALANCING.md's OBJECTIVE-TYPE TUNING
-// TABLE (~25 batteries of prior discovery), one constant per objective type
-// rather than a single uniform placeholder. These are FIRST GUESSES to be
-// measured, not final values — but starting from the type is what keeps a
-// campaign to ~3 passes instead of nine.
-const KILL_ALL_SCALE = { easy: 0.95, medium: 1.20, hard: 1.30, nightmare: 1.30 };
-const CARVE_SCALE    = { easy: 1.05, medium: 1.30, hard: 1.45, nightmare: 1.45 }; // kill-all +0.1–0.2
-const HOLD_SCALE     = { easy: 1.30, medium: 1.45, hard: 1.70, nightmare: 2.30 }; // needs BIG values
-const ESCAPE_SCALE   = { easy: 0.90, medium: 1.10, hard: 1.30, nightmare: 1.70 };
-const ROOMS_SCALE    = { easy: 0.75, medium: 0.80, hard: 0.90, nightmare: 1.00 };
-const SURVIVE_SCALE  = { easy: 0.95, medium: 1.00, hard: 1.05, nightmare: 1.10 }; // nearly inert; near default
-const ESCORT_SCALE   = { easy: 0.70, medium: 1.10, hard: 1.20, nightmare: 1.30 }; // nearly inert
-const BOSS_SCALE     = { easy: 0.70, medium: 0.90, hard: 1.00, nightmare: 1.20 };
+// PASS 1 scales, read off measured calibration walks (100 games/party/rung on
+// the 3 representative parties) rather than guessed. The objective-type table
+// in CAMPAIGN_BALANCING.md supplied the STARTING point; every value below is
+// where that encounter's own curve actually put the band midpoint, so they
+// deviate from the type defaults wherever the curve said so.
+//
+// Two encounters are NOT settled and carry provisional values — see the
+// per-encounter notes on e3 and e6, and CAMPAIGN3_BALANCE_NOTES.md.
 
 export const unlitBeaconCampaign: CampaignDefinition = {
   slug: 'unlitbeacon',
@@ -93,7 +88,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     // Battle goals (A7) — slug must match the encounter goal's slug.
     { slug: 'held_the_gate',      name: 'Held the Gate',       description: 'Turn back the first column without losing anyone.' },
     { slug: 'every_lantern_lit',  name: 'Every Lantern Lit',   description: 'Hold both bridgeheads with the whole party still standing.' },
-    { slug: 'dry_boots',          name: 'Dry Boots',           description: 'Cross the Frozen Mere by round 8.' },
+    { slug: 'dry_boots',          name: 'Dry Boots',           description: 'Cross the Frozen Mere by round 6.' },
     { slug: 'reader_unharmed',    name: 'The Reading',         description: 'Bring Tam to the parley ring without a scratch on anyone.' },
     { slug: 'answered_alone',     name: 'Answered Alone',      description: 'Let the hero personally strike down the Adjutant.' },
     { slug: 'whole_line_home',    name: 'The Whole Line Home', description: 'Face the Marshal and lose no one.' },
@@ -294,7 +289,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_gate', name: 'Held the Gate', description: 'Turn back the first column without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: KILL_ALL_SCALE,
+      hpScaleOverride: { easy: 0.95, medium: 1.10, hard: 1.22, nightmare: 1.32 },  // kill-all (tutorial: easy sits high on purpose)
     },
 
     // e2 — Barricade Night (siege). Hold the square while the column keeps
@@ -306,14 +301,14 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         theme: 'forest',
         blocked: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
       },
-      enemies: ['shelf_pikeman', 'volley_archer', 'frozen_watchman'],
+      enemies: ['shelf_pikeman', 'volley_archer'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 2 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 3 }, { x: 3, y: 4 }],
       waves: [
-        { enemies: ['vanguard', 'vanguard'], placement: [{ x: 7, y: 3 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 3 } },
-        { enemies: ['breaker', 'volley_archer'], placement: [{ x: 6, y: 0 }, { x: 7, y: 6 }], trigger: { on: 'round', round: 5 } },
+        { enemies: ['vanguard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 } },
+        { enemies: ['breaker'], placement: [{ x: 6, y: 0 }], trigger: { on: 'round', round: 5 } },
       ],
-      hpScaleOverride: KILL_ALL_SCALE,
+      hpScaleOverride: { easy: 0.80, medium: 0.90, hard: 1.00, nightmare: 1.00 },  // kill-all + waves, L2 party is body-count fragile
     },
 
     // e3 — The Two Bridges (hold). Cover both bridgeheads at once while
@@ -341,7 +336,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'every_lantern_lit', name: 'Every Lantern Lit', description: 'Hold both bridgeheads with the whole party still standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: HOLD_SCALE,
+      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.70, nightmare: 2.30 },  // hold — PROVISIONAL, curve is flat (see note)
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the
@@ -361,7 +356,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand'],
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: CARVE_SCALE,
+      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 1.05, nightmare: 1.05 },  // hazard carve
     },
 
     // e5 — The Icefall (carve). Fighting UP a frozen cascade: ice pillars,
@@ -380,7 +375,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['volley_archer', 'volley_archer', 'blizzard_wisp', 'frozen_watchman'],
       enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 6, y: 3 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 5 }],
-      hpScaleOverride: CARVE_SCALE,
+      hpScaleOverride: { easy: 0.72, medium: 0.85, hard: 1.00, nightmare: 1.02 },  // carve
     },
 
     // e6 — The Frozen Mere (novel). The drowned company rises through the
@@ -396,6 +391,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         }],
+        // The ice closes. Without a clock this encounter was completely
+        // hpScale-INERT (100% at every scale from 0.90 to 2.20): you win by
+        // ARRIVING, so a tankier drowned just lives longer. The clock is what
+        // makes bodies cost you rounds — CAMPAIGN_BALANCING.md's escape note.
+        // Set LATER than the 'Dry Boots' achievement (round 8) so that goal
+        // stays a real choice rather than a restatement of the loss.
+        loss: [{ kind: 'round_reached', round: 8 }],
       },
       enemies: ['meredrowned', 'meredrowned', 'meredrowned'],
       enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 4 }],
@@ -404,9 +406,9 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       goals: [
-        { slug: 'dry_boots', name: 'Dry Boots', description: 'Cross the Frozen Mere by round 8.', check: { kind: 'win_by_round', round: 8 } },
+        { slug: 'dry_boots', name: 'Dry Boots', description: 'Cross the Frozen Mere by round 6.', check: { kind: 'win_by_round', round: 6 } },
       ],
-      hpScaleOverride: ESCAPE_SCALE,
+      hpScaleOverride: { easy: 1.40, medium: 1.70, hard: 2.00, nightmare: 2.40 },  // escape — PROVISIONAL, spread problem (see note)
     },
 
     // e7 — The Storm Door (race). ONE unit must reach the Vigil's door before
@@ -431,7 +433,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['winters_voice', 'winters_voice', 'blizzard_wisp', 'blizzard_wisp'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 2 }, { x: 4, y: 5 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: ESCAPE_SCALE,
+      hpScaleOverride: { easy: 1.10, medium: 1.20, hard: 1.45, nightmare: 1.80 },  // escape with a clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor
@@ -473,7 +475,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: ROOMS_SCALE,
+      hpScaleOverride: { easy: 1.15, medium: 1.30, hard: 1.45, nightmare: 1.70 },  // rooms
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -499,7 +501,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         { enemies: ['vanguard', 'volley_archer'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 5 } },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: SURVIVE_SCALE,
+      hpScaleOverride: { easy: 1.30, medium: 1.80, hard: 2.40, nightmare: 3.40 },  // survive — scale-heavy; real lever is round/wave count
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -528,7 +530,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'reader_unharmed', name: 'The Reading', description: 'Bring Tam to the parley ring without a scratch on anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: ESCORT_SCALE,
+      hpScaleOverride: { easy: 1.15, medium: 1.40, hard: 1.60, nightmare: 1.85 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge
@@ -552,7 +554,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'answered_alone', name: 'Answered Alone', description: 'Let the hero personally strike down the Adjutant.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: BOSS_SCALE,
+      hpScaleOverride: { easy: 1.20, medium: 1.45, hard: 2.00, nightmare: 2.35 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
@@ -579,7 +581,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'whole_line_home', name: 'The Whole Line Home', description: 'Face the Marshal and lose no one.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: BOSS_SCALE,
+      hpScaleOverride: { easy: 1.45, medium: 1.65, hard: 1.95, nightmare: 2.30 },  // boss, dual-win
     },
   },
 

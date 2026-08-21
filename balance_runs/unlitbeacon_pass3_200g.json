@@ -1,0 +1,2669 @@
+{
+  "campaign": "unlitbeacon",
+  "contentHash": "d044e9d24908",
+  "smoke": false,
+  "gamesPerCell": 200,
+  "when": "2026-08-21T13:05:05.288Z",
+  "pass": false,
+  "outOfBand": [
+    "e2/nightmare: mean  31%, unsolvable (best  36%)",
+    "e3/easy: mean  75% out of band, WALL for: ranged",
+    "e3/hard: mean  73% out of band",
+    "e3/nightmare: mean  70% out of band",
+    "e4/nightmare: mean  50% out of band",
+    "e6/hard: mean  80% out of band",
+    "e6/nightmare: mean  83% out of band",
+    "e9/nightmare: mean  52% out of band",
+    "e12/hard: mean  50%, WALL for: ranged"
+  ],
+  "cells": [
+    {
+      "encounter": "e1",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 1,
+      "games": 200,
+      "playerWins": 196,
+      "winRate": 0.98,
+      "draws": 0,
+      "avgTurns": 34.58,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 196,
+        "L:Your party has fallen": 4
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 1,
+      "games": 200,
+      "playerWins": 184,
+      "winRate": 0.92,
+      "draws": 0,
+      "avgTurns": 32.47,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 184,
+        "L:Your party has fallen": 16
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 1,
+      "games": 200,
+      "playerWins": 175,
+      "winRate": 0.875,
+      "draws": 0,
+      "avgTurns": 37.685,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 175,
+        "L:Your party has fallen": 25
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 1,
+      "games": 200,
+      "playerWins": 170,
+      "winRate": 0.85,
+      "draws": 0,
+      "avgTurns": 38.01,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 170,
+        "L:Your party has fallen": 30
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 1,
+      "games": 200,
+      "playerWins": 120,
+      "winRate": 0.6,
+      "draws": 0,
+      "avgTurns": 39.395,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 120,
+        "L:Your party has fallen": 80
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 1,
+      "games": 200,
+      "playerWins": 114,
+      "winRate": 0.57,
+      "draws": 0,
+      "avgTurns": 43.62,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 114,
+        "L:Your party has fallen": 86
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 1,
+      "games": 200,
+      "playerWins": 156,
+      "winRate": 0.78,
+      "draws": 0,
+      "avgTurns": 41.155,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 156,
+        "L:Your party has fallen": 44
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 1,
+      "games": 200,
+      "playerWins": 118,
+      "winRate": 0.59,
+      "draws": 0,
+      "avgTurns": 39.63,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 82,
+        "W:Every enemy has fallen": 118
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 1,
+      "games": 200,
+      "playerWins": 116,
+      "winRate": 0.58,
+      "draws": 0,
+      "avgTurns": 44.345,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 116,
+        "L:Your party has fallen": 84
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 1,
+      "games": 200,
+      "playerWins": 95,
+      "winRate": 0.475,
+      "draws": 0,
+      "avgTurns": 44.725,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 105,
+        "W:Every enemy has fallen": 95
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 1,
+      "games": 200,
+      "playerWins": 60,
+      "winRate": 0.3,
+      "draws": 0,
+      "avgTurns": 42.86,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 140,
+        "W:Every enemy has fallen": 60
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e1",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 1,
+      "games": 200,
+      "playerWins": 36,
+      "winRate": 0.18,
+      "draws": 0,
+      "avgTurns": 47.15,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 36,
+        "L:Your party has fallen": 164
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 180,
+      "winRate": 0.9,
+      "draws": 0,
+      "avgTurns": 40.175,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 180,
+        "L:Your party has fallen": 20
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 196,
+      "winRate": 0.98,
+      "draws": 0,
+      "avgTurns": 27.88,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 196,
+        "L:Your party has fallen": 4
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 170,
+      "winRate": 0.85,
+      "draws": 0,
+      "avgTurns": 40.355,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 170,
+        "L:Your party has fallen": 30
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 142,
+      "winRate": 0.71,
+      "draws": 0,
+      "avgTurns": 43.235,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 142,
+        "L:Your party has fallen": 58
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 150,
+      "winRate": 0.75,
+      "draws": 0,
+      "avgTurns": 35.25,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 150,
+        "L:Your party has fallen": 50
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 134,
+      "winRate": 0.67,
+      "draws": 0,
+      "avgTurns": 44.45,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 134,
+        "L:Your party has fallen": 66
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 105,
+      "winRate": 0.525,
+      "draws": 0,
+      "avgTurns": 46.695,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 105,
+        "L:Your party has fallen": 95
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 134,
+      "winRate": 0.67,
+      "draws": 0,
+      "avgTurns": 35.065,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 66,
+        "W:Every enemy has fallen": 134
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 99,
+      "winRate": 0.495,
+      "draws": 0,
+      "avgTurns": 47.04,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 101,
+        "W:Every enemy has fallen": 99
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 64,
+      "winRate": 0.32,
+      "draws": 0,
+      "avgTurns": 47.125,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 136,
+        "W:Every enemy has fallen": 64
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 71,
+      "winRate": 0.355,
+      "draws": 0,
+      "avgTurns": 38.325,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 129,
+        "W:Every enemy has fallen": 71
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e2",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 49,
+      "winRate": 0.245,
+      "draws": 0,
+      "avgTurns": 47.36,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 151,
+        "W:Every enemy has fallen": 49
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 5,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 85,
+      "winRate": 0.425,
+      "draws": 29,
+      "avgTurns": 56.915,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "DRAW": 29,
+        "L:Your party has fallen": 86,
+        "W:Every enemy has fallen": 27,
+        "W:Every mark is held": 58
+      },
+      "drawFlag": true
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 165,
+      "winRate": 0.825,
+      "draws": 3,
+      "avgTurns": 34.62,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 163,
+        "L:Your party has fallen": 32,
+        "DRAW": 3,
+        "W:Every enemy has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 5,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 112,
+      "winRate": 0.56,
+      "draws": 11,
+      "avgTurns": 41.89,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 106,
+        "DRAW": 11,
+        "L:Your party has fallen": 77,
+        "W:Every enemy has fallen": 6
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 153,
+      "winRate": 0.765,
+      "draws": 5,
+      "avgTurns": 38.21,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 42,
+        "W:Every mark is held": 151,
+        "W:Every enemy has fallen": 2,
+        "DRAW": 5
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 5,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 72,
+      "winRate": 0.36,
+      "draws": 0,
+      "avgTurns": 42.97,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 128,
+        "W:Every mark is held": 72
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 163,
+      "winRate": 0.815,
+      "draws": 0,
+      "avgTurns": 32.99,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 163,
+        "L:Your party has fallen": 37
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 2,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 5,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 2,
+      "games": 200,
+      "playerWins": 40,
+      "winRate": 0.2,
+      "draws": 0,
+      "avgTurns": 45.82,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 160,
+        "W:Every mark is held": 40
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e3",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 2,
+      "games": 200,
+      "playerWins": 177,
+      "winRate": 0.885,
+      "draws": 0,
+      "avgTurns": 30.335,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every mark is held": 177,
+        "L:Your party has fallen": 23
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 3,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 25.58,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 3,
+      "games": 200,
+      "playerWins": 192,
+      "winRate": 0.96,
+      "draws": 0,
+      "avgTurns": 26.935,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 192,
+        "L:kill-all": 8
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 3,
+      "games": 200,
+      "playerWins": 155,
+      "winRate": 0.775,
+      "draws": 0,
+      "avgTurns": 38.57,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 155,
+        "L:kill-all": 45
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 3,
+      "games": 200,
+      "playerWins": 195,
+      "winRate": 0.975,
+      "draws": 0,
+      "avgTurns": 34.395,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 195,
+        "L:kill-all": 5
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 3,
+      "games": 200,
+      "playerWins": 193,
+      "winRate": 0.965,
+      "draws": 0,
+      "avgTurns": 28.665,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 193,
+        "L:kill-all": 7
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 3,
+      "games": 200,
+      "playerWins": 87,
+      "winRate": 0.435,
+      "draws": 0,
+      "avgTurns": 43.005,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 87,
+        "L:kill-all": 113
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 3,
+      "games": 200,
+      "playerWins": 167,
+      "winRate": 0.835,
+      "draws": 0,
+      "avgTurns": 37.57,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 167,
+        "L:kill-all": 33
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 3,
+      "games": 200,
+      "playerWins": 116,
+      "winRate": 0.58,
+      "draws": 0,
+      "avgTurns": 33.72,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 84,
+        "W:kill-all": 116
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 3,
+      "games": 200,
+      "playerWins": 52,
+      "winRate": 0.26,
+      "draws": 0,
+      "avgTurns": 43.72,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 148,
+        "W:kill-all": 52
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 3,
+      "games": 200,
+      "playerWins": 154,
+      "winRate": 0.77,
+      "draws": 0,
+      "avgTurns": 39.625,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 154,
+        "L:kill-all": 46
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 3,
+      "games": 200,
+      "playerWins": 117,
+      "winRate": 0.585,
+      "draws": 0,
+      "avgTurns": 34.05,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 83,
+        "W:kill-all": 117
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e4",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 3,
+      "games": 200,
+      "playerWins": 28,
+      "winRate": 0.14,
+      "draws": 0,
+      "avgTurns": 44.885,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 172,
+        "W:kill-all": 28
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 4,
+      "games": 200,
+      "playerWins": 165,
+      "winRate": 0.825,
+      "draws": 0,
+      "avgTurns": 49.825,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 165,
+        "L:kill-all": 35
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 4,
+      "games": 200,
+      "playerWins": 143,
+      "winRate": 0.715,
+      "draws": 0,
+      "avgTurns": 34.435,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 57,
+        "W:kill-all": 143
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 4,
+      "games": 200,
+      "playerWins": 175,
+      "winRate": 0.875,
+      "draws": 0,
+      "avgTurns": 42.815,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 175,
+        "L:kill-all": 25
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 4,
+      "games": 200,
+      "playerWins": 176,
+      "winRate": 0.88,
+      "draws": 0,
+      "avgTurns": 48.855,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 176,
+        "L:kill-all": 24
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 4,
+      "games": 200,
+      "playerWins": 100,
+      "winRate": 0.5,
+      "draws": 0,
+      "avgTurns": 38.61,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 100,
+        "W:kill-all": 100
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 4,
+      "games": 200,
+      "playerWins": 162,
+      "winRate": 0.81,
+      "draws": 0,
+      "avgTurns": 46.795,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 162,
+        "L:kill-all": 38
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 4,
+      "games": 200,
+      "playerWins": 144,
+      "winRate": 0.72,
+      "draws": 0,
+      "avgTurns": 54.64,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 56,
+        "W:kill-all": 144
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 4,
+      "games": 200,
+      "playerWins": 30,
+      "winRate": 0.15,
+      "draws": 0,
+      "avgTurns": 39.12,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 170,
+        "W:kill-all": 30
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 4,
+      "games": 200,
+      "playerWins": 126,
+      "winRate": 0.63,
+      "draws": 0,
+      "avgTurns": 50.44,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 74,
+        "W:kill-all": 126
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 4,
+      "games": 200,
+      "playerWins": 110,
+      "winRate": 0.55,
+      "draws": 0,
+      "avgTurns": 57.33,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 110,
+        "L:kill-all": 90
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 4,
+      "games": 200,
+      "playerWins": 30,
+      "winRate": 0.15,
+      "draws": 0,
+      "avgTurns": 39.945,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:kill-all": 170,
+        "W:kill-all": 30
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e5",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 4,
+      "games": 200,
+      "playerWins": 80,
+      "winRate": 0.4,
+      "draws": 0,
+      "avgTurns": 51.24,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:kill-all": 80,
+        "L:kill-all": 120
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 5,
+      "games": 200,
+      "playerWins": 191,
+      "winRate": 0.955,
+      "draws": 0,
+      "avgTurns": 43.93,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 191,
+        "L:The deadline passed": 9
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 5,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 32.38,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 194,
+        "W:Every enemy has fallen": 6
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 5,
+      "games": 200,
+      "playerWins": 168,
+      "winRate": 0.84,
+      "draws": 0,
+      "avgTurns": 44.015,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 167,
+        "L:The deadline passed": 32,
+        "W:Every enemy has fallen": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 5,
+      "games": 200,
+      "playerWins": 159,
+      "winRate": 0.795,
+      "draws": 0,
+      "avgTurns": 47.04,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 159,
+        "L:The deadline passed": 41
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 5,
+      "games": 200,
+      "playerWins": 199,
+      "winRate": 0.995,
+      "draws": 0,
+      "avgTurns": 34.9,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 196,
+        "L:The deadline passed": 1,
+        "W:Every enemy has fallen": 3
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 5,
+      "games": 200,
+      "playerWins": 98,
+      "winRate": 0.49,
+      "draws": 0,
+      "avgTurns": 47.705,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 98,
+        "L:The deadline passed": 102
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 5,
+      "games": 200,
+      "playerWins": 183,
+      "winRate": 0.915,
+      "draws": 0,
+      "avgTurns": 47.16,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 183,
+        "L:The deadline passed": 17
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 5,
+      "games": 200,
+      "playerWins": 197,
+      "winRate": 0.985,
+      "draws": 0,
+      "avgTurns": 36.125,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 197,
+        "L:The deadline passed": 3
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 5,
+      "games": 200,
+      "playerWins": 98,
+      "winRate": 0.49,
+      "draws": 0,
+      "avgTurns": 49.445,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 98,
+        "L:The deadline passed": 102
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 5,
+      "games": 200,
+      "playerWins": 177,
+      "winRate": 0.885,
+      "draws": 0,
+      "avgTurns": 49.645,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 177,
+        "L:The deadline passed": 23
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 5,
+      "games": 200,
+      "playerWins": 196,
+      "winRate": 0.98,
+      "draws": 0,
+      "avgTurns": 37.45,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 196,
+        "L:The deadline passed": 3,
+        "L:Your party has fallen": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e6",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 5,
+      "games": 200,
+      "playerWins": 122,
+      "winRate": 0.61,
+      "draws": 0,
+      "avgTurns": 50.96,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The whole party escaped": 122,
+        "L:The deadline passed": 78
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 6,
+      "games": 200,
+      "playerWins": 193,
+      "winRate": 0.965,
+      "draws": 0,
+      "avgTurns": 36.16,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 182,
+        "W:Every enemy has fallen": 11,
+        "L:Your party has fallen": 3,
+        "L:The deadline passed": 4
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 6,
+      "games": 200,
+      "playerWins": 147,
+      "winRate": 0.735,
+      "draws": 0,
+      "avgTurns": 42.855,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 120,
+        "L:The deadline passed": 40,
+        "W:You reached the goal": 27,
+        "L:Your party has fallen": 13
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 6,
+      "games": 200,
+      "playerWins": 152,
+      "winRate": 0.76,
+      "draws": 0,
+      "avgTurns": 46.165,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 138,
+        "L:The deadline passed": 47,
+        "W:Every enemy has fallen": 14,
+        "L:Your party has fallen": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 6,
+      "games": 200,
+      "playerWins": 176,
+      "winRate": 0.88,
+      "draws": 0,
+      "avgTurns": 39.185,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:The deadline passed": 22,
+        "W:You reached the goal": 176,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 6,
+      "games": 200,
+      "playerWins": 139,
+      "winRate": 0.695,
+      "draws": 0,
+      "avgTurns": 43.16,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:The deadline passed": 55,
+        "W:You reached the goal": 36,
+        "W:Every enemy has fallen": 103,
+        "L:Your party has fallen": 6
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 6,
+      "games": 200,
+      "playerWins": 152,
+      "winRate": 0.76,
+      "draws": 0,
+      "avgTurns": 46.465,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 128,
+        "L:The deadline passed": 46,
+        "W:Every enemy has fallen": 24,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 6,
+      "games": 200,
+      "playerWins": 146,
+      "winRate": 0.73,
+      "draws": 0,
+      "avgTurns": 41.82,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 146,
+        "L:The deadline passed": 45,
+        "L:Your party has fallen": 9
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 6,
+      "games": 200,
+      "playerWins": 42,
+      "winRate": 0.21,
+      "draws": 0,
+      "avgTurns": 47.98,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:The deadline passed": 122,
+        "W:Every enemy has fallen": 17,
+        "L:Your party has fallen": 36,
+        "W:You reached the goal": 25
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 6,
+      "games": 200,
+      "playerWins": 118,
+      "winRate": 0.59,
+      "draws": 0,
+      "avgTurns": 50.06,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 118,
+        "L:The deadline passed": 75,
+        "L:Your party has fallen": 7
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 6,
+      "games": 200,
+      "playerWins": 94,
+      "winRate": 0.47,
+      "draws": 0,
+      "avgTurns": 45.675,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 23,
+        "L:The deadline passed": 83,
+        "W:You reached the goal": 94
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 6,
+      "games": 200,
+      "playerWins": 9,
+      "winRate": 0.045,
+      "draws": 0,
+      "avgTurns": 50.135,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 57,
+        "L:The deadline passed": 134,
+        "W:You reached the goal": 9
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e7",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 6,
+      "games": 200,
+      "playerWins": 49,
+      "winRate": 0.245,
+      "draws": 0,
+      "avgTurns": 53.57,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You reached the goal": 49,
+        "L:The deadline passed": 138,
+        "L:Your party has fallen": 13
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 7,
+      "games": 200,
+      "playerWins": 200,
+      "winRate": 1,
+      "draws": 0,
+      "avgTurns": 64.075,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 7,
+      "games": 200,
+      "playerWins": 147,
+      "winRate": 0.735,
+      "draws": 0,
+      "avgTurns": 68.85,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 53,
+        "W:Every enemy has fallen": 147
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 7,
+      "games": 200,
+      "playerWins": 167,
+      "winRate": 0.835,
+      "draws": 2,
+      "avgTurns": 79.035,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 167,
+        "DRAW": 2,
+        "L:Your party has fallen": 31
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 7,
+      "games": 200,
+      "playerWins": 193,
+      "winRate": 0.965,
+      "draws": 2,
+      "avgTurns": 70.61,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 193,
+        "L:Your party has fallen": 5,
+        "DRAW": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 7,
+      "games": 200,
+      "playerWins": 90,
+      "winRate": 0.45,
+      "draws": 0,
+      "avgTurns": 70.18,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 110,
+        "W:Every enemy has fallen": 90
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 7,
+      "games": 200,
+      "playerWins": 137,
+      "winRate": 0.685,
+      "draws": 2,
+      "avgTurns": 80.98,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 137,
+        "L:Your party has fallen": 61,
+        "DRAW": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 7,
+      "games": 200,
+      "playerWins": 196,
+      "winRate": 0.98,
+      "draws": 0,
+      "avgTurns": 76.325,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 196,
+        "L:Your party has fallen": 4
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 7,
+      "games": 200,
+      "playerWins": 23,
+      "winRate": 0.115,
+      "draws": 0,
+      "avgTurns": 72.42,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 177,
+        "W:Every enemy has fallen": 23
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 7,
+      "games": 200,
+      "playerWins": 76,
+      "winRate": 0.38,
+      "draws": 5,
+      "avgTurns": 87.805,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 76,
+        "L:Your party has fallen": 119,
+        "DRAW": 5
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 7,
+      "games": 200,
+      "playerWins": 139,
+      "winRate": 0.695,
+      "draws": 0,
+      "avgTurns": 87.71,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 139,
+        "L:Your party has fallen": 61
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 7,
+      "games": 200,
+      "playerWins": 0,
+      "winRate": 0,
+      "draws": 0,
+      "avgTurns": 72.4,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 200
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e8",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 7,
+      "games": 200,
+      "playerWins": 14,
+      "winRate": 0.07,
+      "draws": 9,
+      "avgTurns": 91.265,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 177,
+        "DRAW": 9,
+        "W:Every enemy has fallen": 14
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 8,
+      "games": 200,
+      "playerWins": 178,
+      "winRate": 0.89,
+      "draws": 0,
+      "avgTurns": 54.39,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 178,
+        "L:Your party has fallen": 22
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 8,
+      "games": 200,
+      "playerWins": 155,
+      "winRate": 0.775,
+      "draws": 0,
+      "avgTurns": 51.265,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 155,
+        "L:Your party has fallen": 45
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 8,
+      "games": 200,
+      "playerWins": 192,
+      "winRate": 0.96,
+      "draws": 0,
+      "avgTurns": 54.99,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 192,
+        "L:Your party has fallen": 8
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 8,
+      "games": 200,
+      "playerWins": 135,
+      "winRate": 0.675,
+      "draws": 0,
+      "avgTurns": 57.215,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 65,
+        "W:You survived 8 rounds": 135
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 8,
+      "games": 200,
+      "playerWins": 124,
+      "winRate": 0.62,
+      "draws": 0,
+      "avgTurns": 52.93,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 76,
+        "W:You survived 8 rounds": 124
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 8,
+      "games": 200,
+      "playerWins": 181,
+      "winRate": 0.905,
+      "draws": 0,
+      "avgTurns": 59.18,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 181,
+        "L:Your party has fallen": 19
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 8,
+      "games": 200,
+      "playerWins": 111,
+      "winRate": 0.555,
+      "draws": 0,
+      "avgTurns": 58.17,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 89,
+        "W:You survived 8 rounds": 111
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 8,
+      "games": 200,
+      "playerWins": 63,
+      "winRate": 0.315,
+      "draws": 0,
+      "avgTurns": 56.76,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 63,
+        "L:Your party has fallen": 137
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 8,
+      "games": 200,
+      "playerWins": 160,
+      "winRate": 0.8,
+      "draws": 0,
+      "avgTurns": 60.59,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 160,
+        "L:Your party has fallen": 40
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 8,
+      "games": 200,
+      "playerWins": 99,
+      "winRate": 0.495,
+      "draws": 0,
+      "avgTurns": 59.715,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 101,
+        "W:You survived 8 rounds": 99
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 8,
+      "games": 200,
+      "playerWins": 59,
+      "winRate": 0.295,
+      "draws": 0,
+      "avgTurns": 56.92,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 141,
+        "W:You survived 8 rounds": 59
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e9",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 8,
+      "games": 200,
+      "playerWins": 156,
+      "winRate": 0.78,
+      "draws": 0,
+      "avgTurns": 61.335,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:You survived 8 rounds": 156,
+        "L:Your party has fallen": 44
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 9,
+      "games": 200,
+      "playerWins": 174,
+      "winRate": 0.87,
+      "draws": 0,
+      "avgTurns": 50.99,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 24,
+        "W:Every enemy has fallen": 125,
+        "W:The escort made it through": 49,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 9,
+      "games": 200,
+      "playerWins": 195,
+      "winRate": 0.975,
+      "draws": 0,
+      "avgTurns": 41.89,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 183,
+        "W:The escort made it through": 12,
+        "L:Your charge has fallen": 4,
+        "L:Your party has fallen": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 9,
+      "games": 200,
+      "playerWins": 176,
+      "winRate": 0.88,
+      "draws": 0,
+      "avgTurns": 51.285,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 147,
+        "L:Your charge has fallen": 24,
+        "W:The escort made it through": 29
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 9,
+      "games": 200,
+      "playerWins": 117,
+      "winRate": 0.585,
+      "draws": 0,
+      "avgTurns": 42.685,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 81,
+        "W:Every enemy has fallen": 39,
+        "W:The escort made it through": 78,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 9,
+      "games": 200,
+      "playerWins": 151,
+      "winRate": 0.755,
+      "draws": 0,
+      "avgTurns": 47.665,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The escort made it through": 11,
+        "W:Every enemy has fallen": 140,
+        "L:Your charge has fallen": 41,
+        "L:Your party has fallen": 8
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 9,
+      "games": 200,
+      "playerWins": 145,
+      "winRate": 0.725,
+      "draws": 0,
+      "avgTurns": 54.635,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 112,
+        "L:Your charge has fallen": 55,
+        "W:The escort made it through": 33
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 9,
+      "games": 200,
+      "playerWins": 110,
+      "winRate": 0.55,
+      "draws": 0,
+      "avgTurns": 40.23,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The escort made it through": 102,
+        "L:Your charge has fallen": 89,
+        "W:Every enemy has fallen": 8,
+        "L:Your party has fallen": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 9,
+      "games": 200,
+      "playerWins": 130,
+      "winRate": 0.65,
+      "draws": 0,
+      "avgTurns": 43.135,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 61,
+        "W:The escort made it through": 109,
+        "W:Every enemy has fallen": 21,
+        "L:Your party has fallen": 9
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 9,
+      "games": 200,
+      "playerWins": 108,
+      "winRate": 0.54,
+      "draws": 0,
+      "avgTurns": 55.5,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:Every enemy has fallen": 77,
+        "L:Your party has fallen": 5,
+        "L:Your charge has fallen": 87,
+        "W:The escort made it through": 31
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 9,
+      "games": 200,
+      "playerWins": 75,
+      "winRate": 0.375,
+      "draws": 0,
+      "avgTurns": 40.875,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 125,
+        "W:The escort made it through": 70,
+        "W:Every enemy has fallen": 5
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 9,
+      "games": 200,
+      "playerWins": 95,
+      "winRate": 0.475,
+      "draws": 0,
+      "avgTurns": 41.99,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 99,
+        "W:The escort made it through": 91,
+        "W:Every enemy has fallen": 4,
+        "L:Your party has fallen": 6
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e10",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 9,
+      "games": 200,
+      "playerWins": 45,
+      "winRate": 0.225,
+      "draws": 0,
+      "avgTurns": 58.415,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your charge has fallen": 153,
+        "W:The escort made it through": 15,
+        "W:Every enemy has fallen": 30,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 163,
+      "winRate": 0.815,
+      "draws": 0,
+      "avgTurns": 29.495,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 163,
+        "L:Your hero has fallen": 37
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 134,
+      "winRate": 0.67,
+      "draws": 0,
+      "avgTurns": 22.945,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 134,
+        "L:Your hero has fallen": 66
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 198,
+      "winRate": 0.99,
+      "draws": 0,
+      "avgTurns": 33.5,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 198,
+        "L:Your hero has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 163,
+      "winRate": 0.815,
+      "draws": 0,
+      "avgTurns": 33.925,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 163,
+        "L:Your hero has fallen": 37
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 115,
+      "winRate": 0.575,
+      "draws": 0,
+      "avgTurns": 26.345,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 85,
+        "W:The target is destroyed": 115
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 184,
+      "winRate": 0.92,
+      "draws": 0,
+      "avgTurns": 39.81,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 184,
+        "L:Your hero has fallen": 16
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 159,
+      "winRate": 0.795,
+      "draws": 0,
+      "avgTurns": 45.585,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 159,
+        "L:Your hero has fallen": 41
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 28,
+      "winRate": 0.14,
+      "draws": 0,
+      "avgTurns": 28.825,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 172,
+        "W:The target is destroyed": 28
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 127,
+      "winRate": 0.635,
+      "draws": 0,
+      "avgTurns": 50.145,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 73,
+        "W:The target is destroyed": 127
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 95,
+      "winRate": 0.475,
+      "draws": 0,
+      "avgTurns": 51.835,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 105,
+        "W:The target is destroyed": 95
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 3,
+      "winRate": 0.015,
+      "draws": 0,
+      "avgTurns": 32.125,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 194,
+        "L:Your party has fallen": 3,
+        "W:The target is destroyed": 3
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e11",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 76,
+      "winRate": 0.38,
+      "draws": 0,
+      "avgTurns": 62.735,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your hero has fallen": 124,
+        "W:The target is destroyed": 76
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "easy",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 173,
+      "winRate": 0.865,
+      "draws": 0,
+      "avgTurns": 52.01,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 164,
+        "L:Your party has fallen": 27,
+        "W:You reached the goal": 9
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "easy",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 136,
+      "winRate": 0.68,
+      "draws": 0,
+      "avgTurns": 39.365,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 136,
+        "L:Your party has fallen": 64
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "easy",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 196,
+      "winRate": 0.98,
+      "draws": 0,
+      "avgTurns": 45.74,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 196,
+        "L:Your party has fallen": 4
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "medium",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 156,
+      "winRate": 0.78,
+      "draws": 0,
+      "avgTurns": 60.31,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 154,
+        "L:Your party has fallen": 44,
+        "W:You reached the goal": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "medium",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 80,
+      "winRate": 0.4,
+      "draws": 0,
+      "avgTurns": 41.92,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 120,
+        "W:You reached the goal": 1,
+        "W:The target is destroyed": 79
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "medium",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 198,
+      "winRate": 0.99,
+      "draws": 0,
+      "avgTurns": 50.025,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 182,
+        "W:You reached the goal": 16,
+        "L:Your party has fallen": 2
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "hard",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 105,
+      "winRate": 0.525,
+      "draws": 0,
+      "avgTurns": 67.515,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 102,
+        "L:Your party has fallen": 95,
+        "W:You reached the goal": 3
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "hard",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 11,
+      "winRate": 0.055,
+      "draws": 0,
+      "avgTurns": 44.21,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 189,
+        "W:The target is destroyed": 11
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "hard",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 181,
+      "winRate": 0.905,
+      "draws": 0,
+      "avgTurns": 59.895,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 160,
+        "W:You reached the goal": 21,
+        "L:Your party has fallen": 19
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "nightmare",
+      "party": "melee",
+      "level": 10,
+      "games": 200,
+      "playerWins": 46,
+      "winRate": 0.23,
+      "draws": 0,
+      "avgTurns": 71.8,
+      "inBand": true,
+      "validationErrors": 0,
+      "reasons": {
+        "W:The target is destroyed": 46,
+        "L:Your party has fallen": 154
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "nightmare",
+      "party": "ranged",
+      "level": 10,
+      "games": 200,
+      "playerWins": 1,
+      "winRate": 0.005,
+      "draws": 0,
+      "avgTurns": 44.56,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 199,
+        "W:You reached the goal": 1
+      },
+      "drawFlag": false
+    },
+    {
+      "encounter": "e12",
+      "difficulty": "nightmare",
+      "party": "balanced",
+      "level": 10,
+      "games": 200,
+      "playerWins": 122,
+      "winRate": 0.61,
+      "draws": 0,
+      "avgTurns": 75.49,
+      "inBand": false,
+      "validationErrors": 0,
+      "reasons": {
+        "L:Your party has fallen": 78,
+        "W:The target is destroyed": 100,
+        "W:You reached the goal": 22
+      },
+      "drawFlag": false
+    }
+  ]
+}
