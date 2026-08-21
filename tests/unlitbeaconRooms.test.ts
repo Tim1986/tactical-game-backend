@@ -142,3 +142,56 @@ describe('e8 room flags', () => {
     expect(events.some((e) => e.type === 'UNIT_SPAWNED')).toBe(true);
   });
 });
+
+// ── Fable review of 5fc1aad ──────────────────────────────────────────────────
+// The trail must record LEAP landings, not just MOVE/CHARGE. Driven through the
+// real processTurn so the append site itself is under test, not a reenactment.
+import { processTurn } from '../src/game/turnProcessor.js';
+import { buildAbilityMap } from '../src/ai/defaultData.js';
+import { applyCampaignAbilities, applyCooldownOverrides } from '../src/game/abilityOverrides.js';
+
+describe('door trigger vs move_self (Fable review of 5fc1aad)', () => {
+  it('a Leaping Slam that LANDS on the trigger tile springs the ambush at end of turn', () => {
+    const build = (() => {
+      const choices = choicesForLevel(PARTY, 7);
+      return buildEncounterState(unlitBeaconCampaign, 'e8', PARTY, choices, 7, 'hard', HUMAN, ENEMY);
+    })();
+    const state = build.state;
+    const abilityMap = applyCooldownOverrides(
+      applyCampaignAbilities(buildAbilityMap(), build.campaignAbilities), build.cooldownOverrides);
+
+    // Walk the party through floor 1's 'always' door onto floor 2.
+    const ep0 = state.encounterProgress!;
+    const barb = state.units.find((u) => ep0.partyIds.includes(u.instanceId) && u.definitionSlug === 'barbarian')!;
+    barb.position = { ...ep0.exitDoors[0] };
+    maybeRoomTransition(state, barb, []);
+
+    // Floor 2: put the barbarian in leap range of the trigger tile (6,3), give
+    // it the turn, and make the leap legal (tile free — the test above pins
+    // that occupied tiles are rejected).
+    barb.position = { x: 4, y: 3 };
+    state.initiative.isRound1 = false;
+    state.initiative.order = [barb.instanceId];
+    state.initiative.slot = 0;
+    state.initiative.activeUnitId = barb.instanceId;
+    state.activePlayerId = HUMAN;
+    if (!barb.abilities.includes('roar')) barb.abilities.push('roar');
+    barb.cooldowns['roar'] = 0;
+
+    const before = new Set(state.units.map((u) => u.instanceId));
+    const result = processTurn(
+      state,
+      [
+        { type: 'USE_ABILITY', unitInstanceId: barb.instanceId, abilitySlug: 'roar', target: { x: 6, y: 3 } },
+        { type: 'END_TURN' },
+      ] as never,
+      HUMAN, HUMAN, ENEMY, abilityMap,
+    );
+
+    const moved = result.updatedState.units.find((u) => u.instanceId === barb.instanceId)!;
+    expect(moved.position).toEqual({ x: 6, y: 3 });                 // the leap really landed there
+    expect(result.updatedState.encounterProgress!.waves).toHaveLength(0);  // ambush sprung
+    const spawned = result.updatedState.units.filter((u) => !before.has(u.instanceId));
+    expect(spawned.length).toBe(1);
+  });
+});

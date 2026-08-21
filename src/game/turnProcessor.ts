@@ -318,7 +318,11 @@ function applyGameActionInternal(
   // campaign 3's e8 exposed it. Door triggers now fire in finalizeTurnInternal,
   // matched against turnContext.visited so stepping on the tile and moving on
   // still springs the ambush.
-  if (wasMove && ws.turnContext) {
+  // Record on ANY position change, not just MOVE/CHARGE — a move_self leap
+  // (USE_ABILITY) that lands on the trigger tile must spring the ambush too,
+  // the same set of movements the room transition below already honors
+  // ("covers MOVE, CHARGE and move_self landings"). [Fable review of 5fc1aad]
+  if (ws.turnContext) {
     const v = ws.turnContext.visited ?? (ws.turnContext.visited = []);
     const last = v[v.length - 1];
     if (!last || last.x !== actingUnit.position.x || last.y !== actingUnit.position.y) {
