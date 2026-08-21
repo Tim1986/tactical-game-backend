@@ -37,12 +37,13 @@ import type { PuzzleDefinition } from '../types.js';
  * Slack, not arithmetic: the Rogue's 16 against 12 health, so it cannot be
  * solved by counting.
  *
- * ⚠ Measured caveat: the solver reports near-miss 12 here, against 2 and 3 for
- * #18 and #19. That figure is approximate by design — the search short-circuits
- * on the first win, so it reports what it happened to explore rather than the
- * best failing line. It is a SOFT target with no threshold and every hard gate
- * passes, but this puzzle's "so close" hook is UNPROVEN rather than good. If the
- * rotation is ever pruned, hand-check this one first.
+ * On near-miss: the solver reports 12 here, where the geometry puzzles report
+ * 2–3. That is the TEMPO CHANNEL's signature, not a flaw — #15, the other tempo
+ * puzzle, reports 11 on the same measure and is a keeper. A failing line ends
+ * AFTER the enemy has healed, so the "closest miss" is measured against a
+ * restored health bar; a geometry puzzle's failing line ends on whatever damage
+ * actually landed. Read near-miss within a channel, never across channels.
+ * (Measured across the full 10-puzzle rotation, 2026-08-21.)
  *
  * Vocabulary 2 (First Aid heals the user; a frozen unit's turn is skipped).
  * Tier-0 fate. 2v1, per trap #9.
