@@ -46,6 +46,7 @@ import { PUZZLE_031 } from './puzzles/puzzle-031.js';
 import { PUZZLE_032 } from './puzzles/puzzle-032.js';
 import { PUZZLE_033 } from './puzzles/puzzle-033.js';
 import { PUZZLE_034 } from './puzzles/puzzle-034.js';
+import { PUZZLE_035 } from './puzzles/puzzle-035.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -66,6 +67,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_026.id]: PUZZLE_026, [PUZZLE_027.id]: PUZZLE_027, [PUZZLE_028.id]: PUZZLE_028, [PUZZLE_029.id]: PUZZLE_029, [PUZZLE_030.id]: PUZZLE_030,
   [PUZZLE_031.id]: PUZZLE_031, [PUZZLE_032.id]: PUZZLE_032,
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
+  [PUZZLE_035.id]: PUZZLE_035,
 };
 
 /**
@@ -82,7 +84,8 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // PURIFY 2 (⚠ #16 and #31 are the same puzzle in different clothes — Fable
   // review 2026-08-21; kept, spaced 15 days apart, but purify is now CLOSED as
   // an answer) · bolt-the-blocker 2 · cold_snap 1 · longshot-the-healer 1 ·
-  // ignore-the-free-kill 1 · sword 1.
+  // ignore-the-free-kill 1 · pinning-the-healer 1 · sword 1.
+  // CLOSED answers (do not author more): freeze · grasp · purify.
   // ⚠ A "tbd" in this tally is a bug: #31 was authored as "first purify" while
   // 016 sat unverified in this very list — and 016 WAS purify. The tally only
   // prevents duplicates if it is complete.
@@ -97,7 +100,10 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_023, // tempo/self-heal   → freeze
   PUZZLE_022, // blocked path      → arrow (the REACHABLE door)
   PUZZLE_024, // camouflage        → grasp (picker; default is a decoy)
-  PUZZLE_032, // passive synergy   → COLD SNAP  ← first passive puzzle
+  PUZZLE_032, // passive synergy   → cold_snap (Opportunist; first passive puzzle)
+  PUZZLE_035, // tempo/heal        → PINNING the healer OUT OF RANGE  ← first
+              //                     enemy-root answer; it keeps its turn and
+              //                     cannot use it
   PUZZLE_026, // blocked path      → arrow (the blocker)
   PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)  ← first of both
   PUZZLE_034, // 3-TURN eliminate_all → shoot the TANK, ignore the free kill
