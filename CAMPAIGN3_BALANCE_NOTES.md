@@ -8,152 +8,69 @@ Sessions: 1 (2026-08-20) runtime verification · 2 (2026-08-21) §6.4 close-out 
 type-table scales, hit the engine blocker · 3 (2026-08-21) blocker fixed,
 structural pass on e2/e6, measured scales for all 12 → **41/48 in band**.
 
-## STATUS IN ONE LINE (session 3, 2026-08-21)
+## STATUS: ✅ BALANCED — `RESULT: PASS`, campaign REGISTERED (2026-08-21)
 
-**41 of 48 cells in band.** The engine blocker is FIXED, e2's catastrophe is
-fixed, and every encounter now carries measured scales. `RESULT` is still FAIL:
-7 cells remain, and 3 of them need STRUCTURE, not numbers. Latest battery
-artifact: `balance_runs/unlitbeacon_pass3_200g.json`.
+48/48 cells in band, every party floor held, zero validation errors, on a
+200-games/cell battery. Artifact: `balance_runs/unlitbeacon_PASS_200g.json`.
+`unlitbeacon` is now registered in `src/campaigns/index.ts` and is live content.
 
-| enc | easy | med | hard | nm | |
+| enc | type | easy | med | hard | nm |
 |---|---|---|---|---|---|
-| e1 | 93 | 67 | 65 | 32 | ✓ |
-| e2 | 91 | 71 | 56 | 31* | *nm solvability: best party 36% (<40) |
-| e3 | 75* | 78 | 73* | 70* | **FLAT — structural** |
-| e4 | 91 | 79 | 56 | 50* | nm overshot; wants ~1.12 |
-| e5 | 81 | 73 | 50 | 37 | ✓ |
-| e6 | 93 | 76 | 80* | 83* | **structural — spread** |
-| e7 | 82 | 78 | 51 | 25 | ✓ |
-| e8 | 86 | 70 | 49 | 25 | ✓ |
-| e9 | 88 | 73 | 56 | 52* | **structural — survive is scale-inert up here** |
-| e10 | 91 | 69 | 58 | 36 | ✓ |
-| e11 | 82 | 77 | 52 | 29 | ✓ (all rungs ≥0.89, see cliff note) |
-| e12 | 84 | 72 | 50* | 28 | *hard: WALL for ranged (spread) |
+| e1 | kill-all (tutorial) | 94 | 80 | 49 | 33 |
+| e2 | kill-all + waves | 90 | 72 | 57 | 39 |
+| e3 | hold | 90 | 74 | 49 | 35 |
+| e4 | hazard carve | 92 | 75 | 56 | 35 |
+| e5 | carve | 85 | 71 | 54 | 37 |
+| e6 | escape + clock | 93 | 72 | 59 | 34 |
+| e7 | escape + clock | 86 | 78 | 53 | 29 |
+| e8 | rooms | 86 | 69 | 50 | 24 |
+| e9 | survive | 89 | 76 | 55 | 37 |
+| e10 | escort (armed) | 88 | 75 | 62 | 36 |
+| e11 | boss (duel) | 82 | 70 | 50 | 30 |
+| e12 | boss (dual-win) | 84 | 74 | 61 | 30 |
 
 Bands: easy 80–95 · medium 65–80 · hard 45–65 · nightmare 15–45.
 
-### THE 7 REMAINING CELLS, and the lever each needs
+### Mechanism histograms — every encounter decided by its own objective
+(2400 games each, aggregated across all difficulties/parties)
 
-1. **e3 easy/hard/nm — FLAT (75/78/73/70).** Barely moves with scale across the
-   whole range, because you win by STANDING on two tiles, not by killing. Per
-   the tuning table a `hold` needs its guards standing ON the marks — e3's
-   pikemen start beside the bridgeheads, not on them. This is a placement/design
-   fix. `ranged` is also walled on easy.
-2. **e6 hard/nm (80/83) — SPREAD, not mean.** The clock (added this session)
-   made scale matter at all, but the `ranged` party crosses ~100% at EVERY
-   scale from 0.9 to 2.4 while melee gets walled — so scale moves the mean
-   without ranking the parties. Enemy START DISTANCE is the documented spread
-   lever; run `spreadSweep.ts`. Do NOT reach for scale again here.
-3. **e9 nightmare (52%).** Raising scale 2.90→3.40 barely moved it — the table
-   is right that `survive` difficulty lives in ROUND COUNT × WAVE SIZE, not HP.
-   Add a wave or a round rather than pushing scale past 3.
-4. **e4 nightmare (50%).** Pure overshoot from this session's centring edit
-   (1.25→1.05 was too big a step). Wants ~1.12. One-line fix, needs a battery.
-5. **e2 nightmare — solvability.** Mean 31% is in band but the best party only
-   reaches 36%, and nightmare requires one party ≥40%. Spread lever.
-6. **e12 hard — `ranged` walled.** Mean 50% is fine; one party is locked out.
-   Spread lever.
+- **e3** 55% `Every mark is held` — the hold is the win condition, not attrition.
+- **e6** 55% escaped / 36% `The deadline passed` — the clock is live.
+- **e7** 48% reached goal / 32% deadline.
+- **e9** 64% `You survived 8 rounds` / 36% party wipe — **zero** mercy wins.
+- **e10** losses are 32.6% `Your charge has fallen` vs 2.1% party wipe — the
+  escort is what kills you, which is the doc's test for an escort fight.
+- **e11** 58% target destroyed / 42% `Your hero has fallen` — the duel stakes bite.
+- **e12** dual-win confirmed live: 59% kill, **2.9% `You reached the goal`**.
 
-### Session 3 also established
-- **e11 has a violent breakpoint CLIFF.** For the ranged party, scale 0.88 → 3%
-  and 0.89 → 100%, on a 100-game sample each — a 100-point swing in one step
-  (wisp HP 29→30 crosses a one-shot threshold and flips the brain's target
-  priority; melee is unaffected at every scale). **Every e11 rung must stay
-  ≥0.89.** The current 1.20/1.45/2.00/2.35 all clear it. Do not let a future
-  tune walk easy below that line — it silently makes EASY the hardest rung.
-- **Body count dominates at low level.** On e2, removing ONE enemy moved a cell
-  from 10% to 93%. Shape matters too: same 4 bodies with two of them present at
-  round 1 instead of arriving later cost ~25 points.
+### Structural changes made to reach PASS (not just numbers)
+1. **e2** was 0% in all 12 cells. Cut from 7 enemies to 4 (2 starting, 1
+   vanguard at r3, 1 breaker at r5). One body was worth ~83 points at level 2.
+2. **e3** guards moved ONTO the marks ((5,1)/(5,6) → (4,1)/(4,6)). The cell was
+   dead flat (75/78/73/70 across the whole scale range) because you win by
+   standing on tiles, not killing. Scale bites now.
+3. **e6** given a `round_reached: 6` loss. It was totally scale-inert (100% from
+   0.90 to 2.40). `Dry Boots` moved to round 6 so the achievement stays a real
+   choice. ⚠ Its placement is load-bearing — see the in-file comment.
+4. **e9** +1 body in the round-5 wave; `survive` is scale-inert at high values,
+   so its scales came DOWN from 1.30–3.40 to 1.00–2.40 once the body was added.
 
-
-**BLOCKED on an engine bug (see next section).** §6.4 runtime verification is
-now **5 of 5 COMPLETE**, and the type-table starting scales are in. But the
-battery cannot run: e8 throws validation errors, and the smoke gate (correctly)
-refuses every run — full AND `--encounter`-scoped — until they are zero. No
-win-rate data can be collected by anyone until this is resolved.
-
-### Session 2 (2026-08-21) added
-- §6.4 item (d) CONFIRMED — all three e8 room flags fire. Permanent regression
-  test at `tests/unlitbeaconRooms.test.ts` (4 tests).
-- All 12 placeholder scales REPLACED with the objective-type table's starting
-  values (`KILL_ALL/CARVE/HOLD/ESCAPE/ROOMS/SURVIVE/ESCORT/BOSS_SCALE`).
-- That scale change EXPOSED the e8 engine bug below (it was always there; the
-  old placeholder scales made floor 2 so slow to reach that it rarely fired).
-
-## ⚠ THE CAMPAIGN IS DELIBERATELY UNREGISTERED
-
-`src/campaigns/index.ts` does **not** list `unlitbeacon`, and that is on
-purpose. `mobile/app/(tabs)/campaign.tsx` renders `Object.values(CAMPAIGNS)`
-directly with no draft/hidden flag, so registering makes it immediately
-playable — an unbalanced 12-encounter campaign in players' hands.
-
-Registering is a **one-line change** (import + registry entry, rationale
-comment is in that file). Do it as the LAST step of the balance pass.
-
-It must be registered to run the sim at all (`campaignSim` resolves slugs
-through `CAMPAIGNS`), so the loop is: register → work → unregister before any
-commit that could ship, until the battery passes.
-
-## 🛑 BLOCKER — e8 door-triggered wave orphans the rest of a queued turn
-
-**This is escalation trigger 1 (validation errors that survive a content fix) and
-it is an ENGINE bug, not a balance or authoring one. The balance operator may not
-fix it — it needs Fable or an owner ruling.**
-
-### Symptom
-`e8`, balanced party (`fighter,ranger,cleric,wizard`) only:
-
-| cell | games | validation errors | draws |
-|---|---|---|---|
-| e8 easy balanced | 40 | 8 (20%) | 6 |
-| e8 hard balanced | 40 | 8 (20%) | 9 |
-| e8 easy/hard melee | 40 ea | 0 | 0 |
-| e8 easy/hard ranged | 40 ea | 0 | 0 |
-
-Every error is the same message: `Charge destination is not reachable (path blocked)`.
-The draw-stall flag on that cell tracks it exactly — the stall is a SYMPTOM of the
-broken turns, not an independent placement problem. Do not "fix" it with placement.
-
-### Mechanism (confirmed, not inferred)
-The offending action batch is:
-```
-MOVE   -> (6,3)      <- e8 floor 2's door-trigger tile
-CHARGE -> (6,6)
-END_TURN
-```
-`(6,3)` is exactly `waves[0].trigger.tile`. The MOVE springs the landing guard,
-which spawns at `(6,4)` — inside the path the CHARGE was planned through. The
-charge is then correctly rejected, and the rest of the turn is orphaned.
-
-### Root cause
-`turnProcessor.ts:313` fires `checkSpawnTriggers(..., wasMove ? actingUnit : undefined)`
-MID-TURN. The comment directly above it (lines 306–312) documents this exact
-failure mode for ROOM TRANSITIONS and says they were moved to end-of-turn
-because "a mid-turn transition ... orphans the rest of its queued turn (the D2
-Goblinopolis bug)". **The same fix was never applied to the sibling case:
-door-triggered wave SPAWNS.** Inserting a unit mid-turn invalidates later queued
-actions exactly the way a mid-turn teleport does.
-
-### Recommended fix (surgical, matches the existing precedent)
-Split the mid-turn call by trigger kind:
-- `round` and `room_cleared` triggers MUST keep firing mid-turn — the comment
-  notes a cleared board has to spawn its wave BEFORE the win check or the match
-  ends early.
-- The `on:'door'` trigger (the only mover-dependent one) moves to end-of-turn in
-  `finalizeTurnInternal`, next to `maybeRoomTransition` and behind the same
-  "actually moved this turn AND still alive" guard.
-
-### Why this matters beyond the sim
-Turns are submitted as a BATCH in live play, so a human can hit this too: step on
-the ambush tile, and the rest of your own turn is rejected. That is the same
-defect class as the Leaping Slam bug a tester reported in v1.0.86 (a queued
-action the engine will never accept). Blast radius today is any `on:'door'` wave
-— e8 is the only content using one, so fixing it now is cheap.
-
-### Options if the engine fix is refused
-Moving e8's trigger tile only relocates the landmine (any tile a unit walks
-THROUGH before a charge can do this) and would be papering over a live-play bug.
-Recommend against.
+### DEVIATIONS / traps for the next tuner
+- **e11 breakpoint cliff.** Ranged party 3% at scale 0.88, 100% at 0.89 (wisp HP
+  29→30 crosses a one-shot threshold and flips the brain's target priority).
+  **Every e11 rung must stay ≥0.89** or EASY silently becomes the hardest rung.
+- **e6 placement must not be "tidied".** undertow is `pull: toward_caster`, so
+  drowned standing between the party and the far shore TOW crossers toward the
+  exit. West, mid-lane and east sweeps all went flat or non-monotonic; the
+  authored mid-mere placement is the only geometry where the drag punishes.
+- **Slopes are steep and vary 5x by encounter.** e1/medium moves ~3 points per
+  0.01 of scale; e12 moves ~0.4. A "centring pass" sized off a sweep midpoint
+  overshot 14 cells at once and cost 3 batteries. Move edge cells 0.02–0.03 max.
+- **Sim noise is ±5–8 points per cell at 200 games**, so a single battery can
+  fail a correctly-tuned cell. Cells whose true value sits within ~3 points of a
+  band edge WILL flip between runs — park them mid-band, and confirm a
+  borderline cell at 300+ games/party before touching its scale (e9/medium read
+  64 on one battery and 71 at 900 games).
 
 ## §6.4 runtime verification — 5 of 5 CONFIRMED
 
@@ -188,115 +105,25 @@ Note the shape of that second bug: it is the same defect class as the client-sid
 Leaping Slam bug fixed in v1.0.86 (offering occupied tiles as leap landings),
 surfacing here in authored content instead of UI.
 
-## MEASUREMENT LIMIT — e12's second win path
+## Superseded notes (kept so nobody re-derives them)
 
-The brain **always** takes the kill path: every simmed e12 win reads
-`W:The target is destroyed`, never the Standard tile. So the battery will
-measure e12 as a boss fight only, and its win rate says **nothing** about
-whether a human can realistically cut through to (7,4).
+- **"e12's Standard tile can't be measured — the brain always kills."** STALE.
+  Fable spotted the dual-win firing in pass-3 histograms, and the final battery
+  confirms it at 2.9% of e12 games (`W:You reached the goal`), across all three
+  parties. It is live, measurable, and load-bearing for the balanced party. Hand
+  -verification is now confirmation, not discovery.
+- **The e8 door-wave ENGINE BLOCKER.** Fixed in `5fc1aad`, reviewed and patched
+  by Fable in `fb49cda` (leap landings must enter the trigger trail). Regression
+  armor lives in `tests/unlitbeaconRooms.test.ts` (7 tests).
+- **Fable's 7-cell direction memo.** All seven cells are closed; its two
+  corrections (e6's wall was the balanced party failing the CLOCK, not melee;
+  and the e12 staleness above) are folded into the sections above.
 
-The tile is mechanically real (proved above), but reachability is a design
-question the sim cannot answer here. Geometry for whoever picks this up: the
-hero starts at x≤1 and must reach (7,4), passing the Marshal at (5,4) with
-honor guards at (6,3)/(6,5) — (6,4) is the only gap and is flanked by both.
-**Verify this path by hand before trusting e12's numbers**, per §6.5's warning
-that the Standard "must be genuinely reachable or it's decoration".
+## Remaining follow-ups (not blockers)
 
-## §6.5 balance — starting scales SET, nothing measured yet
-
-The uniform placeholder is gone. Each encounter now carries the OBJECTIVE-TYPE
-TUNING TABLE's starting scale for its type (CAMPAIGN_BALANCING.md) — first
-guesses to be measured, not final values:
-
-| enc | type | constant |
-|---|---|---|
-| e1 (tutorial), e2 | kill-all | `KILL_ALL_SCALE` 0.95/1.20/1.30/1.30 |
-| e3 | hold (simultaneous tiles) | `HOLD_SCALE` 1.30/1.45/1.70/2.30 |
-| e4 (hazard), e5 | carve | `CARVE_SCALE` 1.05/1.30/1.45/1.45 |
-| e6, e7 | escape | `ESCAPE_SCALE` 0.90/1.10/1.30/1.70 |
-| e8 | rooms | `ROOMS_SCALE` 0.75/0.80/0.90/1.00 |
-| e9 | survive | `SURVIVE_SCALE` 0.95/1.00/1.05/1.10 |
-| e10 | escort | `ESCORT_SCALE` 0.70/1.10/1.20/1.30 |
-| e11, e12 | boss | `BOSS_SCALE` 0.70/0.90/1.00/1.20 |
-
-**No win rates have been measured at any sample size** — the smoke gate blocks
-every run while e8 errors. e1 also gets the tutorial exemption when it is.
-
-### Directional signals only — NOT acceptance data
-
-Smoke is 2 games/cell (pure noise, the doc says ignore) and my probes used
-default unit choices rather than `choicesForLevel`, so these are hints about
-where to look first, nothing more:
-
-- **e6** (novel/undertow, `scope:'all'` escape) — 25/25 party escapes on HARD
-  in a 30-game probe. Looks far too easy; §6.5 already flags the perverse
-  straggler incentive here.
-- **e12** (finale) — party lost 26/30 on HARD in the same probe shape. Looks
-  too hard, though that was measured *before* the ability fixes, which
-  **strengthened** the boss (it now lands two abilities it previously could
-  not) — so expect it to be harder still, not easier. Re-measure first.
-- **e8** (rooms) — `⚠ draws 50% (stall)` on hard/balanced. Per the doc a stall
-  is a placement/design problem, not an HP one.
-
-## FABLE DIRECTION (review pass, 2026-08-21) — the 7 cells, in work order
-
-The engine fix (`5fc1aad`) is REVIEWED and patched (`fb49cda`): one hole —
-`visited` only recorded MOVE/CHARGE, so a move_self leap landing on the trigger
-tile never sprang the ambush. The trail now records any position change, pinned
-by a processTurn-level Leaping Slam test. ⚠ This can nudge e8/e2 numbers a few
-points versus pass 3 (the brain leaping onto (6,3) now springs the guard) — the
-smoke marker is content-hashed so batteries run without re-smoking, but expect
-small drift.
-
-**GOOD NEWS that changes the plan: e12's Standard-tile win IS observed in sim
-now** — pass 3's e12/hard/balanced histogram shows `W:You reached the goal ×21`.
-The old "the brain always takes the kill path" limit was measured on pre-fix
-content and is STALE. The dual-win is live, measurable, and already load-bearing
-for balanced's 90% — hand-verification is now confirmation, not discovery, and
-tuning e12 must not price out the tile path.
-
-Ordered by leverage, cheapest first:
-
-1. **e4 nightmare** — scale 1.05 → ~1.12. Pure overshoot, one line.
-2. **e2 nightmare (solvability, best 36% < 40)** — do NOT reach for placement
-   yet. All three parties lose to `Your party has fallen` and the wins are
-   mercy kill-alls, so it responds to scale; the last notch (1.10→1.00) moved
-   best-party 26→36. One more notch, nm → 0.92–0.95, plausibly lands ≥40 while
-   mean stays in [15,45]. Placement only if that fails.
-3. **e6 hard/nm — the wall is NOT who Opus thought.** Pass-3 histograms: melee
-   88–92%, ranged 98%, **balanced 49–61% and failing to the CLOCK**
-   (`L:The deadline passed ×102` on hard). So: ranged over-crosses (kites the
-   drowned dead from standoff, then strolls), balanced under-crosses. One lever
-   fixes both directions: **move the drowned starts CLOSER to the party**
-   (`spreadSweep.ts`) — close starts brick ranged's standoff (doc-measured),
-   and earlier engagement ends fights sooner, easing the clock on balanced.
-   After the spread lands, re-walk scale DOWN (current 2.00/2.40 were inflated
-   to chase ranged's 100% and will overshoot once ranged is mortal).
-4. **e3 easy/hard/nm (flat)** — the tuning table's hold rule, literally: the
-   pikemen stand BESIDE the bridgeheads at (5,1)/(5,6); stand them ON the marks
-   at (4,1)/(4,6). Then the win requires killing or displacing them, HP starts
-   to matter, and scale wakes up. Expect to re-walk e3's scales from much lower
-   once it bites (current 1.30–2.30 were tuned against a flat curve and mean
-   nothing). The easy-cell ranged wall likely eases too: today the ranged party
-   must park two bodies on exposed tiles deep in enemy range with nothing
-   forced to come to them; guards-on-marks turns that into a fight it can win
-   at range first.
-5. **e9 nightmare (52%, scale-inert)** — do not push scale past 3.4; the table
-   is right (survive lives in round count × wave size). There is no
-   per-difficulty wave knob, so: add **+1 unit to the round-5 wave** (~10–15
-   pts down across ALL difficulties), then re-center easy/med/hard by walking
-   their scales DOWN (they respond fine at low values). Watch the win reason
-   stays `round_reached`, not mercy.
-6. **e12 hard — ranged walled (6%)** — losses are `Your party has fallen ×189`,
-   NOT hero-sniped: the ranged party grinds down against the formation before
-   the 214-HP boss dies. Two candidate levers, measure before choosing:
-   (a) start-distance sweep (though far starts should already favor ranged —
-   suspicion is muster_charge leaping INTO the clumped squishies; check the
-   histogram of a ranged-only probe for deaths-by-ability if the sweep is
-   flat); (b) trim the marshal's hard-rung HP so the race is winnable. Keep the
-   Standard-tile path priced IN for balanced while doing it.
-7. Then: full battery to `RESULT: PASS` (save `--json` to `balance_runs/`),
-   boss encounters on nightmare first, deviations documented, balance report,
-   register `unlitbeacon` LAST.
-
-Fable's engine-fix review obligation from the owner: **discharged** (fb49cda).
+- `mobile/CAMPAIGN_BEATS.md` should get The Unlit Beacon's entry now that it
+  ships (per mobile/AGENTS.md: update the registry whenever a campaign ships),
+  so campaign 4 doesn't repeat its beats.
+- e12's Standard-tile path is worth ONE hand-play to confirm it feels reachable
+  rather than merely being reachable — the geometry is tight (hero from x≤1 to
+  (7,4), past the Marshal at (5,4) with honor guards at (6,3)/(6,5)).
