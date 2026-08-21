@@ -32,7 +32,10 @@ export const PUZZLE_015: PuzzleDefinition = {
   units: [
     { id: 'p1',   side: 'player', slug: 'wizard',    specialSlug: 'freeze', position: { x: 2, y: 2 } },
     { id: 'p2',   side: 'player', slug: 'barbarian', specialSlug: 'roar',   position: { x: 6, y: 5 } },
-    { id: 'heal', side: 'enemy',  slug: 'cleric',    specialSlug: 'heal',   position: { x: 5, y: 4 } },
+    // introRelevant: the goal says kill the Ranger, but the puzzle IS this
+    // heal — freeze the Cleric or the damage is undone. Without its card the
+    // intended line is unguessable, which is the bar for showing an enemy.
+    { id: 'heal', side: 'enemy',  slug: 'cleric',    specialSlug: 'heal',   position: { x: 5, y: 4 }, introRelevant: true },
     { id: 'targ', side: 'enemy',  slug: 'ranger',    specialSlug: 'pinning', position: { x: 6, y: 4 }, currentHealth: 11 },
   ],
   initiativeOrder: ['p1', 'heal', 'p2', 'targ'],

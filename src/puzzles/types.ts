@@ -29,6 +29,22 @@ export interface PuzzleUnitSpec {
   /** Pre-applied statuses (burns with 1 turn left are great material). */
   statusEffects?: Array<Pick<ActiveStatusEffect, 'slug' | 'turnsRemaining' | 'stacks'>>;
   /**
+   * ENEMY units only: force this unit onto the intro screen's "The enemy"
+   * section, WITH its ability spelled out.
+   *
+   * The section is hidden by default (see PUZZLES_AND_INVITES.md). Intro
+   * vertical space is the scarcest thing in the feature, and a beginner enemy
+   * card used to render portrait + class name only — which the goal line and
+   * the board both already say, so it cost a scroll and taught nothing. Set
+   * this ONLY when a first-time solver genuinely could not find the intended
+   * line without knowing what this unit does. #15 is the canonical case: the
+   * goal says kill the Ranger, but the puzzle IS the Cleric's heal.
+   *
+   * Ignored on `expert` puzzles, which show every enemy card regardless —
+   * there, sifting the enemy's HP and abilities is itself the puzzle.
+   */
+  introRelevant?: boolean;
+  /**
    * Player units only: specials the player may pick from on the intro screen
    * (obscures the "obvious special = the solution" tell). `specialSlug` is the
    * default selection and MUST be included in the list.
