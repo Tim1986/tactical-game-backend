@@ -59,14 +59,11 @@ const DIFFICULTIES: CampaignDifficulty[] = ['easy', 'medium', 'hard', 'nightmare
  */
 const PARTY_SIZE = 4;
 
-const TARGET_BANDS: Record<CampaignDifficulty, [number, number]> = {
-  easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.15, 0.45],
-};
 /** A build below this is "walled" — it cannot progress, and the party is
  *  locked for the whole campaign so it cannot re-comp around the problem.
  *  Owner-accepted 2026-08-18 as a best guess: reasoned from the difficulty
- *  philosophy, NOT calibrated from play like the bands above. If a WALLS
- *  verdict ever looks wrong, check the named walled builds the report prints —
+ *  philosophy, NOT calibrated from play. If a WALLS verdict ever looks wrong,
+ *  check the named walled builds the report prints —
  *  incoherent parties mean this cap is too tight; parties a player would
  *  actually field mean the cell really is bricking them. */
 const WALL_FLOOR: Record<CampaignDifficulty, number> = {
@@ -91,14 +88,13 @@ const WALL_FLOOR: Record<CampaignDifficulty, number> = {
  *  - hard: loosened. Some comps should genuinely struggle.
  *  - nightmare: loose. The owner's bar is "only beatable with certain
  *    strategies", which literally describes a high wall share. Selectivity is
- *    the product here, not a defect. NIGHTMARE_BEST_MIN still guarantees some
- *    build actually cracks every cell, so "loose" never means "unsolvable".
+ *    the product here, not a defect. The ACCEPTANCE floor still guarantees a
+ *    real subset of builds cracks every cell, so "loose" never means
+ *    "unsolvable".
  */
 const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
   easy: 0.10, medium: 0.15, hard: 0.25, nightmare: 0.50,
 };
-/** Nightmare is judged on solvability: some build must genuinely crack it. */
-const NIGHTMARE_BEST_MIN = 0.40;
 
 export interface SampledBuild {
   slugs: string[];
@@ -213,36 +209,83 @@ export interface CellRow {
 }
 
 /**
- * ⚠ THE BAND IS CHECKED ON THE MEAN, NOT THE MEDIAN — and that was a real
- * design correction, not an arbitrary pick. Two reasons:
+ * ACCEPTANCE — judge the GOOD teams, not the average team.
+ * (Owner, 2026-08-21: "I don't care about weak teams doing poorly, I care about
+ * how better teams do... if 50% of possible teams on nightmare have less than
+ * 5% wins, that's fine, get good, play better teams. But there needs to be a
+ * subset of good teams that can meet those percents, different demands for how
+ * many of those teams need to be successful, based on difficulty level.")
  *
- *  1. The bands in this file and campaignSim were CALIBRATED against the mean
- *     of the 3 representative parties. Judging a different statistic against
- *     them is not apples-to-apples: measured on the shipped moonberry, the same
- *     2,000 builds put 12/20 cells in band by mean but only 2/20 by median.
- *     Nearly all of that gap was the statistic, not the content.
- *  2. Build-space distributions are frequently BIMODAL — a build either works
- *     or is bricked (the same cliff behaviour D2 found in content tuning). On a
- *     bimodal sample the median snaps to whichever mode holds 50%+ and swings
- *     wildly: moonberry e2/nightmare is mean 32% vs median 10%.
+ * ⚠ THIS REPLACED A MEAN-IN-BAND CHECK, and the replacement is the point.
+ * The old check asked whether the AVERAGE sampled build sat in a win-rate band.
+ * That is the wrong question twice over: a pile of hopeless comps drags a cell
+ * that is well-tuned for good comps, and the bands themselves were calibrated
+ * against the mean of campaignSim's three representative parties — which,
+ * measured over all 70 legal comps on unlitbeacon e1, sit at percentiles 57,
+ * 26 and 19, a mean 12.3 points BELOW the true comp-space mean. Every band
+ * verdict inherited that bias. Asking a question about the distribution's
+ * upper half sidesteps the anchor problem entirely.
  *
- * The median is still REPORTED because the mean/median gap is itself the
- * bimodality signal, and wallShare is what actually captures "how many builds
- * are bricked" — that job never belonged to the band check.
+ * Two bounds per cell:
+ *   FLOOR   — at least `share` of sampled builds must reach win rate `target`.
+ *             Weak builds failing costs the cell nothing; that IS the comp
+ *             metagame. This subsumes the old nightmare solvability check
+ *             (which demanded exactly one build clear 40%) by demanding a real
+ *             subset instead of a single lucky draw.
+ *   CEILING — the MEDIAN build must not exceed `ceiling`, or the cell is soft
+ *             no matter how the good builds do. Without this, "10% of builds
+ *             beat 40%" passes trivially on a fight everyone wins.
  */
+const ACCEPTANCE: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
+  easy:      { target: 0.80, share: 0.50, ceiling: 0.95 },
+  medium:    { target: 0.65, share: 0.35, ceiling: 0.80 },
+  hard:      { target: 0.45, share: 0.20, ceiling: 0.65 },
+  nightmare: { target: 0.40, share: 0.10, ceiling: 0.45 },
+};
+
+/**
+ * EARLY-ENCOUNTER RELAXATION (owner, 2026-08-21: "for the first 2 rounds it
+ * should be easier. should still require decent play, but you don't have all
+ * your tools, it'll be boring to get stuck there").
+ *
+ * Keyed on LEVEL, not encounter index, because level is the actual cause: at
+ * L1 nobody has a special, at L2 only the hero and first companion do (see
+ * choicesForLevel). That covers e1-e2 in the 5-encounter trilogy and e1-e3 in
+ * the 12-encounter campaigns, whose e3 is also L2.
+ *
+ * BOTH bounds loosen, roughly halfway to the next-easier tier. The ceiling has
+ * to move too: a fight deliberately made gentler would otherwise be flagged
+ * TOO EASY for complying.
+ */
+const ACCEPTANCE_EARLY: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
+  easy:      { target: 0.80, share: 0.65, ceiling: 1.00 },
+  medium:    { target: 0.65, share: 0.50, ceiling: 0.90 },
+  hard:      { target: 0.45, share: 0.35, ceiling: 0.80 },
+  nightmare: { target: 0.40, share: 0.20, ceiling: 0.60 },
+};
+
+/** L<=2 — the party does not have its full kit yet. */
+export const isEarlyEncounter = (level: number) => level <= 2;
+
 function summarize(row: CellRow) {
   const wrs = row.builds.map((b) => b.winRate);
-  const [lo, hi] = TARGET_BANDS[row.difficulty];
+  const early = isEarlyEncounter(row.level);
+  const { target, share, ceiling } = (early ? ACCEPTANCE_EARLY : ACCEPTANCE)[row.difficulty];
   const floor = WALL_FLOOR[row.difficulty];
   const walled = row.builds.filter((b) => b.winRate < floor);
   const mean = wrs.reduce((s, x) => s + x, 0) / wrs.length;
   const med = median(wrs);
   const best = Math.max(...wrs);
+  const solveShare = wrs.filter((w) => w >= target).length / wrs.length;
   const wallShare = walled.length / wrs.length;
-  const bandOk = mean >= lo && mean <= hi;
+  const floorOk = solveShare >= share;   // enough good teams can win it
+  const ceilOk = med <= ceiling;         // the typical team cannot walk it
   const wallOk = wallShare <= MAX_WALL_SHARE[row.difficulty];
-  const solvable = row.difficulty !== 'nightmare' || best >= NIGHTMARE_BEST_MIN;
-  return { mean, med, best, min: Math.min(...wrs), wallShare, walled, bandOk, wallOk, solvable, ok: bandOk && wallOk && solvable, lo, hi };
+  return {
+    mean, med, best, min: Math.min(...wrs), wallShare, walled, early,
+    target, share, ceiling, solveShare,
+    floorOk, ceilOk, wallOk, ok: floorOk && ceilOk && wallOk,
+  };
 }
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
@@ -255,14 +298,17 @@ const pct = (n: number) => (n * 100).toFixed(0).padStart(3) + '%';
 
 function report(rows: CellRow[], header: string) {
   console.log(`\n${header}\n`);
-  console.log('enc  difficulty  builds   mean  median  min  best  walled   band        verdict');
+  console.log('enc  lvl difficulty  builds  median   solve%  need   ceil  walled  verdict');
   const bad: string[] = [];
   for (const row of rows) {
     const s = summarize(row);
-    const flags = [!s.bandOk && 'BAND', !s.wallOk && 'WALLS', !s.solvable && 'UNSOLVABLE'].filter(Boolean).join('+');
+    // TOO HARD = not enough good teams can win it. TOO EASY = the median team
+    // walks it. These are opposite fixes, so never collapse them into one flag.
+    const flags = [!s.floorOk && 'TOO HARD', !s.ceilOk && 'TOO EASY', !s.wallOk && 'WALLS'].filter(Boolean).join('+');
     if (!s.ok) bad.push(`${row.encounter}/${row.difficulty}(${flags})`);
     console.log(
-      `${row.encounter.padEnd(4)} ${row.difficulty.padEnd(10)} ${String(row.builds.length).padStart(6)}  ${pct(s.mean)}  ${pct(s.med)}  ${pct(s.min)}  ${pct(s.best)}  ${(s.wallShare * 100).toFixed(0).padStart(3)}%  [${pct(s.lo)},${pct(s.hi)}]  ${s.ok ? 'OK' : '⚠ ' + flags}`
+      `${row.encounter.padEnd(4)} L${String(row.level).padEnd(2)} ${row.difficulty.padEnd(10)} ${String(row.builds.length).padStart(6)}  ${pct(s.med)}   ${(s.solveShare * 100).toFixed(0).padStart(3)}%>=${(s.target * 100).toFixed(0)}%  ${(s.share * 100).toFixed(0).padStart(3)}%  <=${(s.ceiling * 100).toFixed(0).padStart(3)}%  ${(s.wallShare * 100).toFixed(0).padStart(3)}%  ${s.ok ? 'OK' : '⚠ ' + flags}`
+      + (s.early ? '  [early]' : '')
       // A large mean/median gap means the build space is BIMODAL: the cell is
       // not "medium difficulty", it is easy for some builds and a brick wall
       // for others. Tune the brick, not the average.
@@ -275,7 +321,7 @@ function report(rows: CellRow[], header: string) {
       }
     }
   }
-  console.log(`\n${bad.length ? `⚠ ${bad.length} cell(s) failing: ${bad.join(', ')}` : '✓ every cell passes (median in band, walls under cap, nightmare solvable)'}`);
+  console.log(`\n${bad.length ? `⚠ ${bad.length} cell(s) failing: ${bad.join(', ')}` : '✓ every cell passes (enough good teams win it, the median team cannot walk it, no wall)'}`);
   return bad.length === 0;
 }
 
