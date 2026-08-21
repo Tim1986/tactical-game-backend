@@ -225,6 +225,12 @@ export interface MatchState {
     startPos: BoardPosition;
     /** round-1 bare-END_TURN forced commit: skips start/end-of-turn ticks */
     forcedCommit: boolean;
+    /** CAMPAIGN (A4): every tile the acting unit has OCCUPIED this turn, in
+     *  order (starts with startPos). Door-triggered waves are matched against
+     *  this trail at END of turn rather than mid-turn — see the note in
+     *  turnProcessor's action site. Without the trail a unit could step on an
+     *  ambush tile and charge away before the door fired, never springing it. */
+    visited?: BoardPosition[];
     /** last applied action sequence number (ROD3 idempotency); -1 before any action */
     seq: number;
     /**

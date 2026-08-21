@@ -98,6 +98,39 @@ describe('e8 room flags', () => {
     expect(state.encounterProgress!.waves).toHaveLength(1);
     foe.position = foeWas;
 
+    // A unit that STEPPED on the tile and moved on still springs it — the trail
+    // is what stops the end-of-turn deferral from letting you brush past the
+    // ambush and escape it (which would silently gut the mechanic).
+    const brushBefore = new Set(state.units.map((u) => u.instanceId));
+    mover.position = { x: 5, y: 5 };                       // ended the turn elsewhere
+    checkSpawnTriggers(state, [], mover, [{ x: 2, y: 2 }, { x: 6, y: 3 }, { x: 5, y: 5 }]);
+    expect(state.encounterProgress!.waves).toHaveLength(0);
+    expect(state.units.filter((u) => !brushBefore.has(u.instanceId)).length).toBe(1);
+  });
+
+  it('a door wave does not fire mid-turn (it would orphan the queued turn)', () => {
+    // Regression for the e8 blocker: the guard spawning the instant a MOVE
+    // landed on (6,3) dropped a body into the path of the CHARGE the same turn
+    // had already queued, and the engine rejected it as unreachable. The action
+    // site now passes NO mover, so door triggers cannot fire there at all.
+    const { state } = buildE8();
+    const ep0 = state.encounterProgress!;
+    const mover = state.units.find((u) => u.instanceId === ep0.partyIds[0])!;
+    mover.position = { ...ep0.exitDoors[0] };
+    maybeRoomTransition(state, mover, []);
+
+    mover.position = { x: 6, y: 3 };
+    checkSpawnTriggers(state, []);            // the action-site call: no mover
+    expect(state.encounterProgress!.waves).toHaveLength(1);   // still pending
+  });
+
+  it('springs on the end-of-turn sweep', () => {
+    const { state } = buildE8();
+    const ep0 = state.encounterProgress!;
+    const mover = state.units.find((u) => u.instanceId === ep0.partyIds[0])!;
+    mover.position = { ...ep0.exitDoors[0] };
+    maybeRoomTransition(state, mover, []);
+
     // The party unit stepping on (6,3) springs it.
     const before = new Set(state.units.map((u) => u.instanceId));
     mover.position = { x: 6, y: 3 };

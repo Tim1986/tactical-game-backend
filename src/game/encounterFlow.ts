@@ -109,7 +109,15 @@ export function spawnWave(state: MatchState, wave: PendingWave, events: GameEven
  * Fire any due triggers. Call after every resolved action (mover = the unit
  * that just finished a MOVE/CHARGE, if any) and at round starts.
  */
-export function checkSpawnTriggers(state: MatchState, events: GameEvent[], mover?: UnitInstance): void {
+export function checkSpawnTriggers(
+  state: MatchState,
+  events: GameEvent[],
+  mover?: UnitInstance,
+  /** Tiles the mover occupied this turn (turnContext.visited). Defaults to its
+   *  current tile. Door triggers match against ALL of them, so a unit that
+   *  stepped on the tile and moved on still springs the ambush. */
+  moverTiles?: BoardPosition[],
+): void {
   const ep = state.encounterProgress;
   if (!ep || ep.waves.length === 0) return;
   const partyIds = new Set(ep.partyIds);
@@ -121,7 +129,9 @@ export function checkSpawnTriggers(state: MatchState, events: GameEvent[], mover
       (w.trigger.on === 'round' && state.roundNumber >= w.trigger.round)
       || (w.trigger.on === 'room_cleared' && boardClear)
       || (w.trigger.on === 'door' && !!mover && partyIds.has(mover.instanceId)
-          && mover.position.x === w.trigger.tile.x && mover.position.y === w.trigger.tile.y);
+          && (moverTiles ?? [mover.position]).some(
+            (t) => t.x === (w.trigger as { tile: BoardPosition }).tile.x
+                && t.y === (w.trigger as { tile: BoardPosition }).tile.y));
     (fire ? due : keep).push(w);
   }
   if (due.length === 0) return;

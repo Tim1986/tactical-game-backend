@@ -256,6 +256,7 @@ function beginTurnInternal(
   ws.turnContext = {
     actingUnitId: actingUnit.instanceId,
     startPos: { ...actingUnit.position },
+    visited: [{ ...actingUnit.position }],
     forcedCommit,
     seq: -1,
   };
@@ -304,13 +305,27 @@ function applyGameActionInternal(
     }
   }
 
-  // CAMPAIGN (A4): spawn triggers (door/round/room_cleared) fire after every
-  // action — BEFORE the win check, so a cleared board spawns its wave rather
-  // than ending the match. Room transitions do NOT fire here: a mid-turn
-  // transition teleports the mover and orphans the rest of its queued turn
-  // (the D2 Goblinopolis bug — "Target out of range" on the queued ability).
-  // They fire at END of the acting unit's turn in finalizeTurnInternal.
-  checkSpawnTriggers(ws, events, wasMove ? actingUnit : undefined);
+  // CAMPAIGN (A4): round/room_cleared triggers fire after every action — BEFORE
+  // the win check, so a cleared board spawns its wave rather than ending the
+  // match.
+  //
+  // DOOR triggers deliberately do NOT fire here (no mover is passed). Spawning
+  // a unit mid-turn orphans the rest of the mover's queued turn exactly the way
+  // a mid-turn room transition does — the guard lands in the path of an
+  // already-queued CHARGE and the action is rejected ("Charge destination is
+  // not reachable"). That is the same D2 Goblinopolis bug the room transition
+  // below was moved to end-of-turn to avoid; the sibling case was missed until
+  // campaign 3's e8 exposed it. Door triggers now fire in finalizeTurnInternal,
+  // matched against turnContext.visited so stepping on the tile and moving on
+  // still springs the ambush.
+  if (wasMove && ws.turnContext) {
+    const v = ws.turnContext.visited ?? (ws.turnContext.visited = []);
+    const last = v[v.length - 1];
+    if (!last || last.x !== actingUnit.position.x || last.y !== actingUnit.position.y) {
+      v.push({ ...actingUnit.position });
+    }
+  }
+  checkSpawnTriggers(ws, events);
 
   const winCheck = checkWinCondition(ws, playerOneId, playerTwoId);
   if (winCheck.isOver) {
@@ -354,6 +369,14 @@ function finalizeTurnInternal(
   // and move_self landings) and survived it (thorns/burn can kill mid-turn).
   // Must run BEFORE advanceSlot/buildFinalOrder: abandoning enemies edits
   // initiative.order.
+  // CAMPAIGN (A4): door-triggered waves fire HERE, not at the action site (see
+  // the note there). Matched against the whole turn's tile trail, and BEFORE
+  // the room transition below — a sprung ambush leaves living enemies on the
+  // board, which is what shuts an 'on_clear' door again.
+  if (!forcedCommit && actingUnit.isAlive) {
+    checkSpawnTriggers(ws, events, actingUnit, tc.visited);
+  }
+
   if (!forcedCommit && actingUnit.isAlive
     && (actingUnit.position.x !== startPos.x || actingUnit.position.y !== startPos.y)) {
     maybeRoomTransition(ws, actingUnit, events);
