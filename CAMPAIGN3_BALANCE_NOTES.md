@@ -6,10 +6,19 @@ Work-in-progress notes for the campaign-3 balance pass
 
 ## STATUS IN ONE LINE
 
-Runtime verification (§6.4) is **done except one item** and found two real
-content bugs, now fixed — the campaign **SMOKES CLEAN**. The balance pass
-itself (§6.5) has **not started**: all 12 `hpScaleOverride`s are still the
-uniform placeholder and the 200-game battery has never run.
+**BLOCKED on an engine bug (see next section).** §6.4 runtime verification is
+now **5 of 5 COMPLETE**, and the type-table starting scales are in. But the
+battery cannot run: e8 throws validation errors, and the smoke gate (correctly)
+refuses every run — full AND `--encounter`-scoped — until they are zero. No
+win-rate data can be collected by anyone until this is resolved.
+
+### Session 2 (2026-08-21) added
+- §6.4 item (d) CONFIRMED — all three e8 room flags fire. Permanent regression
+  test at `tests/unlitbeaconRooms.test.ts` (4 tests).
+- All 12 placeholder scales REPLACED with the objective-type table's starting
+  values (`KILL_ALL/CARVE/HOLD/ESCAPE/ROOMS/SURVIVE/ESCORT/BOSS_SCALE`).
+- That scale change EXPOSED the e8 engine bug below (it was always there; the
+  old placeholder scales made floor 2 so slow to reach that it rarely fired).
 
 ## ⚠ THE CAMPAIGN IS DELIBERATELY UNREGISTERED
 
@@ -25,14 +34,75 @@ It must be registered to run the sim at all (`campaignSim` resolves slugs
 through `CAMPAIGNS`), so the loop is: register → work → unregister before any
 commit that could ship, until the battery passes.
 
-## §6.4 runtime verification — 4 of 5 confirmed
+## 🛑 BLOCKER — e8 door-triggered wave orphans the rest of a queued turn
+
+**This is escalation trigger 1 (validation errors that survive a content fix) and
+it is an ENGINE bug, not a balance or authoring one. The balance operator may not
+fix it — it needs Fable or an owner ruling.**
+
+### Symptom
+`e8`, balanced party (`fighter,ranger,cleric,wizard`) only:
+
+| cell | games | validation errors | draws |
+|---|---|---|---|
+| e8 easy balanced | 40 | 8 (20%) | 6 |
+| e8 hard balanced | 40 | 8 (20%) | 9 |
+| e8 easy/hard melee | 40 ea | 0 | 0 |
+| e8 easy/hard ranged | 40 ea | 0 | 0 |
+
+Every error is the same message: `Charge destination is not reachable (path blocked)`.
+The draw-stall flag on that cell tracks it exactly — the stall is a SYMPTOM of the
+broken turns, not an independent placement problem. Do not "fix" it with placement.
+
+### Mechanism (confirmed, not inferred)
+The offending action batch is:
+```
+MOVE   -> (6,3)      <- e8 floor 2's door-trigger tile
+CHARGE -> (6,6)
+END_TURN
+```
+`(6,3)` is exactly `waves[0].trigger.tile`. The MOVE springs the landing guard,
+which spawns at `(6,4)` — inside the path the CHARGE was planned through. The
+charge is then correctly rejected, and the rest of the turn is orphaned.
+
+### Root cause
+`turnProcessor.ts:313` fires `checkSpawnTriggers(..., wasMove ? actingUnit : undefined)`
+MID-TURN. The comment directly above it (lines 306–312) documents this exact
+failure mode for ROOM TRANSITIONS and says they were moved to end-of-turn
+because "a mid-turn transition ... orphans the rest of its queued turn (the D2
+Goblinopolis bug)". **The same fix was never applied to the sibling case:
+door-triggered wave SPAWNS.** Inserting a unit mid-turn invalidates later queued
+actions exactly the way a mid-turn teleport does.
+
+### Recommended fix (surgical, matches the existing precedent)
+Split the mid-turn call by trigger kind:
+- `round` and `room_cleared` triggers MUST keep firing mid-turn — the comment
+  notes a cleared board has to spawn its wave BEFORE the win check or the match
+  ends early.
+- The `on:'door'` trigger (the only mover-dependent one) moves to end-of-turn in
+  `finalizeTurnInternal`, next to `maybeRoomTransition` and behind the same
+  "actually moved this turn AND still alive" guard.
+
+### Why this matters beyond the sim
+Turns are submitted as a BATCH in live play, so a human can hit this too: step on
+the ambush tile, and the rest of your own turn is rejected. That is the same
+defect class as the Leaping Slam bug a tester reported in v1.0.86 (a queued
+action the engine will never accept). Blast radius today is any `on:'door'` wave
+— e8 is the only content using one, so fixing it now is cheap.
+
+### Options if the engine fix is refused
+Moving e8's trigger tile only relocates the landmine (any tile a unit walks
+THROUGH before a charge can do this) and would be papering over a live-play bug.
+Recommend against.
+
+## §6.4 runtime verification — 5 of 5 CONFIRMED
 
 | # | Mechanic | Result |
 |---|---|---|
 | a | Novel abilities loader (first `novel` use ever) | ✓ **WORKS** — all three cast in play: `undertow` 56 casts/25 games (e6), `halt_the_line` 30 (e12), `muster_charge` 30 (e12). Two were mis-authored though — see below. |
 | b | AI-cast `move_self` (`muster_charge`) | ✓ **WORKS** after the content fix — and it was **never a brain gap**. The brain's AoE placement already respects the free-landing-tile rule. Do not escalate this. |
 | c | Dual-win `[units_dead, units_at_tiles scope:'main']` | ✓ **WIRED** — proved by pre-placing the main on the Standard tile (7,4): instant `winnerSide: p1, reason: "You reached the goal"`. **But see the measurement limit below.** |
-| d | Rooms flags: `surprise` + wave `on:'door'` + `doorMode:'always'` | ⚠ **NOT FULLY VERIFIED** — the only outstanding §6.4 item. e8 runs clean (0 validation errors) so nothing is crashing, but I did **not** confirm each flag actually fires. |
+| d | Rooms flags: `surprise` + wave `on:'door'` + `doorMode:'always'` | ✓ **CONFIRMED 2026-08-21** — all three fire, driven through the real engine functions on the real encounter in `tests/unlitbeaconRooms.test.ts`. `doorMode:'always'` lets the party leave floor 1 mid-fight; floor 2's garrison spawns with `skipFirstSlot` (surprise); the landing guard springs ONLY for a party unit on (6,3) (an enemy standing there does not spring it). ⚠ Trap found while verifying: room 0 is placed at BUILD time and never passes through `enterNextRoom`, so a `surprise` authored on room 0 would be silently dropped. e8 is safe (its surprise is on floor 2) — but do not author surprise on a room 0. |
 | e | Ally `follow` mode + armed escort | ✓ **WORKS** — e10 resolves both ways in the histograms: `W:The escort made it through` and `L:Your charge has fallen`. |
 
 ### Two content bugs found and FIXED (`src/campaigns/unlitbeacon.ts`)
@@ -72,10 +142,25 @@ honor guards at (6,3)/(6,5) — (6,4) is the only gap and is flanked by both.
 **Verify this path by hand before trusting e12's numbers**, per §6.5's warning
 that the Standard "must be genuinely reachable or it's decoration".
 
-## §6.5 balance — NOT STARTED
+## §6.5 balance — starting scales SET, nothing measured yet
 
-All 12 `hpScaleOverride`s remain `{ easy: 1.0, medium: 1.2, hard: 1.4,
-nightmare: 1.6 }`. Nothing has been tuned.
+The uniform placeholder is gone. Each encounter now carries the OBJECTIVE-TYPE
+TUNING TABLE's starting scale for its type (CAMPAIGN_BALANCING.md) — first
+guesses to be measured, not final values:
+
+| enc | type | constant |
+|---|---|---|
+| e1 (tutorial), e2 | kill-all | `KILL_ALL_SCALE` 0.95/1.20/1.30/1.30 |
+| e3 | hold (simultaneous tiles) | `HOLD_SCALE` 1.30/1.45/1.70/2.30 |
+| e4 (hazard), e5 | carve | `CARVE_SCALE` 1.05/1.30/1.45/1.45 |
+| e6, e7 | escape | `ESCAPE_SCALE` 0.90/1.10/1.30/1.70 |
+| e8 | rooms | `ROOMS_SCALE` 0.75/0.80/0.90/1.00 |
+| e9 | survive | `SURVIVE_SCALE` 0.95/1.00/1.05/1.10 |
+| e10 | escort | `ESCORT_SCALE` 0.70/1.10/1.20/1.30 |
+| e11, e12 | boss | `BOSS_SCALE` 0.70/0.90/1.00/1.20 |
+
+**No win rates have been measured at any sample size** — the smoke gate blocks
+every run while e8 errors. e1 also gets the tutorial exemption when it is.
 
 ### Directional signals only — NOT acceptance data
 
@@ -95,10 +180,10 @@ where to look first, nothing more:
 
 ## NEXT STEPS, in order
 
-1. Finish §6.4 item (d): confirm the e8 room flags actually fire — the
-   `on:'door'` wave springs, `surprise` applies, `doorMode:'always'` lets you
-   bar the stair mid-fight.
-2. Register `unlitbeacon` (needed for the sim).
+1. **UNBLOCK e8** — the engine fix above, or an owner ruling. Nothing below can
+   start until `--smoke` reports 0 validation errors. (§6.4 item (d) is DONE.)
+2. Register `unlitbeacon` (needed for the sim — one-line toggle in
+   `src/campaigns/index.ts`, rationale comment is there).
 3. `npx tsx src/ai/campaignSim.ts unlitbeacon --smoke` — re-gate on current content.
 4. `npx tsx src/ai/campaignSim.ts unlitbeacon --games 200 --json results.json`
    — budget for a long run; the doc warns a full battery is hours.
