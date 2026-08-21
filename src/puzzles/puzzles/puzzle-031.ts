@@ -1,11 +1,16 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #31 — "Cut Him Loose" (ANSWER: PURIFY — never a winning move before).
+ * Puzzle #31 — "Cut Him Loose" (ANSWER: PURIFY).
  *
- * Fable's rule for this round: no more puzzles answered by Freeze or Shadow
- * Grasp, which between them already close 60% of the rotation. This one is
- * answered by a Cleric's Purify, and the target never enters the calculation.
+ * ⚠ Fable review 2026-08-21: this is a NEAR-CLONE of #16 "Break the Bindings"
+ * — same texture (rooted finisher), same answer (Purify your own unit), same
+ * roster shape, same one-short retry hook. It was authored as "the first purify
+ * answer" because the rotation tally carried "(016 tbd)" instead of #16's
+ * actual answer. Kept in rotation (near-clones are acceptable filler on the
+ * road to 50, and the two sit 15 days apart), but PURIFY IS NOW A CLOSED
+ * ANSWER, and the lesson is procedural: verify the tally is COMPLETE before
+ * claiming any answer is new.
  *
  * Your Rogue is ROOTED two tiles from the enemy Sorcerer: MOV-4 leaves it able
  * to use abilities but unable to close, and Expose Weakness only reaches one

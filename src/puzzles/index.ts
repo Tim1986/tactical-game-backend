@@ -79,14 +79,19 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // cannot see that because it scores one puzzle at a time).
   //
   // Answer tally, 24 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
-  // bolt-the-blocker 2 · purify 1 · cold_snap 1 · longshot-the-healer 1 ·
-  // ignore-the-free-kill 1 · sword 1 · (016 tbd).
+  // PURIFY 2 (⚠ #16 and #31 are the same puzzle in different clothes — Fable
+  // review 2026-08-21; kept, spaced 15 days apart, but purify is now CLOSED as
+  // an answer) · bolt-the-blocker 2 · cold_snap 1 · longshot-the-healer 1 ·
+  // ignore-the-free-kill 1 · sword 1.
+  // ⚠ A "tbd" in this tally is a bug: #31 was authored as "first purify" while
+  // 016 sat unverified in this very list — and 016 WAS purify. The tally only
+  // prevents duplicates if it is complete.
   // ⛔ NO new freeze or grasp answers until the rotation reaches ~40.
   PUZZLE_007, // pull              → grasp
   PUZZLE_015, // tempo/heal        → freeze
   PUZZLE_019, // blocked path      → arrow (the blocker)
   PUZZLE_018, // friendly fire     → arrow (the weaker shot)
-  PUZZLE_031, // free-the-rooted   → PURIFY  ← first of its answer
+  PUZZLE_031, // free-the-rooted   → purify (⚠ near-clone of #16 — see tally note)
   PUZZLE_021, // blocked path      → bolt (the blocker)
   PUZZLE_009, // pull              → grasp
   PUZZLE_023, // tempo/self-heal   → freeze
@@ -102,7 +107,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_029, // friendly fire     → bolt (the weaker shot)
   PUZZLE_012, // pull              → grasp
   PUZZLE_028, // tempo/heal        → freeze
-  PUZZLE_016, // free-the-finisher → (sorcerer)
+  PUZZLE_016, // free-the-finisher → purify (the original; #31 is its twin)
   PUZZLE_030, // pull              → grasp
   PUZZLE_025, // tempo/heal        → freeze
   PUZZLE_017, // overkill/knockback→ sword (the weaker attack)
