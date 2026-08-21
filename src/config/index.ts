@@ -116,7 +116,9 @@ export const config = {
     resendApiKey: optionalEnv('RESEND_API_KEY', ''),
     // Verified sender the support form mail is sent FROM (must be on a Resend-verified
     // domain), e.g. "Dungeon Combat <no-reply@dungeoncombat.org>".
-    fromAddress: optionalEnv('MAIL_FROM', 'Dungeon Combat <no-reply@example.com>'),
+    // EMAIL_FROM is accepted as an alias: the password-reset mailer used to read
+    // that name only, so a deploy may have either (or both) set.
+    fromAddress: optionalEnv('MAIL_FROM', process.env.EMAIL_FROM ?? 'Dungeon Combat <no-reply@example.com>'),
     // Inbox that receives support submissions (defaults to SUPPORT_EMAIL).
     supportInbox: optionalEnv('SUPPORT_INBOX', process.env.SUPPORT_EMAIL ?? 'support@example.com'),
   },

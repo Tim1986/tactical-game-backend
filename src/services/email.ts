@@ -9,6 +9,12 @@ import { logger } from '../utils/logger.js';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
+// The app aborts its own HTTP requests at 15s (mobile src/api/client.ts). An
+// unbounded call to Resend can therefore outlive the request that is waiting on
+// it, and the user sees a connection error for a request that actually arrived.
+// Stay comfortably under that ceiling and fail as a normal error result.
+const RESEND_TIMEOUT_MS = 8_000;
+
 export interface SendEmailInput {
   to: string;
   subject: string;
@@ -37,6 +43,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   try {
     const res = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
+      signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${config.email.resendApiKey}`,
         'Content-Type': 'application/json',
