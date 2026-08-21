@@ -354,12 +354,23 @@ merged). Always merge before concluding anything.
 contentHash and exits 2). Both shards must run from the same commit, or you are
 averaging two different games.
 
-**What a build is.** A sampled build draws a legal comp (max 2 per class, same
-cap real players have), then per unit a special, a passive and a Deep Gift —
-each gated by level exactly as `choicesForLevel` gates them — and then a fork
-state read from the campaign's OWN node graph (every boon-granting `choice`
-node contributes one option, so the run is one a real player could have had).
-Campaigns with no boons yield an empty fork state.
+**What a build is.** A sampled build draws a legal comp — **four DISTINCT
+classes**, hero + three companions, exactly what the campaign setup screen
+allows — then per unit a special, a passive and a Deep Gift, each gated by
+level exactly as `choicesForLevel` gates them, and a fork state read from the
+campaign's OWN node graph. Boons must be the ones REACHABLE BEFORE the
+encounter being simmed (see the ⚠ below).
+
+> ⚠ **2026-08-21 — two sampler bugs, both inflating win rates.** (1) Comps
+> were drawn under the ARENA cap (max 2 per class); only 43% of draws were
+> legal campaign parties, and the illegal duplicate-class comps are the
+> strongest in the game (AC_REWORK pass 8). Fixed: distinct-class draw.
+> (2) EVERY encounter cell received the campaign's full boon set, including
+> boons granted by choice nodes the player hadn't reached yet — worth ~30 pts
+> on an L1 cell (`startShielded: 'all'`). **Every buildBattery verdict
+> produced before both fixes is tainted** — including The Sealed Deep's
+> shipped 48/48 PASS and the trilogy audit below. The full recovery plan is
+> `REBALANCE_2026-08.md`.
 
 **Acceptance, per cell:**
 - **Band**: MEAN win rate across builds is in the difficulty band. ⚠ It must be
@@ -394,6 +405,11 @@ and the cap is too tight; if they are reasonable parties a player would field,
 the cell really is bricking them. Adjust here, in one place, and say so.
 
 ### Validation against the shipped trilogy (2026-08-18)
+
+> ⚠ **TAINTED (2026-08-21):** this audit ran on the buggy sampler (duplicate
+> classes + unearned boons — see the warning box above). Both bugs push toward
+> "too easy" verdicts, which is what it concluded. Do not act on this section;
+> re-run per `REBALANCE_2026-08.md` step 3. Kept for the record.
 
 Run on moonberry — 2,000 builds (100 per cell x 20 cells, 2 shards x 50 games),
 ~15 min per shard in parallel. **The trilogy is materially looser than the

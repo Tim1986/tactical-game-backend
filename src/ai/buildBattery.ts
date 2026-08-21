@@ -39,8 +39,25 @@ import { spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 
 const DIFFICULTIES: CampaignDifficulty[] = ['easy', 'medium', 'hard', 'nightmare'];
-/** Mirrors teamService / simHarness: a real player cannot field 3+ of a class. */
-const MAX_PER_CLASS = 2;
+/**
+ * A campaign party is FOUR DISTINCT CLASSES — one hero plus three companions,
+ * no duplicates.
+ *
+ * This used to read `MAX_PER_CLASS = 2` with the comment "mirrors teamService /
+ * simHarness: a real player cannot field 3+ of a class". That is the ARENA
+ * rule, and this harness only ever sims campaigns, so it was sampling parties
+ * that cannot exist: the setup screen (mobile `app/campaign/[slug].tsx`) filters
+ * the hero out of the companion grid and stores companions in a set, so a
+ * duplicate class is unreachable in play.
+ *
+ * It mattered — only 43% of draws under the old rule were legal campaign
+ * parties, so well over half of every sampled cell was measuring comps no
+ * player can field, and duplicate-heavy comps (which arena work shows behave
+ * very differently, e.g. warlock²+barbarian²) were dragging the distribution.
+ * Any campaign balance verdict produced by this file before 2026-08-21 was
+ * computed over that polluted sample and should be re-run.
+ */
+const PARTY_SIZE = 4;
 
 const TARGET_BANDS: Record<CampaignDifficulty, [number, number]> = {
   easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.15, 0.45],
@@ -96,12 +113,12 @@ export function sampleBuild(rng: () => number, campaign: CampaignDefinition, lev
   const classes = Object.keys(DEFAULT_UNITS);
   const pick = <T,>(a: T[]): T => a[Math.floor(rng() * a.length)];
 
+  // Four distinct classes; slugs[0] is the hero, the rest are companions (the
+  // order is load-bearing — choicesForLevel front-loads main + first companion).
   const slugs: string[] = [];
-  const counts: Record<string, number> = {};
-  while (slugs.length < 4) {
+  while (slugs.length < PARTY_SIZE) {
     const c = pick(classes);
-    if ((counts[c] ?? 0) >= MAX_PER_CLASS) continue;
-    counts[c] = (counts[c] ?? 0) + 1;
+    if (slugs.includes(c)) continue;
     slugs.push(c);
   }
 
