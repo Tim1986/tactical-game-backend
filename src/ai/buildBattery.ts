@@ -32,7 +32,7 @@ import { simEncounterCell, REPRESENTATIVE_PARTIES } from './campaignSim.js';
 import { makeRng } from './simHarness.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
 import { DEEP_GIFTS, DeepGiftSlug, CampaignUnitChoice } from '../campaigns/runtime.js';
-import { CampaignDifficulty, CampaignDefinition } from '../campaigns/types.js';
+import { CampaignDifficulty, CampaignDefinition, CampaignNode } from '../campaigns/types.js';
 import { DEFAULT_UNITS } from './defaultData.js';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -107,9 +107,65 @@ export interface SampledBuild {
   label: string;
 }
 
-/** Draw one legal build: comp (max 2/class), then a loadout per unit, then the
- *  fork state. Level gates which parts exist, matching choicesForLevel. */
-export function sampleBuild(rng: () => number, campaign: CampaignDefinition, level: number): SampledBuild {
+/**
+ * Boon-granting choice nodes a player MUST already have passed to be standing
+ * at `encounterId` — i.e. the only boons that encounter's cell may hand out.
+ *
+ * ⚠ This exists because of a real bug (2026-08-21). `sampleBuild` used to walk
+ * EVERY choice node in the campaign and apply the whole boon set to every cell,
+ * so an encounter was fought with rewards from choices that happen later in the
+ * story. Measured on unlitbeacon e1/nightmare/melee at L1: 43% with no boons
+ * (correct), 73% with one, 88% with both — the entire gap between this tool's
+ * 86% for that cell and campaignSim's 29%. `startShielded: 'all'` alone is
+ * worth ~30 points at L1, where nobody has a special yet.
+ *
+ * A choice node counts as "before" the encounter iff it can still REACH the
+ * encounter node — computed on the reversed edge set, so it is correct for
+ * branching graphs and not just the linear chains the trilogy happens to use.
+ * The node itself is excluded: you make a choice on the way TO a fight, and
+ * its reward lands on the next one.
+ */
+export function boonChoicesBefore(campaign: CampaignDefinition, encounterId: string): string[][] {
+  const nodes = campaign.nodes ?? {};
+  const edges = (n: CampaignNode): string[] =>
+    n.kind === 'choice' ? n.choices.map((c) => c.next)
+      : n.kind === 'end' ? []
+      : [n.next];
+
+  // Nodes that can reach ANY node staging this encounter (BFS on reversed edges).
+  const targets = Object.entries(nodes)
+    .filter(([, n]) => n.kind === 'encounter' && n.encounter === encounterId)
+    .map(([id]) => id);
+  if (!targets.length) throw new Error(`No node stages encounter "${encounterId}" in ${campaign.slug}`);
+
+  const back = new Map<string, string[]>();
+  for (const [id, n] of Object.entries(nodes)) {
+    for (const to of edges(n)) (back.get(to) ?? back.set(to, []).get(to)!).push(id);
+  }
+  const canReach = new Set<string>();
+  const queue = [...targets];
+  while (queue.length) {
+    for (const prev of back.get(queue.pop()!) ?? []) {
+      if (canReach.has(prev)) continue;
+      canReach.add(prev);
+      queue.push(prev);
+    }
+  }
+
+  const out: string[][] = [];
+  for (const id of canReach) {
+    const n = nodes[id];
+    if (n?.kind !== 'choice') continue;
+    const granting = n.choices.filter((c) => c.grantBoon).map((c) => c.grantBoon!);
+    if (granting.length) out.push(granting);
+  }
+  return out;
+}
+
+/** Draw one legal build: comp (four distinct classes), a loadout per unit, and
+ *  the fork state EARNED BY THIS POINT in the story. Level gates which loadout
+ *  parts exist, matching choicesForLevel; `encounterId` gates the boons. */
+export function sampleBuild(rng: () => number, campaign: CampaignDefinition, level: number, encounterId: string): SampledBuild {
   const classes = Object.keys(DEFAULT_UNITS);
   const pick = <T,>(a: T[]): T => a[Math.floor(rng() * a.length)];
 
@@ -132,16 +188,10 @@ export function sampleBuild(rng: () => number, campaign: CampaignDefinition, lev
     return out;
   });
 
-  // Fork state, read from the campaign's OWN graph: every choice node that
-  // grants a boon contributes at most one, so the sampled run is a run a real
-  // player could actually have. Campaigns with no boons yield [].
-  const boonKeys: string[] = [];
-  for (const node of Object.values(campaign.nodes ?? {})) {
-    if ((node as { kind: string }).kind !== 'choice') continue;
-    const opts = (node as { choices?: { grantBoon?: string }[] }).choices ?? [];
-    const granting = opts.filter((o) => o.grantBoon).map((o) => o.grantBoon!);
-    if (granting.length) boonKeys.push(pick(granting));
-  }
+  // Fork state: one option from each boon-granting choice the player has
+  // already reached at this point in the story (NOT the whole campaign — see
+  // boonChoicesBefore). Encounters before the first fork correctly yield [].
+  const boonKeys = boonChoicesBefore(campaign, encounterId).map(pick);
 
   const label = slugs.map((s, i) => {
     const c = choices[i];
@@ -301,7 +351,7 @@ if (isMain) {
         // Seed from (campaign, cell, buildIndex): reproducible, and shard 0 and
         // shard 1 draw disjoint build indices so they never duplicate work.
         const seed = parseInt(createHash('sha1').update(`${campaignSlug}|${encounter}|${difficulty}|${i}`).digest('hex').slice(0, 8), 16);
-        const b = sampleBuild(makeRng(seed), campaign, level);
+        const b = sampleBuild(makeRng(seed), campaign, level, encounter);
         const r = simEncounterCell(campaignSlug, encounter, difficulty, b.label, b.slugs, {
           games, level, seed, choicesOverride: b.choices, boonKeys: b.boonKeys,
         });

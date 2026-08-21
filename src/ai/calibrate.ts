@@ -65,7 +65,7 @@ for (const difficulty of diffs) {
     const wrs: number[] = [];
     for (let i = 0; i < builds; i++) {
       const seed = parseInt(createHash('sha1').update(`${slug}|${encounter}|${difficulty}|${i}`).digest('hex').slice(0, 8), 16);
-      const b = sampleBuild(makeRng(seed), campaign, level);
+      const b = sampleBuild(makeRng(seed), campaign, level, encounter);
       wrs.push(simEncounterCell(slug, encounter, difficulty, b.label, b.slugs, {
         games, level, seed, choicesOverride: b.choices, boonKeys: b.boonKeys, hpScale: scale,
       }).winRate);
