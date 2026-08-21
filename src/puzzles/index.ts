@@ -106,7 +106,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
               //                     cannot use it
   PUZZLE_026, // blocked path      → arrow (the blocker)
   PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)  ← first of both
-  PUZZLE_034, // 3-TURN eliminate_all → shoot the TANK, ignore the free kill
+  PUZZLE_034, // 3-TURN eliminate_all → shoot the TANK, ignore the free kill (+PICKER: longshot among decoys)
               //                        (pre-applied burning; DEPTH 2, the only one)
   PUZZLE_013, // pull              → grasp
   PUZZLE_027, // tempo/self-heal   → freeze

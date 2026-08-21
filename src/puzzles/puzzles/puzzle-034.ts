@@ -29,7 +29,7 @@ import type { PuzzleDefinition } from '../types.js';
  * reason to move) to keep the 3-turn search tractable, and neither enemy carries
  * a freeze or a root, so nothing can delete the third turn.
  *
- * Slack: 15 + 16 + 11 = 42 against 35, and the Acolyte's 6 against a 7-point
+ * Slack: 15 + 16 + 11 = 42 against 40, and the Acolyte's 6 against a 7-point
  * tick. Note the third shot is an ARROW, not a second Longshot — specials are
  * once per match, which is #33's lesson and is now part of the budget.
  *
@@ -46,14 +46,20 @@ export const PUZZLE_034: PuzzleDefinition = {
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
     // ROOTED as a search-cost device (see #33): range 8, never wants to move.
+    // CAMOUFLAGE (Fable retrofit, 2026-08-21): the Ranger picks its bow. Only
+    // Longshot's 15 completes the 42-point budget against 40; Piercing's 12
+    // leaves the Warden on exactly 1 (the near-miss made into a decoy), and
+    // Pinning's 7 is never close. Default is PIERCING — the tempting decoy —
+    // because a picker whose default is the answer is decoration (the #24 rule).
     {
-      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'longshot',
+      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'piercing',
+      specialChoices: ['pinning', 'piercing', 'longshot'],
       position: { x: 1, y: 2 },
       statusEffects: [{ slug: 'rooted', turnsRemaining: 5, stacks: 1 }],
     },
     { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 3, y: 4 } },
     // The real job: 35 health, and it takes all three turns.
-    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 5, y: 4 }, currentHealth: 35 },
+    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 5, y: 4 }, currentHealth: 40 },
     // Already dead. 6 health against a 7-point tick at the start of its own slot.
     {
       id: 'acol', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
