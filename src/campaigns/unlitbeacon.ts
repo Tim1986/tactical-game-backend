@@ -1,8 +1,16 @@
 /**
  * unlitbeacon.ts — "The Unlit Beacon" (second PAID campaign) — DESIGN DRAFT.
  *
- * ⚠ NOT REGISTERED in index.ts. Every hpScaleOverride is a PLACEHOLDER pending
- * the balance battery (CAMPAIGN_BALANCING.md). Design notes: mobile/CAMPAIGN3_DESIGN.md.
+ * ⚠ NOT REGISTERED in index.ts — registering it makes it immediately playable
+ * (the Campaign tab renders the registry as-is), and it is not balanced yet.
+ * Every hpScaleOverride is still a PLACEHOLDER; the 200-game battery has never
+ * run. Design notes: mobile/CAMPAIGN3_DESIGN.md. Balance-pass state, including
+ * what has been runtime-verified so far: backend/CAMPAIGN3_BALANCE_NOTES.md.
+ *
+ * Runtime verification (2026-08-20): the novel-abilities loader, AI-cast
+ * move_self, dual-win and ally-follow all execute; two novel abilities were
+ * mis-typed as 'single' and could never resolve — fixed, see their comments.
+ * The campaign now SMOKES CLEAN (0 validation errors).
  *
  * Premise: the beacon above Coldgate Pass has burned every winter for four
  * hundred years, and everyone in Frostmere believes the light keeps the dead
@@ -215,9 +223,14 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     halt_the_line: {
       id: 'halt_the_line', slug: 'halt_the_line', name: 'Halt the Line',
       description: 'The Marshal slams his standard down: 8 unblockable damage to every adjacent enemy, and they are rooted for 1 turn.',
-      targetingType: 'single', range: 0, areaRadius: 1, cooldownTurns: 99,
+      // SELF-CENTRED BLAST — shaped like whirlwind/shockwave in gameData
+      // (aoe · range 0 · radius 1 · orthogonal), NOT 'single'. Authored as
+      // 'single' with range 0 this was unsatisfiable: the only tile in range is
+      // the caster's own, and canTargetAlly:false forbids aiming there, so the
+      // brain never cast it once in 30 games. Measured 2026-08-20.
+      targetingType: 'aoe', range: 0, areaRadius: 1, cooldownTurns: 99,
       canTargetAlly: false, isSpecial: true, isUnblockable: true,
-      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      excludeAllies: true, areaShape: 'orthogonal', isMultiHit: false,
       effects: [
         { type: 'damage', formula: 'flat', value: 8 },
         { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
@@ -226,9 +239,16 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     muster_charge: {
       id: 'muster_charge', slug: 'muster_charge', name: 'Muster Charge',
       description: 'The Marshal crosses 4 tiles in a single stride and deals 9 damage around where he lands.',
-      targetingType: 'single', range: 4, areaRadius: 1, cooldownTurns: 99,
+      // LEAP + LANDING RING — shaped like roar (Leaping Slam) in gameData
+      // (aoe · radius 1 · 'ring', so the caster lands in the calm eye and is
+      // not caught by its own blast). Authored as 'single' this could NEVER
+      // resolve: a single-target cast demands a unit ON the tile, while
+      // move_self demands that tile be EMPTY — mutually exclusive, so all 28
+      // casts in 30 games were rejected "Cannot leap onto an occupied tile"
+      // and the Marshal's signature move never fired. Measured 2026-08-20.
+      targetingType: 'aoe', range: 4, areaRadius: 1, cooldownTurns: 99,
       canTargetAlly: false, isSpecial: true, isUnblockable: false,
-      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      excludeAllies: true, areaShape: 'ring', isMultiHit: false,
       effects: [
         { type: 'move_self' },
         { type: 'damage', formula: 'flat', value: 9 },
