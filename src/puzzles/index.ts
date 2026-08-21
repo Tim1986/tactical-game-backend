@@ -79,54 +79,50 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
  * Interleaved focus / pull / reach so consecutive days feel different.
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
-  // Interleaved so consecutive days never repeat a FAMILY, and annotated with
-  // each puzzle's WINNING MOVE so answer concentration stays visible (Fable,
-  // 2026-08-21: freeze and grasp had quietly reached 30% each, and the solver
-  // cannot see that because it scores one puzzle at a time).
+  // Interleaved on THREE dimensions (Fable reorder 2026-08-21): family,
+  // ANSWER (same answer >= 5 days apart), and axis (pickers spread, 3-turns
+  // spread). The previous order appended new entries as a clump — days 12-15
+  // ran picker/3-turn/picker with #39 repeating #35's exact answer 3 days
+  // later. Keep all three spacings when inserting; do not append.
   //
-  // Answer tally, 24 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
-  // PURIFY 2 (⚠ #16 and #31 are the same puzzle in different clothes — Fable
-  // review 2026-08-21; kept, spaced 15 days apart, but purify is now CLOSED as
-  // an answer) · bolt-the-blocker 2 · cold_snap 1 · longshot-the-healer 1 ·
-  // ignore-the-free-kill 1 · sword 1.
-  // PICKERS (specialChoices): #1 #24 #34 #39 #40 — 5 of 28.
-  // 3-TURN: #33 #34 #36 — 3 of 28.
+  // Answer tally, 28 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
+  // pinning-the-healer 2 · purify 2 · bolt-the-blocker 2 · longshot-blocker 1 ·
+  // longshot-healer 1 · longshot-far 1 · cold_snap 1 · ignore-free-kill 1 ·
+  // sword 1.
   // CLOSED answers (do not author more): freeze · grasp · purify.
-  // ⚠ A "tbd" in this tally is a bug: #31 was authored as "first purify" while
-  // 016 sat unverified in this very list — and 016 WAS purify. The tally only
-  // prevents duplicates if it is complete.
-  // ⛔ NO new freeze or grasp answers until the rotation reaches ~40.
-  PUZZLE_007, // pull              → grasp
-  PUZZLE_015, // tempo/heal        → freeze
-  PUZZLE_019, // blocked path      → arrow (the blocker)
-  PUZZLE_018, // friendly fire     → arrow (the weaker shot)
-  PUZZLE_031, // free-the-rooted   → purify (⚠ near-clone of #16 — see tally note)
-  PUZZLE_021, // blocked path      → bolt (the blocker)
-  PUZZLE_009, // pull              → grasp
-  PUZZLE_023, // tempo/self-heal   → freeze
-  PUZZLE_022, // blocked path      → arrow (the REACHABLE door)
-  PUZZLE_024, // camouflage        → grasp (picker; default is a decoy)
-  PUZZLE_032, // passive synergy   → cold_snap (Opportunist; first passive puzzle)
-  PUZZLE_035, // tempo/heal        → PINNING the healer OUT OF RANGE  ← first
-              //                     enemy-root answer; it keeps its turn and
-              //                     cannot use it
-  PUZZLE_040, // blocked path +PICKER → longshot the blocker (1 of 3 choices)
+  // PICKERS: #1 #24 #34 #39 #40 — ⚠ 4 of 5 are the SAME ranger bow picker and
+  // piercing is ALWAYS the decoy (a meta-tell). No more ranger bow pickers;
+  // next pickers host on fighter/barbarian/rogue/warlock, and piercing must be
+  // an ANSWER somewhere before the picker returns to the ranger.
+  // 3-TURN: #33 #34 #36 — 3 of 28.
+  PUZZLE_007, // pull                 → grasp
+  PUZZLE_015, // tempo/heal           → freeze
+  PUZZLE_019, // blocked path         → arrow (the blocker)
+  PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)
+  PUZZLE_031, // free-the-rooted      → purify (near-clone of #16, spaced from it)
+  PUZZLE_017, // overkill/knockback   → sword (the weaker attack)
+  PUZZLE_009, // pull                 → grasp
+  PUZZLE_023, // tempo/self-heal      → freeze
+  PUZZLE_040, // blocked path +PICKER → longshot the blocker (1 of 3)
+  PUZZLE_018, // friendly fire        → arrow (the weaker shot)
+  PUZZLE_032, // passive synergy      → cold_snap (Opportunist)
+  PUZZLE_012, // pull                 → grasp
+  PUZZLE_025, // tempo/heal           → freeze
   PUZZLE_036, // 3-TURN eliminate_all → longshot the FAR one (assign the reach)
-  PUZZLE_039, // tempo/heal   +PICKER → pinning the healer (1 of 3 choices)
-  PUZZLE_026, // blocked path      → arrow (the blocker)
-  PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)  ← first of both
-  PUZZLE_034, // 3-TURN eliminate_all → shoot the TANK, ignore the free kill (+PICKER: longshot among decoys)
-              //                        (pre-applied burning; DEPTH 2, the only one)
-  PUZZLE_013, // pull              → grasp
-  PUZZLE_027, // tempo/self-heal   → freeze
-  PUZZLE_029, // friendly fire     → bolt (the weaker shot)
-  PUZZLE_012, // pull              → grasp
-  PUZZLE_028, // tempo/heal        → freeze
-  PUZZLE_016, // free-the-finisher → purify (the original; #31 is its twin)
-  PUZZLE_030, // pull              → grasp
-  PUZZLE_025, // tempo/heal        → freeze
-  PUZZLE_017, // overkill/knockback→ sword (the weaker attack)
-  PUZZLE_020, // tempo/self-heal   → freeze
+  PUZZLE_022, // blocked path         → arrow (the REACHABLE door)
+  PUZZLE_024, // camouflage +PICKER   → grasp (default is a decoy)
+  PUZZLE_027, // tempo/self-heal      → freeze
+  PUZZLE_035, // tempo/heal           → pinning the healer OUT OF RANGE
+  PUZZLE_021, // blocked path         → bolt (the blocker)
+  PUZZLE_013, // pull                 → grasp
+  PUZZLE_028, // tempo/heal           → freeze
+  PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (longshot among decoys)
+  PUZZLE_026, // blocked path         → arrow (the blocker)
+  PUZZLE_016, // free-the-finisher    → purify (the original)
+  PUZZLE_020, // tempo/self-heal      → freeze
+  PUZZLE_030, // pull                 → grasp
+  PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
+  PUZZLE_029, // friendly fire        → bolt (the weaker shot)
 ];
 
 /**
