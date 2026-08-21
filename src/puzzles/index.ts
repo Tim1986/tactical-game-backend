@@ -45,6 +45,7 @@ import { PUZZLE_030 } from './puzzles/puzzle-030.js';
 import { PUZZLE_031 } from './puzzles/puzzle-031.js';
 import { PUZZLE_032 } from './puzzles/puzzle-032.js';
 import { PUZZLE_033 } from './puzzles/puzzle-033.js';
+import { PUZZLE_034 } from './puzzles/puzzle-034.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -64,7 +65,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_024.id]: PUZZLE_024, [PUZZLE_025.id]: PUZZLE_025,
   [PUZZLE_026.id]: PUZZLE_026, [PUZZLE_027.id]: PUZZLE_027, [PUZZLE_028.id]: PUZZLE_028, [PUZZLE_029.id]: PUZZLE_029, [PUZZLE_030.id]: PUZZLE_030,
   [PUZZLE_031.id]: PUZZLE_031, [PUZZLE_032.id]: PUZZLE_032,
-  [PUZZLE_033.id]: PUZZLE_033,
+  [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
 };
 
 /**
@@ -77,9 +78,9 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // 2026-08-21: freeze and grasp had quietly reached 30% each, and the solver
   // cannot see that because it scores one puzzle at a time).
   //
-  // Answer tally, 23 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
+  // Answer tally, 24 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
   // bolt-the-blocker 2 · purify 1 · cold_snap 1 · longshot-the-healer 1 ·
-  // sword 1 · (016 tbd).
+  // ignore-the-free-kill 1 · sword 1 · (016 tbd).
   // ⛔ NO new freeze or grasp answers until the rotation reaches ~40.
   PUZZLE_007, // pull              → grasp
   PUZZLE_015, // tempo/heal        → freeze
@@ -94,6 +95,8 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_032, // passive synergy   → COLD SNAP  ← first passive puzzle
   PUZZLE_026, // blocked path      → arrow (the blocker)
   PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)  ← first of both
+  PUZZLE_034, // 3-TURN eliminate_all → shoot the TANK, ignore the free kill
+              //                        (pre-applied burning; DEPTH 2, the only one)
   PUZZLE_013, // pull              → grasp
   PUZZLE_027, // tempo/self-heal   → freeze
   PUZZLE_029, // friendly fire     → bolt (the weaker shot)
