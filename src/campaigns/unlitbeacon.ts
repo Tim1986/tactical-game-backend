@@ -1,16 +1,15 @@
 /**
- * unlitbeacon.ts — "The Unlit Beacon" (second PAID campaign) — DESIGN DRAFT.
+ * unlitbeacon.ts — "The Unlit Beacon" (second PAID campaign). SHIPPED.
  *
- * ⚠ NOT REGISTERED in index.ts — registering it makes it immediately playable
- * (the Campaign tab renders the registry as-is), and it is not balanced yet.
- * Every hpScaleOverride is still a PLACEHOLDER; the 200-game battery has never
- * run. Design notes: mobile/CAMPAIGN3_DESIGN.md. Balance-pass state, including
- * what has been runtime-verified so far: backend/CAMPAIGN3_BALANCE_NOTES.md.
+ * BALANCED 2026-08-21: `RESULT: PASS` at 200 games/cell — 48/48 cells in band,
+ * all party floors held, zero validation errors. Registered in index.ts, so
+ * this is live content. Design notes: mobile/CAMPAIGN3_DESIGN.md.
  *
- * Runtime verification (2026-08-20): the novel-abilities loader, AI-cast
- * move_self, dual-win and ally-follow all execute; two novel abilities were
- * mis-typed as 'single' and could never resolve — fixed, see their comments.
- * The campaign now SMOKES CLEAN (0 validation errors).
+ * ⚠ Before retuning ANY encounter here, read backend/CAMPAIGN3_BALANCE_NOTES.md
+ * — it records two traps that are invisible in the numbers: e11 sits above a
+ * breakpoint cliff (every rung must stay >=0.89 or EASY becomes the hardest
+ * difficulty), and e6's enemy placement is load-bearing because undertow tows
+ * crossers toward the exit.
  *
  * Premise: the beacon above Coldgate Pass has burned every winter for four
  * hundred years, and everyone in Frostmere believes the light keeps the dead
