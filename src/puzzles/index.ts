@@ -34,6 +34,16 @@ import { PUZZLE_017 } from './puzzles/puzzle-017.js';
 import { PUZZLE_018 } from './puzzles/puzzle-018.js';
 import { PUZZLE_019 } from './puzzles/puzzle-019.js';
 import { PUZZLE_020 } from './puzzles/puzzle-020.js';
+import { PUZZLE_023 } from './puzzles/puzzle-023.js';
+import { PUZZLE_024 } from './puzzles/puzzle-024.js';
+import { PUZZLE_025 } from './puzzles/puzzle-025.js';
+import { PUZZLE_026 } from './puzzles/puzzle-026.js';
+import { PUZZLE_027 } from './puzzles/puzzle-027.js';
+import { PUZZLE_028 } from './puzzles/puzzle-028.js';
+import { PUZZLE_029 } from './puzzles/puzzle-029.js';
+import { PUZZLE_030 } from './puzzles/puzzle-030.js';
+import { PUZZLE_022 } from './puzzles/puzzle-022.js';
+import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
 /** Every registered puzzle, keyed by id. */
 export const PUZZLES: Record<string, PuzzleDefinition> = {
@@ -47,6 +57,9 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_015.id]: PUZZLE_015, [PUZZLE_016.id]: PUZZLE_016,
   [PUZZLE_017.id]: PUZZLE_017, [PUZZLE_018.id]: PUZZLE_018,
   [PUZZLE_019.id]: PUZZLE_019, [PUZZLE_020.id]: PUZZLE_020,
+  [PUZZLE_021.id]: PUZZLE_021, [PUZZLE_022.id]: PUZZLE_022, [PUZZLE_023.id]: PUZZLE_023,
+  [PUZZLE_024.id]: PUZZLE_024, [PUZZLE_025.id]: PUZZLE_025,
+  [PUZZLE_026.id]: PUZZLE_026, [PUZZLE_027.id]: PUZZLE_027, [PUZZLE_028.id]: PUZZLE_028, [PUZZLE_029.id]: PUZZLE_029, [PUZZLE_030.id]: PUZZLE_030,
 };
 
 /**
@@ -54,16 +67,28 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
  * Interleaved focus / pull / reach so consecutive days feel different.
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
-  PUZZLE_007, // pull  (sorcerer) — v2 PASS, depth 1
-  PUZZLE_015, // tempo (ranger)   — v2 PASS, depth 1
-  PUZZLE_009, // pull  (ranger)   — v2 PASS, depth 1
-  PUZZLE_012, // pull  (sorcerer) — v2 PASS, depth 1
-  PUZZLE_013, // pull  (wizard)   — v2 PASS, depth 1
-  PUZZLE_016, // free-the-finisher (sorcerer) — v2 PASS, depth 1
-  PUZZLE_017, // overkill/knockback (ranger)  — v2 PASS, depth 1
-  PUZZLE_018, // friendly-fire line (ranger)  — v2 PASS, depth 1
-  PUZZLE_019, // blocked path (ranger+rogue)   — v2 PASS, depth 1
-  PUZZLE_020, // tempo/self-heal (wizard)      — v2 PASS, depth 1
+  // Interleaved so consecutive days never repeat a family. Families:
+  // pull · tempo · blocked-path · friendly-fire · camouflage · overkill · free-finisher
+  PUZZLE_007, // pull            (sorcerer)
+  PUZZLE_015, // tempo/heal      (ranger)
+  PUZZLE_019, // blocked path    (ranger+rogue)
+  PUZZLE_018, // friendly fire   (ranger, line)
+  PUZZLE_020, // tempo/self-heal (wizard)
+  PUZZLE_021, // blocked path    (sorcerer+rogue)
+  PUZZLE_009, // pull            (ranger)
+  PUZZLE_023, // tempo/self-heal (wizard+ranger)
+  PUZZLE_022, // blocked path    (two doors)
+  PUZZLE_024, // CAMOUFLAGE      (warlock picker)
+  PUZZLE_025, // tempo/heal      (wizard+ranger)
+  PUZZLE_026, // blocked path    (barbarian finisher)
+  PUZZLE_013, // pull            (wizard)
+  PUZZLE_027, // tempo/self-heal (wizard+rogue)
+  PUZZLE_029, // friendly fire   (sorcerer, line)
+  PUZZLE_012, // pull            (sorcerer)
+  PUZZLE_028, // tempo/heal      (wizard+sorcerer)
+  PUZZLE_016, // free-the-finisher (sorcerer)
+  PUZZLE_030, // pull            (warlock+fighter)
+  PUZZLE_017, // overkill/knockback (ranger)
 ];
 
 /**
