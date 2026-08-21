@@ -22,7 +22,7 @@ import type { PuzzleDefinition } from '../types.js';
  * than Grasp's 9, so the greedy player who chose correctly still throws the
  * bigger number, leaves the Sorcerer at range, and strands the Barbarian.
  *
- * Slack: 9 + 16 against 20. Vocabulary 2 (a pull drags toward the caster; enemies
+ * Slack: 9 + 13 against 20 (Grasp + the Barbarian's Axe). Vocabulary 2 (a pull drags toward the caster; enemies
  * out of reach cannot be attacked). Tier-0 fate. 2v1, per trap #9.
  */
 export const PUZZLE_024: PuzzleDefinition = {
