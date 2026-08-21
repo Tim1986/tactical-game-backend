@@ -238,22 +238,65 @@ where to look first, nothing more:
 - **e8** (rooms) — `⚠ draws 50% (stall)` on hard/balanced. Per the doc a stall
   is a placement/design problem, not an HP one.
 
-## NEXT STEPS, in order
+## FABLE DIRECTION (review pass, 2026-08-21) — the 7 cells, in work order
 
-1. **e3 structure** — stand the bridgehead guards ON the marks (tuning table's
-   `hold` rule). Re-battery; expect scale to start biting afterwards.
-2. **e6 spread** — `npx tsx src/ai/spreadSweep.ts`, move enemy start distance.
-   Scale is exhausted here; do not touch it again first.
-3. **e9 nightmare** — add a wave or a round, not scale.
-4. **e4 nightmare** — scale 1.05 → ~1.12 (pure overshoot).
-5. **e2 nightmare / e12 hard** — spread lever for the walled party.
-6. Re-run the 200-game battery until `RESULT: PASS`, saving `--json`.
-7. Boss encounters (e11, e12) simmed on nightmare first, then all difficulties.
-8. Verify e12's Standard-tile win path BY HAND (see the measurement-limit
-   section — the sim always takes the kill path and cannot answer it).
-9. Register `unlitbeacon` (one-line toggle in `src/campaigns/index.ts`) as the
-   LAST step, once the battery passes.
-10. Balance report into the campaign's delivery notes; Fable review.
+The engine fix (`5fc1aad`) is REVIEWED and patched (`fb49cda`): one hole —
+`visited` only recorded MOVE/CHARGE, so a move_self leap landing on the trigger
+tile never sprang the ambush. The trail now records any position change, pinned
+by a processTurn-level Leaping Slam test. ⚠ This can nudge e8/e2 numbers a few
+points versus pass 3 (the brain leaping onto (6,3) now springs the guard) — the
+smoke marker is content-hashed so batteries run without re-smoking, but expect
+small drift.
 
-**Fable also owes a review of the engine fix in `5fc1aad`** (door-triggered
-waves moved to end-of-turn) — owner asked for that explicitly when approving it.
+**GOOD NEWS that changes the plan: e12's Standard-tile win IS observed in sim
+now** — pass 3's e12/hard/balanced histogram shows `W:You reached the goal ×21`.
+The old "the brain always takes the kill path" limit was measured on pre-fix
+content and is STALE. The dual-win is live, measurable, and already load-bearing
+for balanced's 90% — hand-verification is now confirmation, not discovery, and
+tuning e12 must not price out the tile path.
+
+Ordered by leverage, cheapest first:
+
+1. **e4 nightmare** — scale 1.05 → ~1.12. Pure overshoot, one line.
+2. **e2 nightmare (solvability, best 36% < 40)** — do NOT reach for placement
+   yet. All three parties lose to `Your party has fallen` and the wins are
+   mercy kill-alls, so it responds to scale; the last notch (1.10→1.00) moved
+   best-party 26→36. One more notch, nm → 0.92–0.95, plausibly lands ≥40 while
+   mean stays in [15,45]. Placement only if that fails.
+3. **e6 hard/nm — the wall is NOT who Opus thought.** Pass-3 histograms: melee
+   88–92%, ranged 98%, **balanced 49–61% and failing to the CLOCK**
+   (`L:The deadline passed ×102` on hard). So: ranged over-crosses (kites the
+   drowned dead from standoff, then strolls), balanced under-crosses. One lever
+   fixes both directions: **move the drowned starts CLOSER to the party**
+   (`spreadSweep.ts`) — close starts brick ranged's standoff (doc-measured),
+   and earlier engagement ends fights sooner, easing the clock on balanced.
+   After the spread lands, re-walk scale DOWN (current 2.00/2.40 were inflated
+   to chase ranged's 100% and will overshoot once ranged is mortal).
+4. **e3 easy/hard/nm (flat)** — the tuning table's hold rule, literally: the
+   pikemen stand BESIDE the bridgeheads at (5,1)/(5,6); stand them ON the marks
+   at (4,1)/(4,6). Then the win requires killing or displacing them, HP starts
+   to matter, and scale wakes up. Expect to re-walk e3's scales from much lower
+   once it bites (current 1.30–2.30 were tuned against a flat curve and mean
+   nothing). The easy-cell ranged wall likely eases too: today the ranged party
+   must park two bodies on exposed tiles deep in enemy range with nothing
+   forced to come to them; guards-on-marks turns that into a fight it can win
+   at range first.
+5. **e9 nightmare (52%, scale-inert)** — do not push scale past 3.4; the table
+   is right (survive lives in round count × wave size). There is no
+   per-difficulty wave knob, so: add **+1 unit to the round-5 wave** (~10–15
+   pts down across ALL difficulties), then re-center easy/med/hard by walking
+   their scales DOWN (they respond fine at low values). Watch the win reason
+   stays `round_reached`, not mercy.
+6. **e12 hard — ranged walled (6%)** — losses are `Your party has fallen ×189`,
+   NOT hero-sniped: the ranged party grinds down against the formation before
+   the 214-HP boss dies. Two candidate levers, measure before choosing:
+   (a) start-distance sweep (though far starts should already favor ranged —
+   suspicion is muster_charge leaping INTO the clumped squishies; check the
+   histogram of a ranged-only probe for deaths-by-ability if the sweep is
+   flat); (b) trim the marshal's hard-rung HP so the race is winnable. Keep the
+   Standard-tile path priced IN for balanced while doing it.
+7. Then: full battery to `RESULT: PASS` (save `--json` to `balance_runs/`),
+   boss encounters on nightmare first, deviations documented, balance report,
+   register `unlitbeacon` LAST.
+
+Fable's engine-fix review obligation from the owner: **discharged** (fb49cda).
