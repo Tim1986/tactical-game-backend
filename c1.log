@@ -1,0 +1,30 @@
+
+═══ puzzle-031 — "Puzzle #31 — Cut Him Loose" — 1 special combo(s) ═══
+  fate: The dice sleep. Every strike lands — no dodges, no misses.  script: []
+
+  ── combo: (no choices) (2.1s)
+    solvable:            ✓
+    winning first moves: 31 raw → 1 distinct ideas
+        · purify@(3,4)
+    brain-greedy wins:   ✗
+    GOAL-greedy wins:    no ✓   (v2 gate — the human proxy)
+    min win depth:       1 ✓
+    near-miss remaining: 3 ✓ (close-call hook)
+    random win rate:     0.0%
+
+  OVERALL VERDICT: PASS ✓
+
+═══ puzzle-032 — "Puzzle #32 — Cold Comfort" — 1 special combo(s) ═══
+  fate: The dice sleep. Every strike lands — no dodges, no misses.  script: []
+
+  ── combo: (no choices) (7.1s)
+    solvable:            ✓
+    winning first moves: 35 raw → 1 distinct ideas
+        · cold_snap@(6,4)
+    brain-greedy wins:   ✗
+    GOAL-greedy wins:    no ✓   (v2 gate — the human proxy)
+    min win depth:       1 ✓
+    near-miss remaining: 10
+    random win rate:     2.5%
+
+  OVERALL VERDICT: PASS ✓

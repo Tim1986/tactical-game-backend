@@ -42,6 +42,9 @@ import { PUZZLE_027 } from './puzzles/puzzle-027.js';
 import { PUZZLE_028 } from './puzzles/puzzle-028.js';
 import { PUZZLE_029 } from './puzzles/puzzle-029.js';
 import { PUZZLE_030 } from './puzzles/puzzle-030.js';
+import { PUZZLE_031 } from './puzzles/puzzle-031.js';
+import { PUZZLE_032 } from './puzzles/puzzle-032.js';
+import { PUZZLE_033 } from './puzzles/puzzle-033.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -60,6 +63,8 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_021.id]: PUZZLE_021, [PUZZLE_022.id]: PUZZLE_022, [PUZZLE_023.id]: PUZZLE_023,
   [PUZZLE_024.id]: PUZZLE_024, [PUZZLE_025.id]: PUZZLE_025,
   [PUZZLE_026.id]: PUZZLE_026, [PUZZLE_027.id]: PUZZLE_027, [PUZZLE_028.id]: PUZZLE_028, [PUZZLE_029.id]: PUZZLE_029, [PUZZLE_030.id]: PUZZLE_030,
+  [PUZZLE_031.id]: PUZZLE_031, [PUZZLE_032.id]: PUZZLE_032,
+  [PUZZLE_033.id]: PUZZLE_033,
 };
 
 /**
@@ -67,28 +72,36 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
  * Interleaved focus / pull / reach so consecutive days feel different.
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
-  // Interleaved so consecutive days never repeat a family. Families:
-  // pull · tempo · blocked-path · friendly-fire · camouflage · overkill · free-finisher
-  PUZZLE_007, // pull            (sorcerer)
-  PUZZLE_015, // tempo/heal      (ranger)
-  PUZZLE_019, // blocked path    (ranger+rogue)
-  PUZZLE_018, // friendly fire   (ranger, line)
-  PUZZLE_020, // tempo/self-heal (wizard)
-  PUZZLE_021, // blocked path    (sorcerer+rogue)
-  PUZZLE_009, // pull            (ranger)
-  PUZZLE_023, // tempo/self-heal (wizard+ranger)
-  PUZZLE_022, // blocked path    (two doors)
-  PUZZLE_024, // CAMOUFLAGE      (warlock picker)
-  PUZZLE_025, // tempo/heal      (wizard+ranger)
-  PUZZLE_026, // blocked path    (barbarian finisher)
-  PUZZLE_013, // pull            (wizard)
-  PUZZLE_027, // tempo/self-heal (wizard+rogue)
-  PUZZLE_029, // friendly fire   (sorcerer, line)
-  PUZZLE_012, // pull            (sorcerer)
-  PUZZLE_028, // tempo/heal      (wizard+sorcerer)
-  PUZZLE_016, // free-the-finisher (sorcerer)
-  PUZZLE_030, // pull            (warlock+fighter)
-  PUZZLE_017, // overkill/knockback (ranger)
+  // Interleaved so consecutive days never repeat a FAMILY, and annotated with
+  // each puzzle's WINNING MOVE so answer concentration stays visible (Fable,
+  // 2026-08-21: freeze and grasp had quietly reached 30% each, and the solver
+  // cannot see that because it scores one puzzle at a time).
+  //
+  // Answer tally, 22 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
+  // bolt-the-blocker 2 · purify 1 · cold_snap 1 · sword 1 · (016 tbd).
+  // ⛔ NO new freeze or grasp answers until the rotation reaches ~40.
+  PUZZLE_007, // pull              → grasp
+  PUZZLE_015, // tempo/heal        → freeze
+  PUZZLE_019, // blocked path      → arrow (the blocker)
+  PUZZLE_018, // friendly fire     → arrow (the weaker shot)
+  PUZZLE_031, // free-the-rooted   → PURIFY  ← first of its answer
+  PUZZLE_021, // blocked path      → bolt (the blocker)
+  PUZZLE_009, // pull              → grasp
+  PUZZLE_023, // tempo/self-heal   → freeze
+  PUZZLE_022, // blocked path      → arrow (the REACHABLE door)
+  PUZZLE_024, // camouflage        → grasp (picker; default is a decoy)
+  PUZZLE_032, // passive synergy   → COLD SNAP  ← first passive puzzle
+  PUZZLE_026, // blocked path      → arrow (the blocker)
+  PUZZLE_013, // pull              → grasp
+  PUZZLE_027, // tempo/self-heal   → freeze
+  PUZZLE_029, // friendly fire     → bolt (the weaker shot)
+  PUZZLE_012, // pull              → grasp
+  PUZZLE_028, // tempo/heal        → freeze
+  PUZZLE_016, // free-the-finisher → (sorcerer)
+  PUZZLE_030, // pull              → grasp
+  PUZZLE_025, // tempo/heal        → freeze
+  PUZZLE_017, // overkill/knockback→ sword (the weaker attack)
+  PUZZLE_020, // tempo/self-heal   → freeze
 ];
 
 /**
