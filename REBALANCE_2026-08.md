@@ -1,5 +1,17 @@
 # Campaign rebalance — operator brief (written by Fable, 2026-08-21)
 
+> ## STATUS 2026-08-21 (Opus): steps 1-3 DONE. Results: `balance_runs/AUDIT_2026-08-21.md`
+> - **Step 1** distinct-class sampler — done, `8110195`
+> - **Step 2** boon scoping — done, `c08ceb4` + `tests/buildBatterySampling.test.ts` (22 tests)
+> - **Acceptance criterion REPLACED** — owner ratified a percentile rule over the
+>   old mean-in-band check; numbers now live in **`DIFFICULTY_TARGETS.md`**,
+>   implemented as `ACCEPTANCE`/`ACCEPTANCE_EARLY` (`b68eae4`, `26ac03c`).
+>   ⚠ That supersedes the "Acceptance (unchanged, restated)" section below.
+> - **Step 3** full re-audit — done, 156 cells / ~585k games, all JSON saved.
+> - **Steps 4-6 remain.** Read the audit before tuning: the campaigns need
+>   OPPOSITE fixes (Sealed Deep is over-tuned; everything else is under-tuned),
+>   and the prediction in the table below was confirmed exactly.
+
 Two harness bugs were found on 2026-08-21, both in `src/ai/buildBattery.ts`,
 both pushing the same direction: **they made encounters look easier than they
 are for real parties**. This doc is the complete plan for re-verifying and
@@ -116,7 +128,14 @@ Do these in order. Each step gates the next.
    Sealed Deep notes, and `mobile/CAMPAIGN_ROADMAP.md` if its buildBattery
    description repeats the "max 2 per class" claim.
 
-## Acceptance (unchanged, restated so this doc stands alone)
+## Acceptance — ⚠ SUPERSEDED 2026-08-21, see `DIFFICULTY_TARGETS.md`
+
+The mean-in-band rule below was retired the same day this doc was written. It
+asked whether the AVERAGE build sat in a win-rate band; the owner's rule asks
+whether enough GOOD builds clear a bar, with a median ceiling to stop a cell
+being soft. Kept only so the old verdicts in git history stay readable.
+
+### (retired) Acceptance
 
 Per cell: **mean** win rate across sampled builds in band (easy 80–95, medium
 65–80, hard 45–65, nightmare 15–45) · wall share within `MAX_WALL_SHARE`
