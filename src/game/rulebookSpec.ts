@@ -530,6 +530,17 @@ export const RULE_CHECKS: RuleCheck[] = [
         { type: 'END_TURN' },
       ], P1, P1, P2, map);
       assert(ok.updatedState.units[1].currentHealth === 90, 'orthogonal neighbor must be in range 1');
+      // Line abilities are the exception: range runs in TILES along the ray
+      // (Chebyshev), so a diagonal aim at full printed range is legal where
+      // Manhattan counting would reject it.
+      const shooter = mkUnit(P1, 1, 1, { abilities: ['test_line'] });
+      const farDiag = mkUnit(P2, 4, 4); // chebyshev 3, manhattan 6
+      const lineMap = new Map([['test_line', mkAbility({ slug: 'test_line', targetingType: 'line', range: 3, isUnblockable: true })]]);
+      const lr = processTurn(mkLegacyState([shooter, farDiag]), [
+        { type: 'USE_ABILITY', unitInstanceId: shooter.instanceId, abilitySlug: 'test_line', target: farDiag.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, lineMap);
+      assert(lr.updatedState.units[1].currentHealth === 90, 'diagonal line target at chebyshev range must be legal and hit');
     },
   },
   {
@@ -683,7 +694,7 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'ABL-8', name: 'AOE shape: default blasts include diagonals; orthogonal blasts never do (parity sweep over all real AOE abilities)',
+    rule: 'ABL-8', name: 'AOE shape: blasts include diagonals; every arena AoE is a ring (parity sweep over all real AOE abilities)',
     run: () => {
       // Generic behavior: orthogonal hits the cardinal neighbor, never the diagonal.
       const orthoAb = mkAbility({ slug: 'test_ortho', targetingType: 'aoe', range: 0, areaRadius: 1, areaShape: 'orthogonal', isUnblockable: true });
@@ -702,10 +713,11 @@ export const RULE_CHECKS: RuleCheck[] = [
       assert(ev2.some((e) => e.targetUnitInstanceId === card2.instanceId), 'default (chebyshev) AOE must hit the cardinal neighbor');
       assert(ev2.some((e) => e.targetUnitInstanceId === diag2.instanceId), 'default (chebyshev) AOE must hit the diagonal neighbor');
 
-      // Data-level guard: the two orthogonal-by-design abilities must stay orthogonal.
-      for (const slug of ['whirlwind', 'shockwave']) {
-        const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
-        assert(def?.areaShape === 'orthogonal', `${slug} must have areaShape 'orthogonal' in game data`);
+      // Data-level guard: EVERY arena AoE is a ring (owner ruling 2026-08-22 —
+      // Whirlwind and Ground Slam joined the rings; 'orthogonal' and default
+      // chebyshev survive in the engine only for campaign enemy content).
+      for (const def of DEFAULT_ABILITIES.filter((a) => a.targetingType === 'aoe')) {
+        assert(def.areaShape === 'ring', `${def.slug} must have areaShape 'ring' — every arena AoE is a ring`);
       }
 
       // PARITY SWEEP: for EVERY real AOE ability, the engine's resolved hit set
@@ -1016,6 +1028,15 @@ export const RULE_CHECKS: RuleCheck[] = [
       thorny = mkThorns(3, 3);
       cast(hit, attacker, thorny, [attacker, thorny]);
       assert(attacker.currentHealth === attacker.maxHealth, 'diagonal attacker must not take thorns damage');
+      // ring blast from a diagonal: HITS the thorny unit but never triggers
+      // thorns (owner ruling 2026-08-22 — Thorns is reach, reach is adjacent).
+      // Possible since Whirlwind/Ground Slam became rings.
+      const ringer = mkUnit(P1, 2, 2);
+      thorny = mkThorns(3, 3);
+      const ringAb = mkAbility({ slug: 'test_ring', targetingType: 'aoe', range: 0, areaRadius: 1, areaShape: 'ring', isUnblockable: true });
+      const rev = cast(ringAb, ringer, ringer, [ringer, thorny]);
+      assert(rev.some((e) => e.targetUnitInstanceId === thorny.instanceId), 'ring from diagonal must hit the thorny unit');
+      assert(ringer.currentHealth === ringer.maxHealth, 'a ring hit from a diagonal tile must NOT trigger thorns');
       // a dodged hit deals no thorns (shielded absorb: no damage landed either)
       attacker = mkUnit(P1, 3, 2);
       thorny = mkThorns(3, 3);

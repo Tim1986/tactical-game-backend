@@ -28,14 +28,13 @@ describe('DB-row abilities keep their engine shape', () => {
     expect([...uncovered], 'gameData fields with no DB column and no overlay').toEqual([]);
   });
 
-  it('rings spare their centre and orthogonal AoEs spare diagonals after a DB round-trip', () => {
-    for (const slug of ['ffh','blizzard','roar']) {
+  it('every arena AoE is a ring that spares its centre, after a DB round-trip', () => {
+    // Whirlwind and Ground Slam joined the rings 2026-08-22 (owner ruling —
+    // one AoE shape everywhere in the arena; diagonals are hit).
+    for (const slug of ['ffh','blizzard','roar','whirlwind','shockwave']) {
       expect(abilityShape(slug).areaShape, slug).toBe('ring');
       expect(isInAoe({x:4,y:4},{x:4,y:4},1,abilityShape(slug).areaShape), `${slug} centre`).toBe(false);
-    }
-    for (const slug of ['whirlwind','shockwave']) {
-      expect(abilityShape(slug).areaShape, slug).toBe('orthogonal');
-      expect(isInAoe({x:4,y:4},{x:5,y:5},1,abilityShape(slug).areaShape), `${slug} diagonal`).toBe(false);
+      expect(isInAoe({x:4,y:4},{x:5,y:5},1,abilityShape(slug).areaShape), `${slug} diagonal`).toBe(true);
     }
     expect(abilityShape('twin').isMultiHit).toBe(true);
     expect(abilityShape('sword').areaShape).toBe('chebyshev');

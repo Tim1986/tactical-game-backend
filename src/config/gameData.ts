@@ -29,11 +29,11 @@ export const ABILITY_DEFS = [
   {
     slug: 'whirlwind',
     name: 'Whirlwind',
-    description: 'Deals 20 blockable damage to all units directly adjacent, including allies.',
+    description: 'Deals 20 blockable damage to every unit around you — all 8 surrounding tiles, allies included.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
-    area_shape: 'orthogonal',
+    area_shape: 'ring',
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: false,
@@ -42,11 +42,11 @@ export const ABILITY_DEFS = [
   {
     slug: 'shockwave',
     name: 'Ground Slam',
-    description: 'Deals 13 unblockable damage to all units directly adjacent, including allies, and roots them for 2 turns.',
+    description: 'Deals 13 unblockable damage to every unit around you — all 8 surrounding tiles, allies included — and roots them for 2 turns.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
-    area_shape: 'orthogonal',
+    area_shape: 'ring',
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: true,
@@ -65,7 +65,7 @@ export const ABILITY_DEFS = [
     // discovers the interaction (see AC_REWORK.md).
     slug: 'roar',
     name: 'Leaping Slam',
-    description: 'Leap to a tile up to 2 away (even if rooted, and straight over anything in the way), then deal 3 unblockable damage to every unit around where you land, allies included, and weaken them for 2 turns. You land unharmed in the centre.',
+    description: 'Leap to a tile up to 2 steps away (even if rooted, and straight over anything in the way), then deal 3 unblockable damage to every unit around where you land, allies included, and weaken them for 2 turns. You land unharmed in the centre.',
     targeting_type: 'aoe',
     range: 2,
     area_radius: 1,
@@ -96,7 +96,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'heal',
     name: 'Heal',
-    description: 'Restores 27 health to yourself or an ally within 2 tiles.',
+    description: 'Restores 27 health to yourself or an ally within 2 steps.',
     targeting_type: 'single',
     range: 2,
     area_radius: 0,
@@ -112,7 +112,7 @@ export const ABILITY_DEFS = [
     // the ally wades in — Heal and Purify already do reactive repair better.
     slug: 'ward',
     name: 'Ward',
-    description: 'Grants an ally within 3 tiles +16 maximum health for the rest of the match, and a shield that fully negates the next hit against them (even an unblockable one).',
+    description: 'Grants an ally within 3 steps +16 maximum health for the rest of the match, and a shield that fully negates the next hit against them (even an unblockable one).',
     targeting_type: 'single',
     range: 3,
     area_radius: 0,
@@ -127,7 +127,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'purify',
     name: 'Purify',
-    description: 'Removes Frozen, Rooted and Burning from yourself or an ally within 3 tiles, and restores 19 health.',
+    description: 'Removes Frozen, Rooted and Burning from yourself or an ally within 3 steps, and restores 19 health.',
     targeting_type: 'single',
     range: 3,
     area_radius: 0,
@@ -230,7 +230,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'dagger_toss',
     name: 'Dagger Toss',
-    description: 'Throws a dagger for 16 unblockable damage at an enemy within 4 tiles.',
+    description: 'Throws a dagger for 16 unblockable damage at an enemy within 4 steps.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -259,7 +259,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'arrow',
     name: 'Arrow',
-    description: 'Deals 11 damage from up to 6 tiles away.',
+    description: 'Deals 11 damage from up to 6 steps away.',
     targeting_type: 'single',
     range: 6,
     area_radius: 0,
@@ -283,7 +283,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'pinning',
     name: 'Pinning Shot',
-    description: 'Deals 7 blockable damage to an enemy within 6 tiles and roots them for 2 turns.',
+    description: 'Deals 7 blockable damage to an enemy within 6 steps and roots them for 2 turns.',
     targeting_type: 'single',
     range: 6,
     area_radius: 0,
@@ -298,7 +298,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'longshot',
     name: 'Longshot',
-    description: 'Deals 15 blockable damage to an enemy up to 8 tiles away.',
+    description: 'Deals 15 blockable damage to an enemy up to 8 steps away.',
     targeting_type: 'single',
     range: 8,
     area_radius: 0,
@@ -312,7 +312,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'bolt',
     name: 'Flame Blast',
-    description: 'Deals 10 damage to an enemy within 5 tiles.',
+    description: 'Deals 10 damage to an enemy within 5 steps.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -324,7 +324,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'ffh',
     name: 'Ring of Fire',
-    description: 'Deals 14 unblockable damage in a ring around any tile within 5, allies included. The centre tile is spared.',
+    description: 'Deals 14 unblockable damage in a ring around any tile within 5 steps, allies included. The centre tile is spared.',
     targeting_type: 'aoe',
     range: 5,
     area_radius: 1,
@@ -337,7 +337,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'flame_jet',
     name: 'Flame Jet',
-    description: 'Deals 16 unblockable damage to an enemy within 4 tiles.',
+    description: 'Deals 16 unblockable damage to an enemy within 4 steps.',
     targeting_type: 'line',
     range: 4,
     area_radius: 0,
@@ -349,7 +349,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'ignite',
     name: 'Ignite',
-    description: 'Deals 5 unblockable damage to an enemy within 5 tiles and sets them burning for 3 turns.',
+    description: 'Deals 5 unblockable damage to an enemy within 5 steps and sets them burning for 3 turns.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -366,7 +366,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'eldritch',
     name: 'Demon Blast',
-    description: 'Deals 11 damage to an enemy within 4 tiles.',
+    description: 'Deals 11 damage to an enemy within 4 steps.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -378,7 +378,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'fear',
     name: 'Fear',
-    description: 'Drives an enemy within 4 tiles 3 tiles away from you and roots them for 2 turns.',
+    description: 'Drives an enemy within 4 steps 3 tiles away from you and roots them for 2 turns.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -393,7 +393,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'grasp',
     name: 'Shadow Grasp',
-    description: 'Deals 9 unblockable damage to an enemy within 5 tiles, drags them 3 tiles toward you and roots them for 1 turn.',
+    description: 'Deals 9 unblockable damage to an enemy within 5 steps, drags them 3 steps toward you and roots them for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -409,7 +409,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'drain',
     name: 'Essence Drain',
-    description: 'Drains 10 unblockable health from an enemy within 4 tiles, restoring 8 health to yourself.',
+    description: 'Drains 10 unblockable health from an enemy within 4 steps, restoring 8 health to yourself.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -423,7 +423,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'missile',
     name: 'Ice Blast',
-    description: 'Deals 10 damage to an enemy within 5 tiles.',
+    description: 'Deals 10 damage to an enemy within 5 steps.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -435,7 +435,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'freeze',
     name: 'Freeze',
-    description: 'Freezes an enemy within 4 tiles for 2 turns. A frozen unit cannot move or act.',
+    description: 'Freezes an enemy within 4 steps for 2 turns. A frozen unit cannot move or act.',
     targeting_type: 'single',
     range: 4,
     area_radius: 0,
@@ -447,7 +447,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'blizzard',
     name: 'Ring of Frost',
-    description: 'Freezes every unit in a ring around any tile within 3 for 1 turn, allies included. The centre tile is spared.',
+    description: 'Freezes every unit in a ring around any tile within 3 steps for 1 turn, allies included. The centre tile is spared.',
     targeting_type: 'aoe',
     range: 3,
     area_radius: 1,
@@ -462,7 +462,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'cold_snap',
     name: 'Cold Snap',
-    description: 'Deals 9 unblockable damage to an enemy within 5 tiles and freezes them for 1 turn.',
+    description: 'Deals 9 unblockable damage to an enemy within 5 steps and freezes them for 1 turn.',
     targeting_type: 'single',
     range: 5,
     area_radius: 0,
@@ -523,7 +523,7 @@ const ANCHOR_WIZ = anchorWith(2);
 // Warded: implemented at match build — units with the 'warded' flag start
 // with a long-lived 'shielded' status (consumed by the first hit as usual).
 const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Begin the match with a shield that fully negates the first damaging hit against you — its damage and any effect it carries, even an unblockable one — then breaks. Costs 2 maximum health.', passiveFlag: 'warded', stat: 'maxHealth', value: -2 };
-const THORNS: PassiveOption = { slug: 'thorns', name: 'Thorns', description: 'When an adjacent enemy hits you, they take 3 damage.', passiveFlag: 'thorns' };
+const THORNS: PassiveOption = { slug: 'thorns', name: 'Thorns', description: 'When an adjacent enemy hits you, they take 3 damage. Adjacent means the 4 neighbouring tiles — a blow from a diagonal never triggers it.', passiveFlag: 'thorns' };
 // Undying pays a max-health tax for the free life — without it the passive was
 // a strict upgrade on every class that could take it.
 const undyingWith = (hp: number): PassiveOption => ({
