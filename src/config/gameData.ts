@@ -29,7 +29,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'whirlwind',
     name: 'Whirlwind',
-    description: 'Deals 20 blockable damage to every unit around you — all 8 surrounding tiles, allies included.',
+    description: 'Deals 18 blockable damage to every unit around you — all 8 surrounding tiles, allies included.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -37,12 +37,12 @@ export const ABILITY_DEFS = [
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: false,
-    effects: [{ type: 'damage', formula: 'flat', value: 20 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 18 }],
   },
   {
     slug: 'shockwave',
     name: 'Ground Slam',
-    description: 'Deals 13 unblockable damage to every unit around you — all 8 surrounding tiles, allies included — and roots them for 2 turns.',
+    description: 'Deals 11 unblockable damage to every unit around you — all 8 surrounding tiles, allies included — and roots them for 1 turn.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -51,8 +51,8 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 13 },
-      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      { type: 'damage', formula: 'flat', value: 11 },
+      { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],
   },
   {
