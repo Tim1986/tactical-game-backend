@@ -139,6 +139,13 @@ const PRESETS: Record<string, Preset> = {
   // predates the 2026-08-13 reference-panel refresh (e2ba543) and the v1.0.81
   // overhaul, so no archived CSV is a valid before-picture. Run this against
   // `shipped` to measure what the ring change actually did.
+  // ═══ RING CONTAINMENT LADDER (Fable, 2026-08-22) ═══════════════════════
+  // full0822 grid: ring kit worth +9-10 pair-mean pts (roar 41.3 / ww 49.9 /
+  // gs 51.9 vs grid 39.2). Ladder = damage taps + reverting the c6 barbarian
+  // AC crutch (+1 AC existed to fix pre-ring weak-barbarian).
+  contain1: { ac: {}, hp: {}, dmg: { whirlwind: -2, shockwave: -2 } },
+  contain2: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 } },
+  contain3: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -3, shockwave: -3 } },
   ortho_control: {
     ac: {}, hp: {},
     areaShape: { whirlwind: 'orthogonal', shockwave: 'orthogonal' },
