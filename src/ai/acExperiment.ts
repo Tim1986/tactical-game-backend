@@ -133,6 +133,18 @@ const PRESETS: Record<string, Preset> = {
   // WW held at the owner's preferred readable rung (18).
   ring_ww18_gs13r1: { ac: {}, hp: {}, dmg: { whirlwind: -2 }, statusDur: { shockwave: -1 } },
   ring_ww18_gs11r1: { ac: {}, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, statusDur: { shockwave: -1 } },
+  // ORTHOGONAL CONTROL — the exact PRE-change abilities (WW 20 blockable /
+  // GS 13 unblockable root-2, both 4-tile orthogonal), reconstructed on
+  // TODAY's panel, brain and gameData. Needed because every stored grid
+  // predates the 2026-08-13 reference-panel refresh (e2ba543) and the v1.0.81
+  // overhaul, so no archived CSV is a valid before-picture. Run this against
+  // `shipped` to measure what the ring change actually did.
+  ortho_control: {
+    ac: {}, hp: {},
+    areaShape: { whirlwind: 'orthogonal', shockwave: 'orthogonal' },
+    dmg: { whirlwind: 2, shockwave: 2 },
+    statusDur: { shockwave: 1 },
+  },
   // c6 — the post-Fable-grid chassis rebalance. NOT SHIPPED: gameData carries
   // the pre-C6 values and balance experiments must never edit it (see the
   // preflight chassis guard). Run the grid with `--preset c6` to reproduce.
