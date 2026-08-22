@@ -118,6 +118,16 @@ const PRESETS: Record<string, Preset> = {
   // only runs stages A/B — stage E (the pair grid) lives in the preset branch,
   // so "no preset" cannot produce a comparable control.
   shipped: { ac: {}, hp: {} },
+  // ═══ RING PROBES (owner 2026-08-22) ═════════════════════════════════════
+  // Whirlwind and Ground Slam are now RINGS in gameData (shape shipped,
+  // damage unchanged at 20/13). These rungs probe the damage ladder before
+  // the full grid. Owner constraint: Whirlwind must READ clearly stronger
+  // than Ground Slam on the card (blockable vs unblockable+root) — if WW has
+  // to go below 18, GS's damage comes down with it. 'shipped' is the ring
+  // baseline (20/13).
+  ring_ww18_gs13: { ac: {}, hp: {}, dmg: { whirlwind: -2 } },
+  ring_ww17_gs12: { ac: {}, hp: {}, dmg: { whirlwind: -3, shockwave: -1 } },
+  ring_ww16_gs11: { ac: {}, hp: {}, dmg: { whirlwind: -4, shockwave: -2 } },
   // c6 — the post-Fable-grid chassis rebalance. NOT SHIPPED: gameData carries
   // the pre-C6 values and balance experiments must never edit it (see the
   // preflight chassis guard). Run the grid with `--preset c6` to reproduce.
