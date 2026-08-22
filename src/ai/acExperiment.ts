@@ -128,6 +128,11 @@ const PRESETS: Record<string, Preset> = {
   ring_ww18_gs13: { ac: {}, hp: {}, dmg: { whirlwind: -2 } },
   ring_ww17_gs12: { ac: {}, hp: {}, dmg: { whirlwind: -3, shockwave: -1 } },
   ring_ww16_gs11: { ac: {}, hp: {}, dmg: { whirlwind: -4, shockwave: -2 } },
+  // Round 2 (after the first ladder): damage is NOT Ground Slam's power source
+  // as a ring — root-2 on 8 tiles is. These probe the root-duration lever with
+  // WW held at the owner's preferred readable rung (18).
+  ring_ww18_gs13r1: { ac: {}, hp: {}, dmg: { whirlwind: -2 }, statusDur: { shockwave: -1 } },
+  ring_ww18_gs11r1: { ac: {}, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, statusDur: { shockwave: -1 } },
   // c6 — the post-Fable-grid chassis rebalance. NOT SHIPPED: gameData carries
   // the pre-C6 values and balance experiments must never edit it (see the
   // preflight chassis guard). Run the grid with `--preset c6` to reproduce.
