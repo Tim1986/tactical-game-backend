@@ -13,13 +13,13 @@ function solved(
     stars: starsForAttempt(onAttempt),
     solvedOnAttempt: onAttempt,
     solvedAt: `${day ?? '2026-08-01'}T12:00:00.000Z`,
-    dailyDate: day ?? null,
+    dailyDates: day ? [day] : [],
   };
 }
 
 /** An attempted-but-unsolved record. */
 function attempted(puzzleId: string, attempts: number): PuzzleSolveRecord {
-  return { puzzleId, attempts, stars: null, solvedOnAttempt: null, solvedAt: null, dailyDate: null };
+  return { puzzleId, attempts, stars: null, solvedOnAttempt: null, solvedAt: null, dailyDates: [] };
 }
 
 /** Today/yesterday in UTC — the streak anchors on real time. */
@@ -124,7 +124,7 @@ describe('computeStats — streaks', () => {
   });
 
   it('ignores solves that were NOT that day\'s featured daily', () => {
-    // Shared-link and back-catalogue solves carry no dailyDate and must never
+    // Shared-link and back-catalogue solves carry no daily date and must never
     // manufacture a streak.
     const s = computeStats([solved('shared1', 1), solved('shared2', 1)]);
     expect(s.currentStreak).toBe(0);
@@ -135,5 +135,28 @@ describe('computeStats — streaks', () => {
   it('does not double-count two puzzles solved on the same UTC day', () => {
     const s = computeStats([solved('a', 1, utc(0)), solved('b', 1, utc(0))]);
     expect(s.currentStreak).toBe(1);
+  });
+});
+
+/**
+ * The replay bug (owner report, 2026-08-22). Mirrors the mobile suite in
+ * mobile/tests/puzzleScoring.test.ts — the two implementations must agree.
+ */
+describe('daily credit is a set of days, not one day', () => {
+  it('counts every day a repeated puzzle was the featured daily', () => {
+    const s = computeStats([{
+      puzzleId: 'puzzle-001', attempts: 1, stars: 5, solvedOnAttempt: 1,
+      solvedAt: `${utc(-2)}T12:00:00.000Z`,
+      dailyDates: [utc(-2), utc(-1), utc(0)],
+    }]);
+    expect(s.currentStreak).toBe(3);
+    expect(s.maxStreak).toBe(3);
+  });
+
+  it('replaying a solved puzzle only ever extends the streak', () => {
+    expect(computeStats([solved('puzzle-001', 1, utc(-1))]).currentStreak).toBe(1);
+    expect(computeStats([{
+      ...solved('puzzle-001', 1, utc(-1)), dailyDates: [utc(-1), utc(0)],
+    }]).currentStreak).toBe(2);
   });
 });

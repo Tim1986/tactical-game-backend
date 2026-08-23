@@ -15,7 +15,7 @@
  *   solved_on_attempt → the attempt that produced the winning `stars`
  *   attempts          → MAX          (never rewind effort already spent)
  *   solved_at         → EARLIEST     (first solve is the historical fact)
- *   daily_date        → COALESCE     (once a solve counts for a day, it counts)
+ *   dailyDates        → UNION        (a day, once earned, is never taken back)
  *
  * Taking MAX on attempts rather than summing is deliberate: two devices that
  * both played the same puzzle three times represent the same three attempts as
@@ -47,8 +47,10 @@ export interface PuzzleSolveInput {
   stars?: number | null;
   solvedOnAttempt?: number | null;
   solvedAt?: string | null;
-  /** UTC 'YYYY-MM-DD' — set only when this was that day's featured daily. */
-  dailyDate?: string | null;
+  /** UTC 'YYYY-MM-DD' days on which this puzzle was solved as that day's
+   *  featured daily. A SET, because the rotation repeats — see migration
+   *  0024. Days are unioned in, never removed. */
+  dailyDates?: string[] | null;
 }
 
 export interface PuzzleSolveRecord {
@@ -57,7 +59,7 @@ export interface PuzzleSolveRecord {
   stars: number | null;
   solvedOnAttempt: number | null;
   solvedAt: string | null;
-  dailyDate: string | null;
+  dailyDates: string[];
 }
 
 export interface PuzzleStats {
@@ -86,7 +88,7 @@ interface Row {
   stars: number | null;
   solved_on_attempt: number | null;
   solved_at: Date | null;
-  daily_date: Date | string | null;
+  daily_dates: (Date | string)[] | null;
 }
 
 /** Postgres DATE → 'YYYY-MM-DD' without tripping over local timezone. */
@@ -103,14 +105,19 @@ function toRecord(r: Row): PuzzleSolveRecord {
     stars: r.stars,
     solvedOnAttempt: r.solved_on_attempt,
     solvedAt: r.solved_at ? r.solved_at.toISOString() : null,
-    dailyDate: dateStr(r.daily_date),
+    dailyDates: (r.daily_dates ?? []).map(dateStr).filter((d): d is string => !!d).sort(),
   };
 }
 
 export async function getPuzzleSolves(userId: string): Promise<PuzzleSolveRecord[]> {
   const { rows } = await query<Row>(
-    `SELECT puzzle_id, attempts, stars, solved_on_attempt, solved_at, daily_date
-       FROM puzzle_solves WHERE user_id = $1 ORDER BY puzzle_id`,
+    `SELECT s.puzzle_id, s.attempts, s.stars, s.solved_on_attempt, s.solved_at,
+            COALESCE(
+              (SELECT array_agg(d.daily_date ORDER BY d.daily_date)
+                 FROM puzzle_daily_solves d
+                WHERE d.user_id = s.user_id AND d.puzzle_id = s.puzzle_id),
+              '{}') AS daily_dates
+       FROM puzzle_solves s WHERE s.user_id = $1 ORDER BY s.puzzle_id`,
     [userId],
   );
   return rows.map(toRecord);
@@ -136,8 +143,8 @@ async function upsertOne(userId: string, rec: PuzzleSolveInput): Promise<void> {
 
   await query(
     `INSERT INTO puzzle_solves
-       (user_id, puzzle_id, attempts, stars, solved_on_attempt, solved_at, daily_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (user_id, puzzle_id, attempts, stars, solved_on_attempt, solved_at)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (user_id, puzzle_id) DO UPDATE SET
        attempts = GREATEST(puzzle_solves.attempts, EXCLUDED.attempts),
        -- Keep the better score, and the attempt that produced it, together.
@@ -155,10 +162,21 @@ async function upsertOne(userId: string, rec: PuzzleSolveInput): Promise<void> {
        solved_at = LEAST(
          COALESCE(puzzle_solves.solved_at, EXCLUDED.solved_at),
          COALESCE(EXCLUDED.solved_at, puzzle_solves.solved_at)),
-       daily_date = COALESCE(puzzle_solves.daily_date, EXCLUDED.daily_date),
        updated_at = NOW()`,
-    [userId, rec.puzzleId, attempts, stars, solvedOnAttempt, solvedAt, rec.dailyDate ?? null],
+    [userId, rec.puzzleId, attempts, stars, solvedOnAttempt, solvedAt],
   );
+
+  // Daily credit is a SET, unioned in: DO NOTHING means a replay can only ever
+  // add a day, never disturb one already banked (migration 0024).
+  const days = (rec.dailyDates ?? []).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
+  for (const day of days) {
+    await query(
+      `INSERT INTO puzzle_daily_solves (user_id, daily_date, puzzle_id)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, daily_date) DO NOTHING`,
+      [userId, day, rec.puzzleId],
+    );
+  }
 }
 
 /**
@@ -203,7 +221,7 @@ export function computeStats(solves: PuzzleSolveRecord[]): PuzzleStats {
   }
 
   // Streaks.
-  const dailyDays = new Set(solved.map((s) => s.dailyDate).filter((d): d is string => !!d));
+  const dailyDays = new Set(solved.flatMap((s) => s.dailyDates ?? []));
   let currentStreak = 0;
   let maxStreak = 0;
   if (dailyDays.size > 0) {

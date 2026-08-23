@@ -23,8 +23,15 @@ const SolveSchema = z.object({
   stars: z.number().int().min(1).max(5).nullish(),
   solvedOnAttempt: z.number().int().min(1).max(100000).nullish(),
   solvedAt: z.string().datetime().nullish(),
+  // A SET of days (migration 0024): the rotation repeats, so one puzzle can be
+  // the featured daily many times. `dailyDate` is the pre-1.0.88 client's
+  // single-day field, still accepted so an un-updated app keeps its streak.
+  dailyDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(4000).nullish(),
   dailyDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
-});
+}).transform(({ dailyDate, ...rest }) => ({
+  ...rest,
+  dailyDates: [...new Set([...(rest.dailyDates ?? []), ...(dailyDate ? [dailyDate] : [])])],
+}));
 
 // Bounded so a corrupted or malicious client cannot push an unbounded batch.
 // The rotation is single digits today; 500 leaves room for years of growth.
