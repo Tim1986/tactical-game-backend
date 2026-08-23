@@ -39,7 +39,7 @@ export const RULEBOOK: RuleSection[] = [
     title: 'Turns & Initiative',
     rules: [
       { id: 'TRN-1', text: "Round 1 sets the initiative order. Players alternate turns; on each turn you commit one unit by taking its turn (move and/or ability). The order units are committed becomes their place in the initiative." },
-      { id: 'TRN-2', text: "In round 1 you must commit a unit — you cannot pass. (If every uncommitted unit is dead or frozen, one is committed for you automatically.)" },
+      { id: 'TRN-2', text: "In round 1 you must commit a unit — you cannot pass. If every unit you could choose is frozen, your commit turn is skipped automatically — you never have to take it." },
       { id: 'TRN-3', text: "From round 2 on, units act in a fixed interleaved order: the first player's units take slots 1, 3, 5, 7 and the other player's take slots 2, 4, 6, 8, in the order each side committed them. This order never changes for the rest of the match." },
       { id: 'TRN-4', text: "On its turn a unit may move once and use one ability, in either order. Both are optional." },
       { id: 'TRN-5', text: "A dead unit's initiative slot is skipped." },

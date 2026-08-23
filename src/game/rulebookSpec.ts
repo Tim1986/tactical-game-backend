@@ -181,6 +181,35 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
+    rule: 'TRN-2', name: 'round 1: an all-frozen player is auto-skipped inside the previous submit',
+    run: () => {
+      // P2's whole side is frozen before round 1 begins. P1 commits normally;
+      // the engine must skip P2's commit turns automatically — activePlayerId
+      // returns to P1 after every P1 submit, P2 never receives a turn, and the
+      // frozen units still land in the initiative order with ticked durations
+      // (TRN-6: the skipped turn is not free).
+      let state = mkRound1State();
+      for (const u of state.units) {
+        if (u.ownerPlayerId === P2) u.statusEffects.push({ slug: 'frozen', turnsRemaining: 9, stacks: 1, sourceUnitInstanceId: u.instanceId });
+      }
+      let skips = 0;
+      for (let i = 0; i < 4; i++) {
+        assert(state.activePlayerId === P1, `P1 must hold every round-1 commit turn (iteration ${i})`);
+        const committed = new Set(state.initiative!.order);
+        const unit = state.units.find((u) => u.ownerPlayerId === P1 && !committed.has(u.instanceId))!;
+        const r = processTurn(state, [{ type: 'MOVE', unitInstanceId: unit.instanceId, destination: unit.position }, { type: 'END_TURN' }], P1, P1, P2, new Map());
+        skips += r.events.filter((e) => e.type === 'TURN_SKIPPED').length;
+        state = r.updatedState;
+      }
+      assert(skips >= 4, `every P2 commit must appear as a TURN_SKIPPED event (saw ${skips})`);
+      assert(!state.initiative!.isRound1, 'round 1 must complete without P2 ever acting');
+      assert(state.initiative!.order.length === 8, 'all 8 units (4 frozen) must be in the final order');
+      const p2Frozen = state.units.filter((u) => u.ownerPlayerId === P2);
+      assert(p2Frozen.every((u) => u.statusEffects.some((se) => se.slug === 'frozen' && se.turnsRemaining < 9)),
+        'skipped frozen units must have TICKED durations — the skip is not free');
+    },
+  },
+  {
     rule: 'TRN-3', name: 'after round 1 the order interleaves first player at 1,3,5,7 and stays fixed',
     run: () => {
       let state = mkRound1State();

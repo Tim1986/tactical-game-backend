@@ -340,6 +340,113 @@ function applyGameActionInternal(
 }
 
 /** END_TURN: cooldowns, durations, initiative advance, endgame drain, win check. Clears turnContext. */
+/**
+ * Round-1 bookkeeping after a unit is committed: either transition to round 2
+ * (both sides fully committed) or hand the commit turn to whichever player
+ * still has uncommitted alive units. Extracted from finalizeTurnInternal so
+ * autoSkipRound1FrozenPlayers can advance through auto-committed units with
+ * EXACTLY the code the manual path runs — a duplicated transition here is the
+ * kind of thing that drifts.
+ */
+function advanceRound1AfterCommit(
+  ws: MatchState,
+  committerPlayerId: string,
+  playerOneId: string,
+  playerTwoId: string,
+  events: GameEvent[],
+): void {
+  const initiative = ws.initiative;
+  // Check if both teams have committed all alive units
+  const otherPlayerId = committerPlayerId === playerOneId ? playerTwoId : playerOneId;
+  const myAliveLeft = ws.units.filter(
+    (u) => u.ownerPlayerId === committerPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+  ).length;
+  const theirAliveLeft = ws.units.filter(
+    (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+  ).length;
+
+  if (myAliveLeft === 0 && theirAliveLeft === 0) {
+    // Transition to round 2
+    initiative.order = buildFinalOrder(initiative.order, ws.units, initiative.round1FirstPlayerId, playerOneId, playerTwoId);
+    initiative.isRound1 = false;
+    initiative.slot = -1; // will be set by advanceSlot below (start at -1 so advance gives 0)
+    // Temporarily set slot to -1 and advance
+    const firstSlot = advanceSlot({ ...initiative, slot: -1 }, ws.units, events);
+    initiative.slot = firstSlot.slot;
+    initiative.activeUnitId = firstSlot.activeUnitId;
+    ws.turnNumber += firstSlot.skippedSlots;
+    // CAMPAIGN (A4): with spawns the order length varies, so campaign rounds
+    // are ORDER-WRAP based, not turnNumber/8. Arena keeps roundFromTurn.
+    ws.roundNumber = (ws.objective || ws.encounterProgress) ? 2 : roundFromTurn(ws.turnNumber);
+    checkSpawnTriggers(ws, events); // round-trigger waves due at round 2
+    // Reset all turn flags at round boundary
+    for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
+    const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
+    ws.activePlayerId = firstUnit?.ownerPlayerId ?? otherPlayerId;
+  } else {
+    // Stay in round 1: next player is whoever has uncommitted alive units
+    const otherHasAlive = ws.units.some(
+      (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
+    );
+    ws.activePlayerId = otherHasAlive ? otherPlayerId : committerPlayerId;
+    initiative.activeUnitId = null;
+  }
+}
+
+/**
+ * AUTO-SKIP a round-1 player whose every choosable unit is frozen (owner,
+ * 2026-08-23: "if the only character you can choose is Frozen, it should just
+ * auto end turn — don't make a player log in to do nothing").
+ *
+ * Rounds 2+ already work this way: advanceSlot skips frozen slots inside the
+ * previous submit, so the frozen player never receives a turn. Round 1 was the
+ * gap — commitment turns are per-player choices, so the engine handed the turn
+ * over and waited for a bare END_TURN that could only ever do one thing. This
+ * performs that bare END_TURN's forced commit inline, with identical
+ * semantics: tick + TURN_SKIPPED (rulebook TRN-6 — durations tick on the
+ * skipped turn), commit into the order, same turn-number accounting.
+ *
+ * Deliberately gated on EVERY uncommitted alive unit being frozen — the
+ * rarer forced-commit causes (a unit doomed to its own burning tick) still
+ * require the player's explicit END_TURN, because that unit takes a real turn
+ * later and auto-spending it would surprise. ROOTED units never qualify: they
+ * can still act (MOV-4), so their player logs in as normal.
+ *
+ * Ping-pong is real: after this player's units auto-commit, the OTHER player
+ * may be in the same state, so loop until someone can act or round 1 ends.
+ * Bounded by the order length; each iteration commits exactly one unit.
+ */
+function autoSkipRound1FrozenPlayers(
+  ws: MatchState,
+  playerOneId: string,
+  playerTwoId: string,
+  events: GameEvent[],
+): void {
+  for (let guard = 0; guard < 32 && ws.initiative.isRound1; guard++) {
+    const pid = ws.activePlayerId;
+    const uncommitted = ws.units.filter(
+      (u) => u.ownerPlayerId === pid && u.isAlive && !ws.initiative.order.includes(u.instanceId),
+    );
+    if (uncommitted.length === 0) return; // advanceRound1AfterCommit owns this case
+    const frozen = (u: UnitInstance) => u.statusEffects.some((se) => se.slug === 'frozen');
+    if (!uncommitted.every(frozen)) return; // someone can act (or must press END_TURN themselves)
+
+    const unit = uncommitted[0];
+    tickUnitStatusEffects(unit, events);
+    events.push({
+      type: 'TURN_SKIPPED',
+      sourceUnitInstanceId: unit.instanceId,
+      message: `${unit.definitionSlug} is frozen — turn skipped`,
+    });
+    ws.initiative.order.push(unit.instanceId);
+    advanceRound1AfterCommit(ws, pid, playerOneId, playerTwoId, events);
+    // Same accounting as the manual bare-END_TURN submission this replaces:
+    // the skipped slot consumes a turn number, and arena rounds re-derive.
+    ws.turnNumber++;
+    if (!(ws.objective || ws.encounterProgress)) ws.roundNumber = roundFromTurn(ws.turnNumber);
+  }
+}
+
 function finalizeTurnInternal(
   ws: MatchState,
   submittingPlayerId: string,
@@ -389,42 +496,7 @@ function finalizeTurnInternal(
   if (isRound1) {
     // Commit acting unit
     initiative.order.push(actingUnit.instanceId);
-
-    // Check if both teams have committed all alive units
-    const otherPlayerId = submittingPlayerId === playerOneId ? playerTwoId : playerOneId;
-    const myAliveLeft = ws.units.filter(
-      (u) => u.ownerPlayerId === submittingPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
-    ).length;
-    const theirAliveLeft = ws.units.filter(
-      (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
-    ).length;
-
-    if (myAliveLeft === 0 && theirAliveLeft === 0) {
-      // Transition to round 2
-      initiative.order = buildFinalOrder(initiative.order, ws.units, initiative.round1FirstPlayerId, playerOneId, playerTwoId);
-      initiative.isRound1 = false;
-      initiative.slot = -1; // will be set by advanceSlot below (start at -1 so advance gives 0)
-      // Temporarily set slot to -1 and advance
-      const firstSlot = advanceSlot({ ...initiative, slot: -1 }, ws.units, events);
-      initiative.slot = firstSlot.slot;
-      initiative.activeUnitId = firstSlot.activeUnitId;
-      ws.turnNumber += firstSlot.skippedSlots;
-      // CAMPAIGN (A4): with spawns the order length varies, so campaign rounds
-      // are ORDER-WRAP based, not turnNumber/8. Arena keeps roundFromTurn.
-      ws.roundNumber = (ws.objective || ws.encounterProgress) ? 2 : roundFromTurn(ws.turnNumber);
-      checkSpawnTriggers(ws, events); // round-trigger waves due at round 2
-      // Reset all turn flags at round boundary
-      for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
-      const firstUnit = ws.units.find((u) => u.instanceId === firstSlot.activeUnitId);
-      ws.activePlayerId = firstUnit?.ownerPlayerId ?? otherPlayerId;
-    } else {
-      // Stay in round 1: next player is whoever has uncommitted alive units
-      const otherHasAlive = ws.units.some(
-        (u) => u.ownerPlayerId === otherPlayerId && u.isAlive && !initiative.order.includes(u.instanceId),
-      );
-      ws.activePlayerId = otherHasAlive ? otherPlayerId : submittingPlayerId;
-      initiative.activeUnitId = null;
-    }
+    advanceRound1AfterCommit(ws, submittingPlayerId, playerOneId, playerTwoId, events);
   } else {
     // Round 2+: advance slot
     const next = advanceSlot(initiative, ws.units, events);
@@ -447,6 +519,13 @@ function finalizeTurnInternal(
   ws.turnNumber++;
   if (!(ws.objective || ws.encounterProgress)) ws.roundNumber = roundFromTurn(ws.turnNumber);
   events.push({ type: 'TURN_ENDED' });
+
+  // Owner 2026-08-23: a round-1 player whose only choosable units are frozen
+  // is skipped HERE, inside this submit — mirroring how advanceSlot already
+  // skips frozen slots in rounds 2+ — so they never receive a do-nothing turn.
+  // Runs before the win check below, which therefore also covers any deaths
+  // from the skipped units' status ticks (frozen + burning).
+  if (ws.initiative.isRound1) autoSkipRound1FrozenPlayers(ws, playerOneId, playerTwoId, events);
 
   // ── Endgame: announce start of round 11, then apply drain ─────────────────
   if (ws.roundNumber >= 11 && prevRound < 11) {
