@@ -6,9 +6,18 @@
  * for each, so a rung can be picked from a curve instead of guessed and
  * re-measured through a 52-minute battery.
  *
- * Uses the SAME statistic the acceptance battery uses (mean over sampled builds)
- * so a rung found here transfers. It just uses fewer builds/games — enough to
- * locate the rung, not to certify it. Always confirm with buildBattery.
+ * Uses the SAME criterion the acceptance battery uses — the owner's percentile
+ * rule from DIFFICULTY_TARGETS.md (solve SHARE floor + median CEILING + wall
+ * cap), imported from buildBattery rather than restated, so a rung found here
+ * transfers. It just uses fewer builds/games — enough to locate the rung, not
+ * to certify it. Always confirm with buildBattery.
+ *
+ * ⚠ Until 2026-08-23 this walked against the RETIRED mean-in-band rule, which
+ * was superseded on 2026-08-21 (REBALANCE_2026-08.md). A rung chosen by the old
+ * stick can be flatly wrong under the new one: mean-in-band asks where the
+ * average build lands, the ratified rule asks how many GOOD builds clear a bar
+ * and whether the median walks it. Those disagree most exactly where tuning
+ * matters — on bimodal cells.
  *
  *   npx tsx src/ai/calibrate.ts sealeddeep e1 hard 1.2,1.6,2.0
  *   npx tsx src/ai/calibrate.ts sealeddeep e1 all 1.2,1.6,2.0 --builds 40
@@ -19,24 +28,15 @@
  * enemy count, placement), not HP.
  */
 import { simEncounterCell } from './campaignSim.js';
-import { sampleBuild } from './buildBattery.js';
+import {
+  sampleBuild, isEarlyEncounter,
+  ACCEPTANCE, ACCEPTANCE_EARLY, WALL_FLOOR, MAX_WALL_SHARE,
+} from './buildBattery.js';
 import { makeRng } from './simHarness.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
 import { CampaignDifficulty } from '../campaigns/types.js';
 import { createHash } from 'node:crypto';
 
-const BANDS: Record<CampaignDifficulty, [number, number]> = {
-  easy: [0.80, 0.95], medium: [0.65, 0.80], hard: [0.45, 0.65], nightmare: [0.15, 0.45],
-};
-const WALL_FLOOR: Record<CampaignDifficulty, number> = {
-  easy: 0.40, medium: 0.25, hard: 0.10, nightmare: 0.05,
-};
-/** Must mirror buildBattery's MAX_WALL_SHARE, or a rung that looks acceptable
- *  here fails certification (and vice versa). Scaled by difficulty per the
- *  owner call — see the long note in buildBattery.ts for why. */
-const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
-  easy: 0.10, medium: 0.15, hard: 0.25, nightmare: 0.50,
-};
 
 const [slug, encounter, diffArg, scalesArg, ...rest] = process.argv.slice(2);
 const getArg = (f: string, d: string) => { const i = rest.indexOf(f); return i !== -1 ? rest[i + 1] : d; };
@@ -57,10 +57,15 @@ const current = campaign.encounters[encounter].hpScaleOverride ?? {};
 console.log(`${slug} ${encounter} (L${level}) — ${builds} builds x ${games} games per rung`);
 console.log(`current: ${diffs.map((d) => `${d} ${current[d] ?? 'default'}`).join('  ')}\n`);
 
+const early = isEarlyEncounter(level);
+if (early) console.log('EARLY encounter (L<=2) — relaxed targets apply.\n');
+
 for (const difficulty of diffs) {
-  const [lo, hi] = BANDS[difficulty];
+  const { target, share, ceiling } = (early ? ACCEPTANCE_EARLY : ACCEPTANCE)[difficulty];
   const floor = WALL_FLOOR[difficulty];
-  console.log(`${difficulty}  target band [${(lo * 100).toFixed(0)},${(hi * 100).toFixed(0)}]  wall floor ${(floor * 100).toFixed(0)}%`);
+  const wallCap = MAX_WALL_SHARE[difficulty];
+  console.log(`${difficulty}  need >=${(share * 100).toFixed(0)}% of teams winning >=${(target * 100).toFixed(0)}%`
+    + `  ·  median <=${(ceiling * 100).toFixed(0)}%  ·  walls <${(wallCap * 100).toFixed(0)}% below ${(floor * 100).toFixed(0)}%`);
   for (const scale of scales) {
     const wrs: number[] = [];
     for (let i = 0; i < builds; i++) {
@@ -74,11 +79,21 @@ for (const difficulty of diffs) {
     const sorted = [...wrs].sort((a, b) => a - b);
     const med = sorted[Math.floor(sorted.length / 2)];
     const walls = wrs.filter((w) => w < floor).length / wrs.length;
-    const inBand = mean >= lo && mean <= hi;
-    const wallCap = MAX_WALL_SHARE[difficulty];
-    const flags = [inBand ? '' : (mean > hi ? 'HIGH' : 'LOW'), walls > wallCap ? `WALLS ${(walls * 100).toFixed(0)}%` : '']
-      .filter(Boolean).join(' ');
-    console.log(`  scale ${scale.toFixed(2)}  mean ${(mean * 100).toFixed(0).padStart(3)}%  median ${(med * 100).toFixed(0).padStart(3)}%  walls ${(walls * 100).toFixed(0).padStart(3)}%  ${inBand && walls <= wallCap ? '✓ IN BAND' : flags}`);
+    const solveShare = wrs.filter((w) => w >= target).length / wrs.length;
+    // The ratified rule, verbatim: enough good teams clear the bar, the typical
+    // team does not walk it, and nobody is truly bricked.
+    const floorOk = solveShare >= share;
+    const ceilOk = med <= ceiling;
+    const wallOk = walls <= wallCap;
+    const flags = [
+      floorOk ? '' : 'TOO HARD',
+      ceilOk ? '' : 'TOO EASY',
+      wallOk ? '' : `WALLS ${(walls * 100).toFixed(0)}%`,
+    ].filter(Boolean).join(' ');
+    console.log(`  scale ${scale.toFixed(2)}  solve ${(solveShare * 100).toFixed(0).padStart(3)}%/${(share * 100).toFixed(0)}%`
+      + `  median ${(med * 100).toFixed(0).padStart(3)}%/${(ceiling * 100).toFixed(0)}%`
+      + `  walls ${(walls * 100).toFixed(0).padStart(3)}%  (mean ${(mean * 100).toFixed(0).padStart(3)}%)`
+      + `  ${floorOk && ceilOk && wallOk ? '✓ PASS' : flags}`);
   }
   console.log();
 }

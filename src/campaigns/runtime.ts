@@ -169,6 +169,10 @@ export function buildCampaignEnemyInstance(
     ...(enemy.moveFlags?.length ? { moveFlags: [...enemy.moveFlags] } : {}),
     ...(enemy.aiHints ? { aiHints: { ...enemy.aiHints } } : {}),
     ...(enemy.artKey ? { artKey: enemy.artKey } : {}),
+    // Explicit, so PLAYER-class thorns tuning cannot leak in through the shared
+    // chassis slug (see THORNS_DAMAGE_BY_CLASS in abilityExecutor).
+    ...(passives.includes('thorns') && enemy.thornsDamage != null
+      ? { thornsDamage: enemy.thornsDamage } : {}),
   };
 }
 

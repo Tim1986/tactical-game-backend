@@ -75,6 +75,20 @@ export const sealedDeepCampaign: CampaignDefinition = {
     { slug: 'final_note',         name: 'The Final Note',      description: 'Let the hero personally silence the bone choir.' },
   ],
 
+  // ⚠ MEASUREMENT ARTIFACT — THE EASY CEILING IS EFFECTIVELY 92, NOT 95.
+  // The certification battery runs 25 games per build, so a build's win rate
+  // can only land on multiples of 4% and the MEDIAN of those rates inherits the
+  // same grid: 96, 92, 88 ... There is no 95. Any cell whose natural median
+  // sits at the top therefore reads "TOO EASY" against a <=95 ceiling for a
+  // reason that is arithmetic, not content — the next value down is 92, three
+  // points inside the bound. Several cells here (e4/easy, e6/easy, e7/easy)
+  // miss by exactly that one point and are parked deliberately rather than
+  // pushed to a rung that breaks their wall caps.
+  // Do not "fix" these by walking scale; either raise --games (100 games gives
+  // 1% resolution) or read the miss as noise. Flagged for the owner 2026-08-23;
+  // DIFFICULTY_TARGETS.md is frozen during tuning so the threshold itself is
+  // untouched.
+
   // ── Cast (design doc §3) ────────────────────────────────────────────────
   // Every one of the 11 B1 undead artKeys ships here. baseClass drives engine
   // mechanics (stats/AI/specials); artKey is a separate art-routing field that
@@ -113,6 +127,13 @@ export const sealedDeepCampaign: CampaignDefinition = {
       maxHealth: 60, armorClass: 9, movementRange: 2,
       abilities: ['sword'],
       passiveFlags: ['stalwart', 'thorns'],
+      // 3, stated explicitly. The zombie runs the FIGHTER chassis, so before
+      // this field existed it inherited THORNS_DAMAGE_BY_CLASS and jumped 3 -> 5
+      // the moment the player's Fighter was buffed on 2026-08-23 — three zombies
+      // in e9 turned every melee swing into a 5 HP tax and the sweep showed
+      // melee parties at 0-17% at EVERY start distance. Enemy retaliation is
+      // authored here now, not inherited from arena balance.
+      thornsDamage: 3,
       nightmare: { hpBonus: 6 },
     },
     // ── Ghoul: freeze-then-feast with the witch ──
@@ -232,7 +253,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // lose, even on nightmare. Parked on band midpoints. Note the steepness
       // (~70 pts per 1.0 of scale): three IDENTICAL warriors share every hit
       // breakpoint, so the whole cell crosses a cliff at once.
-      hpScaleOverride: { easy: 1.40, medium: 1.58, hard: 1.80, nightmare: 1.95 },
+      hpScaleOverride: { easy: 1.05, medium: 1.18, hard: 1.32, nightmare: 1.36 },
     },
 
     // e2 — The Collapsed Gallery (carve). No objective — the terrain IS the
@@ -259,7 +280,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // the biggest HP pool. Nightmare sits BELOW the naive 1.57 read for 30%,
       // because the archers' acBonus and the zombies' hpBonus already add
       // difficulty that this scale curve does not contain.
-      hpScaleOverride: { easy: 1.10, medium: 1.20, hard: 1.35, nightmare: 1.42 },
+      hpScaleOverride: { easy: 0.75, medium: 0.90, hard: 1.00, nightmare: 1.12 },
     },
 
     // e3 — Whistle in the Dark (protect). The first survivor found, huddled
@@ -301,7 +322,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
       // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
       // verdict, and 1.55 breaches the wall cap outright.
-      hpScaleOverride: { easy: 0.90, medium: 1.15, hard: 1.35, nightmare: 1.55 },
+      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.30, nightmare: 1.25 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -309,13 +330,56 @@ export const sealedDeepCampaign: CampaignDefinition = {
       level: 3,
       terrain: {
         theme: 'crypt',
+        // Two fire tiles, not four (2026-08-23, same pass as the ghoul->zombie
+        // mix below). The hazards were the second half of this cell's wall
+        // problem: they are unavoidable chip on the APPROACH, which costs a
+        // strong comp a few HP and costs a weak comp the fight, so they pushed
+        // the bottom of the build distribution under the floor without moving
+        // the median at all. That is wall-share damage with no difficulty
+        // payoff. One tile per lane keeps the fire lanes readable — the fiction
+        // and the herding behaviour are unchanged — at half the tax.
         hazards: [
-          { pos: { x: 3, y: 2 }, type: 'fire' }, { pos: { x: 4, y: 2 }, type: 'fire' },
-          { pos: { x: 3, y: 5 }, type: 'fire' }, { pos: { x: 4, y: 5 }, type: 'fire' },
+          { pos: { x: 3, y: 2 }, type: 'fire' },
+          { pos: { x: 3, y: 5 }, type: 'fire' },
         ],
       },
-      enemies: ['ghoul', 'ghoul', 'ghoul', 'cultist'],
-      enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 3 }, { x: 6, y: 6 }, { x: 5, y: 4 }],
+      // ⚠ COMPOSITION MIX, 2026-08-23 (owner-authorized). This was three
+      // IDENTICAL ghouls + the cultist, and identical bodies share every
+      // kill-breakpoint, so the whole cell crossed at once: measured at 40
+      // builds, easy went 90% solving at scale 0.55 to 33% at 0.70 to 0% at
+      // 1.00. That is not a difficulty slope, it is a coin flip on comp, and
+      // scale cannot fix a bimodal cell (the audit's own rule — the same
+      // reasoning that authorized the structural fix on unlitbeacon e11).
+      // Neither easy nor medium had ANY passing rung: at the scale where the
+      // median team still won 96% of its games, a tenth of teams were already
+      // under the wall floor.
+      // The third ghoul becomes a zombie: it keeps the body count and the HP
+      // budget but strips a third of the incoming BURST (ghouls carry
+      // opportunist + a ranged dagger_toss; the zombie is basic-only at
+      // movement 2), and its 60 HP sits nowhere near the ghouls' 45, which is
+      // what gives the cell a second breakpoint to slide between.
+      // Compare e2 in this same campaign: mixed 2+2 composition, tunes
+      // smoothly at every tier. That is the existence proof this is the cause.
+      enemies: ['ghoul', 'ghoul', 'zombie', 'cultist'],
+      // ⚠ ENEMIES PULLED IN ONE TILE, 2026-08-23. THIS is the cell's real
+      // problem, and it took a spreadSweep to see it. At the old distance
+      // (mean Manhattan gap 5.3) the archetype spread was 53-57 points:
+      //   easy   melee 42% · ranged 95% · balanced 78%
+      //   medium melee 50% · ranged 85% · balanced 28%
+      // The MELEE party was bricked by the crossing, not by the enemies — it
+      // spent the fight walking into dagger_toss while the ranged party never
+      // had to move. Every scale rung inherited that split, which is what made
+      // the cell read bimodal and left easy/medium with no passing value: any
+      // scale low enough to un-brick melee let the median walk it.
+      // At gap 3.5 the spread collapses to 7 pts on easy and 25 on medium, and
+      // melee goes 42% -> 93%. hpScale can finally do its job.
+      // ⚠ This supersedes my own first diagnosis. The ghoul->zombie mix and the
+      // hazard trim below were aimed at the identical-body breakpoint, which is
+      // real but was the SMALLER effect; both are kept (they measured well and
+      // the sweep numbers above include them), but start distance was the
+      // dominant term. Re-sweep before trusting either in isolation.
+      // Changing placement invalidates the scale row — re-walked below.
+      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 5 }, { x: 4, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       // Walk: nm 0.95 -> 85 · 1.15 -> 56 · 1.35 -> 24 (32% walled). The wall
       // share was largely the cultist's `warded` nightmare block, now softened
@@ -324,7 +388,26 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk after softening the cultist: 1.15 -> 50 (8% walled) ·
       // 1.30 -> 30 (36%) · 1.45 -> 12 (48%). 1.30 centres the mean exactly;
       // 1.15 would hold the walls under cap but leave the mean above band.
-      hpScaleOverride: { easy: 0.85, medium: 1.0, hard: 1.15, nightmare: 1.30 },
+      // Row after the placement fix (150-build certification pending):
+      //   easy 0.75 · medium 0.92 · hard 1.10 ✓ · nightmare 1.05 ✓
+      //
+      // ⚠ easy and medium MISS THE CEILING ON PURPOSE — there is no rung that
+      // satisfies both bounds, and this is the documented "know when to stop"
+      // case. Measured at medium (80-100 builds/rung):
+      //     0.92 -> median 92 (ceiling 80) · walls 14% (cap 15) ✓
+      //     0.96 -> median 84 · walls 21%
+      //     1.00 -> median 72 ✓ · walls 24%
+      // The typical team never stops walking it before a fifth of teams get
+      // bricked. So the choice is WHICH bound to miss, and the philosophy names
+      // the answer: when centring and the floors disagree, the floor wins. A
+      // soft medium costs a good team some tension; a 24% wall share costs a
+      // fifth of parties their RUN, in a campaign where the comp is locked.
+      // easy is the same trade: 0.75 walls 6% and misses the ceiling, 0.77
+      // passes the ceiling and walls 12%.
+      // Revisit only with a STRUCTURAL change (the spread work above already
+      // took this cell from 53-pt archetype spread to 7); another scale walk
+      // will just rediscover this table.
+      hpScaleOverride: { easy: 0.75, medium: 0.92, hard: 1.10, nightmare: 1.05 },
     },
 
     // e5 — What Walks Through Walls (survive). Wraiths/specter get `phasing`
@@ -351,7 +434,21 @@ export const sealedDeepCampaign: CampaignDefinition = {
         win: [{ kind: 'round_reached', round: 8 }],
       },
       enemies: ['wraith', 'wraith', 'specter'],
-      enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 4 }],
+      // ⚠ PHASERS PUSHED BACK TWO TILES, 2026-08-23 (spreadSweep). At the old
+      // distance this cell was not "hard", it was a party-archetype filter:
+      //   medium  melee 95% · ranged  5% · balanced 15%   (90-pt spread)
+      //   hard    melee 87% · ranged  0% · balanced  0%   (87-pt spread)
+      // A RANGED party simply loses. Phasers ignore the carve and walk the
+      // straight line to the squishiest thing on the board, so a backline that
+      // cannot body-block dies in the first two rounds — and because they
+      // ignore terrain, no wall layout fixes it. The sweep is unambiguous that
+      // distance is the only dial that moves it: at gap 7.0 ranged goes 0% ->
+      // 32% on hard and 5% -> 88% on medium, and the spread halves to 45/30.
+      // Do NOT read the remaining hard-difficulty ranged weakness as balanced;
+      // it is the least bad rung measured, and phaser COUNT is the next lever
+      // if it needs more (the wave units at rounds 4 and 6 are the cheap ones
+      // to trim). Changing placement invalidates the scale row — re-walked.
+      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 4 }],
       // Waves are load-bearing, not flavour: without them the party clears
       // three phasers and wins on the MERCY rule (measured 100% at all four
       // difficulties, win reason "Every enemy has fallen"). Pending waves
@@ -392,7 +489,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // mean above 65. That is the phaser bimodality — five wall-ignoring
       // enemies either get answered or wipe a squishy backline, so this cell
       // splits rather than spreads. Left at the in-band rung and flagged.
-      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.70, nightmare: 2.00 },
+      hpScaleOverride: { easy: 1.05, medium: 1.15, hard: 1.25, nightmare: 1.35 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -439,7 +536,15 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // (18% -> 44% at 1.85) and the walls with it (48% -> 28%), but the wall
       // share still sits above the tool's 15% cap. Parked to CENTRE the mean —
       // see the nightmare-wall note at the top of this file.
-      hpScaleOverride: { easy: 1.45, medium: 1.55, hard: 1.82, nightmare: 1.95 },
+      // e6 row 2026-08-23: hard 1.20 and nightmare 1.32 both certify. easy and
+      // medium park one rung BELOW their ceilings on purpose — 1.02 pulls easy's
+      // median to 88 but walls 17% (cap 10), and 1.06 pulls medium's to 76 but
+      // walls 19% (cap 15). Same trade as e4: walls win. The three identical
+      // cultists are the underlying cause (shared kill-breakpoint), but the
+      // objective NAMES them — `units_dead: ['cultist']`, "silence the three
+      // chanters" — so mixing the composition would rewrite the fight's premise
+      // and its goal, which is why this one takes the documented miss instead.
+      hpScaleOverride: { easy: 0.97, medium: 1.00, hard: 1.20, nightmare: 1.32 },
     },
 
     // e7 — The Flooded Stair (escape). The barrow answers the allegiance
@@ -503,7 +608,14 @@ export const sealedDeepCampaign: CampaignDefinition = {
       //          in band, and the wall share is what pays for it)
       // The easy->nightmare span is wide (0.50 to 2.00) because the objective
       // only became scale-sensitive at all via the death condition.
-      hpScaleOverride: { easy: 0.50, medium: 0.65, hard: 0.90, nightmare: 2.00 },
+      // e7 row 2026-08-23. medium 0.65 -> 0.75 (measured PASS: solve 60%,
+      // median 76, walls 12%). easy STAYS at 0.50 and misses its ceiling by a
+      // single point — see the quantization note in the campaign header; every
+      // rung that pulls the median below 96 walls 12-32% of teams, because
+      // `units_at_tiles scope:'all'` means a party that cannot get EVERY unit
+      // to the landing scores a flat 0, so weak comps fall off a cliff rather
+      // than degrading. Walls win over ceilings (the floor rule).
+      hpScaleOverride: { easy: 0.50, medium: 0.75, hard: 0.90, nightmare: 2.00 },
     },
 
     // e8 — The Long Way Up (escort). Walk the crew out. Guardrails from the
@@ -551,7 +663,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // since waves are not difficulty-conditional. 3.00 already puts a hunter at
       // 120 HP; pushing further buys nothing. Parked at the best available rung
       // and flagged rather than pretending scale can fix it.
-      hpScaleOverride: { easy: 1.25, medium: 1.50, hard: 2.30, nightmare: 3.00 },
+      hpScaleOverride: { easy: 1.40, medium: 1.62, hard: 2.30, nightmare: 3.00 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of
@@ -572,7 +684,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 0.90 -> 57 · 1.05 -> 20 (32% walled). Seven bodies arriving in waves
       // compound fast. Nightmare sits just BELOW hard because its per-enemy
       // blocks already supply the extra difficulty.
-      hpScaleOverride: { easy: 0.82, medium: 0.92, hard: 0.955, nightmare: 0.97 },
+      hpScaleOverride: { easy: 0.80, medium: 0.88, hard: 0.92, nightmare: 0.98 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
@@ -605,7 +717,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 2.00 -> 22%. That gap IS the walk's documented sampling noise, and
       // it is why rungs get certified rather than trusted. Pulled down to hit
       // the band midpoints against the battery's numbers, not the walk's.
-      hpScaleOverride: { easy: 1.27, medium: 1.50, hard: 1.68, nightmare: 1.90 },
+      hpScaleOverride: { easy: 1.55, medium: 1.50, hard: 1.68, nightmare: 1.90 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
@@ -680,7 +792,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // needed 0.55 and 26 HP. Nightmare sits AT hard's rung deliberately: the
       // per-enemy nightmare blocks are worth ~28 pts on their own, so matching
       // scales still lands nightmare a full band below hard.
-      hpScaleOverride: { easy: 0.75, medium: 0.88, hard: 1.00, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.88, hard: 1.00, nightmare: 1.05 },
     },
   },
 
@@ -735,7 +847,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     },
     censer_node: {
       kind: 'encounter', encounter: 'e4',
-      preText: 'The ghouls scatter toward the fire lanes, using the flame to herd {mainName} instead of fearing it themselves. A hooded cultist stands at the hall\'s center, watching with open curiosity rather than alarm.',
+      preText: 'The ghouls scatter toward the fire lanes, using the flame to herd {mainName} instead of fearing it themselves. Something heavier comes on behind them, too slow to care about the fire at all. A hooded cultist stands at the hall\'s center, watching with open curiosity rather than alarm.',
       next: 'lv4',
     },
     lv4: { kind: 'levelup', level: 4, next: 'walls_note' },
