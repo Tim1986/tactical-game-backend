@@ -237,7 +237,20 @@ const THORNS_DAMAGE = 3;
  *  Thorns is shared by Fighter, Barbarian and Ranger, so a GLOBAL bump would
  *  hand most of its value to Barbarian (11 of the 15 thorns builds in the
  *  contain2 top-100 are Barbarian, vs 1 Fighter). Per-class keeps a Fighter
- *  buff on the Fighter. The harness patches this via a preset's `thornsByClass`. */
+ *  buff on the Fighter. The harness patches this via a preset's `thornsByClass`.
+ *
+ *  ⚠ THIS MAP IS KEYED ON definitionSlug, WHICH CAMPAIGN ENEMIES SHARE WITH THE
+ *  PLAYER CLASS THEY ARE BUILT ON. A campaign enemy is constructed from
+ *  DEFAULT_UNITS[baseClass] and inherits that class's slug, so the Sealed Deep
+ *  zombie (baseClass 'fighter', passive 'thorns') silently picked up the
+ *  2026-08-23 Fighter buff and started returning 5 instead of 3 — a 67% buff to
+ *  an enemy nobody had tuned, which bricked melee parties in every encounter it
+ *  appears in. Enemies now carry an explicit `thornsDamage`, checked FIRST, so
+ *  arena tuning of a player class can never again leak into campaign content.
+ *  (The same chassis-sharing applies to OPPORTUNIST/VENGEFUL_BONUS_BY_CLASS —
+ *  ghouls run the rogue chassis, skeleton berserkers the barbarian. Those
+ *  predate this and are left as-is deliberately; if either class is ever
+ *  retuned, check the campaign enemies built on it.) */
 export const THORNS_DAMAGE_BY_CLASS: Record<string, number> = { fighter: 5 };
 const OPPORTUNIST_BONUS = 4;
 /**
@@ -363,7 +376,7 @@ function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): vo
   if (target.ownerPlayerId === ctx.caster.ownerPlayerId) return;
   if (!ctx.caster.isAlive) return;
   if (manhattanDistance(ctx.caster.position, target.position) !== 1) return;
-  const thorns = THORNS_DAMAGE_BY_CLASS[target.definitionSlug] ?? THORNS_DAMAGE;
+  const thorns = target.thornsDamage ?? THORNS_DAMAGE_BY_CLASS[target.definitionSlug] ?? THORNS_DAMAGE;
   takeDamage(ctx.caster, thorns, ctx.events, target.instanceId, (actual) => {
     ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: target.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: actual, message: 'Thorns' });
   });

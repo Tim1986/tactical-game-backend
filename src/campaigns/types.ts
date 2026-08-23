@@ -188,6 +188,10 @@ export interface CampaignEnemy {
   specialSlug?: string;
   /** Behavioral passive flags always applied ('immovable', 'warded'). */
   passiveFlags?: string[];
+  /** Thorns retaliation for this enemy, when it carries the `thorns` flag.
+   *  ALWAYS set it explicitly rather than letting the chassis decide: the
+   *  class-keyed default follows PLAYER balance and will drift under you. */
+  thornsDamage?: number;
   /** Nightmare-only buffs, applied after difficulty HP scaling. */
   nightmare?: { hpBonus?: number; acBonus?: number; passiveFlags?: string[] };
   /** [A6/B1] Enemy art asset key, decoupled from baseClass (Skeleton art on a

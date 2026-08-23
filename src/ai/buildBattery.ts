@@ -66,7 +66,7 @@ const PARTY_SIZE = 4;
  *  check the named walled builds the report prints —
  *  incoherent parties mean this cap is too tight; parties a player would
  *  actually field mean the cell really is bricking them. */
-const WALL_FLOOR: Record<CampaignDifficulty, number> = {
+export const WALL_FLOOR: Record<CampaignDifficulty, number> = {
   easy: 0.40, medium: 0.25, hard: 0.10, nightmare: 0.05,
 };
 /**
@@ -92,7 +92,7 @@ const WALL_FLOOR: Record<CampaignDifficulty, number> = {
  *    real subset of builds cracks every cell, so "loose" never means
  *    "unsolvable".
  */
-const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
+export const MAX_WALL_SHARE: Record<CampaignDifficulty, number> = {
   easy: 0.10, medium: 0.15, hard: 0.25, nightmare: 0.50,
 };
 
@@ -236,7 +236,7 @@ export interface CellRow {
  *             no matter how the good builds do. Without this, "10% of builds
  *             beat 40%" passes trivially on a fight everyone wins.
  */
-const ACCEPTANCE: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
+export const ACCEPTANCE: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
   easy:      { target: 0.80, share: 0.50, ceiling: 0.95 },
   medium:    { target: 0.65, share: 0.35, ceiling: 0.80 },
   hard:      { target: 0.45, share: 0.20, ceiling: 0.65 },
@@ -257,7 +257,7 @@ const ACCEPTANCE: Record<CampaignDifficulty, { target: number; share: number; ce
  * to move too: a fight deliberately made gentler would otherwise be flagged
  * TOO EASY for complying.
  */
-const ACCEPTANCE_EARLY: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
+export const ACCEPTANCE_EARLY: Record<CampaignDifficulty, { target: number; share: number; ceiling: number }> = {
   easy:      { target: 0.80, share: 0.65, ceiling: 1.00 },
   medium:    { target: 0.65, share: 0.50, ceiling: 0.90 },
   hard:      { target: 0.45, share: 0.35, ceiling: 0.80 },

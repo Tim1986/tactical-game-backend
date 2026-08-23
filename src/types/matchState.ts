@@ -46,6 +46,9 @@ export interface UnitInstance {
    *  back to back if the player likes, then gated exactly like arena's single
    *  use. Arena builds never set this. */
   extraCharges?: Record<string, number>;
+  /** Thorns retaliation damage for THIS unit, overriding the class default.
+   *  Campaign enemies set it explicitly — see THORNS_DAMAGE_BY_CLASS. */
+  thornsDamage?: number;
   /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
    *  (never ends on them). Arena builds never set this. */
   moveFlags?: string[];
