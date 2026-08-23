@@ -3,6 +3,10 @@
 !.env.example
 .DS_Store
 node_modules/
+# ...and as a bare entry: a SYMLINK named node_modules (as a git worktree
+# gets when you point it at the main checkout's install) is not matched by the
+# trailing-slash form, and `git add -A` will happily commit it.
+node_modules
 scratch/
 grids/
 .sim-smoke/
