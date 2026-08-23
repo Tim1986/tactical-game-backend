@@ -146,6 +146,15 @@ const PRESETS: Record<string, Preset> = {
   contain1: { ac: {}, hp: {}, dmg: { whirlwind: -2, shockwave: -2 } },
   contain2: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 } },
   contain3: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -3, shockwave: -3 } },
+  // ═══ RING OF FROST PROBE (Fable/Opus, 2026-08-22) ═══════════════════════
+  // contain2 grid: blizzard is wizard's outlier special — 48.0 mean, 29 of
+  // wizard's 43 top-100 slots, vs freeze 40.6 / cold_snap 40.1. All rungs sit
+  // ON TOP of contain2 so the barbarian side is held constant.
+  // ⚠ Pass 17 found range is a CLIFF knob (r3 weak, r4 good, r5 dominant) —
+  // but that was pre-v1.0.81 and r3 is now the strong rung, so the old slope
+  // cannot be assumed. r4 is included purely to re-measure the slope.
+  c2_blz_r2: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, range: { blizzard: -1 } },
+  c2_blz_r4: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, range: { blizzard: 1 } },
   ortho_control: {
     ac: {}, hp: {},
     areaShape: { whirlwind: 'orthogonal', shockwave: 'orthogonal' },
