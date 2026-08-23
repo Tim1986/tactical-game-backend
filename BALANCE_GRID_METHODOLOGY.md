@@ -102,8 +102,14 @@ That writes the three files to hand over:
 | file | what it is |
 |---|---|
 | `top_builds.csv` | 252 pairings, best passive loadout each, sorted by Best Mean |
-| `top_builds_by_archetype.csv` | same 252 rows, sorted by Variant Mean |
-| `class_representation_topbuilds.csv` | class counts at top 10/25/50/100, both sorts |
+| `class_representation_topbuilds.csv` | class counts at top 10/25/50/100 |
+
+There is deliberately **only one ranked view**. An earlier version also emitted
+a `top_builds_by_archetype.csv` sorted by Variant Mean; the owner removed it
+(2026-08-22) to eliminate any chance of reading the wrong file. Variant Mean
+and Variant Spread survive as COLUMNS inside `top_builds.csv`, so the same
+sanity check is one Excel sort away — but the file that ships is sorted by
+Best Mean.
 
 **Read Variant Spread before trusting a rank.** It is the range across a
 pairing's 9 passive loadouts. Cells carry ~±2 points of run-to-run noise
@@ -117,9 +123,9 @@ column upward, worst for high-spread pairings:
 - `Sorcerer/Wizard ignite+blizzard` — best 66.9, variant mean **59.4**, spread 16.1
   → strong under every passive; the real #1
 
-Sort by **Variant Mean** for archetype strength, by **Best Mean** for "the
-strongest single build a player could field". Prefer Variant Mean for balance
-decisions.
+A high Variant Spread means the Best figure rests on one passive combination
+rather than a robust pairing — worth checking before acting on a top rank, by
+sorting the Variant Mean column in Excel.
 
 **Representation baseline is 25%** — each class is in 63 of the 252 pairings.
 Percentages are share of ROWS containing the class, so they sum to 200% (two
