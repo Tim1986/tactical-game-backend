@@ -29,7 +29,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'whirlwind',
     name: 'Whirlwind',
-    description: 'Deals 18 blockable damage to every unit around you — all 8 surrounding tiles, allies included.',
+    description: 'Deals 16 blockable damage to every unit around you — all 8 surrounding tiles, allies included.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -37,12 +37,12 @@ export const ABILITY_DEFS = [
     cooldown_turns: 99,
     is_special: true,
     is_unblockable: false,
-    effects: [{ type: 'damage', formula: 'flat', value: 18 }],
+    effects: [{ type: 'damage', formula: 'flat', value: 16 }],
   },
   {
     slug: 'shockwave',
     name: 'Ground Slam',
-    description: 'Deals 11 unblockable damage to every unit around you — all 8 surrounding tiles, allies included — and roots them for 1 turn.',
+    description: 'Deals 9 unblockable damage to every unit around you — all 8 surrounding tiles, allies included — and roots them for 1 turn.',
     targeting_type: 'aoe',
     range: 0,
     area_radius: 1,
@@ -51,7 +51,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 11 },
+      { type: 'damage', formula: 'flat', value: 9 },
       { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
     ],
   },
@@ -170,7 +170,7 @@ export const ABILITY_DEFS = [
   {
     slug: 'concussive',
     name: 'Concussive Blow',
-    description: 'Deals 6 unblockable damage to an adjacent enemy and freezes them for 1 turn.',
+    description: 'Deals 7 unblockable damage to an adjacent enemy and freezes them for 1 turn.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -178,14 +178,14 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 6 },
+      { type: 'damage', formula: 'flat', value: 7 },
       { type: 'apply_status', statusSlug: 'frozen', stacks: 1, durationTurns: 1 },
     ],
   },
   {
     slug: 'shield_bash',
     name: 'Shield Bash',
-    description: 'Deals 16 unblockable damage to an adjacent enemy and knocks them 2 tiles back.',
+    description: 'Deals 17 unblockable damage to an adjacent enemy and knocks them 2 tiles back.',
     targeting_type: 'single',
     range: 1,
     area_radius: 0,
@@ -193,7 +193,7 @@ export const ABILITY_DEFS = [
     is_special: true,
     is_unblockable: true,
     effects: [
-      { type: 'damage', formula: 'flat', value: 16 },
+      { type: 'damage', formula: 'flat', value: 17 },
       { type: 'push', direction: 'away_from_caster', distance: 2 },
     ],
   },
@@ -523,7 +523,7 @@ const ANCHOR_WIZ = anchorWith(2);
 // Warded: implemented at match build — units with the 'warded' flag start
 // with a long-lived 'shielded' status (consumed by the first hit as usual).
 const WARDED: PassiveOption = { slug: 'warded', name: 'Warded', description: 'Begin the match with a shield that fully negates the first damaging hit against you — its damage and any effect it carries, even an unblockable one — then breaks. Costs 2 maximum health.', passiveFlag: 'warded', stat: 'maxHealth', value: -2 };
-const THORNS: PassiveOption = { slug: 'thorns', name: 'Thorns', description: 'When an adjacent enemy hits you, they take 3 damage. Adjacent means the 4 neighbouring tiles — a blow from a diagonal never triggers it.', passiveFlag: 'thorns' };
+const THORNS: PassiveOption = { slug: 'thorns', name: 'Thorns', description: 'When an adjacent enemy hits you, they take 3 damage. Fighter deals 5 instead. Adjacent means the 4 neighbouring tiles — a blow from a diagonal never triggers it.', passiveFlag: 'thorns' };
 // Undying pays a max-health tax for the free life — without it the passive was
 // a strict upgrade on every class that could take it.
 const undyingWith = (hp: number): PassiveOption => ({
@@ -574,11 +574,11 @@ const WARLOCK_PASSIVES: PassiveOption[] = [STALWART_1, OPPORTUNIST, SIPHON];
 
 export const UNIT_DEFS = [
   { slug: 'fighter',   name: 'Fighter',   max_health: 52, armor_class: 12, movement_range: 3, abilities: ['sword',    'second_wind'], passives: [], special_options: ['second_wind', 'concussive', 'shield_bash'], passive_options: FIGHTER_PASSIVES, unlock_level: 1, asset_key: 'unit_fighter',   is_active: true },
-  { slug: 'barbarian', name: 'Barbarian', max_health: 55, armor_class: 10, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: BARBARIAN_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
+  { slug: 'barbarian', name: 'Barbarian', max_health: 55, armor_class:  9, movement_range: 3, abilities: ['strike',   'whirlwind'],   passives: [], special_options: ['whirlwind', 'shockwave', 'roar'],      passive_options: BARBARIAN_PASSIVES, unlock_level: 1, asset_key: 'unit_barbarian', is_active: true },
   { slug: 'ranger',    name: 'Ranger',    max_health: 38, armor_class: 11, movement_range: 3, abilities: ['arrow',    'piercing'],    passives: [], special_options: ['piercing', 'pinning', 'longshot'],      passive_options: RANGER_PASSIVES,  unlock_level: 1, asset_key: 'unit_ranger',    is_active: true },
   { slug: 'rogue',     name: 'Rogue',     max_health: 45, armor_class: 8, movement_range: 4, abilities: ['twin',     'assassinate'], passives: [], special_options: ['assassinate', 'dagger_toss', 'expose'], passive_options: ROGUE_PASSIVES,  unlock_level: 1, asset_key: 'unit_rogue',     is_active: true },
   { slug: 'cleric',    name: 'Cleric',    max_health: 50, armor_class: 9, movement_range: 3, abilities: ['mace',     'heal'],        passives: [], special_options: ['heal', 'ward', 'purify'],               passive_options: CLERIC_PASSIVES,  unlock_level: 3, asset_key: 'unit_cleric',    is_active: true },
-  { slug: 'wizard',    name: 'Wizard',    max_health: 34, armor_class: 11, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze', 'blizzard', 'cold_snap'],      passive_options: WIZARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
+  { slug: 'wizard',    name: 'Wizard',    max_health: 32, armor_class: 11, movement_range: 3, abilities: ['missile',  'freeze'],      passives: [], special_options: ['freeze', 'blizzard', 'cold_snap'],      passive_options: WIZARD_PASSIVES,  unlock_level: 3, asset_key: 'unit_wizard',    is_active: true },
   { slug: 'sorcerer',  name: 'Sorcerer',  max_health: 34, armor_class: 9, movement_range: 3, abilities: ['bolt',     'ffh'],         passives: [], special_options: ['ffh', 'flame_jet', 'ignite'],           passive_options: SORCERER_PASSIVES,  unlock_level: 3, asset_key: 'unit_sorcerer',  is_active: true },
   { slug: 'warlock',   name: 'Warlock',   max_health: 43, armor_class: 9, movement_range: 3, abilities: ['eldritch', 'fear'],        passives: [], special_options: ['fear', 'grasp', 'drain'],               passive_options: WARLOCK_PASSIVES,  unlock_level: 3, asset_key: 'unit_warlock',   is_active: true },
 ];

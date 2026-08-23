@@ -238,7 +238,7 @@ const THORNS_DAMAGE = 3;
  *  hand most of its value to Barbarian (11 of the 15 thorns builds in the
  *  contain2 top-100 are Barbarian, vs 1 Fighter). Per-class keeps a Fighter
  *  buff on the Fighter. The harness patches this via a preset's `thornsByClass`. */
-export const THORNS_DAMAGE_BY_CLASS: Record<string, number> = {};
+export const THORNS_DAMAGE_BY_CLASS: Record<string, number> = { fighter: 5 };
 const OPPORTUNIST_BONUS = 4;
 /**
  * Per-class Opportunist override, mirroring the per-class Undying HP tax

@@ -1010,13 +1010,21 @@ export const RULE_CHECKS: RuleCheck[] = [
   {
     rule: 'PAS-4', name: 'Thorns deals 3 to adjacent attackers whose hit lands; never to ranged, allies, or missed hits',
     run: () => {
-      const mkThorns = (x: number, y: number) => mkUnit(P2, x, y, { passives: ['thorns'] });
+      // mkUnit defaults to definitionSlug 'fighter', and Fighter's Thorns is 5
+      // (THORNS_DAMAGE_BY_CLASS) — so spell the class out in both directions.
+      const mkThorns = (x: number, y: number, slug = 'barbarian') =>
+        mkUnit(P2, x, y, { passives: ['thorns'], definitionSlug: slug });
       const hit = mkAbility({ isUnblockable: true }); // 10 damage
-      // adjacent attacker takes 3 back
+      // adjacent attacker takes the base 3 back off a non-Fighter
       let attacker = mkUnit(P1, 3, 2);
       let thorny = mkThorns(3, 3);
       const ev = cast(hit, attacker, thorny, [attacker, thorny]);
       assert(attacker.currentHealth === attacker.maxHealth - 3, 'adjacent attacker must take 3 thorns damage');
+      // ...and 5 off a Fighter (per-class override, shipped 2026-08-22)
+      const fAtk = mkUnit(P1, 3, 2);
+      const fThorny = mkThorns(3, 3, 'fighter');
+      cast(hit, fAtk, fThorny, [fAtk, fThorny]);
+      assert(fAtk.currentHealth === fAtk.maxHealth - 5, "Fighter's thorns must deal 5");
       assert(ev.some((e) => e.message === 'Thorns'), 'thorns retaliation must be a visible event');
       // ranged (non-adjacent) attacker is safe
       attacker = mkUnit(P1, 3, 0);

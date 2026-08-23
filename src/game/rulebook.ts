@@ -109,7 +109,7 @@ export const RULEBOOK: RuleSection[] = [
     rules: [
       { id: 'PAS-1', text: "Swift: +1 movement. Only offered to classes with a melee basic attack." },
       { id: 'PAS-3', text: "Warded: the unit starts the match with a shield that negates the first hit against it, in exchange for 2 maximum health." },
-      { id: 'PAS-4', text: "Thorns: when an enemy on an adjacent tile (the 4 cardinal tiles — never diagonal) lands a hit on this unit, the attacker takes 3 damage. A ring blast striking from a diagonal tile does not trigger Thorns." },
+      { id: 'PAS-4', text: "Thorns: when an enemy on an adjacent tile (the 4 cardinal tiles — never diagonal) lands a hit on this unit, the attacker takes 3 damage — 5 if the defender is a Fighter. A ring blast striking from a diagonal tile does not trigger Thorns." },
       { id: 'PAS-5', text: "Undying: the first time this unit would die each match, it survives at 1 health instead. Works against any damage, including executes, burning, and endgame drain. Once per match." },
       { id: 'PAS-6', text: "Opportunist: this unit deals +4 damage against targets suffering any status effect. A Ranger deals +5 instead." },
       { id: 'PAS-7', text: "Vengeful: this unit deals +3 damage while at or below half of its maximum health. A Barbarian deals +4 instead." },
