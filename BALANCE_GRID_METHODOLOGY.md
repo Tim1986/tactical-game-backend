@@ -83,6 +83,53 @@ per-mechanic, per-run).
 
 ---
 
+## ⛔ DELIVERABLE: always the TOP BUILDS view (owner standing rule, 2026-08-22)
+
+**Never hand over the raw merged grid.** The owner's words: *"I want the top
+builds version. Full version is just noise, it's not what I need."*
+
+The raw CSV has 2,268 rows but only **252 distinct builds** — every pairing
+appears NINE times, once per passive combination, so the top of the raw list is
+the same few builds repeated with different passives. Collapse it:
+
+```bash
+node scripts/mergeGridParts.mjs grids/<dir>/part*.csv -o grids/<dir>/merged.csv
+node scripts/topBuilds.mjs grids/<dir>/merged.csv      # <- ALWAYS run this
+```
+
+That writes the three files to hand over:
+
+| file | what it is |
+|---|---|
+| `top_builds.csv` | 252 pairings, best passive loadout each, sorted by Best Mean |
+| `top_builds_by_archetype.csv` | same 252 rows, sorted by Variant Mean |
+| `class_representation_topbuilds.csv` | class counts at top 10/25/50/100, both sorts |
+
+**Read Variant Spread before trusting a rank.** It is the range across a
+pairing's 9 passive loadouts. Cells carry ~±2 points of run-to-run noise
+(measured 2026-08-22: re-running an *identical* preset on one pair gave 4/81
+exact cell matches, mean |Δ| 1.95, max 6.4 — while the 81-cell pair mean
+reproduced to 0.1). Taking the max of 9 noisy draws therefore biases the Best
+column upward, worst for high-spread pairings:
+
+- `Barbarian/Warlock roar+fear` — best **68.8**, variant mean 52.9, spread 38.4
+  → one lucky passive combination, ranks #1 by Best and #8 by archetype
+- `Sorcerer/Wizard ignite+blizzard` — best 66.9, variant mean **59.4**, spread 16.1
+  → strong under every passive; the real #1
+
+Sort by **Variant Mean** for archetype strength, by **Best Mean** for "the
+strongest single build a player could field". Prefer Variant Mean for balance
+decisions.
+
+**Representation baseline is 25%** — each class is in 63 of the 252 pairings.
+Percentages are share of ROWS containing the class, so they sum to 200% (two
+classes per row). Do NOT divide by 2N.
+
+⚠ Deduping changes conclusions, so never judge balance off the raw view. On the
+contain2 grid the raw rows put Fighter at 7/100 and Barbarian at 39/100; the
+deduped view put Fighter at 18-20 and Barbarian at 28-30. The raw numbers were
+counting *passive variants of one build*, not distinct strong builds.
+
 ## Tooling quick reference
 
 - `--refs fable` — score against the 12 shipped Fable rosters (the reference
@@ -95,6 +142,8 @@ per-mechanic, per-run).
   (preset knobs `oppBonus` / `vengBonus`). Per-passive HP tax via `passiveHp`
   (same pattern as Undying's per-class HP cost).
 - Merge parts: `node scripts/mergeGridParts.mjs grids/<dir>/part*.csv -o merged.csv`
+- **Top builds (ALWAYS): `node scripts/topBuilds.mjs merged.csv`** — see the
+  standing rule above; the raw grid is never the deliverable.
 - Workbook: `node scripts/buildGridXlsx.mjs merged.csv merged.xlsx`
 
 See also `AC_REWORK.md` (the original sim-driven rebalance handoff) and
