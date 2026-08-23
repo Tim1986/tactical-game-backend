@@ -168,6 +168,19 @@ const PRESETS: Record<string, Preset> = {
     dmg: { whirlwind: -2, shockwave: -2, shield_bash: 1 },
     thornsByClass: { fighter: 4 },
   },
+  // ═══ contain6 (owner 2026-08-22) — contain5 + a second Fighter lift ═══════
+  // Measured on the contain5 grid: for the six non-frontline classes, the best
+  // build available WITH a Barbarian beats the best WITH a Fighter by +3.3 pts
+  // on average (Warlock +9.6, Rogue +6.5, Cleric +5.2; Ranger is the lone
+  // exception at -4.2 thanks to second_wind+piercing). Owner: "every class
+  // looking for a frontline buddy would rather have a Barbarian."
+  //   Fighter Thorns 4->5 (per-class; cannot leak to Barbarian/Ranger)
+  //   Concussive Blow 6->7
+  contain6: {
+    ac: { barbarian: -1 }, hp: { wizard: -2 },
+    dmg: { whirlwind: -2, shockwave: -2, shield_bash: 1, concussive: 1 },
+    thornsByClass: { fighter: 5 },
+  },
   ortho_control: {
     ac: {}, hp: {},
     areaShape: { whirlwind: 'orthogonal', shockwave: 'orthogonal' },
