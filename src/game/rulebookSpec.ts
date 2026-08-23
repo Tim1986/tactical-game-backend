@@ -397,6 +397,26 @@ export const RULE_CHECKS: RuleCheck[] = [
 
   // ── DGE ────────────────────────────────────────────────────────────────────
   {
+    rule: 'DGE-1', name: 'the stated AC range 8-12 matches the actual roster',
+    run: () => {
+      // DGE-1 tells the player "Each unit has an Armor Class (AC) between 8 and
+      // 12". That is a claim about the CHASSIS TABLE, not about engine
+      // behaviour, and until 2026-08-23 nothing checked it — the rule text
+      // could quietly become a lie the next time a class was tuned.
+      //
+      // This is not hypothetical. The unit-info pip scale carried the same kind
+      // of hardcoded bound (AC_MIN 13 / AC_MAX 17, left over from an older stat
+      // table) and rotted silently: every class in the game displayed a single
+      // armour pip because the real range had moved entirely below the constant.
+      // A number shown to players must be derived from the data or asserted
+      // against it. This asserts.
+      const acs = Object.values(DEFAULT_UNITS).map((d) => d.armorClass);
+      const lo = Math.min(...acs), hi = Math.max(...acs);
+      assert(lo === 8 && hi === 12,
+        `DGE-1 says AC runs 8-12 but the roster spans ${lo}-${hi} — update the rule TEXT and any UI that hardcodes the range (see src/components/statPips.ts in mobile)`);
+    },
+  },
+  {
     rule: 'DGE-1', name: 'AC-based hit chance: d20+5 vs AC; each attack rolls fresh',
     run: () => {
       // AC 6 → 0% dodge: must always hit
@@ -1189,6 +1209,17 @@ export const RULE_CHECKS: RuleCheck[] = [
   {
     rule: 'PAS-9', name: 'Channeler deals +2 with abilities only on a turn the caster did not move',
     run: () => {
+      // Roster guard, mirroring PAS-1: the rule text says "Offered to the
+      // Wizard", which is a claim about the DATA. Unasserted numbers and
+      // roster claims in player-facing text rot silently — see the DGE-1 AC-range
+      // check for what that looks like when it happens.
+      {
+        const offering = Object.entries(DEFAULT_UNITS)
+          .filter(([, d]) => d.passiveOptions.some((x) => x.slug === 'channeler'))
+          .map(([sl]) => sl);
+        assert(offering.length === 1 && offering[0] === 'wizard',
+          `PAS-9 says Channeler is offered to the Wizard, but the roster offers it to: ${offering.join(', ') || 'nobody'}`);
+      }
       const still = mkUnit(P1, 3, 2, { passives: ['channeler'], hasMovedThisTurn: false });
       let t = mkUnit(P2, 3, 3);
       cast(mkAbility({ isUnblockable: true }), still, t, [still, t]);
@@ -1202,6 +1233,17 @@ export const RULE_CHECKS: RuleCheck[] = [
   {
     rule: 'PAS-10', name: 'Siphon heals the caster 1 when its ability damages an enemy, capped at max',
     run: () => {
+      // Roster guard, mirroring PAS-1: the rule text says "Offered to the
+      // Warlock", which is a claim about the DATA. Unasserted numbers and
+      // roster claims in player-facing text rot silently — see the DGE-1 AC-range
+      // check for what that looks like when it happens.
+      {
+        const offering = Object.entries(DEFAULT_UNITS)
+          .filter(([, d]) => d.passiveOptions.some((x) => x.slug === 'siphon'))
+          .map(([sl]) => sl);
+        assert(offering.length === 1 && offering[0] === 'warlock',
+          `PAS-10 says Siphon is offered to the Warlock, but the roster offers it to: ${offering.join(', ') || 'nobody'}`);
+      }
       const siph = mkUnit(P1, 3, 2, { passives: ['siphon'] });
       siph.currentHealth = 50;
       const t = mkUnit(P2, 3, 3);

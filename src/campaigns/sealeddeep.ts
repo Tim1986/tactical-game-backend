@@ -404,10 +404,18 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // fifth of parties their RUN, in a campaign where the comp is locked.
       // easy is the same trade: 0.75 walls 6% and misses the ceiling, 0.77
       // passes the ceiling and walls 12%.
+      // medium is CLOSED, measured three times at two build counts:
+      //     0.92 -> median 92 · walls 12% (cap 15)
+      //     0.98 -> median 80 (exactly the ceiling) · walls 18%
+      //     1.04 -> median 60 · walls 28%
+      // The median never clears the ceiling before the cap breaks. Parked at
+      // 0.92 (walls safe, ceiling missed). nightmare 1.05 -> 1.15 after the
+      // certification run read it TOO EASY at 1.05 (median 58 vs 45); 1.15
+      // certifies at solve 43% / median 28 / walls 35% (cap 50).
       // Revisit only with a STRUCTURAL change (the spread work above already
       // took this cell from 53-pt archetype spread to 7); another scale walk
       // will just rediscover this table.
-      hpScaleOverride: { easy: 0.75, medium: 0.92, hard: 1.10, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.75, medium: 0.92, hard: 1.10, nightmare: 1.15 },
     },
 
     // e5 — What Walks Through Walls (survive). Wraiths/specter get `phasing`
@@ -708,8 +716,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // and flagged rather than pretending scale can fix it.
       // e8 row 2026-08-23, after the route fix made this cell tunable at all:
       //   easy 1.30 solve 74% walls 10% (median 96 — the +1 quantization miss)
-      //   medium 1.38 walls ~12% (median ~86; 1.45 hits the ceiling exactly but
-      //     walls 18%, so this takes the ceiling miss and keeps the cap)
+      //   medium 1.38 — CLOSED after four rungs. walls 6% / median 88 here;
+      //     1.41 puts the median exactly ON the ceiling but walls 17%, 1.44
+      //     walls 21%, 1.50 walls 28%. The wall share triples between 1.38 and
+      //     1.44, so there is no value that clears the ceiling with the cap
+      //     intact. Parked on the safe side: 6% walled is the best in the
+      //     campaign, and the ceiling miss costs a good team some tension.
       //   hard 1.60 solve 66% median 60 walls 10% ✓
       //   nightmare 1.60 solve 48% median 36 walls 10% ✓
       // Note how far the top of the row FELL: hard was 2.30 and nightmare 3.00,
