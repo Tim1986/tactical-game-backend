@@ -1,0 +1,16 @@
+-- Per-turn event storage (owner bug report, 2026-08-23: "the combat log is
+-- absolutely reliable — if you come back to it, you need to be able to see
+-- what you missed").
+--
+-- THE BUG. The only event record was matches.last_turn_events — the MOST
+-- RECENT turn only, overwritten on every submit. A player who was away for
+-- several turns (frozen units auto-skipping their turns is the easy way to
+-- be away for many) came back to a log with a hole in it: every turn except
+-- the last was simply gone, and nothing could reconstruct it.
+--
+-- THE FIX. turn_history already gets one row per submitted turn; it now also
+-- carries that turn's events, so GET /matches/:id/events?sinceTurn=N can
+-- replay any gap. Backfill is impossible (the events were never stored), so
+-- pre-migration turns return '[]' — the client treats an empty row as "no
+-- detail available", which is exactly true.
+ALTER TABLE turn_history ADD COLUMN IF NOT EXISTS events JSONB NOT NULL DEFAULT '[]';

@@ -121,6 +121,33 @@ export async function getUserMatches(userId: string): Promise<(MatchRow & { play
   return result.rows;
 }
 
+/**
+ * Per-turn events for every turn AFTER `sinceTurn` — the combat-log gap filler.
+ *
+ * A returning client hands over the last turn number its persisted log covers
+ * and gets back everything it missed, in order. Turns recorded before
+ * migration 0025 return events: [] (they were never stored); the client shows
+ * those turns as headers with no detail, which is the honest rendering.
+ * Access is the same rule as GET /matches/:id — participants only.
+ */
+export async function getTurnEventsSince(
+  matchId: string,
+  userId: string,
+  sinceTurn: number,
+): Promise<{ turnNumber: number; playerId: string; events: unknown[] }[]> {
+  const m = await query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]);
+  const match = m.rows[0];
+  if (!match) throw new MatchNotFoundError();
+  if (match.player_one_id !== userId && match.player_two_id !== userId) throw new MatchAccessError();
+  const result = await query<{ turn_number: number; player_id: string; events: unknown[] }>(
+    `SELECT turn_number, player_id, events FROM turn_history
+      WHERE match_id = $1 AND turn_number > $2
+      ORDER BY turn_number ASC LIMIT 200`,
+    [matchId, sinceTurn],
+  );
+  return result.rows.map((r) => ({ turnNumber: r.turn_number, playerId: r.player_id, events: r.events ?? [] }));
+}
+
 export async function submitTurn(matchId: string, submittingPlayerId: string, actions: TurnAction[]): Promise<{ result: ReturnType<typeof processTurn>; match: MatchRow }> {
   return withTransaction(async (client) => {
     const matchResult = await client.query<MatchRow>('SELECT * FROM matches WHERE id = $1 FOR UPDATE', [matchId]);
@@ -131,8 +158,8 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
     const abilityMap = await loadAbilityMap(client);
     const humanResult = processTurn(match.match_state, actions, submittingPlayerId, match.player_one_id, match.player_two_id, abilityMap);
     await client.query(
-      'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
-      [matchId, submittingPlayerId, match.turn_number, JSON.stringify(actions), JSON.stringify(humanResult.updatedState)]
+      'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot, events) VALUES ($1, $2, $3, $4, $5, $6)',
+      [matchId, submittingPlayerId, match.turn_number, JSON.stringify(actions), JSON.stringify(humanResult.updatedState), JSON.stringify(humanResult.events)]
     );
 
     // For PvE: auto-process Fable's turns within the same transaction
@@ -272,10 +299,14 @@ export async function submitRodEndTurn(
       return { events: allEvents, updatedState: finalized.updatedState, matchOver: true, winnerId: finalized.winnerId, match: await fetchMatch() };
     }
 
-    // Record turn history (actions not tracked per-ROD-call; log empty list)
+    // Record turn history (actions not tracked per-ROD-call; log empty list).
+    // events = the COMPLETE turn as an absent observer needs it: the per-action
+    // events accumulated across /action calls PLUS end-turn resolution — the
+    // same composition last_turn_events gets below. Storing only `allEvents`
+    // here would strip every attack from the permanent record.
     await client.query(
-      'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
-      [matchId, submittingPlayerId, match.turn_number, JSON.stringify([]), JSON.stringify(finalized.updatedState)],
+      'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot, events) VALUES ($1, $2, $3, $4, $5, $6)',
+      [matchId, submittingPlayerId, match.turn_number, JSON.stringify([]), JSON.stringify(finalized.updatedState), JSON.stringify([...actionEvents, ...allEvents])],
     );
 
     let result = finalized;
@@ -459,8 +490,8 @@ async function runFableTurns(
     const turnResult = processTurn(currentState, fableActions, fablePlayerId, humanPlayerId, fablePlayerId, abilityMap);
     if (client) {
       await client.query(
-        'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot) VALUES ($1, $2, $3, $4, $5)',
-        [matchId, fablePlayerId, currentState.turnNumber, JSON.stringify(fableActions), JSON.stringify(turnResult.updatedState)]
+        'INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot, events) VALUES ($1, $2, $3, $4, $5, $6)',
+        [matchId, fablePlayerId, currentState.turnNumber, JSON.stringify(fableActions), JSON.stringify(turnResult.updatedState), JSON.stringify(turnResult.events)]
       );
     }
     allEvents.push(...(turnResult.events as unknown[]));

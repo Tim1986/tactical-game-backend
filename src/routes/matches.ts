@@ -77,6 +77,23 @@ matchRouter.post('/:id/end-turn', async (req: Request, res: Response): Promise<v
   }
 });
 
+// GET /matches/:id/events?sinceTurn=N — per-turn events for every turn after
+// N, for combat-log gap filling. A client whose persisted log ends at turn N
+// calls this on return and reconstructs everything it missed. Turns predating
+// migration 0025 come back with events: [] — header-only rendering is honest.
+matchRouter.get('/:id/events', async (req: Request, res: Response): Promise<void> => {
+  const sinceTurn = Number.parseInt(String(req.query.sinceTurn ?? '0'), 10);
+  if (!Number.isFinite(sinceTurn) || sinceTurn < 0) { Errors.validation(res, 'sinceTurn must be a non-negative integer'); return; }
+  try {
+    const turns = await matchService.getTurnEventsSince(req.params.id, req.user!.id, sinceTurn);
+    sendSuccess(res, { turns });
+  } catch (err) {
+    if (err instanceof matchService.MatchNotFoundError) { Errors.notFound(res, 'Match'); return; }
+    if (err instanceof matchService.MatchAccessError) { Errors.forbidden(res); return; }
+    throw err;
+  }
+});
+
 matchRouter.get('/:id/history', async (req: Request, res: Response): Promise<void> => {
   try {
     const history = await matchService.getTurnHistory(req.params.id, req.user!.id);

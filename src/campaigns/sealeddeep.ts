@@ -636,20 +636,63 @@ export const sealedDeepCampaign: CampaignDefinition = {
           // entirely "did the crew die". A defenseless NPC that ranged parties
           // cannot body-block needs the HP of a boss, not of a party member.
           maxHealth: 105, abilities: [],
-          behavior: { mode: 'route', waypoints: [{ x: 3, y: 4 }, { x: 5, y: 4 }, { x: 7, y: 4 }] },
+          // ⚠ ROUTE LENGTHENED 2026-08-23. It was a straight line down row 4:
+          // seven tiles at movement 3, so the crew reached the exit on about
+          // ROUND 3 and the encounter was decided before the hunters could
+          // close. That is the real reason this cell resisted everything —
+          // scale saturated (2.60 and 3.00 measured identically), and clocks of
+          // 12, 9 and even 7 all left hard sitting at median 100, because none
+          // of them can bind on a three-round fight.
+          // The crew now switches back across the chamber, roughly tripling its
+          // exposure, so the hunters get the rounds they need to be a threat
+          // and the deadline becomes a real constraint instead of decoration.
+          behavior: { mode: 'route', waypoints: [{ x: 3, y: 1 }, { x: 5, y: 6 }, { x: 7, y: 4 }] },
           placement: { x: 0, y: 4 },
         },
       },
       objective: {
-        text: 'Get the survey crew safely up the passage',
+        text: 'Get the survey crew safely up the passage before the barrow wakes (10 rounds)',
         win: [{ kind: 'ally_at_tiles', allyKey: 'crew', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
-        loss: [{ kind: 'ally_dead', allyKey: 'crew' }],
+        // ⚠ DEADLINE ADDED 2026-08-23. Escort is hpScale-inert by nature and
+        // this cell proved it exactly: 2.60 and 3.00 measured IDENTICALLY
+        // (55% solving, 32-33% walled) and the median even drifted UP. You win
+        // by ARRIVING, so a tankier hunter simply lives longer while the crew
+        // walks past it — enemy HP buys nothing, which is why hard and
+        // nightmare sat TOO EASY at every rung up to 3.00 while the wall share
+        // climbed past its cap.
+        // A clock is the lever the win condition respects (the manual's rule:
+        // "if the win condition does not require killing, scale is weak; find
+        // the lever the win condition actually respects"). It also pushes the
+        // right end of the distribution: a strong party's answer here is slow,
+        // careful shepherding, which the deadline taxes, while a party that
+        // loses the crew outright is unaffected — it already lost. That is
+        // precisely the TOO EASY + WALLS shape this cell had.
+        // Clock walk (scale 1.90, hard): 12 -> median 96 · 9 -> median 96 · so
+        // the crew was arriving around round 6 and neither clock touched it.
+        // 7 is the first value that can bind. Note the VIP's own HP is NOT
+        // available as a difficulty lever here — it was already walked UP
+        // 62 -> 85 -> 105 to stop the crew dying in a third of builds, and
+        // pulling it back down would simply re-break the wall share. Watch the
+        // WALL share when
+        // tightening further: a clock that is too tight stops ranking builds
+        // and starts excluding them, which is the failure mode e6 already hit
+        // at clock 10 before it went to 13.
+        loss: [{ kind: 'ally_dead', allyKey: 'crew' }, { kind: 'round_reached', round: 10 }],
       },
       // barrow_hound is the dedicated hunter key (own aiHints, not shared with
       // the ghoul chaff key); starts at (6,2), well outside round-1 reach of
       // the crew's (0,4) start.
       enemies: ['skeleton_berserker', 'barrow_hound', 'barrow_hound', 'skeleton_archer'],
-      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 6, y: 6 }, { x: 6, y: 1 }],
+      // ⚠ PACK PUSHED BACK ONE TILE, 2026-08-23 (spreadSweep). At the old
+      // distance the cell split the field rather than ranking it:
+      //   easy   melee 48% · ranged 90% · balanced 97%   (48-pt spread)
+      //   medium melee 73% · ranged 48% · balanced 95%   (47-pt spread)
+      // — and note the two rows disagree about WHICH archetype suffers, which
+      // is the signature of a fight decided by who reaches whom first rather
+      // than by the matchup. At gap 6.5 it reads melee 82 / ranged 100 /
+      // balanced 97 on easy (18-pt spread) and 75/100/88 on medium (25).
+      // Changing placement invalidates the scale row — re-walked below.
+      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 6 }, { x: 7, y: 1 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
       goals: [
         { slug: 'crew_intact', name: 'Crew Intact', description: 'Bring the whole survey crew out alive.', check: { kind: 'unit_survives', scope: 'all' } },
@@ -663,7 +706,17 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // since waves are not difficulty-conditional. 3.00 already puts a hunter at
       // 120 HP; pushing further buys nothing. Parked at the best available rung
       // and flagged rather than pretending scale can fix it.
-      hpScaleOverride: { easy: 1.40, medium: 1.62, hard: 2.30, nightmare: 3.00 },
+      // e8 row 2026-08-23, after the route fix made this cell tunable at all:
+      //   easy 1.30 solve 74% walls 10% (median 96 — the +1 quantization miss)
+      //   medium 1.38 walls ~12% (median ~86; 1.45 hits the ceiling exactly but
+      //     walls 18%, so this takes the ceiling miss and keeps the cap)
+      //   hard 1.60 solve 66% median 60 walls 10% ✓
+      //   nightmare 1.60 solve 48% median 36 walls 10% ✓
+      // Note how far the top of the row FELL: hard was 2.30 and nightmare 3.00,
+      // values that existed only because scale was being pushed against a cell
+      // that could not respond to it. Once the crew stopped outrunning its own
+      // encounter, 1.60 does what 3.00 could not.
+      hpScaleOverride: { easy: 1.30, medium: 1.38, hard: 1.60, nightmare: 1.60 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of
@@ -684,7 +737,21 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 0.90 -> 57 · 1.05 -> 20 (32% walled). Seven bodies arriving in waves
       // compound fast. Nightmare sits just BELOW hard because its per-enemy
       // blocks already supply the extra difficulty.
-      hpScaleOverride: { easy: 0.80, medium: 0.88, hard: 0.92, nightmare: 0.98 },
+      // e9 row 2026-08-23, ALL FOUR TIERS CERTIFY (100 builds/rung):
+      //   easy 0.78 solve 79% walls 0% · medium 0.85 solve 58% walls 0%
+      //   hard 0.92 solve 50% walls 2% · nightmare 0.90 solve 25% walls 10%
+      //
+      // ⚠ Every earlier walk of this cell is void. The three zombies run the
+      // FIGHTER chassis and were silently inheriting the player Fighter's
+      // thorns (3 -> 5 on 2026-08-23), so a melee swing cost 5 HP three times
+      // over: spreadSweep read melee at 0-17% at EVERY start distance, and the
+      // cell looked like an unfixable archetype filter. With `thornsDamage: 3`
+      // authored on the zombie it is an ordinary, well-behaved fight.
+      //
+      // Cliffy above 0.95 — identical bodies, shared breakpoint: hard goes 82%
+      // solving at 0.85 to 12% at 1.00. Stay inside 0.78-0.92 and re-walk in
+      // small steps if anything moves.
+      hpScaleOverride: { easy: 0.78, medium: 0.85, hard: 0.92, nightmare: 0.90 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
