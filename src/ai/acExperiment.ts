@@ -17,7 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { runSim } from './simHarness.js';
 import { DEFAULT_UNITS, DEFAULT_ABILITIES } from './defaultData.js';
-import { OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS } from '../game/abilityExecutor.js';
+import { OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS, THORNS_DAMAGE_BY_CLASS } from '../game/abilityExecutor.js';
 import { loadoutsFor, runDuelMatrix, runReferenceMatrix } from './loadoutMatrix.js';
 import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
 
@@ -84,6 +84,8 @@ interface Preset {
   /** Ability-slug → delta on the ability's SELF status duration (Blizzard's
    * channel root — distinct from statusDur, which hits the target). */
   selfStatusDur?: Record<string, number>;
+  /** Class-slug → per-class Thorns retaliation damage (base 3). */
+  thornsByClass?: Record<string, number>;
   /** Ability-slug → override areaShape ('chebyshev'|'orthogonal'|'ring'). */
   areaShape?: Record<string, 'chebyshev' | 'orthogonal' | 'ring'>;
   /** Ability-slug → delta on areaRadius. */
@@ -155,6 +157,17 @@ const PRESETS: Record<string, Preset> = {
   // cannot be assumed. r4 is included purely to re-measure the slope.
   c2_blz_r2: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, range: { blizzard: -1 } },
   c2_blz_r4: { ac: { barbarian: -1 }, hp: {}, dmg: { whirlwind: -2, shockwave: -2 }, range: { blizzard: 1 } },
+  // ═══ contain5 (owner 2026-08-22) — the ship candidate ═══════════════════
+  // contain2 barbarian values + Wizard chassis tap + Fighter lift.
+  //   Wizard HP 34->32 (chassis, not AC: the AC band is tight post-c6 and a
+  //     -1 AC is a flat 5pt swing on every incoming attack).
+  //   Fighter Thorns 3->4, PER-CLASS (global would mostly buff Barbarian).
+  //   Shield Bash 16->17.
+  contain5: {
+    ac: { barbarian: -1 }, hp: { wizard: -2 },
+    dmg: { whirlwind: -2, shockwave: -2, shield_bash: 1 },
+    thornsByClass: { fighter: 4 },
+  },
   ortho_control: {
     ac: {}, hp: {},
     areaShape: { whirlwind: 'orthogonal', shockwave: 'orthogonal' },
@@ -1224,6 +1237,8 @@ function applyPreset(p: Preset): void {
   for (const [c, v] of Object.entries(p.oppBonus ?? {})) OPPORTUNIST_BONUS_BY_CLASS[c] = v;
   for (const k of Object.keys(VENGEFUL_BONUS_BY_CLASS)) delete VENGEFUL_BONUS_BY_CLASS[k];
   for (const [c, v] of Object.entries(p.vengBonus ?? {})) VENGEFUL_BONUS_BY_CLASS[c] = v;
+  for (const k of Object.keys(THORNS_DAMAGE_BY_CLASS)) delete THORNS_DAMAGE_BY_CLASS[k];
+  for (const [c, v] of Object.entries(p.thornsByClass ?? {})) THORNS_DAMAGE_BY_CLASS[c] = v;
   for (const c of ALL_CLASSES) {
     DEFAULT_UNITS[c].armorClass = Math.max(7, BASE_AC[c] + (p.ac[c] ?? 0));
     DEFAULT_UNITS[c].maxHealth = BASE_HP[c] + (p.hp[c] ?? 0);

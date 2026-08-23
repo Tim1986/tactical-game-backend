@@ -233,6 +233,12 @@ function weakenedAdjustedDamage(ctx: ExecutionContext, rawValue: number): number
 }
 
 const THORNS_DAMAGE = 3;
+/** Per-class Thorns override, same pattern as OPPORTUNIST/VENGEFUL_BONUS_BY_CLASS.
+ *  Thorns is shared by Fighter, Barbarian and Ranger, so a GLOBAL bump would
+ *  hand most of its value to Barbarian (11 of the 15 thorns builds in the
+ *  contain2 top-100 are Barbarian, vs 1 Fighter). Per-class keeps a Fighter
+ *  buff on the Fighter. The harness patches this via a preset's `thornsByClass`. */
+export const THORNS_DAMAGE_BY_CLASS: Record<string, number> = {};
 const OPPORTUNIST_BONUS = 4;
 /**
  * Per-class Opportunist override, mirroring the per-class Undying HP tax
@@ -357,7 +363,8 @@ function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): vo
   if (target.ownerPlayerId === ctx.caster.ownerPlayerId) return;
   if (!ctx.caster.isAlive) return;
   if (manhattanDistance(ctx.caster.position, target.position) !== 1) return;
-  takeDamage(ctx.caster, THORNS_DAMAGE, ctx.events, target.instanceId, (actual) => {
+  const thorns = THORNS_DAMAGE_BY_CLASS[target.definitionSlug] ?? THORNS_DAMAGE;
+  takeDamage(ctx.caster, thorns, ctx.events, target.instanceId, (actual) => {
     ctx.events.push({ type: 'DAMAGE_DEALT', sourceUnitInstanceId: target.instanceId, targetUnitInstanceId: ctx.caster.instanceId, value: actual, message: 'Thorns' });
   });
 }
