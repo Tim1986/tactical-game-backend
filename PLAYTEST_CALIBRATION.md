@@ -16,33 +16,48 @@ Linked from `CAMPAIGNS.md` (§Balancing) and `CAMPAIGN_BALANCING.md`.
 
 ## The headline finding (2026-08-24)
 
-> **A win rate does not tell you how a fight FEELS. What the party can DO does.**
+> **Win rate is nearly useless for predicting how a fight FEELS.**
 
-Two encounters, same campaign, played back to back by the owner:
+Three encounters, one campaign, played in order by the owner. The measured
+numbers span **nine points**; the felt difficulty runs backwards through them:
 
-| played | measured (mean) | owner's verdict |
-|---|---|---|
-| unlitbeacon **e1** — L1, `noSpecials` | **78%** | *"I won by a very narrow margin… this is about the level I would expect of HARD for a first encounter."* |
-| unlitbeacon **e2** — L2, specials unlocked | **72%** | *"This felt reasonable. Maybe a little on the hard end of medium… but it was fine. Fun fight."* |
+| played | measured (mean) | owner's verdict | felt |
+|---|---|---|---|
+| **e1** — L1, `noSpecials`, kill-all | **78%** | *"Won by a very narrow margin… about the level I would expect of HARD for a first encounter."* | ✗ too hard |
+| **e2** — L2, specials, kill-all + waves | **72%** | *"Felt reasonable… a little on the hard end of medium, but it was fine. Fun fight."* | hard end of OK |
+| **e3** — L2, specials, HOLD two bridgeheads | **69%** | *"Felt like a good difficulty… on the easier end of medium."* | easy end of OK |
 
-**e2 measures six points HARDER and felt BETTER.** The variable is not
-difficulty — it is that at L2 the party has specials and therefore choices. A
-level-1 party with basic attacks only, grinding down AC-12 enemies, experiences
-the same win rate as a slog.
+**The order of the measurements is the exact REVERSE of the order of the
+feelings.** The easiest cell on paper was the only one rejected; the hardest
+cell on paper felt the most comfortable. Two separate causes, and both are
+things the battery cannot see:
 
-**Consequences, both now enforced in content:**
+1. **TOOLS (e1 → e2).** At L1 with `noSpecials` the party has basic attacks
+   and nothing else, so a fight is a grind with no decisions in it. At L2 half
+   the party has specials, and the same win rate becomes a fight you are
+   *playing* rather than *waiting out*.
+2. **WIN CONDITION (e2 → e3).** A kill-all with reinforcements gives the player
+   no visible progress — bodies keep arriving and the finish line is wherever
+   the last one dies. A `hold`/`survive` objective has a clock the player can
+   watch and ground they chose; it reads as controlled even while measuring
+   harder.
+
+**Consequences, all now enforced in content:**
 
 1. **The e1 tutorial exemption is about missing TOOLS, not about difficulty.**
    Every campaign's first encounter is calibrated to ~85% mean / ~90% median at
-   easy and medium (see CAMPAIGNS.md §Balancing). It does not extend to e2+.
-2. **~72% mean is the measured CEILING for an early-campaign medium cell.**
-   The owner has played a 72% cell and called it the hard end of acceptable.
-   Anything early measuring below that is above his stated tolerance.
+   easy and medium (see CAMPAIGNS.md §Balancing). It does NOT extend to e2+.
+2. **The acceptable early-medium window is ~69–72% mean** — the owner has
+   played both ends and named them. It is a THREE POINT window, which is well
+   inside battery noise (±5 at 150 builds): do not pretend to tune inside it.
+3. **Objective fights can run harder on paper than kill-alls** and still feel
+   fair. When a kill-all and a hold measure the same, the kill-all is the
+   harder experience.
 
-⚠ When judging any tutorial or early cell, look past the verdict at the SHAPE
-of the fight: enemy AC (+1 = 5% more of your swings wasted), identical enemies
-sharing damage breakpoints, terrain funnels, and above all **whether the party
-has specials yet.**
+⚠ When judging any early cell, look past the verdict at the SHAPE of the fight:
+whether the party has specials yet · what the win condition is (visible
+progress or not) · enemy AC (+1 = 5% more of your swings wasted) · identical
+enemies sharing damage breakpoints · terrain funnels.
 
 ---
 
@@ -53,6 +68,7 @@ the owner actually played, ≥80 builds × 25 games.
 
 | date | campaign / enc | level | diff | scale played | measured | owner verdict | action taken |
 |---|---|---|---|---|---|---|---|
+| 2026-08-24 | unlitbeacon e3 (hold) | L2 | medium | 0.65 | 69% mean · 72% median · 5% walls | *"Felt like a good difficulty… on the easier end of medium."* | **No change.** Sets the floor of the acceptable early-medium window. |
 | 2026-08-24 | unlitbeacon e2 | L2 | medium | 1.00 | 72% mean · 76% median · 4% walls | *"Felt reasonable. Maybe a little on the hard end of medium, wouldn't want a medium to feel much harder than that at level 2, but it was fine. Fun fight."* | **No change.** Recorded as the early-medium ceiling. |
 | 2026-08-24 | unlitbeacon e1 | L1 | medium | 1.25 | 78% mean · 80% median · 3% walls | *"Won by a very narrow margin. The calibration for medium on a level 1 scenario, no specials at this point, is off. Too hard for this level — about the level I would expect of HARD for a first encounter."* | medium 1.25 → **1.12** (88% mean). Exemption then applied to all five campaigns' e1. |
 
