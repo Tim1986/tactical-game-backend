@@ -418,7 +418,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand'],
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.00, medium: 1.15, hard: 1.25, nightmare: 1.30 },  // hazard carve
+      // ⚠ medium 1.15 -> 1.02 (owner played it 2026-08-24). Two things
+      // stacked: he reported it "manageable, maybe a little on the hard end"
+      // AND diagnosed why it wasn't worse — "if he hadn't wasted his flame
+      // jet, it would have been tighter." He was playing the WALL-BLIND brain,
+      // which burned the Torchhand's once-per-battle special on stone. The
+      // brain fix that same day removes that gift, and the cell immediately
+      // failed: 1.15 now measures 56% mean with 18% of builds WALLED (cap 15).
+      // 1.02 -> 71% mean · 80% median · 10% walls ✓, i.e. back inside the
+      // 69-72% window the owner has bracketed by feel (PLAYTEST_CALIBRATION).
+      // A rare case where a playtest verdict and an engine fix pointed the
+      // same direction, and the verdict was recorded early enough to catch it.
+      hpScaleOverride: { easy: 0.88, medium: 1.02, hard: 1.12, nightmare: 1.20 },  // hazard carve
     },
 
     // e5 — The Icefall (carve). Fighting UP a frozen cascade: ice pillars,

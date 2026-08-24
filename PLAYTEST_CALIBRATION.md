@@ -68,6 +68,7 @@ the owner actually played, ≥80 builds × 25 games.
 
 | date | campaign / enc | level | diff | scale played | measured | owner verdict | action taken |
 |---|---|---|---|---|---|---|---|
+| 2026-08-24 | unlitbeacon e4 (hazard) | L3 | medium | 1.15 | **56% mean · 60% median · 18% walls** (re-measured AFTER the brain fix; the owner played the wall-blind brain) | *"Felt manageable. Maybe a little on the hard end, if he hadn't wasted his flame jet, it would have been tighter. Good fight though, good use of hazards (once they're explained) to make things interesting."* | medium **1.15 → 1.02** (71% mean, 10% walls), and the whole row eased. See below. |
 | 2026-08-24 | unlitbeacon e3 (hold) | L2 | medium | 0.65 | 69% mean · 72% median · 5% walls | *"Felt like a good difficulty… on the easier end of medium."* | **No change.** Sets the floor of the acceptable early-medium window. |
 | 2026-08-24 | unlitbeacon e2 | L2 | medium | 1.00 | 72% mean · 76% median · 4% walls | *"Felt reasonable. Maybe a little on the hard end of medium, wouldn't want a medium to feel much harder than that at level 2, but it was fine. Fun fight."* | **No change.** Recorded as the early-medium ceiling. |
 | 2026-08-24 | unlitbeacon e1 | L1 | medium | 1.25 | 78% mean · 80% median · 3% walls | *"Won by a very narrow margin. The calibration for medium on a level 1 scenario, no specials at this point, is off. Too hard for this level — about the level I would expect of HARD for a first encounter."* | medium 1.25 → **1.12** (88% mean). Exemption then applied to all five campaigns' e1. |
@@ -91,6 +92,25 @@ it, so no action:
 | unlitbeacon | 1.00 | 72% | **the reference row** |
 
 ---
+
+## ⚠ A verdict is only valid for the ENGINE it was played on
+
+The e4 row is the case that proves it. The owner reported the fight as
+"manageable, maybe a little on the hard end" — and, unprompted, named the
+reason it wasn't tighter: *"if he hadn't wasted his flame jet."* He was
+playing the wall-blind brain, which burned the Torchhand's once-per-battle
+special into a wall. The fix shipped the same day.
+
+Re-measuring the SAME scale on the FIXED brain: 78% → **56% mean, 18% walls** —
+a failing cell. The encounter he called "a little on the hard end" would have
+shipped materially harder than the one he played.
+
+**So: when the engine changes, every row above it is a record of a fight that
+no longer exists.** Re-measure before acting on an old verdict, and note in the
+row which side of the change it was played on. The observation that saved this
+one came from the owner noticing an enemy play badly — playtesters see engine
+bugs that batteries cannot, because a battery has no opinion about whether the
+opponent played well.
 
 ## How to add a row
 
