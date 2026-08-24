@@ -446,9 +446,41 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         ],
       },
       enemies: ['volley_archer', 'volley_archer', 'blizzard_wisp', 'frozen_watchman'],
-      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 6, y: 3 }],
-      playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 5 }],
-      hpScaleOverride: { easy: 0.85, medium: 0.92, hard: 1.00, nightmare: 1.02 },  // carve
+      // ⚠ Wisp pushed to the back edge (was (5,4)) — see the placement note.
+      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 4 }, { x: 6, y: 3 }],
+      // ⚠ SPREAD, and this is the load-bearing fix (owner 2026-08-24: "my
+      // characters start out bunched up. I didn't choose to bunch them up, YOU
+      // did. So on my first turn, in almost every scenario, I'm gonna get
+      // caught in a 3 unit blizzard... it feels unfair").
+      //
+      // He is right, and the geometry is worse than it looks. The OLD formation
+      // — (0,3)(0,4)(1,2)(1,5) — has a ring centre at (1,3) that catches THREE
+      // party units. That is a property of the formation itself, not of where
+      // the wisp stands, and the party never chose it.
+      //
+      // His proposed fix (start the wisp farther back) does NOT work on its
+      // own, which is worth recording: the wisp moves 3 (phasing, so the ice
+      // pillars that define this encounter do not slow it at all), Ring of
+      // Frost has range 3, and the ring adds another 1 — a reach of 7 across
+      // an 8-wide board. From the BACK EDGE it still catches 3 in the old
+      // formation. Distance cannot solve a formation problem.
+      //
+      // This spread caps any single ring at 2 units, verified against every
+      // legal centre on the board. Combined with the back-edge start, the wisp
+      // must now walk most of the board and strand itself in front of the
+      // party to land even that — a 34 HP caster, in reach, having spent its
+      // once-per-battle special. That is the trade the fight was missing:
+      // eat a two-unit freeze, then kill the thing that cast it.
+      playerPlacement: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 0, y: 5 }, { x: 2, y: 6 }],
+      // Re-walked on the new geometry (the owner predicted it: "that would
+      // also make the encounter easier, so it'll need a rebalance as well").
+      // The cliff here is savage — 16 points of win rate per 0.04 of scale —
+      // so the tiers sit close together on purpose:
+      //   easy      0.85 -> 85% mean ✓   (0.92 -> 76%)
+      //   medium    0.96 -> 73% · 0.98 -> 64% ✓ · 1.00 -> 57% · 1.15 -> 35%, 40% walled
+      //   hard      1.02 -> 62% ✓ · 1.10 -> 49% ✓
+      //   nightmare 1.12 -> 38% ✓ · 1.22 -> 23% ✓
+      hpScaleOverride: { easy: 0.85, medium: 0.98, hard: 1.10, nightmare: 1.22 },  // carve
     },
 
     // e6 — The Frozen Mere (novel). The drowned company rises through the
