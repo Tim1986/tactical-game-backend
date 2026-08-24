@@ -214,7 +214,9 @@ export const moonberryCampaign: CampaignDefinition = {
       // ⚠ TUTORIAL EXEMPTION at easy AND medium (CAMPAIGNS.md §Balancing).
       // Retuned 2026-08-24 with the catalog's other e1s: 1.26 -> 78% mean,
       // 1.08 -> 85%/92% median, 0% walls.
-      hpScaleOverride: { easy: 0.98, medium: 1.08, hard: 1.29, nightmare: 1.32 },
+      //   0.72 -> 95% · 0.80 -> 91% · 0.90 -> 86% mean, 92% median, 1% walls ✓
+      //   (the pre-fix 1.08 measured 42% median with 29% of builds walled)
+      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 1.05, nightmare: 1.15 },
     },
 
     // e2 — The Market Escort (escort). REUSED from the shipped e4, re-fictioned:

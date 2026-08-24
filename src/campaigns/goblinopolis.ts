@@ -276,7 +276,15 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'exact_change', name: 'Exact Change', description: 'Clear the gate without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.05, medium: 1.30, hard: 1.50, nightmare: 1.75 },
+      // Walked after the terrain rebuild. ⚠ The scales came DOWN hard (1.30 ->
+      // 0.85 at medium) because the old row was propping up a board that was
+      // walling most builds outright — once cover stopped shielding the
+      // goblins, the encounter's real difficulty showed.
+      //   easy      0.65 -> 97% (too easy) · 0.75 -> 89%, 0% walls ✓
+      //   medium    0.75 -> 84% · 0.85 -> 74%, 1% walls ✓ · 1.00 -> 43%, 31% walls
+      //   hard      0.95 -> 56%, 4% walls ✓ · 1.05 -> 42%, 13% walls ✓
+      //   nightmare 1.05 -> 21%, 23% walls ✓ · 1.10 -> 14%, 38% walls (too far)
+      hpScaleOverride: { easy: 0.75, medium: 0.85, hard: 0.95, nightmare: 1.05 },
     },
 
     // e4 — The Office of Forms (rooms). REUSED from the shipped e4's two-room
