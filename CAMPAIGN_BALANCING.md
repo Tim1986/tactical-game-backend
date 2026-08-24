@@ -1,5 +1,17 @@
 # CAMPAIGN_BALANCING.md — the balancing workflow (operator: Opus 5)
 
+> **⚠ RE-CERTIFICATION OWED (queued, owner 2026-08-24: "note the need for
+> certifications again but hold off on running it for now").** Two brain
+> changes have landed since the last full battery and BOTH make campaign
+> enemies play better, so every campaign number now understates the
+> opponent that ships:
+>   1. line abilities stop at walls (they were cast into stone)
+>   2. `raceUrgency` — the defending side finally understands a tile
+>      objective, and freezes/roots whoever is closest to winning
+> Plus `main_dead` protect (BR1). Run all five campaigns when the owner's
+> playthrough stops surfacing engine-level findings — doing it between
+> fixes just buys another void result. Arena is unaffected by all three.
+
 > **⚠ ENGINE-FREEZE: every battery run before 2026-08-24's brain fix is VOID.**
 > The brain's line-ability scorer ignored walls (it scored units behind stone
 > and cast into it), and `main_dead` carried no protect instinct. Both are
