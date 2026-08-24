@@ -701,8 +701,11 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       //   easy      0.70 -> 89% · 0.78 -> 85% ✓
       //   medium    0.75 -> 88% · 0.85 -> 76% · 0.90 -> 68%, 7% walls ✓ · 1.00 -> 42%, 33% walls
       //   hard      0.98 -> 48%, 6% walls ✓
-      //   nightmare 1.10 — pending, provisional below
-      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 0.98, nightmare: 1.10 },  // rooms
+      //   nightmare 1.02 -> 19%, 28% walls ✓ · 1.10 -> 9%, 46% walls (too far)
+      // ⚠ The tiers sit CLOSE (0.78-1.02) because the cliff is savage: 1.00 ->
+      // 42% at medium, 1.30 -> 4%. A rooms encounter compounds — every point
+      // of enemy HP is paid three times over three floors with no rest.
+      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 0.98, nightmare: 1.02 },  // rooms
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
