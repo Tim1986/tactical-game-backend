@@ -173,7 +173,7 @@ export async function submitTurn(matchId: string, submittingPlayerId: string, ac
     }
 
     if (result.matchOver) {
-      await finalizeMatch(client, match, result.winnerId);
+      await finalizeMatch(client, match, result.winnerId, { state: result.updatedState, events: allEvents, submittingPlayerId });
     } else {
       const newDeadline = new Date();
       newDeadline.setHours(newDeadline.getHours() + 72);
@@ -233,7 +233,13 @@ export async function submitRodAction(
       const begun = beginTurn(currentState, action, submittingPlayerId, p1, p2);
       allEvents.push(...begun.events);
       if (begun.matchOver) {
-        await finalizeMatch(client, match, begun.winnerId);
+        // Whole-turn events for the absent opponent = whatever earlier /action
+        // calls accumulated on the turnContext, plus this call's.
+        await finalizeMatch(client, match, begun.winnerId, {
+          state: begun.updatedState,
+          events: [...(state.turnContext?.events ?? []), ...allEvents],
+          submittingPlayerId,
+        });
         return { events: allEvents, updatedState: begun.updatedState, matchOver: true, winnerId: begun.winnerId };
       }
       currentState = begun.updatedState;
@@ -251,7 +257,11 @@ export async function submitRodAction(
     applied.updatedState.turnContext!.events = [...(state.turnContext?.events ?? []), ...allEvents];
 
     if (applied.matchOver) {
-      await finalizeMatch(client, match, applied.winnerId);
+      await finalizeMatch(client, match, applied.winnerId, {
+        state: applied.updatedState,
+        events: [...(state.turnContext?.events ?? []), ...allEvents],
+        submittingPlayerId,
+      });
       return { events: allEvents, updatedState: applied.updatedState, matchOver: true, winnerId: applied.winnerId };
     }
 
@@ -295,7 +305,11 @@ export async function submitRodEndTurn(
     const fetchMatch = () => client.query<MatchRow>('SELECT * FROM matches WHERE id = $1', [matchId]).then(r => r.rows[0]);
 
     if (finalized.matchOver) {
-      await finalizeMatch(client, match, finalized.winnerId);
+      await finalizeMatch(client, match, finalized.winnerId, {
+        state: finalized.updatedState,
+        events: [...actionEvents, ...allEvents],
+        submittingPlayerId,
+      });
       return { events: allEvents, updatedState: finalized.updatedState, matchOver: true, winnerId: finalized.winnerId, match: await fetchMatch() };
     }
 
@@ -321,7 +335,11 @@ export async function submitRodEndTurn(
       result = { ...result, updatedState: fableResult.state, matchOver: fableResult.matchOver, winnerId: fableResult.winnerId };
 
       if (fableResult.matchOver) {
-        await finalizeMatch(client, match, fableResult.winnerId);
+        await finalizeMatch(client, match, fableResult.winnerId, {
+          state: result.updatedState,
+          events: [...actionEvents, ...allEvents, ...postFableEvents],
+          submittingPlayerId,
+        });
         return { events: [...allEvents, ...postFableEvents], updatedState: result.updatedState, matchOver: true, winnerId: result.winnerId, match: await fetchMatch() };
       }
     }
@@ -353,7 +371,45 @@ export async function forfeitMatch(matchId: string, forfeitingPlayerId: string):
   });
 }
 
-async function finalizeMatch(client: import('pg').PoolClient, match: MatchRow, winnerId: string | null): Promise<void> {
+/**
+ * Complete a match: ELO/XP, status, and — critically — the FINAL board state
+ * and the winning turn's events.
+ *
+ * ⚠ `final` exists because of a 2026-08-23 PvP bug: every match-over path used
+ * to call this and RETURN, skipping the "UPDATE matches SET match_state,
+ * last_turn_events, turn_number" that non-terminal turns run. The winner's own
+ * client showed the victory (it had the submit response in hand), but the DB
+ * row stayed frozen at the state BEFORE the winning move — so the opponent's
+ * poll saw no turn-number change and sat on a live-looking board forever,
+ * and even a reload showed the winner's units where they stood a turn ago.
+ * The final turn was also missing from turn_history, so the combat-log gap
+ * filler could not reconstruct it either. Passing `final` persists all three;
+ * ON CONFLICT DO NOTHING because two paths (whole-turn submit, ROD end-turn)
+ * already insert their history row with per-turn-correct events before this
+ * runs — overwriting those with the flattened final list would duplicate the
+ * PvE Fable turns, which carry rows of their own. Only the mid-action ROD
+ * kills (beginTurn/applyAction match over) lack a row and take this insert.
+ * Forfeits pass nothing — there is no new state, and status/winner_id alone
+ * describe what happened.
+ */
+async function finalizeMatch(
+  client: import('pg').PoolClient,
+  match: MatchRow,
+  winnerId: string | null,
+  final?: { state: MatchState; events: unknown[]; submittingPlayerId: string },
+): Promise<void> {
+  if (final) {
+    await client.query(
+      'UPDATE matches SET match_state = $1, last_turn_events = $2, turn_number = $3 WHERE id = $4',
+      [JSON.stringify(final.state), JSON.stringify(final.events), final.state.turnNumber, match.id],
+    );
+    await client.query(
+      `INSERT INTO turn_history (match_id, player_id, turn_number, actions, state_snapshot, events)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (match_id, turn_number) DO NOTHING`,
+      [match.id, final.submittingPlayerId, match.turn_number, JSON.stringify([]), JSON.stringify(final.state), JSON.stringify(final.events)],
+    );
+  }
   const loserId = winnerId === match.player_one_id ? match.player_two_id : match.player_one_id;
   let eloDeltaP1 = 0; let eloDeltaP2 = 0;
   // ELO moves only on ranked (matchmaking) matches. PvE and friendly
