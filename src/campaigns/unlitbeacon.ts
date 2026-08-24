@@ -300,7 +300,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e1: {
       level: 1,
       terrain: {
-        theme: 'forest', // TODO(art): 'snow' theme requested — see design doc §6
+        theme: 'snow',
         blocked: [
           { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 },
           { x: 2, y: 2 }, { x: 2, y: 5 },
@@ -339,7 +339,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e2: {
       level: 2,
       terrain: {
-        theme: 'forest',
+        theme: 'snow',
         blocked: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
       },
       enemies: ['shelf_pikeman', 'volley_archer'],
@@ -358,7 +358,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e3: {
       level: 2,
       terrain: {
-        theme: 'forest',
+        theme: 'snow',
         // The river: a blocked channel with two bridge gaps at y=1 and y=6.
         blocked: [
           { x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }, { x: 4, y: 7 },
@@ -407,7 +407,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e4: {
       level: 3,
       terrain: {
-        theme: 'forest',
+        theme: 'snow',
         blocked: [{ x: 2, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 6, y: 5 }],
         hazards: [
           { pos: { x: 3, y: 2 }, type: 'fire' }, { pos: { x: 4, y: 3 }, type: 'fire' },
@@ -439,7 +439,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e5: {
       level: 4,
       terrain: {
-        theme: 'cave',
+        theme: 'ice',
         blocked: [
           { x: 3, y: 1 }, { x: 2, y: 3 }, { x: 4, y: 4 }, { x: 3, y: 6 },
           { x: 5, y: 2 }, { x: 6, y: 5 },
@@ -489,7 +489,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     // pull literally undoes your progress, which no encounter has done before.
     e6: {
       level: 5,
-      terrain: { theme: 'cave' },
+      terrain: { theme: 'ice' },
       objective: {
         text: 'Get everyone across the Frozen Mere',
         // ⚠ The WHOLE far column, not a four-tile window inside it. The owner
@@ -595,7 +595,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e7: {
       level: 6,
       terrain: {
-        theme: 'cave',
+        theme: 'snow',
         blocked: [
           { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 3, y: 6 },
           { x: 5, y: 1 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 5, y: 7 },
@@ -724,7 +724,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         loss: [{ kind: 'main_dead' }],
       },
       terrain: {
-        theme: 'cave',
+        theme: 'snow',
         blocked: [{ x: 2, y: 2 }, { x: 5, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 5 }],
       },
       enemies: ['the_adjutant', 'blizzard_wisp', 'blizzard_wisp'],
@@ -751,7 +751,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         ],
       },
       terrain: {
-        theme: 'cave',
+        theme: 'snow',
         blocked: [{ x: 5, y: 1 }, { x: 5, y: 6 }],
       },
       enemies: ['marshal_vail', 'honor_guard', 'honor_guard', 'winters_voice'],
