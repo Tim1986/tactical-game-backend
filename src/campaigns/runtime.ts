@@ -470,7 +470,10 @@ export function buildEncounterState(
     return inst;
   });
   const resolveWaves = (waves: WaveSpec[] | undefined, roomTerrain: TerrainSpec | undefined, noSpec: boolean, where: string): PendingWave[] =>
-    (waves ?? []).map((w, wi) => {
+    // Difficulty-scoped waves (types.ts): filtered BEFORE any instance is
+    // built, so on the other difficulties the wave has no runtime footprint —
+    // no units, no pending trigger, nothing for the mercy rule to count.
+    (waves ?? []).filter((w) => !w.difficulties || w.difficulties.includes(difficulty)).map((w, wi) => {
       if (w.enemies.length === 0) throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} has no enemies`);
       for (const pl of w.placement) {
         if (!isInBounds(pl)) throw new Error(`Encounter ${encounterId}: ${where} wave ${wi} spawn (${pl.x},${pl.y}) is out of bounds`);

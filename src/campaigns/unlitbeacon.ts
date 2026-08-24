@@ -184,7 +184,24 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     // e11's duelist: hunts the HERO — priorityTarget:'main', never used before.
     the_adjutant: {
       baseClass: 'rogue', artKey: 'specter', name: 'The Adjutant',
-      maxHealth: 78, armorClass: 11, movementRange: 5, specialSlug: 'expose',
+      // 100, up from 78 (2026-08-24, same pass as the movement drop below). The
+      // two changes are one rebalance: the OLD fight put its difficulty in the
+      // HUNT (movement-5 phasing killer vs the hero) which walled fragile-hero
+      // builds while tanky-hero builds walked it. Difficulty now lives where
+      // the tuning table says a boss's belongs — the target's own HP pool
+      // (100-110) — so every build fights the same long duel and the hunt is
+      // flavour rather than a filter.
+      maxHealth: 100, armorClass: 11,
+      // 4, down from 5 (2026-08-24). The duel's loss is main_dead and the
+      // Adjutant is a PHASING hunter with priorityTarget: main — at movement 5
+      // no hero could open distance, so builds with a fragile hero (wizard 32
+      // HP) were deleted before the duel happened while tanky-hero builds
+      // walked it. That hero-class split is why the cell stayed bimodal even
+      // after the wisp breakpoint fix: median 88-100 until scale ~2.0, walls
+      // past cap from 1.6, at every tier. One step slower keeps the hunt (it
+      // still phases, still tracks the main) but lets a fragile hero trade
+      // distance for the turns the party needs.
+      movementRange: 4, specialSlug: 'expose',
       moveFlags: ['phasing'],
       aiHints: { priorityTarget: 'main' },
       nightmare: { hpBonus: 8, acBonus: 1 },
@@ -288,7 +305,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_gate', name: 'Held the Gate', description: 'Turn back the first column without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.09, hard: 1.28, nightmare: 1.32 },  // kill-all (tutorial: easy sits high on purpose)
+      hpScaleOverride: { easy: 0.95, medium: 1.25, hard: 1.28, nightmare: 1.32 },  // kill-all (tutorial: easy sits high on purpose)
     },
 
     // e2 — Barricade Night (siege). Hold the square while the column keeps
@@ -307,7 +324,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         { enemies: ['vanguard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 } },
         { enemies: ['breaker'], placement: [{ x: 6, y: 0 }], trigger: { on: 'round', round: 5 } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.90, hard: 1.00, nightmare: 0.98 },  // kill-all + waves, L2 party is body-count fragile
+      hpScaleOverride: { easy: 0.80, medium: 1.00, hard: 1.10, nightmare: 1.20 },  // kill-all + waves, L2 party is body-count fragile
     },
 
     // e3 — The Two Bridges (hold). Cover both bridgeheads at once while
@@ -333,13 +350,30 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // marks are unguarded is a stroll, and e3 measured dead FLAT (75/78/73/70)
       // across the whole scale range while they sat at (5,1)/(5,6). Now the
       // marks must be taken off them, so enemy HP finally matters here.
+      //
+      // ⚠ THE ARCHER AND BREAKER SIT AT x=7, NOT x=6 (2026-08-24). With them at
+      // (6,3)/(6,4) this encounter was not a difficulty setting, it was a COMP
+      // FILTER: nightmare measured melee 2% · ranged 0% · balanced 100%, a
+      // 100-point archetype spread, and spreadSweep found NO start distance
+      // that balanced the three (moving everyone together just traded which
+      // archetype was excluded). The cause is specific: the win needs two units
+      // STANDING on contested forward tiles simultaneously, and a ranged party
+      // has nothing durable enough to survive there while those two killers are
+      // in range. Pushing only the killers back — the pikemen stay on the marks
+      // — gives a fragile party the turns it needs to clear them first.
+      // Spread after: 45 pts on medium, 2 on nightmare (from 98/100). A party
+      // is LOCKED for the campaign, so an archetype that cannot play an
+      // encounter is a wall, not identity.
+      // ⚠ Moving the CROSSINGS was tried first and made it worse (ranged 40% ->
+      // 2% on medium): marks nearer the centre sit nearer the backline. The
+      // marks belong at the board edges; it is the killers that had to move.
       enemies: ['shelf_pikeman', 'shelf_pikeman', 'volley_archer', 'breaker'],
-      enemyPlacement: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 6, y: 3 }, { x: 6, y: 4 }],
+      enemyPlacement: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
         { slug: 'every_lantern_lit', name: 'Every Lantern Lit', description: 'Hold both bridgeheads with the whole party still standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.60, medium: 0.72, hard: 0.90, nightmare: 1.20 },  // hold — re-walked after guards moved ONTO the marks
+      hpScaleOverride: { easy: 0.50, medium: 0.65, hard: 0.75, nightmare: 0.85 },  // hold — re-walked after guards moved ONTO the marks
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the
@@ -359,7 +393,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand'],
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 0.82, medium: 0.96, hard: 1.05, nightmare: 1.12 },  // hazard carve
+      hpScaleOverride: { easy: 1.00, medium: 1.15, hard: 1.25, nightmare: 1.30 },  // hazard carve
     },
 
     // e5 — The Icefall (carve). Fighting UP a frozen cascade: ice pillars,
@@ -378,7 +412,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['volley_archer', 'volley_archer', 'blizzard_wisp', 'frozen_watchman'],
       enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 6, y: 3 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 5 }],
-      hpScaleOverride: { easy: 0.72, medium: 0.85, hard: 1.00, nightmare: 1.02 },  // carve
+      hpScaleOverride: { easy: 0.85, medium: 0.92, hard: 1.00, nightmare: 1.02 },  // carve
     },
 
     // e6 — The Frozen Mere (novel). The drowned company rises through the
@@ -420,12 +454,61 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 4 }],
       waves: [
         { enemies: ['meredrowned'], placement: [{ x: 3, y: 3 }], trigger: { on: 'round', round: 4 } },
+        // HARD/NIGHTMARE ONLY — the first use of difficulty-scoped waves
+        // (types.ts). This escape is hpScale-inert (you win by arriving), so
+        // hard and nightmare sat TOO EASY with no lever that would not also
+        // break the passing easy/medium. A second drowned rising early is
+        // pressure in the currency this fight trades in: bodies cost rounds,
+        // and the round-6 clock makes rounds the whole game.
+        // A BLIZZARD WISP, not more drowned (third iteration, measured):
+        //   +1 drowned behind the runners  -> median 88 -> 84 (~nothing)
+        //   +2 drowned AHEAD, on the exits -> median 88 (nothing at all)
+        // The histogram says why: wins are honest "whole party escaped" races,
+        // and a killable body is a speed bump to a party that out-damages it.
+        // The clock is the game here, and the only thing that costs a RUNNER a
+        // round is a LOST TURN — which is what the wisp's freeze is. One cast
+        // over the mere freezes half the crossing against a 6-round deadline.
+        // Dosed per tier (what the scoped dial is FOR): the round-2 single
+        // wisp measured hard 88 -> 76 and nightmare 92 -> 68 — right currency,
+        // shy dose. Hard's wisp now rises at ROUND 1 (one more cast inside the
+        // clock); nightmare gets a second wisp on the south lane.
+        // FLANK lanes (6,1)/(6,6), not the centre (6,3)/(6,4): a wisp standing
+        // in the centre corridor sat exactly where the brain plans its charges,
+        // producing "Charge destination is not reachable" validation errors
+        // every game (a brain/engine path disagreement the harness papers over
+        // by SKIPPING the player's turn — which both fails smoke and quietly
+        // inflates the measured difficulty with a tax that is not the fight).
+        // Blizzard is a placed AoE; the freeze reaches the crossing from the
+        // flanks just as well.
+        // ON THE EXIT TILES (third geometry, measured honestly this time).
+        // Flank spawns barely bit — the freeze from (6,1)/(6,6) missed the
+        // crossing (hard median 76, nm 84 with NO validation tax). But the win
+        // needs all four runners ON the four exit tiles, so a wisp STANDING on
+        // an exit is not a speed bump: it must die before the party can finish,
+        // which is the one way a body genuinely costs rounds in an escape. Off
+        // the charge corridor, so the brain's pathing stays clean.
+        // Dose, measured: ~20 pts for the FIRST exit wisp on a tier, ~4 for
+        // the second (diminishing — a party already at the shore kills them in
+        // passing). hard runs two, nightmare three; every one occupies an exit
+        // tile the win condition needs, so each is a mandatory kill inside the
+        // clock. Final state: nightmare 1.70 CERTIFIES (median 44/45); hard is
+        // a documented PARK at median ~76 vs 65 with ZERO walls — four
+        // geometries (corridor, flank, 1-exit, 2-exit) all measured 76-80
+        // honest, so this is the encounter's floor for that tier, not a
+        // missing rung. The safe-direction miss: a breather, nobody bricked.
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       goals: [
-        { slug: 'dry_boots', name: 'Dry Boots', description: 'Cross the Frozen Mere by round 6.', check: { kind: 'win_by_round', round: 6 } },
+        // ⚠ round 4, not 6. The loss clock IS round 6, so "cross by round 6" was
+        // granted automatically on every win — a goal you cannot fail is not a
+        // goal. 4 asks for a genuinely direct crossing. (Balance untouched: a
+        // goal never gates acceptance.)
+        { slug: 'dry_boots', name: 'Dry Boots', description: 'Cross the Frozen Mere by round 4.', check: { kind: 'win_by_round', round: 4 } },
       ],
-      hpScaleOverride: { easy: 0.70, medium: 1.00, hard: 1.20, nightmare: 1.55 },  // escape — re-walked against the round-6 clock
+      hpScaleOverride: { easy: 1.20, medium: 1.30, hard: 1.20, nightmare: 1.70 },  // escape — re-walked against the round-6 clock
     },
 
     // e7 — The Storm Door (race). ONE unit must reach the Vigil's door before
@@ -450,7 +533,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['winters_voice', 'winters_voice', 'blizzard_wisp', 'blizzard_wisp'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 2 }, { x: 4, y: 5 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: { easy: 1.10, medium: 1.20, hard: 1.45, nightmare: 1.70 },  // escape with a clock
+      hpScaleOverride: { easy: 1.22, medium: 1.45, hard: 1.80, nightmare: 1.70 },  // escape with a clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor
@@ -492,7 +575,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: { easy: 1.15, medium: 1.30, hard: 1.45, nightmare: 1.70 },  // rooms
+      hpScaleOverride: { easy: 1.00, medium: 1.30, hard: 1.45, nightmare: 1.70 },  // rooms
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -521,7 +604,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         { enemies: ['vanguard', 'volley_archer', 'shelf_pikeman'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 6 }], trigger: { on: 'round', round: 5 } },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.00, medium: 1.16, hard: 1.85, nightmare: 2.40 },  // survive — re-walked after +1 body in the round-5 wave
+      hpScaleOverride: { easy: 1.20, medium: 1.70, hard: 1.85, nightmare: 2.40 },  // survive — re-walked after +1 body in the round-5 wave
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -574,7 +657,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'answered_alone', name: 'Answered Alone', description: 'Let the hero personally strike down the Adjutant.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 1.20, medium: 1.58, hard: 2.00, nightmare: 2.35 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+      hpScaleOverride: { easy: 1.30, medium: 1.50, hard: 1.62, nightmare: 1.85 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
@@ -601,7 +684,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'whole_line_home', name: 'The Whole Line Home', description: 'Face the Marshal and lose no one.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.45, medium: 1.65, hard: 1.78, nightmare: 2.30 },  // boss, dual-win
+      hpScaleOverride: { easy: 1.58, medium: 1.80, hard: 1.95, nightmare: 2.30 },  // boss, dual-win
     },
   },
 

@@ -78,6 +78,20 @@ export interface WaveSpec {
   /** Non-default: the spawn does NOT act the round it appears (a designed
    *  player ambush). Normal waves weave into initiative and act same-round. */
   surprise?: boolean;
+  /** Restrict this wave to the listed difficulties (omit = every difficulty).
+   *
+   *  THE SECOND PER-TIER DIAL (owner-approved 2026-08-24). hpScaleOverride is
+   *  per-difficulty but inert on objective encounters — an escape/hold is won
+   *  by ARRIVING, so enemy HP buys nothing (Unlit Beacon e6 measured 100% at
+   *  every scale 0.90-2.20; Sealed Deep e8 the same until its route changed).
+   *  Both BAL1 campaigns hit cells where the only honest verdict was "no lever
+   *  exists": every structural knob (clock, wave timing, enemy count) was
+   *  GLOBAL, so raising hard/nightmare meant breaking easy/medium with no
+   *  compensating dial. A difficulty-scoped wave is pressure that costs the
+   *  thing objective fights actually trade in — rounds and bodies — applied
+   *  only to the tiers that need it. Resolved at encounter BUILD time: a
+   *  filtered-out wave never exists in the runtime state at all. */
+  difficulties?: CampaignDifficulty[];
 }
 
 /** [A4] One room of a multi-room encounter. The board re-carves per room;
