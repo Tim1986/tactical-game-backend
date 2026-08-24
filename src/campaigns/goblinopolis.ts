@@ -1,55 +1,119 @@
 /**
- * goblinopolis.ts — "The Bell of Goblinopolis".
+ * goblinopolis.ts — "The Bell of Goblinopolis" (PAID).
  *
- * A stolen town bell, a trail of blue ribbons, and a goblin city that insists the
- * theft was perfectly legal. Reworked from a ChatGPT "Act One" draft into a complete
- * 5-encounter arc (boss finale) under current standards: all enemies render as
- * goblins (ranger/rogue/sorcerer chassis) or orcs (barbarian/cleric/fighter chassis).
- * Goblinopolis is a goblin city with orc muscle for its guards and brutes — the art
- * constraint and the story reinforce each other. Free teaser for now.
+ * ═══ GROUND-UP REDESIGN 2026-08-24 (TRILOGY_REDESIGN.md §4) ═══════════════
+ * Was a 5-encounter teaser built on the trilogy's shared skeleton (festival →
+ * theft → pincer ambush → gate brute → boss-plus-healer). Now a full L1→10
+ * album: 12 encounters, forks at L6 and L9.
  *
- * The twist: neither town stole from the other. An orc warboss swapped both bells to
- * start a war he could rule the ruins of.
+ * THE DRIVER CHANGED, and that is the point. Nobody steals anything. Amrun's
+ * flood-bell simply CRACKED, the only foundry that can cast a replacement is
+ * in Goblinopolis, and the rain season is three weeks out. The campaign is a
+ * DELIVERY — one of the two structures CAMPAIGN_BEATS §6 lists as never used
+ * — and the whole map is the obstacle. The trilogy's stolen-object driver now
+ * belongs to Lantern alone (§2 bans 1 and 2, repaid by giving each beat to
+ * exactly one campaign).
+ *
+ * VILLAIN: Undersecretary Snagg, a middle-clerk whose entire authority exists
+ * only while the delivery is stalled. Not evil — LOAD-BEARING. If the bell
+ * moves, he goes back to filing. Menacing the way a records office is
+ * menacing, which is the register this campaign has always been best at and
+ * never fully committed to.
+ *
+ * TWIST: "the permission always existed." The last permit needs the Warboss's
+ * seal — and Gurm signed it years ago, a standing order that bells always pass
+ * ("wars are loud enough"). Snagg has been sitting on the signed form the
+ * entire campaign. This retires Gurm as a boss (the old twist, "a schemer
+ * played both sides", is spent 2/3 across the trilogy and is retired
+ * everywhere) and keeps him as its best cameo.
+ *
+ * ENDING: not a boss. Snagg falls MID-campaign at e9, and the finale is the
+ * race the whole story promised — rain falling, lower town flooding, get the
+ * bell up the tower and ring it. CAMPAIGN_BEATS §7.6 asked for a finale that
+ * is not a boss fight; this is one.
+ *
+ * ⚠ ART: this campaign has NO tile theme yet. Its whole setting is urban and
+ * the shipped set is crypt/cave/forest/snow/ice — town/interior/canal tiles
+ * are requested in TILE_ART_SPEC.md v2. Every encounter below is authored so
+ * that adding `theme: 'town' | 'interior' | 'canal'` later is a one-line
+ * change per encounter; the fiction already names which one it wants.
+ *
+ * BALANCE: hpScaleOverride values are PROVISIONAL except where a reused
+ * encounter's D2 numbers are noted. The battery is the balance pass.
  */
 import { CampaignDefinition } from './types.js';
 
 export const goblinopolisCampaign: CampaignDefinition = {
   slug: 'goblinopolis',
   title: 'The Bell of Goblinopolis',
-  blurb: 'A stolen town bell, a trail of blue ribbons, and a goblin city that insists the theft was perfectly legal.',
+  blurb: 'Amrun\'s flood-bell has cracked, the rain is three weeks out, and the only foundry that can cast a new one is in a city where moving a bell requires a form nobody has invented yet.',
   enemyFactionName: 'Bluecaps',
-  free: true,
+  free: false,
   startNode: 'intro',
   // TODO(skins): no skin system yet — unlock recorded in campaign meta locally.
-  // '40101' = Set 1 Ranger-Goblin. This is literally the Bluecap Pathfinder
-  // enemy's own art (see `bluecap_pathfinder` below) — the closest possible
-  // fit of the four reassignments.
   rewardSkin: { classSlug: 'ranger', skinId: '40101', name: 'Bluecap Pathfinder' },
 
   achievements: [
+    // Completion slugs UNCHANGED so existing meta stays valid.
     { slug: 'complete_easy',      name: 'Bell-Road Beginner', description: 'Complete The Bell of Goblinopolis on Easy.' },
-    { slug: 'complete_medium',    name: 'Buckbridge Deputy',   description: 'Complete The Bell of Goblinopolis on Medium.' },
-    { slug: 'complete_hard',      name: 'Goblinopolis Envoy',  description: 'Complete The Bell of Goblinopolis on Hard.' },
+    { slug: 'complete_medium',    name: 'Buckbridge Deputy',  description: 'Complete The Bell of Goblinopolis on Medium.' },
+    { slug: 'complete_hard',      name: 'Goblinopolis Envoy', description: 'Complete The Bell of Goblinopolis on Hard.' },
     { slug: 'complete_nightmare', name: 'Ringer of the Impossible Bell', description: 'Complete The Bell of Goblinopolis on Nightmare — unlocks the Bluecap Pathfinder skin.' },
-    { slug: 'ribbon_reader',  name: 'Follow the Blue',    description: 'Track the goblin band by its carefully tied blue ribbons.' },
-    { slug: 'polite_pursuit', name: 'Properly Announced', description: 'Begin a goblin pursuit with excellent manners and impressive volume.' },
-    { slug: 'cart_before_horse', name: 'Cart Before Horse', description: 'Stop to rescue Dave Tanner\'s runaway supply cart.' },
-    { slug: 'signal_spotter', name: 'Eyes on the Hill',   description: 'Keep sight of the goblins\' signal runner through the river fog.' },
+    // L6 fork
+    { slug: 'the_sparkyard',   name: 'The Sparkyard Route', description: 'Take the bell through the foundry district.' },
+    { slug: 'the_ledger_quarter', name: 'The Ledger Quarter', description: 'Take the bell through the old clerks\' quarter.' },
+    // L9 fork
+    { slug: 'published_the_lot', name: 'Published the Lot',  description: 'Nail every stalled permit to the Records Hall door.' },
+    { slug: 'returned_by_hand',  name: 'Returned by Hand',   description: 'Carry every stalled permit back to the goblin who filed it.' },
+    // Battle goals — slugs match the goal slugs below.
+    { slug: 'nothing_pilfered', name: 'Nothing Pilfered',  description: 'Hold the foundry yard without losing anyone.' },
+    { slug: 'not_a_scratch',    name: 'Not a Scratch',     description: 'Bring the bell-wagon through its first mile untouched.' },
+    { slug: 'exact_change',     name: 'Exact Change',      description: 'Clear the tollgate without losing anyone.' },
+    { slug: 'in_triplicate',    name: 'In Triplicate',     description: 'Clear the Office of Forms with the whole party standing.' },
+    { slug: 'dry_pages',        name: 'Dry Pages',         description: 'Cross the Ink Works without losing anyone to the fire.' },
+    { slug: 'cleared_customs',  name: 'Cleared Customs',   description: 'Clear the customs barge by round 6.' },
+    { slug: 'true_weight',      name: 'True Weight',       description: 'Hold both scale platforms with nobody down.' },
+    { slug: 'held_the_yard',    name: 'Held the Yard',     description: 'Survive the impound yard with the whole party standing.' },
+    { slug: 'audited_him',      name: 'Audited Him',       description: 'Let the hero personally close Snagg\'s file.' },
+    { slug: 'above_the_water',  name: 'Above the Water',   description: 'Survive the first rain without a single loss.' },
+    { slug: 'up_the_stair',     name: 'Up the Stair',      description: 'Carry the bell up the Stair of Stamps with nobody lost.' },
+    { slug: 'rung_on_time',     name: 'Rung On Time',      description: 'Ring the flood-bell by round 7.' },
   ],
 
+  boons: {
+    // L6 pairing: armor vs reach. Deliberately a different axis from
+    // Lantern's (HP vs movement) and both paid campaigns' (shield/HP, move/AC).
+    sparkyard_plate: {
+      slug: 'sparkyard_plate', name: 'Sparkyard Plate',
+      description: 'Foundry offcuts, hammered to fit — +2 armor class for the rest of the run.',
+      effects: { partyArmorClass: 2 },
+    },
+    ledger_boots: {
+      slug: 'ledger_boots', name: 'Ledger-Runner Boots',
+      description: 'The quarter\'s couriers know every shortcut — +1 movement range for the rest of the run.',
+      effects: { partyMovement: 1 },
+    },
+    // L9 pairing: the city's goodwill, two ways.
+    the_published_lot: {
+      slug: 'the_published_lot', name: 'Published the Lot',
+      description: 'A city that suddenly owes you a favor — every unit starts each remaining encounter shielded.',
+      effects: { startShielded: 'all' },
+    },
+    returned_by_hand: {
+      slug: 'returned_by_hand', name: 'Returned by Hand',
+      description: 'Fed at every door you knocked on — +6 max HP for the rest of the run.',
+      effects: { partyMaxHp: 6 },
+    },
+  },
+
   enemies: {
-    // ── Goblins (ranger/rogue/sorcerer chassis → goblin art) ──
     bluecap_scout: {
       baseClass: 'ranger', name: 'Bluecap Scout',
       maxHealth: 36, armorClass: 10,
       nightmare: { acBonus: 1 },
     },
+    // The city's couriers. Fast, and always carrying something away from you.
     bellrunner: {
-      // A goblin courier who does nothing but sprint with stolen goods. Fast,
-      // and fragile RELATIVE to the orcs (47-62) — but not one-shot fragile:
-      // at 35 HP he died to whoever reached him first, which made e3's clock
-      // the only difficulty lever, and a clock is one number shared by all four
-      // difficulties. At 52 he takes a focused turn or two, so hpScale bites.
       baseClass: 'rogue', name: 'Bellrunner',
       maxHealth: 52, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
@@ -64,8 +128,6 @@ export const goblinopolisCampaign: CampaignDefinition = {
       maxHealth: 40, armorClass: 11, specialSlug: 'pinning',
       nightmare: { acBonus: 1 },
     },
-    // ── Orcs (barbarian/cleric/fighter chassis → orc art) ──
-    // Goblinopolis hires orcs as its heavy muscle; blue sashes mark the city's service.
     kettlehelm_orc: {
       baseClass: 'fighter', name: 'Kettlehelm Orc',
       maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
@@ -77,265 +139,553 @@ export const goblinopolisCampaign: CampaignDefinition = {
       nightmare: { hpBonus: 5 },
     },
     patchcoat_mender: {
-      // Orc field-medic in a coat of stitched-together sashes; keeps the brutes standing.
       baseClass: 'cleric', name: 'Patchcoat Mender',
       maxHealth: 46, armorClass: 11, specialSlug: 'heal',
       nightmare: { hpBonus: 4 },
     },
     ironbell_warden: {
-      // The gate-brute of Goblinopolis — an immovable orc who guards the bell-arch.
       baseClass: 'fighter', name: 'Ironbell Warden',
       maxHealth: 62, armorClass: 12,
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
     },
-    warboss_gurm: {
-      // BOSS. A huge orc who swapped both towns' bells to start a war he could rule.
-      // D2: as a KILL-TARGET the other three become ignorable, so he needs to
-      // be a fight on his own (same lesson as Lantern's Grubnash, who was burst
-      // down in 17 turns at 80 HP). The round-9 deadline is his differentiator —
-      // no undying here, the clock is what stops you taking your time.
-      baseClass: 'barbarian', name: 'Warboss Gurm',
-      maxHealth: 105, armorClass: 10, specialSlug: 'shockwave',
+    // ── NEW ──────────────────────────────────────────────────────────────
+    // The villain. Warlock chassis: Grasp is a clerk's true weapon — it drags
+    // you back into the queue you were trying to leave.
+    undersecretary_snagg: {
+      baseClass: 'warlock', name: 'Undersecretary Snagg',
+      maxHealth: 92, armorClass: 11, specialSlug: 'grasp',
       passiveFlags: ['immovable'],
-      nightmare: { hpBonus: 8 },
+      nightmare: { hpBonus: 8, passiveFlags: ['warded'] },
+    },
+    // Snagg's department. Two flavours so the Records Hall is not a mirror
+    // match: one stamps, one files.
+    clerk_of_seals: {
+      baseClass: 'cleric', name: 'Clerk of Seals',
+      maxHealth: 44, armorClass: 10, specialSlug: 'ward',
+      nightmare: { hpBonus: 4 },
+    },
+    clerk_of_stamps: {
+      baseClass: 'rogue', name: 'Clerk of Stamps',
+      maxHealth: 38, armorClass: 9, specialSlug: 'expose',
+      nightmare: { acBonus: 1 },
+    },
+    // Flood-night opportunists — not the city, just people in a bad hour.
+    wet_boot_looter: {
+      baseClass: 'rogue', name: 'Wet-Boot Looter',
+      maxHealth: 34, armorClass: 8, movementRange: 4,
+      nightmare: { acBonus: 1 },
+    },
+    // Inspectors: the barge's authority, and genuinely just doing their jobs.
+    customs_inspector: {
+      baseClass: 'ranger', name: 'Customs Inspector',
+      maxHealth: 42, armorClass: 11, specialSlug: 'pinning',
+      nightmare: { acBonus: 1 },
     },
   },
 
   encounters: {
-    // ═══ D2 RETROFIT (2026-08-17) ═══════════════════════════════════════════
-    // Palette: e1 kill-all · e2 carve · e3 race · e4 rooms · e5 boss.
-    // Five distinct types, none consecutive (CAMPAIGNS.md §8). Goblinopolis is
-    // the DOORS/ROOMS + RACE showcase of the free three.
+    // ═══ PALETTE ════════════════════════════════════════════════════════════
+    // e1 kill-all · e2 escort · e3 carve · e4 rooms · e5 hazard · e6 race ·
+    // e7 hold · e8 siege · e9 boss · e10 survive · e11 escape · e12 race.
+    // Eleven distinct types across twelve encounters; `race` repeats at e6 and
+    // e12, non-consecutively, and the finale reprise is deliberate — the
+    // campaign's whole promise is "get the bell there in time", so it opens
+    // that question at the customs barge and answers it at the belfry.
     // ════════════════════════════════════════════════════════════════════════
 
-    // e1 — Bridge Ambush (kill-all). Tutorial: no terrain, no objective.
+    // e1 — The Foundry Yard (kill-all). Tutorial. Deliberately NOT a pincer:
+    // that shape belongs to Lantern alone now. Thieves come over ONE wall in
+    // two beats, so the first fight teaches "hold a line and focus fire"
+    // rather than "you are surrounded".
     e1: {
       level: 1,
-      enemies: ['bluecap_scout', 'sparkcap_slinger', 'bluecap_scout'],
-      enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
-      playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
+      enemies: ['bluecap_scout', 'bluecap_scout', 'wet_boot_looter'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }],
+      playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       noSpecials: true,
-      // ⚠ TUTORIAL EXEMPTION at medium (owner standard, 2026-08-24). A
-      // campaign's FIRST fight — level 1, no specials, party at -8 max HP —
-      // is calibrated to ~85% mean / ~90% median with no walled archetype,
-      // which reads TOO EASY against the general medium band on purpose. The
-      // owner played unlitbeacon e1 at a measured-PASS 78% mean and called it
-      // "about the level I would expect of HARD for a first encounter": win
-      // rate does not measure GRIND, and every e1 in the catalog sat in that
-      // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
-      // chosen here:
-      //   1.46 -> 74% mean/76% median · 1.32 -> 84%/88%, 1% walls · 1.22 -> 93% (too far)
+      goals: [
+        { slug: 'nothing_pilfered', name: 'Nothing Pilfered', description: 'Hold the yard without losing anyone.', check: { kind: 'no_party_deaths' } },
+      ],
+      // ⚠ TUTORIAL EXEMPTION at easy AND medium (CAMPAIGNS.md §Balancing).
+      // Retuned 2026-08-24 with the rest of the catalog's e1s: 1.46 -> 74%
+      // mean, 1.32 -> 84%/88% median, 1% walls.
       hpScaleOverride: { easy: 1.13, medium: 1.32, hard: 1.54, nightmare: 1.76 },
     },
 
-    // e2 — Blue-Ribbon Tollgate (carve). A barricade line with the toll gap on
-    // the direct lane: melee walks straight through, ranged fights for sight.
-    // Cover deliberately sits ON THE APPROACH, never screening the slinger —
-    // the lesson that cost three passes on Lantern e2.
+    // e2 — The First Mile (escort). The campaign's thesis in one fight: the
+    // BELL is the escorted unit. It cannot fight, it cannot dodge, and it
+    // moves on a fixed route — every later encounter is a variation on
+    // "protect the thing you are delivering".
+    //
+    // ⚠ The wagon is an OBJECT, authored tough from the start (96 HP,
+    // immovable, no kit) for the reason CAMPAIGN_BEATS §2 #10 records: both
+    // prior defenseless-VIP encounters had to be rescued late with a boss-tier
+    // HP pool or ranged parties get walled. Spend the beat honestly.
     e2: {
       level: 2,
       terrain: {
-        blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }],
+        blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }],
       },
-      enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'sparkcap_slinger'],
-      enemyPlacement: [{ x: 6, y: 2 }, { x: 4, y: 3 }, { x: 6, y: 5 }],
-      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.08, medium: 1.30, hard: 1.50, nightmare: 1.50 },
+      allies: {
+        wagon: {
+          name: 'The Bell-Wagon', baseClass: 'fighter',
+          maxHealth: 96, armorClass: 10, movementRange: 2,
+          abilities: [],
+          behavior: { mode: 'route', waypoints: [{ x: 4, y: 4 }, { x: 7, y: 4 }] },
+          placement: { x: 1, y: 4 },
+        },
+      },
+      objective: {
+        text: 'Get the bell-wagon down the road',
+        win: [{ kind: 'ally_at_tiles', allyKey: 'wagon', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
+        loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
+      },
+      enemies: ['bluecap_scout', 'wet_boot_looter', 'wet_boot_looter'],
+      enemyPlacement: [{ x: 6, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 6 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
+      goals: [
+        { slug: 'not_a_scratch', name: 'Not a Scratch', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.60 },
     },
 
-    // e3 — Amrun Ferry Relay (race). The Bellrunner is carrying the clapper to
-    // the ferry: drop HIM before it casts off. Three guards exist only to cost
-    // you the turns you do not have.
+    // e3 — Blue-Ribbon Tollgate (carve). REUSED from the shipped e2 and native
+    // here: a tollgate is the purest expression of this campaign. Barricade
+    // line with the toll gap on the direct lane — cover sits on the APPROACH,
+    // never screening the shooters (the rule three failed layouts taught).
     e3: {
       level: 3,
-      objective: {
-        text: 'Clear the relay before the ferry casts off (11 rounds)',
-        win: [{ kind: 'all_enemies_dead' }],
-        loss: [{ kind: 'round_reached', round: 11 }],
+      terrain: {
+        blocked: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
       },
-      // No terrain: the stall wall existed only to deny a shooting lane to the
-      // courier, which the new win condition makes moot — and it taxed melee's
-      // approach for nothing. Open ground, tight clock.
-      enemies: ['bellrunner', 'bluecap_pathfinder', 'kettlehelm_orc', 'patchcoat_mender'],
-      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 4 }],
-      playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
-      // ⚠ A kill-all ON A TIGHT CLOCK is chaotic to tune. Enemy HP converts
-      // directly into rounds-to-clear, so clock and scale multiply, and cells
-      // sitting near the "can we finish in time" threshold flip in bulk:
-      //   8 rounds: 0.73 -> 81% · 0.93 -> 56% · 1.10 -> 16% · 1.30 -> 0.2%
-      //   9 rounds: easy 70% BELOW medium 75%, and 0.98 -> 54% vs 0.99 -> 25%
-      // — a 28-point swing on 0.01 of scale, plus non-monotonic difficulty.
-      // Resolution: make the clock GENEROUS (11 rounds) so it catches only
-      // genuinely slow parties, and let hpScale carry difficulty the normal
-      // way. The deadline stays a real pressure the objective text shapes play
-      // around, without being the thing that decides most matches.
-      // Interpolated from measured points on the 11-round clock:
-      //   0.85 -> 88% · 1.10 -> 37% · 1.35 -> 8% · 1.55 -> 0.5%
-      // (~50 points per 0.25 — still steeper than an untimed encounter.)
-      // NOTE nightmare sits BELOW hard on purpose: every enemy here carries a
-      // `nightmare` block (acBonus / hpBonus / warded), and measurement showed
-      // those alone are worth ~28 points (hard 0.98 -> 54% vs nightmare
-      // 0.99 -> 25%). The scale must give that back.
-      hpScaleOverride: { easy: 0.85, medium: 0.93, hard: 1.01, nightmare: 0.97 },
+      enemies: ['kettlehelm_orc', 'bluecap_pathfinder', 'bluecap_scout', 'sparkcap_slinger'],
+      enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
+      goals: [
+        { slug: 'exact_change', name: 'Exact Change', description: 'Clear the gate without losing anyone.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 1.05, medium: 1.30, hard: 1.50, nightmare: 1.75 },
     },
 
-    // e4 — The Bell-Arch (rooms). THE flagship: the gate is room 1, the city
-    // behind it is room 2. Clear the arch, step through the door, and the board
-    // re-carves with the party entering from the gate edge — HP, cooldowns and
-    // the round counter all carry across.
+    // e4 — The Office of Forms (rooms). REUSED from the shipped e4's two-room
+    // crawl, re-fictioned from the Bell-Arch into the permit office:
+    // antechamber, then the stamp hall. HP and cooldowns carry across the
+    // door, so the antechamber is a resource decision.
     e4: {
       level: 4,
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       rooms: [
         {
-          // Room 1: the arch itself. Wall stubs make it a gate, not a field.
-          terrain: { blocked: [{ x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 6 }] },
-          enemies: ['ironbell_warden', 'sparkcap_slinger'],
-          enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
+          terrain: { blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
+          enemies: ['clerk_of_stamps', 'bluecap_scout'],
+          enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
-          doorMode: 'on_clear',
         },
         {
-          // Room 2: inside the ribbon-strung city. The party enters at the gate
-          // edge and the garrison is already formed up.
-          terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
-          // Garrison size is a COARSE lever here — dropping this from 3 to 2
-          // swung medium 53% -> 98%. Keep three and tune with hpScale; HP and
-          // cooldowns carry across the door, so this room is fought with
-          // whatever room 1 left the party.
-          enemies: ['kettlehelm_orc', 'bellrunner', 'bluecap_scout'],
-          enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 1 }],
+          terrain: { blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 4 }] },
+          enemies: ['clerk_of_seals', 'kettlehelm_orc', 'clerk_of_stamps'],
+          enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 4 }, { x: 6, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
       ],
-      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      // Two-room attrition is harsher than the raw enemy count suggests, so
-      // these run well below a single-room encounter's scales.
-      hpScaleOverride: { easy: 0.73, medium: 0.78, hard: 0.90, nightmare: 1.00 },
+      goals: [
+        { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
+      ],
+      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.55 },
     },
 
-    // e5 — Gurm's War-Camp (boss, on a clock). Kill-target on Gurm, with the
-    // story's own threat as the loss condition: he rings the last bell standing
-    // and the war starts. Retires the boss+healer gate — the mender is a
-    // problem you may solve or outrun, not a scripted prerequisite.
+    // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
+    // in lanes across the press floor. Fire is on the CROSSING, not around the
+    // enemy — same rule as e3's cover.
     e5: {
       level: 5,
-      terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
-      objective: {
-        text: 'Bring down Warboss Gurm before he rings the bell (9 rounds)',
-        win: [{ kind: 'units_dead', enemyKeys: ['warboss_gurm'] }],
-        loss: [{ kind: 'round_reached', round: 9 }],
+      terrain: {
+        blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }],
+        hazards: [
+          { pos: { x: 3, y: 3 }, type: 'fire' }, { pos: { x: 3, y: 4 }, type: 'fire' },
+          { pos: { x: 4, y: 2 }, type: 'fire' }, { pos: { x: 4, y: 5 }, type: 'fire' },
+        ],
       },
-      // Court pulled two tiles closer. At a 6-tile gap melee sat at 20-39%
-      // (walled at easy/medium) while ranged plinked Gurm at 100% — start
-      // distance is the dominant spread driver and a far start bricks melee.
-      enemies: ['warboss_gurm', 'patchcoat_mender', 'kettlehelm_orc', 'bluecap_pathfinder'],
-      enemyPlacement: [{ x: 4, y: 3 }, { x: 5, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 1 }],
+      enemies: ['sparkcap_slinger', 'sparkcap_slinger', 'mudboot_bruiser', 'bluecap_scout'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 6 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
+      goals: [
+        { slug: 'dry_pages', name: 'Dry Pages', description: 'Lose nobody to the fire.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.15, nightmare: 1.30 },
+    },
+
+    // e6 — The Customs Barge (race). REUSED from the shipped e3's ferry relay,
+    // re-fictioned as a customs inspection. ⚠ A real race, not a walk: the
+    // deadline is tight against the distance (the mistake unlitbeacon e7 made
+    // — a 9-round clock on a 3-turn walk — is not repeated here).
+    e6: {
+      level: 5,
+      terrain: {
+        blocked: [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 6 }, { x: 3, y: 7 }],
+      },
+      objective: {
+        text: 'Clear the barge before it casts off (7 rounds)',
+        win: [{ kind: 'all_enemies_dead' }],
+        loss: [{ kind: 'round_reached', round: 7 }],
+      },
+      enemies: ['customs_inspector', 'customs_inspector', 'bellrunner', 'kettlehelm_orc'],
+      enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 3 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
+      goals: [
+        { slug: 'cleared_customs', name: 'Cleared Customs', description: 'Clear the barge by round 6.', check: { kind: 'win_by_round', round: 6 } },
+      ],
+      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.10, nightmare: 1.25 },
+    },
+
+    // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
+
+    // e7 — The Weighbridge (hold). Both scale platforms must be occupied at
+    // once while the bell is weighed — step off either and the reading voids.
+    // `simultaneous` is the whole puzzle, and shove effects are the threat.
+    e7: {
+      level: 6,
+      terrain: {
+        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
+      },
+      objective: {
+        text: 'Hold both weigh-plates until the reading takes (6 rounds)',
+        win: [{ kind: 'round_reached', round: 6 }],
+      },
+      enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
+      waves: [
+        {
+          enemies: ['bellrunner', 'bluecap_scout'],
+          placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }],
+          trigger: { on: 'round', round: 3 },
+        },
+        {
+          enemies: ['mudboot_bruiser'],
+          placement: [{ x: 7, y: 4 }],
+          trigger: { on: 'round', round: 4 },
+          difficulties: ['hard', 'nightmare'],
+        },
+      ],
+      playerPlacement: [{ x: 4, y: 3 }, { x: 4, y: 4 }, { x: 3, y: 3 }, { x: 3, y: 4 }],
+      goals: [
+        { slug: 'true_weight', name: 'True Weight', description: 'Hold the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
+      ],
+      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.00, nightmare: 1.10 },
+    },
+
+    // e8 — The Impound Yard (siege). Snagg impounds the bell "pending review";
+    // the party defends the depot through the night while the city's muscle
+    // arrives at both gates.
+    e8: {
+      level: 7,
+      terrain: {
+        blocked: [
+          { x: 2, y: 1 }, { x: 2, y: 6 }, { x: 5, y: 1 }, { x: 5, y: 6 },
+          { x: 3, y: 3 }, { x: 4, y: 4 },
+        ],
+      },
+      objective: {
+        text: 'Hold the impound yard until dawn (7 rounds)',
+        win: [{ kind: 'round_reached', round: 7 }],
+      },
+      enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 5 }],
+      waves: [
+        {
+          enemies: ['mudboot_bruiser', 'bluecap_scout'],
+          placement: [{ x: 0, y: 3 }, { x: 0, y: 4 }],
+          trigger: { on: 'round', round: 3 },
+        },
+        {
+          enemies: ['bellrunner', 'sparkcap_slinger'],
+          placement: [{ x: 7, y: 2 }, { x: 0, y: 5 }],
+          trigger: { on: 'round', round: 5 },
+        },
+        {
+          enemies: ['kettlehelm_orc', 'patchcoat_mender'],
+          placement: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          trigger: { on: 'round', round: 4 },
+          difficulties: ['hard', 'nightmare'],
+        },
+      ],
+      playerPlacement: [{ x: 3, y: 4 }, { x: 4, y: 3 }, { x: 2, y: 3 }, { x: 5, y: 4 }],
+      goals: [
+        { slug: 'held_the_yard', name: 'Held the Yard', description: 'Survive with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
+      ],
+      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 0.95, nightmare: 1.05 },
+    },
+
+    // e9 — The Audit (boss). MID-CAMPAIGN, deliberately: Snagg is the
+    // obstacle, not the climax, and killing the obstacle is not the same as
+    // finishing the delivery. Kill-target so the clerks are a problem you may
+    // solve or outrun — never a scripted "kill the healer first"
+    // (CAMPAIGN_BEATS §2 ban #3).
+    e9: {
+      level: 8,
+      terrain: {
+        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 5, y: 4 }, { x: 2, y: 4 }],
+      },
+      objective: {
+        text: 'Close Undersecretary Snagg\'s file',
+        win: [{ kind: 'units_dead', enemyKeys: ['undersecretary_snagg'] }],
+      },
+      enemies: ['undersecretary_snagg', 'clerk_of_seals', 'clerk_of_stamps', 'ironbell_warden'],
+      enemyPlacement: [{ x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 4 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.17, nightmare: 1.18 },
+      goals: [
+        { slug: 'audited_him', name: 'Audited Him', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
+      ],
+      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.10, nightmare: 1.25 },
+    },
+
+    // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
+
+    // e10 — The First Rain (survive). The rain arrives early. Lower town
+    // floods, and the looters are not the city's muscle — just people having
+    // a very bad hour. Survive the panic.
+    e10: {
+      level: 9,
+      terrain: {
+        blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 3, y: 0 }, { x: 4, y: 7 }],
+      },
+      objective: {
+        text: 'Keep the bell above the water (7 rounds)',
+        win: [{ kind: 'round_reached', round: 7 }],
+      },
+      enemies: ['wet_boot_looter', 'wet_boot_looter', 'bellrunner', 'mudboot_bruiser'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 2 }, { x: 6, y: 5 }, { x: 1, y: 5 }],
+      waves: [
+        {
+          enemies: ['wet_boot_looter', 'wet_boot_looter'],
+          placement: [{ x: 0, y: 4 }, { x: 7, y: 3 }],
+          trigger: { on: 'round', round: 3 },
+        },
+        {
+          enemies: ['bellrunner', 'wet_boot_looter'],
+          placement: [{ x: 7, y: 5 }, { x: 0, y: 2 }],
+          trigger: { on: 'round', round: 5 },
+          difficulties: ['hard', 'nightmare'],
+        },
+      ],
+      playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
+      goals: [
+        { slug: 'above_the_water', name: 'Above the Water', description: 'Nobody lost to the flood.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 0.95, nightmare: 1.05 },
+    },
+
+    // e11 — The Stair of Stamps (escape). Up the tower's switchback with the
+    // bell, the yard filling behind you. The win is ARRIVING, not clearing.
+    e11: {
+      level: 10,
+      terrain: {
+        blocked: [
+          { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 },
+          { x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 },
+          { x: 4, y: 3 },
+        ],
+      },
+      objective: {
+        text: 'Carry the bell to the belfry stair — get everyone up',
+        win: [{
+          kind: 'units_at_tiles', scope: 'all',
+          tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
+        }],
+      },
+      enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder', 'clerk_of_stamps'],
+      enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
+      waves: [
+        {
+          enemies: ['bellrunner', 'wet_boot_looter', 'mudboot_bruiser'],
+          placement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 4 }],
+          trigger: { on: 'round', round: 2 },
+        },
+      ],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
+      goals: [
+        { slug: 'up_the_stair', name: 'Up the Stair', description: 'Get everyone up with nobody lost.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 0.85, medium: 1.05, hard: 1.30, nightmare: 1.55 },
+    },
+
+    // e12 — Ring It (race). THE FINALE, and not a boss: the crest is coming up
+    // the lower streets and the bell has to sound before it arrives. The hero
+    // must reach the bell-rope tile. Everything else on the board is trying to
+    // make that take one turn longer.
+    e12: {
+      level: 10,
+      terrain: {
+        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }, { x: 6, y: 3 }],
+      },
+      objective: {
+        text: 'Ring the flood-bell before the crest arrives (8 rounds)',
+        win: [{ kind: 'units_at_tiles', scope: 'main', tiles: [{ x: 7, y: 4 }] }],
+        loss: [{ kind: 'round_reached', round: 8 }],
+      },
+      enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder', 'sparkcap_slinger'],
+      enemyPlacement: [{ x: 6, y: 4 }, { x: 5, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 2 }],
+      waves: [
+        {
+          enemies: ['bellrunner', 'clerk_of_stamps'],
+          placement: [{ x: 4, y: 3 }, { x: 4, y: 5 }],
+          trigger: { on: 'round', round: 3 },
+        },
+        {
+          enemies: ['mudboot_bruiser', 'kettlehelm_orc'],
+          placement: [{ x: 7, y: 3 }, { x: 7, y: 5 }],
+          trigger: { on: 'round', round: 5 },
+          difficulties: ['hard', 'nightmare'],
+        },
+      ],
+      playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+      goals: [
+        { slug: 'rung_on_time', name: 'Rung On Time', description: 'Ring it by round 7.', check: { kind: 'win_by_round', round: 7 } },
+      ],
+      hpScaleOverride: { easy: 0.85, medium: 1.05, hard: 1.25, nightmare: 1.45 },
     },
   },
 
   nodes: {
     intro: {
       kind: 'story',
-      text: 'On the morning of Buckbridge\'s First Pancake Festival, {mainName} is woken by three sounds: a rooster, a crash, and Mayor Thaddeus Mumblebranch shouting, "Remain calm! I have misplaced the emergency!"\n\nThe mayor stands beneath the empty arch where the great Bridge Bell hung yesterday. A single blue ribbon flutters from the cut rope. Beyond the bridge, small figures hurry east beneath a wobbling brass shape.',
-      next: 'bell_gone',
+      text: 'The flood-bell of Amrun has hung in its tower for two hundred years, and for two hundred years it has rung twice: once a season for practice, and eleven times for real. Every one of those eleven, the lower town got out in time.\n\nLast Tuesday it cracked. Not dramatically — a hairline, and a sound like a dropped plate.\n\nThe rain season is three weeks out. The only foundry that can cast a bell that size is in Goblinopolis, four days downriver, and Goblinopolis has already agreed to sell them one at a fair price.\n\n"So it\'s simple," says the Amrun reeve, handing {mainName} a purse and a receipt. "Go and fetch it."\n\nIt is not simple.',
+      next: 'foundry_pre',
     },
-    bell_gone: {
-      kind: 'story',
-      text: 'Dave Tanner points down the road with a wooden spoon. "Blue-sashed goblins," he tells {mainName}. "Very organized. One of them handed me a receipt."\n\nThe receipt reads: EMERGENCY BELL REQUISITION, FORM 17-B. At the bottom, in purple ink: Property required by Goblinopolis until the current alarming emergency is less alarming.',
-      next: 'bridge_ambush_node',
-    },
-    bridge_ambush_node: {
+    foundry_pre: {
       kind: 'encounter', encounter: 'e1',
-      preText: 'Two goblin stragglers spring from opposite hedges. "No pursuit without a pursuit permit!" squeaks one. {mainName} has just enough time to wonder whether that is a real law before an arrow whizzes past and a crackle of sorcerer-fire answers from the other side.',
+      preText: 'The bell is beautiful. Two tons of new bronze, still warm, sitting in the foundry yard under a tarp — and the foundry yard, at dusk, turns out to be a popular place for people who like bronze.\n\nThey come over the east wall in ones and twos, hopeful rather than organised. {mainName} puts the company between them and the bell.',
       next: 'lv2',
     },
-    lv2: { kind: 'levelup', level: 2, next: 'first_clue' },
-    first_clue: {
+    lv2: { kind: 'levelup', level: 2, next: 'permit_1' },
+    permit_1: {
       kind: 'story',
-      text: 'The goblins scramble off, leaving a map covered in arrows, tea stains, and notes like GOOD HIDING ROCK and BAD HIDING ROCK — CONTAINS BEES.\n\nA line of blue ribbons marks the east road. {mainName} also finds a message tube stamped with the seal of Goblinopolis. Whatever this theft is, it was planned.',
-      next: 'fork_one',
+      text: 'In the morning a goblin in a very clean coat is standing at the yard gate with a clipboard.\n\n"Bell?" he says. "Moving a bell requires Form 12-C. Movement of Cast Goods Exceeding One Ton Within City Limits."\n\n"We bought it. Here\'s the receipt."\n\n"The receipt is excellent. Twelve-C is about MOVEMENT." He produces one, stamps it, hands it over, and looks quietly pleased. "Undersecretary Snagg. You\'ll be seeing me."\n\nThe form is, as far as anyone can tell, entirely genuine.',
+      next: 'first_mile_pre',
     },
-    fork_one: {
-      kind: 'choice',
-      text: 'The ribbons lead toward an abandoned tollhouse. How should {mainName} approach?',
-      choices: [
-        { label: 'Follow the ribbons quietly and study the trail.', setFlags: { followedRibbons: true }, grantAchievement: 'ribbon_reader', next: 'tollgate_quiet' },
-        { label: 'March up openly and announce a peaceful pursuit.', setFlags: { followedRibbons: false }, grantAchievement: 'polite_pursuit', next: 'tollgate_loud' },
-      ],
-    },
-    // Diamond: both paths are the SAME tollgate fight, different flavor.
-    tollgate_quiet: {
+    first_mile_pre: {
       kind: 'encounter', encounter: 'e2',
-      preText: 'Following the ribbons, {mainName} reaches the tollhouse unseen and overhears two hulking orcs arguing whether a stolen bell counts as "oversized luggage." Then a floorboard squeaks. Every blue sash turns at once.',
-      next: 'after_tollgate',
-    },
-    tollgate_loud: {
-      kind: 'encounter', encounter: 'e2',
-      preText: '{mainName} calls out, "We would like our bell back, please!" The tollhouse goes silent. An orc guard licks a pencil, opens a ledger, and rumbles, "Request denied — insufficient please." The barricade drops.',
-      next: 'after_tollgate',
-    },
-    after_tollgate: {
-      kind: 'story',
-      text: '{if followedRibbons}Because {mainName} listened before the fight, the party knows the bell is bound for a relay point at the River Amrun.{else}Because {mainName} announced the pursuit, a flustered orc bellows the destination while trying to sound mysterious: "You will NEVER catch us at the River Amrun relay point!"{/if}\n\nInside the tollhouse lies a splinter of painted wood shaped like part of a much larger bell. Someone replaced Goblinopolis\'s own alarm bell with a wooden fake.',
+      preText: 'The wagon is the slowest thing on the road and the loudest thing in the city — two tons of bronze on ungreased axles, announcing itself to every opportunist within four streets.\n\nIt cannot fight, {mainName}. It cannot even hurry. Walk it to the crossroads.',
       next: 'lv3',
     },
-    lv3: { kind: 'levelup', level: 3, next: 'road_to_amrun' },
-    road_to_amrun: {
+    lv3: { kind: 'levelup', level: 3, next: 'tollgate_note' },
+    tollgate_note: {
       kind: 'story',
-      text: 'The road slopes toward the River Amrun. Ahead, a goblin signal-runner flashes a mirror from hilltop to hilltop. Behind {mainName}, Dave Tanner\'s supply cart comes rattling downhill with Dave clinging to the reins and shouting, "This is faster than I intended!"',
-      next: 'fork_two',
+      text: 'At the Blue-Ribbon Tollgate a kettlehelm orc reads Form 12-C twice, upside down once, and shakes his head.\n\n"Twelve-C\'s movement. This here\'s a GATE. Gate needs 12-C ANNEX FOUR."\n\n"Where do we get Annex Four?"\n\nHe points back down the road you came from, at a small office you have already walked past twice.\n\n"Or," he says, in the voice of a man offering a great kindness, "you could pay the toll."\n\nThe toll is precisely the amount of money the company is carrying.',
+      next: 'tollgate_pre',
     },
-    fork_two: {
-      kind: 'choice',
-      text: 'There is time to help the cart or keep the signal-runner in sight — not both. Where does {mainName} lead the party first?',
-      choices: [
-        { label: 'Brace the runaway cart and get Dave safely off the hill.', setFlags: { savedWagon: true }, grantAchievement: 'cart_before_horse', next: 'ferry_from_cart' },
-        { label: 'Race for the river before the signal-runner escapes.', setFlags: { savedWagon: false }, grantAchievement: 'signal_spotter', next: 'ferry_from_chase' },
-      ],
-    },
-    ferry_from_cart: {
+    tollgate_pre: {
       kind: 'encounter', encounter: 'e3',
-      preText: 'Dave\'s cart is safe, but the delay lets the goblins form ranks at the ferry winch. A patch-coated orc mender raises a healing chant while a goblin pathfinder takes aim across the water. "Hold the relay!" barks their captain. {mainName} charges the bank.',
-      next: 'after_ferry',
-    },
-    ferry_from_chase: {
-      kind: 'encounter', encounter: 'e3',
-      preText: '{mainName} reaches the river in time to block the ferry, but the band snaps into a practiced formation — an orc mender guarding the rear, a goblin pathfinder covering the crossing. From the hill behind comes the distant sound of Dave Tanner discovering a haystack.',
-      next: 'after_ferry',
-    },
-    after_ferry: {
-      kind: 'story',
-      text: 'The last guard lowers their weapon. From beneath the ferry dock, a young goblin clerk emerges holding the Bridge Bell\'s clapper in both hands.\n\n"We did take your bell," the clerk admits to {mainName}, "but only because ours was stolen first. Someone swapped the Grand Alarm of Goblinopolis for painted wood — and left a trail pointing at YOU. Same trick was played on Buckbridge. Somebody wants our towns at each other\'s throats."\n\n{if savedWagon}Dave arrives with an intact cart, three flattened pies, and a suggestion that everyone discuss this over lunch.{else}Dave arrives covered in hay. "Good news," he says. "The cart stopped. Bad news: it has joined a scarecrow."{/if}\n\nThe clerk points across the river, to Goblinopolis itself.',
+      preText: 'Nobody at the tollgate wants a fight. They want the toll, and they want it more than they want to be reasonable, and somewhere between the third and fourth explanation the barricade stops being a formality.\n\n{mainName} takes the direct lane. The gap in the barricade is the whole argument.',
       next: 'lv4',
     },
-    lv4: { kind: 'levelup', level: 4, next: 'city_approach' },
-    city_approach: {
+    lv4: { kind: 'levelup', level: 4, next: 'office_note' },
+    office_note: {
       kind: 'story',
-      text: 'Goblinopolis is a jumble of crooked towers and rope bridges, every window strung with blue ribbon. But word of the "bell thieves" has run ahead of {mainName}, and the great Bell-Arch at the gate is shut.\n\nBeneath it stands an orc the size of a doorway, arms folded, entirely unbothered.',
-      next: 'gate_node',
+      text: 'The Office of Forms occupies a building the size of a granary, and every window is lit at midnight.\n\nInside there is an antechamber for people waiting to be told which queue to join, and beyond it the stamp hall, where the actual stamping happens. Between them: one door, one clerk, and a sign reading PLEASE HAVE YOUR FORM READY.\n\nThe company\'s form is ready. The company\'s form has been ready for two days.',
+      next: 'office_pre',
     },
-    gate_node: {
+    office_pre: {
       kind: 'encounter', encounter: 'e4',
-      preText: 'The Ironbell Warden plants himself under the arch like a boulder that learned to frown, and he does not intend to move. Goblin slingers scramble onto the ribbon-strung walls to pelt {mainName} from above. Break through the gate!',
+      preText: 'The clerk looks at Annex Four, then at the party, then at the clock — which reads four minutes to closing — and reaches, with enormous deliberation, for a different stamp.\n\nWhat happens next is technically a queue dispute. {mainName} will have to get through the antechamber AND the hall, and there is no rest between them.',
       next: 'lv5',
     },
-    lv5: { kind: 'levelup', level: 5, next: 'court_approach' },
-    court_approach: {
+    lv5: { kind: 'levelup', level: 5, next: 'ink_note' },
+    ink_note: {
       kind: 'story',
-      text: 'Past the arch, the goblin clerk leads {mainName} to a war-camp pitched in the city\'s old bell-foundry — banners, drums, and BOTH stolen bells hung as trophies.\n\nAtop a heap of requisition forms sits Warboss Gurm, an orc so large the goblins keep a stepladder handy. "Two towns," he grins, "one lovely little war. And when they\'ve worn each other out, Gurm rings the last bell standing."\n\n"{mainName}," whispers the clerk, "his mender keeps him on his feet. Bring her down first, or Gurm won\'t fall."',
-      next: 'boss_node',
+      text: 'Annex Four is stamped. Annex Four, it turns out, must be COUNTERSIGNED, and the countersigning office is on the far side of the Ink Works.\n\nThe Ink Works is where Goblinopolis prints its forms. All of them. Vats of lamp-black, presses the size of houses, and a floor that is slick with two centuries of spilled ink and lamp oil.\n\nSomebody has knocked over a lamp. The lanes between the presses are burning, and the print crew — reasonably — assumes the party did it.',
+      next: 'ink_pre',
     },
-    boss_node: {
+    ink_pre: {
       kind: 'encounter', encounter: 'e5',
-      preText: 'Gurm hefts a war-hammer made from a bell and a fencepost. His patchcoat mender begins to chant, ready to knit his wounds shut, while a Kettlehelm Orc and a Bluecap Pathfinder move to guard the flanks. Drop the mender, then the Warboss!',
+      preText: 'Fire runs in lanes across the press floor, exactly where you would want to walk. Sparkcap slingers throw more of it from the clear ground beyond.\n\nThere is no way around, {mainName}. Only through, and only where the ground is not yet burning.',
+      next: 'barge_note' ,
+    },
+    barge_note: {
+      kind: 'story',
+      text: 'Countersigned. Stamped. Annexed. The bell reaches the river dock with four days to spare and a folder two inches thick.\n\nThe customs barge casts off at the turn of the tide, and it is the only crossing that can take the wagon\'s weight. The inspectors want to open the folder. All of it. Page by page.\n\nThe tide, unlike the inspectors, is not negotiable.',
+      next: 'barge_pre',
+    },
+    barge_pre: {
+      kind: 'encounter', encounter: 'e6',
+      preText: 'Seven rounds until the barge casts off with or without you, {mainName}. The inspectors are not villains — they are people with a job and a checklist, standing exactly where you need to be.\n\nSettle it quickly. The tide is the enemy here.',
+      next: 'fork_district',
+    },
+    // ── FORK 1 (level 6) ────────────────────────────────────────────────────
+    fork_district: {
+      kind: 'choice',
+      text: 'Across the river, two roads run up to the Records Hall, and the wagon can take one.\n\nThe Sparkyard is the foundry district — hot, loud, and full of people who work metal for a living and have opinions about a company hauling two tons of it.\n\nThe Old Ledger Quarter is where the city\'s clerks live: narrow, quiet, and threaded with courier shortcuts that do not appear on any map the city admits to.',
+      choices: [
+        { label: 'Take the Sparkyard — let the smiths look at the bell.', setFlags: { sparkRoute: true }, grantAchievement: 'the_sparkyard', grantBoon: 'sparkyard_plate', next: 'district_note' },
+        { label: 'Take the Old Ledger Quarter — follow the couriers.', setFlags: { sparkRoute: false }, grantAchievement: 'the_ledger_quarter', grantBoon: 'ledger_boots', next: 'district_note' },
+      ],
+    },
+    district_note: {
+      kind: 'story',
+      text: '{if sparkRoute}The Sparkyard smiths come out to look at the bell the way farriers look at a good horse, and by the time the wagon is through, half the company is wearing hammered offcuts strapped over their gear. Nobody offered. Nobody asked. It simply happened.{else}The Ledger Quarter\'s couriers take one look at the folder, another at the wagon, and start calling directions from the rooftops — left here, cut through, mind the step. By the far end the company is moving a third faster and has learned six shortcuts that do not exist.{/if}\n\nAhead, the Records Hall. And in front of it, an entire street of weighing machinery.',
+      next: 'weigh_pre',
+    },
+    weigh_pre: {
+      kind: 'encounter', encounter: 'e7',
+      preText: 'The city will not issue the final permit without a certified weight, and a certified weight requires both plates of the municipal weighbridge to hold steady for a full reading.\n\nBoth plates, {mainName}. Step off either one and the needle drops and the reading voids — and the Bellrunners have worked out exactly what that means.',
+      next: 'lv7',
+    },
+    lv7: { kind: 'levelup', level: 7, next: 'impound_note' },
+    impound_note: {
+      kind: 'story',
+      text: 'The certified weight is 2.04 tons. Form 12-C covers goods "exceeding one ton". Annex Four covers "exceeding two".\n\n"So we\'re covered," says {mainName}.\n\n"You\'re covered TWICE," Snagg agrees, delighted. "Which is an irregularity. I\'m impounding pending review."\n\nAnd there it is, finally, plain: he does not want the bell. He does not want the money. He wants the delivery to remain, permanently, in progress.\n\nThe impound yard gates lock at sundown. The company is inside them, with the bell, and the review is scheduled for a date Snagg has not yet chosen.',
+      next: 'impound_pre',
+    },
+    impound_pre: {
+      kind: 'encounter', encounter: 'e8',
+      preText: 'They come over the yard walls all night, in shifts, with the patience of people being paid by the hour.\n\nHold until dawn, {mainName}. At dawn the gates open on their own — that, at least, is in the regulations.',
+      next: 'lv8',
+    },
+    lv8: { kind: 'levelup', level: 8, next: 'audit_note' },
+    audit_note: {
+      kind: 'story',
+      text: 'At dawn {mainName} does not take the bell out of the yard. {mainName} walks into the Records Hall and asks, for the first time, the question nobody has asked all week:\n\n"Who signs the final permit?"\n\nThe answer is on the wall in a frame, and it has been there for eleven years. THE WARBOSS. And under it, in Gurm\'s enormous careless hand, a standing order:\n\n*"LET BELLS THROUGH. WARS ARE LOUD ENOUGH."*\n\nSigned. Sealed. Eleven years old. It covers every bell that has ever entered or left this city, and it has been hanging four rooms from Snagg\'s desk the entire time.\n\nSnagg is already reaching for the file cabinet.',
+      next: 'audit_pre',
+    },
+    audit_pre: {
+      kind: 'encounter', encounter: 'e9',
+      preText: '"That order," Snagg says, with the first real feeling he has shown all week, "is UNFILED."\n\nHe is not a warrior. He is a middle-clerk with a grasp like a closing drawer and two departments who will do as they are told, and he is standing between {mainName} and eleven years of signed permission.\n\nOnly Snagg has to fall. The clerks are a problem you may solve or simply walk around.',
+      next: 'fork_cabinet',
+    },
+    // ── FORK 2 (level 9) ────────────────────────────────────────────────────
+    fork_cabinet: {
+      kind: 'choice',
+      text: 'Snagg\'s file cabinet is enormous, and it is full.\n\nNot of nothing — of PERMITS. Hundreds of them. Stalled applications going back years: a bakery expansion, a bridge repair, a widow\'s pension, a school. Every one of them stamped, complete, and never released.\n\nOutside, the rain has started early.',
+      choices: [
+        { label: 'Nail every one of them to the Records Hall door.', setFlags: { publishedLot: true }, grantAchievement: 'published_the_lot', grantBoon: 'the_published_lot', next: 'rain_note' },
+        { label: 'Carry each one back to whoever filed it.', setFlags: { publishedLot: false }, grantAchievement: 'returned_by_hand', grantBoon: 'returned_by_hand', next: 'rain_note' },
+      ],
+    },
+    rain_note: {
+      kind: 'story',
+      text: '{if publishedLot}By noon the Records Hall door is papered edge to edge and there is a crowd four deep reading it, and somewhere near the back a woman starts laughing and cannot stop. The city knows the company\'s faces now. Doors open as the wagon passes.{else}It takes until dusk and the company knocks on ninety-one doors. At the fortieth, someone starts following along to help carry. By the ninetieth there are a dozen of them, and every one is fed, soaked, and extremely well informed about where the party is going next.{/if}\n\nAnd the rain does not stop. It is three weeks early and it is not stopping.\n\nAmrun is four days downriver. The bell is here. The lower town is there.\n\nThere is no version of this where the wagon arrives in time.\n\n"Then we don\'t send the bell," says {mainName}. "We send the SOUND. Goblinopolis has a tower."',
+      next: 'first_rain_pre',
+    },
+    first_rain_pre: {
+      kind: 'encounter', encounter: 'e10',
+      preText: 'The lower streets are already shin-deep and the water is still rising. The bell has to get to the tower, and everyone in Goblinopolis with a wet boot and a bad idea is between here and there.\n\nThey are not soldiers, {mainName}. They are frightened people in a flooding city. Keep the bell above the water.',
+      next: 'stair_pre',
+    },
+    stair_pre: {
+      kind: 'encounter', encounter: 'e11',
+      preText: 'The Stair of Stamps is a switchback of ninety-one steps, and the bell weighs two tons, and it is going UP.\n\nThe yard is filling behind you with everyone who would rather this did not happen. Get the whole company to the belfry landing, {mainName}. Nobody left on the stair.',
+      next: 'lv10',
+    },
+    lv10: { kind: 'levelup', level: 10, next: 'ring_pre' },
+    ring_pre: {
+      kind: 'encounter', encounter: 'e12',
+      preText: 'The bell hangs. The rope is in reach. Down in the lower streets the crest is coming up the avenue like a hand pushed under a rug — and four days downriver, Amrun\'s watchmen are standing in the rain waiting for a sound that cannot possibly come from their own cracked tower.\n\nSound carries a long way over water, {mainName}. Eight rounds. Reach the rope.',
       next: 'finale',
     },
     finale: {
       kind: 'end',
-      text: 'Gurm sits down hard, blinks at the ceiling, and mutters, "...no war?" as the goblins cheerfully confiscate his stepladder.\n\nBoth bells go home. Goblinopolis rings its Grand Alarm just to prove it still can, Buckbridge answers with the Bridge Bell, and for one strange afternoon the two towns hold a shared festival of pancakes and extremely loud gratitude.\n\n{if savedWagon}Dave Tanner caters it from a fully recovered cart, {mainName}.{else}Dave Tanner caters it from a borrowed scarecrow, {mainName}, and insists the scarecrow gets a medal.{/if}\n\nMayor Mumblebranch\'s official thank-you arrives three days late and addressed to the wrong hero. Close enough.\n\nTHE BELL OF GOBLINOPOLIS — COMPLETE',
+      text: 'The new bell of Goblinopolis rings for the first time at twenty past four in the afternoon, in driving rain, four days upriver of the town that paid for it.\n\nIt is not, by any measure, where it was supposed to be.\n\nAmrun hears it. Nobody there can explain how — the river fog, the valley, two hundred years of knowing exactly what that sound means and not needing to be told twice — but the lower town is empty by dark, and when the water comes through at midnight it takes eleven houses, a mill, and nobody at all.\n\nThe bell stays. Amrun votes on it, formally, and the vote is not close: a bell that rang for them from another city\'s tower is not a bell you take down. Goblinopolis rings it every season now, twice — once for practice, and once, at the turn of the year, for a town four days downriver that can hear it.\n\n{if publishedLot}The bakery expansion was approved eleven days later. So was the school.{else}The widow whose pension you carried up three flights of stairs sends a letter to Amrun every year, and has never once mentioned the flood.{/if}\n\nUndersecretary Snagg was reassigned to Rural Fencing Disputes, where he is, by all accounts, extremely thorough and completely harmless.\n\nWarboss Gurm never learned any of it had happened. He signed the order eleven years ago, on a Tuesday, between two other things, and has not thought about bells since.\n\nTHE BELL OF GOBLINOPOLIS — COMPLETE',
     },
   },
 };
