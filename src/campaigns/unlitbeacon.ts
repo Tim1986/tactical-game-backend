@@ -689,6 +689,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     // Tam moves with the party instead of walking a scripted lane.
     e10: {
       level: 9,
+      terrain: { theme: 'snow' },
       allies: {
         tam: {
           name: 'Tam Emberwright', baseClass: 'cleric',

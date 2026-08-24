@@ -237,6 +237,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // party entering from one edge (a descent, not a front-and-rear pincer).
     e1: {
       level: 1,
+      terrain: { theme: 'crypt' },
       enemies: ['skeleton_warrior', 'skeleton_warrior', 'skeleton_warrior'],
       enemyPlacement: [{ x: 4, y: 1 }, { x: 3, y: 2 }, { x: 5, y: 2 }],
       playerPlacement: [{ x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }],
@@ -299,6 +300,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // (~60) and placed outside round-1 enemy reach.
     e3: {
       level: 2,
+      terrain: { theme: 'crypt' },
       allies: {
         survivor: {
           name: 'The Whistling Survivor', baseClass: 'cleric',
@@ -528,6 +530,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // The witch is why you cannot simply rush past the cultists.
     e6: {
       level: 5,
+      terrain: { theme: 'crypt' },
       objective: {
         // Clock 13, not 10. The tuning table's rule for a `race` is "make the
         // clock GENEROUS (untimed average + 2-3 rounds), then tune scale
@@ -655,6 +658,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // for a defenseless VIP, hunter carries its OWN enemy key with aiHints.
     e8: {
       level: 7,
+      terrain: { theme: 'crypt' },
       allies: {
         crew: {
           name: 'The Survey Crew', baseClass: 'cleric',
@@ -760,6 +764,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // round, not room-clear (no rooms here).
     e9: {
       level: 8,
+      terrain: { theme: 'crypt' },
       enemies: ['zombie', 'zombie', 'zombie'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 4 }, { x: 5, y: 6 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
@@ -795,6 +800,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // are three distinct enemy keys so per-instance HP can vary later.
     e10: {
       level: 9,
+      terrain: { theme: 'crypt' },
       objective: {
         text: 'Silence the three choristers',
         win: [{ kind: 'units_dead', enemyKeys: ['chorister_witch', 'chorister_cultist_1', 'chorister_cultist_2'] }],
@@ -828,6 +834,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // standing on a ward block it; that pressure is intended.
     e11: {
       level: 10,
+      terrain: { theme: 'crypt' },
       objective: {
         text: 'Hold all three wards at once',
         win: [{

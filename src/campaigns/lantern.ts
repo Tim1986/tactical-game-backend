@@ -197,6 +197,7 @@ export const lanternCampaign: CampaignDefinition = {
     // no specials. The trilogy's ONE surviving pincer (ban #5 repaid).
     e1: {
       level: 1,
+      terrain: { theme: 'forest' },
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_scrapper'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 1, y: 4 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
@@ -223,6 +224,7 @@ export const lanternCampaign: CampaignDefinition = {
     e2: {
       level: 2,
       terrain: {
+        theme: 'forest',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }],
       },
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
