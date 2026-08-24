@@ -6,6 +6,7 @@ import {
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied, isInBounds, calculatePullOptions, calculatePushOptions } from './boardUtils.js';
+import { canAimAtAlly } from './abilityTargeting.js';
 import { reachableFrom, hasLineOfSight, isTerrainBlocked, wallsBlockLine } from '../ai/geometry.js';
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
 import { executeAbility, applyEntryHazard } from './abilityExecutor.js';
@@ -792,6 +793,22 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
   if (ability.targetingType === 'single') {
     const targetUnit = getUnitAtPosition(state.units.filter((u) => u.isAlive), action.target);
     if (!targetUnit) throw new TurnValidationError('No unit at target position');
+    // OWNERSHIP (owner report 2026-08-23: "it should be only enemies as valid
+    // targets across the board"). A harmful single-target ability may not be
+    // aimed at your own side — including yourself. Nothing checked this before:
+    // the Ranger's Arrow would happily target a teammate six tiles away, and
+    // melee only looked well-behaved because an ally is rarely adjacent.
+    // Beneficial abilities (Heal, Ward, Purify) invert the rule — they are for
+    // allies and may not be aimed at an enemy.
+    // Scope is SINGLE-target aiming only: area and line abilities still hit
+    // whatever they catch, friend included (ABL-9/ABL-10), which is a
+    // deliberate rule several puzzles are built on.
+    const alliedTarget = targetUnit.ownerPlayerId === unit.ownerPlayerId;
+    if (canAimAtAlly(ability)) {
+      if (!alliedTarget) throw new TurnValidationError('That ability can only be used on your own units');
+    } else if (alliedTarget) {
+      throw new TurnValidationError('That ability can only target enemies');
+    }
     // LOS: single-target abilities are blocked by a living unit on a true line
     // (orthogonal/diagonal) between caster and target; non-aligned targets are
     // never blocked. Push abilities (Fear) are exempt — mirrors the client's

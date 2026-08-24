@@ -2263,33 +2263,12 @@ export class OptimalBrain implements AIBrain {
             fcAction = { type: 'USE_ABILITY', unitInstanceId: c.instanceId, abilitySlug: slug, target };
           }
         }
-        // Last resort — BASIC attack on an own ally: the engine's
-        // single-target validation doesn't check ownership, so this is a
-        // legal commit when no enemy is reachable (e.g. a rooted unit whose
-        // only in-range neighbor is a teammate). Costs a few HP but keeps
-        // the turn legal; specials are never wasted this way. Prefer the
-        // healthiest ally.
-        if (!fcAction) {
-          let bestAllyHp = -1;
-          for (const c of usable) {
-            for (const slug of c.abilities) {
-              if (!abilityReady(c, slug)) continue;
-              const def = abilityMap.get(slug);
-              if (!def || def.isSpecial || def.targetingType !== 'single') continue;
-              if (def.effects.some((e) => e.type === 'push')) continue;
-              for (const t of state.units) {
-                if (!t.isAlive || t.ownerPlayerId !== myPlayerId || t.instanceId === c.instanceId) continue;
-                if (manhattanDistance(c.position, t.position) > def.range) continue;
-                if (LOS_ENFORCED &&
-                    !hasLineOfSight(c.position, t.position, state.units, [c.instanceId, t.instanceId], state.terrain)) continue;
-                if (t.currentHealth > bestAllyHp) {
-                  bestAllyHp = t.currentHealth;
-                  fcAction = { type: 'USE_ABILITY', unitInstanceId: c.instanceId, abilitySlug: slug, target: t.position };
-                }
-              }
-            }
-          }
-        }
+        // (An earlier build had a last-resort "basic attack your own ally to
+        // commit" fallback here. The engine now rejects a harmful single-target
+        // ability aimed at your own side — owner rule, 2026-08-23 — so that
+        // action is illegal and the fallback is gone. When no legal commit
+        // exists at all, the bare END_TURN below lets the server/harness
+        // force-commit, which is free and was always the better outcome.)
         if (fcAction) return [fcAction, { type: 'END_TURN' }];
       }
 

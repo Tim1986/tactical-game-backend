@@ -792,6 +792,53 @@ export const RULE_CHECKS: RuleCheck[] = [
   },
 
   {
+    rule: 'ABL-15', name: 'single-target attacks are enemies-only; heals are allies-only',
+    run: () => {
+      // Owner report 2026-08-23: the Ranger could aim its Arrow at a teammate.
+      // Nothing checked ownership — not the engine, not the targeting UI — so
+      // "valid target" meant "any unit in range with line of sight".
+      // Layout matters: an ally on the line between caster and enemy blocks
+      // LOS, so the ally sits OFF the caster->enemy row.
+      const caster = mkUnit(P1, 1, 1, { abilities: ['test_hit', 'test_heal'], cooldowns: { test_hit: 0, test_heal: 0 } });
+      const ally   = mkUnit(P1, 1, 2);
+      const enemy  = mkUnit(P2, 3, 1);
+      const abilityMap = new Map([
+        ['test_hit', mkAbility({ isUnblockable: true })],
+        ['test_heal', mkAbility({ isUnblockable: true, effects: [{ type: 'heal', formula: 'flat', value: 5 }] })],
+      ]);
+      const state = mkInitiativeState([caster, ally, enemy], [caster.instanceId, enemy.instanceId, ally.instanceId]);
+
+      assertThrows(
+        () => processTurn(state, [
+          { type: 'USE_ABILITY', unitInstanceId: caster.instanceId, abilitySlug: 'test_hit', target: ally.position },
+          { type: 'END_TURN' },
+        ], P1, P1, P2, abilityMap),
+        'enemies', 'a harmful single-target ability must not be aimable at an ally',
+      );
+      assertThrows(
+        () => processTurn(state, [
+          { type: 'USE_ABILITY', unitInstanceId: caster.instanceId, abilitySlug: 'test_hit', target: caster.position },
+          { type: 'END_TURN' },
+        ], P1, P1, P2, abilityMap),
+        'enemies', 'a harmful single-target ability must not be aimable at YOURSELF',
+      );
+      // The enemy remains a legal target — the rule narrows aiming, not the ability.
+      const ok = processTurn(state, [
+        { type: 'USE_ABILITY', unitInstanceId: caster.instanceId, abilitySlug: 'test_hit', target: enemy.position },
+        { type: 'END_TURN' },
+      ], P1, P1, P2, abilityMap);
+      assert(ok.success, 'an enemy must still be a legal single-target');
+      // And the mirror: a heal may not be aimed at the other team.
+      assertThrows(
+        () => processTurn(state, [
+          { type: 'USE_ABILITY', unitInstanceId: caster.instanceId, abilitySlug: 'test_heal', target: enemy.position },
+          { type: 'END_TURN' },
+        ], P1, P1, P2, abilityMap),
+        'own units', 'a beneficial single-target ability must not be aimable at an enemy',
+      );
+    },
+  },
+  {
     rule: 'ABL-9', name: 'line abilities sweep the FULL range past the tapped tile, stopping only at the board edge',
     run: () => {
       // Owner repro (C22b item 11): 5 units queued in a row, tap the 2nd — all

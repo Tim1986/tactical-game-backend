@@ -47,7 +47,9 @@ describe('DB-row abilities keep their engine shape', () => {
 // could never be cleansed. The derivation is now "every effect is beneficial".
 describe('ally-targetable derivation', () => {
   it('covers cleanses and shields, and lets nothing harmful through', async () => {
-    const { isBeneficialAbility } = await import('../src/services/unitService.js');
+    // From the ENGINE, not unitService: one definition, and this test no
+    // longer drags in the DB config just to ask a pure question.
+    const { isBeneficialAbility } = await import('../src/game/abilityTargeting.js');
     const { ABILITY_DEFS } = await import('../src/config/gameData.js');
     const allyTargetable = (ABILITY_DEFS as readonly any[])
       .filter((a) => isBeneficialAbility(a.targeting_type, a.effects))

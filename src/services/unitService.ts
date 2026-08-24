@@ -1,6 +1,7 @@
 import { query } from '../db/pool.js';
 import { UnitDefinition, AbilityDefinition } from '../types/index.js';
 import { abilityShape } from '../config/abilityShape.js';
+import { isBeneficialAbility, ALLY_TARGETABLE_SPECIAL_SLUGS } from '../game/abilityTargeting.js';
 
 interface UnitRow {
   id: string;
@@ -51,30 +52,10 @@ function rowToUnit(row: UnitRow): UnitDefinition {
   };
 }
 
-// Abilities whose effects are still meant to target an ally rather than an
-// enemy but that this derivation can't see — kept as a safety net.
-const ALLY_TARGETABLE_SPECIAL_SLUGS = new Set(['ward', 'rescue']);
-
-// An ability is ally-targetable when EVERY effect it has is beneficial.
-//
-// This used to require every effect to be a `heal`, which quietly excluded
-// Purify: its three remove_status effects failed the test, so despite a
-// description reading "yourself or an ally within 3 tiles" the client refused
-// to accept an ally as a target and a frozen teammate could never be cleansed.
-// Effect type alone is not enough for apply_status — the same effect delivers
-// Ward's shield and Ring of Frost's freeze — so the status slug is checked too.
-const BENEFICIAL_EFFECTS = new Set(['heal', 'remove_status', 'grant_max_health']);
-const BENEFICIAL_STATUSES = new Set(['shielded']);
-
-export function isBeneficialAbility(
-  targetingType: string,
-  effects: ReadonlyArray<{ type: string; statusSlug?: string }>,
-): boolean {
-  if (targetingType === 'self' || !Array.isArray(effects) || effects.length === 0) return false;
-  return effects.every((e) =>
-    BENEFICIAL_EFFECTS.has(e.type) ||
-    (e.type === 'apply_status' && !!e.statusSlug && BENEFICIAL_STATUSES.has(e.statusSlug)));
-}
+// The beneficial/ally-targetable derivation lives in the ENGINE
+// (src/game/abilityTargeting.ts) so the server's turn validation, this derived
+// API field and the client's targeting UI cannot drift apart — they did, and
+// that is how a harmful ability stayed aimable at an ally (owner, 2026-08-23).
 
 function rowToAbility(row: AbilityRow): AbilityDefinition {
   const effects = row.effects as Array<{ type: string; statusSlug?: string }>;

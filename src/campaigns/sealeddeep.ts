@@ -497,7 +497,21 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // mean above 65. That is the phaser bimodality — five wall-ignoring
       // enemies either get answered or wipe a squishy backline, so this cell
       // splits rather than spreads. Left at the in-band rung and flagged.
-      hpScaleOverride: { easy: 1.05, medium: 1.15, hard: 1.25, nightmare: 1.35 },
+      // ⚠ WHOLE ROW REBUILT 2026-08-23 (second pass). The first pass tuned this
+      // cell against a SIM BUG: the harness's round-1 pre-flight committed a
+      // frozen unit without ticking its duration, so a 2-turn freeze on a
+      // fully-frozen team lasted an effective 3 turns in simulation and nowhere
+      // else. Freezing the phasers — the obvious answer to this encounter — was
+      // therefore overvalued by every measurement, and the row that resulted
+      // (1.05/1.15/1.25/1.35) shipped HARDER than the sim believed. With the
+      // engine's round-1 auto-skip closing that path, this cell re-measured all
+      // four tiers failing on walls (nightmare 65% walled, median 0%).
+      // Rebuilt: easy 1.00 ✓ · medium 1.05 ✓ · nightmare 1.22 ✓.
+      // hard parks at 1.12: it clears the ceiling (median 60 vs 65) and misses
+      // the wall cap by ONE point (26% vs 25%) — one build in a hundred, inside
+      // the ±5 run-to-run noise. The alternative, 1.10, measured median 72 at
+      // 130 builds: a 7-point ceiling miss to buy back a 1-point wall margin.
+      hpScaleOverride: { easy: 1.00, medium: 1.05, hard: 1.12, nightmare: 1.22 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -552,7 +566,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // objective NAMES them — `units_dead: ['cultist']`, "silence the three
       // chanters" — so mixing the composition would rewrite the fight's premise
       // and its goal, which is why this one takes the documented miss instead.
-      hpScaleOverride: { easy: 0.97, medium: 1.00, hard: 1.20, nightmare: 1.32 },
+      hpScaleOverride: { easy: 0.93, medium: 1.00, hard: 1.20, nightmare: 1.32 },
     },
 
     // e7 — The Flooded Stair (escape). The barrow answers the allegiance
@@ -623,7 +637,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // `units_at_tiles scope:'all'` means a party that cannot get EVERY unit
       // to the landing scores a flat 0, so weak comps fall off a cliff rather
       // than degrading. Walls win over ceilings (the floor rule).
-      hpScaleOverride: { easy: 0.50, medium: 0.75, hard: 0.90, nightmare: 2.00 },
+      hpScaleOverride: { easy: 0.50, medium: 0.68, hard: 0.90, nightmare: 2.00 },
     },
 
     // e8 — The Long Way Up (escort). Walk the crew out. Guardrails from the
@@ -728,7 +742,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // values that existed only because scale was being pushed against a cell
       // that could not respond to it. Once the crew stopped outrunning its own
       // encounter, 1.60 does what 3.00 could not.
-      hpScaleOverride: { easy: 1.30, medium: 1.38, hard: 1.60, nightmare: 1.60 },
+      hpScaleOverride: { easy: 1.22, medium: 1.38, hard: 1.60, nightmare: 1.60 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of
@@ -871,7 +885,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // needed 0.55 and 26 HP. Nightmare sits AT hard's rung deliberately: the
       // per-enemy nightmare blocks are worth ~28 pts on their own, so matching
       // scales still lands nightmare a full band below hard.
-      hpScaleOverride: { easy: 0.85, medium: 0.88, hard: 1.00, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.78, medium: 0.88, hard: 1.00, nightmare: 1.05 },
     },
   },
 
