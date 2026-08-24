@@ -589,6 +589,22 @@ function scoreEffectsOnTarget(
               if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.4;
             }
           }
+          // CAMPAIGN protect instinct, HERO variant (BR1, the rider GAMEPLAN
+          // attaches to any brain revision). `ally_dead` earns +40% protect
+          // above; `main_dead` earned NOTHING, so the brain sheltered the hero
+          // exactly as much as any other unit while a human shelters the hero
+          // more — which made the sim UNDERESTIMATE the player's win rate on
+          // every encounter that can be lost by losing the hero. Same shape
+          // and weight as the escort instinct: enemies in striking range of
+          // the main are priority kills for the party.
+          if (objK && caster.ownerPlayerId === objK.partyId
+            && objK.loss.some((l) => l.kind === 'main_dead')) {
+            const hero = ctx.state.units.find((u) => u.isAlive && u.instanceId === objK.mainId);
+            if (hero && manhattanDistance(target.position, hero.position) <= (target.movementRange ?? 3) + 1) {
+              s += effective * WEIGHTS.damage * 0.4;
+              if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.4;
+            }
+          }
           // CAMPAIGN aiHints (A5): a hunter prioritizes its quarry — the
           // escort ('ally') or the main character ('main'). Strong bias, not
           // absolute (free kills elsewhere still outscore chip damage here).
@@ -1225,6 +1241,14 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             // on the 8x8 box let the ray "pass through" a removed corner and
             // score hits the executor never delivers.
             if (!isInBounds(p)) break;
+            // CAMPAIGN terrain (A2): walls EAT the ray — getLineTiles is given
+            // isTerrainBlocked as its stop predicate, so the executor's line
+            // ends at the first wall. Without the same break here the brain
+            // scored every unit BEHIND a wall and cast into stone: the owner
+            // watched a Torchhand burn its once-per-battle Flame Jet on two
+            // heroes it could not reach (2026-08-24, unlitbeacon e4). No-op in
+            // arena, where state.terrain is undefined.
+            if (isTerrainBlocked(ctx.state.terrain, p)) break;
             lastInBounds = p;
             const t = units.find(
               (u) =>
@@ -1574,6 +1598,11 @@ function planAllyTurn(
         if (def.targetingType === 'single' && LOS_ENFORCED
           && !def.effects.some((e) => e.type === 'push')
           && !hasLineOfSight(pos, t.position, state.units, [unit.instanceId, t.instanceId], state.terrain)) continue;
+        // CAMPAIGN terrain (A2): a line ray stops at the first wall, so a
+        // wall-blocked enemy is not a threat from this tile and must not
+        // inflate the tile's score (same blindness as the scoring loop).
+        if (def.targetingType === 'line'
+          && wallsBlockLine(pos, t.position, state.terrain)) continue;
         const score = Math.min(dmg, t.currentHealth) + (dmg >= t.currentHealth ? 20 : 0);
         if (!best || score > best.score) {
           best = { score, action: { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: t.position } };
@@ -2255,6 +2284,10 @@ export class OptimalBrain implements AIBrain {
                 // centres — the fallback must not propose an invalid cast.
                 if (def.targetingType === 'aoe' && def.range > 0
                   && (isTerrainBlocked(state.terrain, t.position) || wallsBlockLine(c.position, t.position, state.terrain))) continue;
+                // ...and a line ray dies at the first wall, so a blocked enemy
+                // is not a legal fallback aim either.
+                if (def.targetingType === 'line'
+                  && wallsBlockLine(c.position, t.position, state.terrain)) continue;
                 target = t.position; break;
               }
             }
