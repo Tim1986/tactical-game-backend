@@ -602,14 +602,32 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Reach the Vigil\'s door before the storm closes (9 rounds)',
+        // ⚠ Clock tightened 9 -> 6 (owner 2026-08-24: "is E7 a race? didn't
+        // seem like a race"). It was one structurally and not in play: the
+        // door is ~8 tiles out at movement 3, so a runner needs ~3 turns
+        // against a NINE round clock — you could clear the board first and
+        // then stroll over, which is a kill-all wearing a race's label. The
+        // node text has always promised the opposite ("whoever can be spared,
+        // sped, and spent... chooses the runner and the rest become the
+        // road"). Six rounds makes committing to a runner the play, and the
+        // defenders now actively freeze whoever is closest to the door (the
+        // raceUrgency brain change), so the road has to be held.
+        text: 'Reach the Vigil\'s door before the storm closes (6 rounds)',
         win: [{ kind: 'units_at_tiles', scope: 'any', tiles: [{ x: 7, y: 4 }] }],
-        loss: [{ kind: 'round_reached', round: 9 }],
+        loss: [{ kind: 'round_reached', round: 6 }],
       },
       enemies: ['winters_voice', 'winters_voice', 'blizzard_wisp', 'blizzard_wisp'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 2 }, { x: 4, y: 5 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: { easy: 1.22, medium: 1.45, hard: 1.80, nightmare: 1.70 },  // escape with a clock
+      // Re-walked against the 6-round clock AND the objective-aware defenders
+      // (both landed 2026-08-24, and together they roughly halved this
+      // encounter's win rate at a fixed scale: medium 1.45 read 69% before and
+      // 31% with 54% walled after). Walk at 80-100 builds x 25:
+      //   easy      0.70 -> 94% · 0.80 -> 85% ✓
+      //   medium    0.92 -> 80% · 1.00 -> 66%, 14% walls ✓ · 1.45 -> 31%
+      //   hard      1.05 -> 66% · 1.15 -> 55%, 13% walls ✓
+      //   nightmare 1.25 -> 36%, 24% walls ✓ · 1.40 -> 32%, 21% ✓
+      hpScaleOverride: { easy: 0.80, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor

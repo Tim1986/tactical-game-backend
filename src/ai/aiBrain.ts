@@ -589,6 +589,17 @@ function scoreEffectsOnTarget(
               if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.4;
             }
           }
+          // CAMPAIGN objective (A3), DEFENDER side: the party unit nearest the
+          // goal tiles is the one actually winning the encounter. Weight is
+          // deliberately below the party's own kill-target bonus (0.5) — the
+          // defender should lean toward the runner, not tunnel on it.
+          if (objK && caster.ownerPlayerId !== objK.partyId) {
+            const urgency = raceUrgency(ctx.state, target);
+            if (urgency > 0) {
+              s += effective * WEIGHTS.damage * 0.45 * urgency;
+              if (raw >= target.currentHealth && !targetUndying) s += killValue(target, map) * 0.45 * urgency;
+            }
+          }
           // CAMPAIGN protect instinct, HERO variant (BR1, the rider GAMEPLAN
           // attaches to any brain revision). `ally_dead` earns +40% protect
           // above; `main_dead` earned NOTHING, so the brain sheltered the hero
@@ -785,6 +796,20 @@ function scoreEffectsOnTarget(
           s += WEIGHTS.exposedBase * eff.durationTurns;
           if (hasStatus(target, 'exposed')) s *= WEIGHTS.redundantStatusFactor;
           break;
+        }
+        // CAMPAIGN objective (A3), DEFENDER side: against a RACE, denying
+        // movement is worth far more than chip damage — a frozen runner loses
+        // a whole turn of ground and a rooted one cannot close at all. Applied
+        // to the movement-denying statuses only, scaled by how close the
+        // target is to winning. This is what turns "scary-looking freeze
+        // casters that fight like brawlers" into a defence.
+        if (isEnemy && (eff.statusSlug === 'frozen' || eff.statusSlug === 'rooted')) {
+          const urgency = raceUrgency(ctx.state, target);
+          if (urgency > 0 && !hasStatus(target, eff.statusSlug)) {
+            // Priced against the existing freeze value (stunFlat) rather
+            // than a new constant, so it scales with the rest of the model.
+            s += WEIGHTS.stunFlat * eff.durationTurns * urgency;
+          }
         }
         // Redundancy guards — don't waste debuffs on already-debuffed targets:
         // a frozen unit can't move or act, so rooting it adds nothing.
@@ -989,6 +1014,40 @@ function scoreEffectsOnTarget(
  * special is simply a wasted special (V4 Bug 2 — specials were dying
  * unspent in 93% of long games). Linear fade between the decay rounds.
  */
+/**
+ * CAMPAIGN objective (A3), ENEMY side: how close this party unit is to WINNING
+ * a tile objective, as a 0..1 urgency.
+ *
+ * The three objective-aware scoring blocks all gate on `caster === party`, so
+ * the defending side was objective-BLIND: it picked targets purely on damage
+ * value while a hero walked past it to the goal. The owner played the Storm
+ * Door (a race to one door tile, defended by two freeze casters and two
+ * blizzard wisps) and reported: "looked really scary, lots of freeze effects,
+ * but didn't turn out hard, felt like the AI was playing it badly... a
+ * powerful opponent playing badly, not a well balanced opponent playing
+ * reasonably well." It had exactly the tools to stop a runner and no reason
+ * to aim them at one.
+ *
+ * Returns 0 when there is no tile objective (every arena match, and every
+ * kill-all encounter), so this is inert outside the case it is for.
+ */
+function raceUrgency(state: MatchState, target: UnitInstance): number {
+  const obj = state.objective;
+  if (!obj || target.ownerPlayerId !== obj.partyId) return 0;
+  let best = 0;
+  for (const w of obj.win) {
+    if (w.kind !== 'units_at_tiles') continue;
+    const applies = w.scope === 'any' || w.scope === 'all'
+      || (w.scope === 'main' && target.instanceId === obj.mainId);
+    if (!applies) continue;
+    const d = Math.min(...w.tiles.map((t) => manhattanDistance(target.position, t)));
+    // 0 tiles away = 1.0, 8+ away = 0. A racer two steps from the door is the
+    // whole encounter; one still crossing the board is just a unit.
+    best = Math.max(best, Math.max(0, 1 - d / 8));
+  }
+  return best;
+}
+
 function specialReserveFor(state: MatchState): number {
   const r = state.roundNumber;
   const start = WEIGHTS.reserveDecayStartRound;
