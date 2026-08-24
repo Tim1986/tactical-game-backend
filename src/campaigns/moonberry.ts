@@ -242,8 +242,14 @@ export const moonberryCampaign: CampaignDefinition = {
         win: [{ kind: 'ally_at_tiles', allyKey: 'contact', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'contact' }],
       },
+      // Battery 1: 100/100/84% at medium and up — the stalker alone was not
+      // enough interception for a follow-mode escort.
       enemies: ['crescent_stalker', 'lantern_lifter', 'mooncap_marksman'],
-      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 6, y: 6 }],
+      enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 2 }, { x: 6, y: 5 }],
+      waves: [
+        { enemies: ['starstep_duelist'], placement: [{ x: 5, y: 6 }], trigger: { on: 'round', round: 2 }, difficulties: ['medium', 'hard', 'nightmare'] },
+        { enemies: ['crescent_stalker'], placement: [{ x: 6, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
+      ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'unremarked', name: 'Unremarked', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
@@ -276,6 +282,9 @@ export const moonberryCampaign: CampaignDefinition = {
           trigger: { on: 'round', round: 4 },
           difficulties: ['hard', 'nightmare'],
         },
+        // A hold is scale-weak, and this one read 98/84/72/64% — too easy at
+        // EVERY tier. Bodies are the lever: one more arrival for everybody.
+        { enemies: ['velvet_gate_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 } },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       goals: [
@@ -302,7 +311,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'good_audition', name: 'A Good Audition', description: 'Take the stage without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.15, nightmare: 1.30 },
+      hpScaleOverride: { easy: 0.94, medium: 1.09, hard: 1.03, nightmare: 0.96 },
     },
 
     // e5 — The Servants' Wing (rooms). Two rooms, laundry then silver hall.
@@ -328,7 +337,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'below_stairs', name: 'Below Stairs', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.55 },
+      hpScaleOverride: { easy: 1.08, medium: 1.37, hard: 1.45, nightmare: 1.34 },
     },
 
     // e6 — The Invitation Courier (race). The guest list is being carried to
@@ -351,7 +360,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'guest_list', name: 'The Guest List', description: 'Intercept them by round 5.', check: { kind: 'win_by_round', round: 5 } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.15, nightmare: 1.35 },
+      hpScaleOverride: { easy: 0.98, medium: 1.31, hard: 1.60, nightmare: 1.93 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -383,10 +392,15 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['velvet_gate_guard', 'mirror_footman', 'mooncap_marksman', 'moonhook_caller'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
       waves: [
+        // Scoped to medium+ — battery 1 had easy walling 27% of builds and
+        // medium 32%, with the specialist dying rather than the party. A
+        // protect objective punishes the low tiers hardest because the ally's
+        // HP does not scale with the party's competence.
         {
           enemies: ['starstep_duelist', 'lantern_lifter'],
           placement: [{ x: 0, y: 3 }, { x: 0, y: 5 }],
           trigger: { on: 'round', round: 3 },
+          difficulties: ['medium', 'hard', 'nightmare'],
         },
         {
           enemies: ['mirror_footman'],
@@ -421,7 +435,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'no_reflection', name: 'No Reflection', description: 'Cross without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.30, nightmare: 1.50 },
+      hpScaleOverride: { easy: 1.03, medium: 1.36, hard: 1.55, nightmare: 1.50 },
     },
 
     // e9 — The Unmasking (survive). Mid-ball, someone calls "impostors!" — the
@@ -450,6 +464,8 @@ export const moonberryCampaign: CampaignDefinition = {
           trigger: { on: 'round', round: 5 },
           difficulties: ['hard', 'nightmare'],
         },
+        // 100/88% at easy/medium — the sweep needs to actually sweep.
+        { enemies: ['starstep_duelist'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 2 } },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       goals: [
@@ -491,7 +507,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'the_whole_take', name: 'The Whole Take', description: 'Clear all three rooms with the party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.20, nightmare: 1.40 },
+      hpScaleOverride: { easy: 0.94, medium: 1.18, hard: 1.25, nightmare: 1.15 },
     },
 
     // e11 — The Cartographer's Stage (boss). REUSED from the shipped e5, now
@@ -513,7 +529,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'took_the_sash', name: 'Took the Sash', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.05, hard: 1.25, nightmare: 1.45 },
+      hpScaleOverride: { easy: 0.98, medium: 1.36, hard: 1.75, nightmare: 1.83 },
     },
 
     // e12 — The Rooftop Line (escape). THE FINALE, and not a boss: alarm up,
@@ -543,10 +559,18 @@ export const moonberryCampaign: CampaignDefinition = {
           placement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 4 }],
           trigger: { on: 'round', round: 2 },
         },
+        // ⚠ Was hard/nightmare-only, and the finale read 100/100/96/96% — the
+        // whole household was supposedly chasing the party and nothing
+        // arrived. Every tier gets the pursuit now; the late pair stays scoped.
         {
           enemies: ['crescent_stalker', 'mooncap_marksman'],
           placement: [{ x: 1, y: 2 }, { x: 1, y: 5 }],
           trigger: { on: 'round', round: 4 },
+        },
+        {
+          enemies: ['velvet_gate_guard', 'mirror_footman'],
+          placement: [{ x: 0, y: 3 }, { x: 0, y: 4 }],
+          trigger: { on: 'round', round: 6 },
           difficulties: ['hard', 'nightmare'],
         },
       ],

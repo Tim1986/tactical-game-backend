@@ -210,7 +210,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // ⚠ TUTORIAL EXEMPTION at easy AND medium (CAMPAIGNS.md §Balancing).
       // Retuned 2026-08-24 with the rest of the catalog's e1s: 1.46 -> 74%
       // mean, 1.32 -> 84%/88% median, 1% walls.
-      hpScaleOverride: { easy: 1.13, medium: 1.32, hard: 1.54, nightmare: 1.76 },
+      hpScaleOverride: { easy: 1.17, medium: 1.28, hard: 1.38, nightmare: 1.51 },
     },
 
     // e2 — The First Mile (escort). The campaign's thesis in one fight: the
@@ -241,8 +241,15 @@ export const goblinopolisCampaign: CampaignDefinition = {
         win: [{ kind: 'ally_at_tiles', allyKey: 'wagon', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
       },
-      enemies: ['bluecap_scout', 'wet_boot_looter', 'wet_boot_looter'],
-      enemyPlacement: [{ x: 6, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 6 }],
+      // ⚠ Battery 1 read 100% at EVERY tier: the wagon's route is six tiles at
+      // movement 2, so it arrived in three turns with three enemies still
+      // walking toward it. An escort with nothing intercepting it is a walk.
+      enemies: ['bluecap_scout', 'wet_boot_looter', 'bellrunner'],
+      enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 4 }],
+      waves: [
+        { enemies: ['wet_boot_looter', 'bluecap_scout'], placement: [{ x: 4, y: 1 }, { x: 4, y: 6 }], trigger: { on: 'round', round: 2 } },
+        { enemies: ['bellrunner'], placement: [{ x: 4, y: 4 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
+      ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'not_a_scratch', name: 'Not a Scratch', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
@@ -311,7 +318,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.55 },
+      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.14, nightmare: 1.21 },
     },
 
     // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
@@ -332,7 +339,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'dry_pages', name: 'Dry Pages', description: 'Lose nobody to the fire.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.15, nightmare: 1.30 },
+      hpScaleOverride: { easy: 0.98, medium: 1.22, hard: 1.34, nightmare: 1.45 },
     },
 
     // e6 — The Customs Barge (race). REUSED from the shipped e3's ferry relay,
@@ -355,7 +362,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'cleared_customs', name: 'Cleared Customs', description: 'Clear the barge by round 6.', check: { kind: 'win_by_round', round: 6 } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.10, nightmare: 1.25 },
+      hpScaleOverride: { easy: 0.80, medium: 0.70, hard: 0.68, nightmare: 0.86 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -375,10 +382,14 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
       waves: [
+        // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
+        // and medium at 44%/21%, i.e. the low tiers were carrying the same
+        // two-front pressure as the high ones.
         {
           enemies: ['bellrunner', 'bluecap_scout'],
           placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }],
           trigger: { on: 'round', round: 3 },
+          difficulties: ['medium', 'hard', 'nightmare'],
         },
         {
           enemies: ['mudboot_bruiser'],
@@ -456,7 +467,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'audited_him', name: 'Audited Him', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.95, hard: 1.10, nightmare: 1.25 },
+      hpScaleOverride: { easy: 0.93, medium: 1.21, hard: 1.33, nightmare: 1.40 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -487,6 +498,9 @@ export const goblinopolisCampaign: CampaignDefinition = {
           trigger: { on: 'round', round: 5 },
           difficulties: ['hard', 'nightmare'],
         },
+        // A survive objective barely feels scale (see unlitbeacon e9's notes),
+        // so 100/100/92% at easy/medium/hard is fixed with BODIES.
+        { enemies: ['wet_boot_looter'], placement: [{ x: 3, y: 6 }], trigger: { on: 'round', round: 2 } },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       goals: [
@@ -521,6 +535,9 @@ export const goblinopolisCampaign: CampaignDefinition = {
           placement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 4 }],
           trigger: { on: 'round', round: 2 },
         },
+        // An escape is won by ARRIVING, so scale is a weak lever — the stair
+        // read 100/92/86/84% on it. A second pursuit is the honest dial.
+        { enemies: ['kettlehelm_orc', 'bluecap_pathfinder'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 4 } },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
@@ -551,9 +568,16 @@ export const goblinopolisCampaign: CampaignDefinition = {
           placement: [{ x: 4, y: 3 }, { x: 4, y: 5 }],
           trigger: { on: 'round', round: 3 },
         },
+        // ⚠ MOVED OFF THE GOAL. This wave used to drop two bodies at (7,3) and
+        // (7,5) — flanking the bell-rope tile at (7,4) — on the encounter the
+        // hero must REACH that tile to win. Battery 1: 12/0/0% at
+        // medium/hard/nightmare with 66-83% of builds walled. Spawning
+        // blockers adjacent to a win tile does not make a race harder, it
+        // makes it unwinnable for anyone who was not already past them.
+        // They now arrive BEHIND the party, so they chase rather than wall.
         {
           enemies: ['mudboot_bruiser', 'kettlehelm_orc'],
-          placement: [{ x: 7, y: 3 }, { x: 7, y: 5 }],
+          placement: [{ x: 1, y: 2 }, { x: 1, y: 5 }],
           trigger: { on: 'round', round: 5 },
           difficulties: ['hard', 'nightmare'],
         },
@@ -562,7 +586,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'rung_on_time', name: 'Rung On Time', description: 'Ring it by round 7.', check: { kind: 'win_by_round', round: 7 } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.05, hard: 1.25, nightmare: 1.45 },
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
     },
   },
 
