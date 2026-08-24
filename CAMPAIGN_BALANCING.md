@@ -1,5 +1,12 @@
 # CAMPAIGN_BALANCING.md — the balancing workflow (operator: Opus 5)
 
+> **⚠ Before tuning any early-campaign cell, read `PLAYTEST_CALIBRATION.md`** —
+> the ledger of what the owner reported after PLAYING an encounter, paired with
+> what the battery measured for it. This harness measures win rate and cannot
+> measure grind: the owner rejected a 78% cell as "too hard" and praised a 72%
+> one as "fun" in the same session, because the harder one had specials and the
+> easier one did not. Add a row every time he reports on a fight.
+
 This is the A8 deliverable (CAMPAIGN_ROADMAP.md): campaign encounter balancing
 is **operated by Opus 5** (`claude-opus-5`), with Fable reviewing once per
 campaign — a spot-check at the end, not a step in the loop. Everything you
