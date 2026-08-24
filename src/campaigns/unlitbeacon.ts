@@ -313,7 +313,24 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_gate', name: 'Held the Gate', description: 'Turn back the first column without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.25, hard: 1.28, nightmare: 1.32 },  // kill-all (tutorial: easy sits high on purpose)
+      // ⚠ TUTORIAL EXEMPTION, now at medium as well as easy (owner played it
+      // 2026-08-24: "won by a very narrow margin... this is about the level I
+      // would expect of HARD for a first encounter").
+      //
+      // The band did not catch it, and that is the lesson worth keeping: at
+      // 1.25 this cell measured a clean PASS — 80% median, 78% mean, 3% walls.
+      // Win rate does not measure GRIND. Three 50 HP / AC 12 stalwarts, fought
+      // by an L1 party at -8 max HP with basic attacks only, through the
+      // two-tile gap this board's wall line leaves at y=3/4, is a long fight
+      // the player wins slowly while a third of their swings miss. The sim's
+      // brain funnels better than a first-time human and never feels bored.
+      // A campaign's FIRST fight is the one that must not feel like that.
+      //
+      // Walk (80 builds x 25): 1.05 -> 95% mean · 1.12 -> 88% · 1.25 -> 78%.
+      // 1.12 reads TOO EASY against the general medium band by design, exactly
+      // as lantern e1's easy does. hard/nightmare are untouched — the owner
+      // did not complain about them, and those tiers are meant to bite.
+      hpScaleOverride: { easy: 0.95, medium: 1.12, hard: 1.28, nightmare: 1.32 },  // kill-all (tutorial: easy AND medium sit high on purpose)
     },
 
     // e2 — Barricade Night (siege). Hold the square while the column keeps
