@@ -162,12 +162,27 @@ describe('A4 — room transitions', () => {
     expect(hasPendingContent(st)).toBe(false);
   });
 
-  it("an 'always' door abandons living enemies — removed from match and initiative", () => {
+  // Owner ruling 2026-08-24: survivors FOLLOW the party through an 'always'
+  // door rather than being deleted. Deleting them made the door a free
+  // room-skip — walk out and everything still standing ceased to exist.
+  it("an 'always' door lets living enemies FOLLOW the party through", () => {
     const { st, p1, e1 } = twoRoomState('always');
+    const hpBefore = e1.currentHealth;
+    const oldPos = { ...e1.position };
     p1.position = { x: 7, y: 3 };
     expect(maybeRoomTransition(st, p1, [])).toBe(true);          // enemies alive, door works anyway
-    expect(st.units.find((u) => u.instanceId === e1.instanceId)).toBeUndefined();
-    expect(st.initiative.order).not.toContain(e1.instanceId);
+
+    const follower = st.units.find((u) => u.instanceId === e1.instanceId);
+    expect(follower, 'the survivor must still be in the match').toBeDefined();
+    expect(st.initiative.order, 'and must keep its initiative slot').toContain(e1.instanceId);
+    // It kept its state and changed only its tile — it walked, it did not respawn.
+    expect(follower!.currentHealth).toBe(hpBefore);
+    expect(follower!.position).not.toEqual(oldPos);
+    // And it arrived NEAR the party, not back where it started.
+    const party = st.units.find((u) => u.instanceId === p1.instanceId)!;
+    const dist = Math.abs(follower!.position.x - party.position.x)
+      + Math.abs(follower!.position.y - party.position.y);
+    expect(dist, 'a pursuer should come through at the party\'s back').toBeLessThanOrEqual(4);
   });
 
   it('a non-party unit on the door does not transition', () => {

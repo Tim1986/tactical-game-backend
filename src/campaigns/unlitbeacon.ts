@@ -641,10 +641,27 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         {
           // Floor 1 — the undercroft. Flee upward mid-fight if you dare.
           terrain: { theme: 'crypt', blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 5, y: 4 }] },
-          enemies: ['shelf_pikeman', 'frozen_watchman'],
-          enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 5 }],
+          // ⚠ Three, not two. The owner played this tower and reported the
+          // shape exactly: "felt relatively easy because there's only 1-2
+          // baddies at a time... then I realized there was a fourth room with
+          // three huge baddies. I decisively lost." The difficulty was all in
+          // the last floor. Front-load some of it so the climb ramps.
+          enemies: ['shelf_pikeman', 'frozen_watchman', 'breaker'],
+          enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 3 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
-          doorMode: 'always',
+          // ⚠ 'on_clear', NOT 'always' — changed the moment survivors began
+          // FOLLOWING the party through (owner ruling, same day). These doors
+          // sit at x=7, BEHIND the enemy line, so a unit chasing a pikeman
+          // ends its turn on one by accident. Under the old delete-them rule
+          // that accident was a free room-skip; under the follow rule it drags
+          // the whole floor upstairs on top of floor 2's garrison and its door
+          // wave. Measured: every difficulty, including EASY, went to 0% —
+          // party wiped 6/6 in every archetype.
+          //
+          // The follow rule is right and stays. The lesson is about PLACEMENT:
+          // an 'always' door only works where stepping on it is a deliberate
+          // act, not on the far side of the room you are fighting through.
+          doorMode: 'on_clear',
         },
         {
           // Floor 2 — the keeper's floor. The watch is caught off guard
@@ -663,13 +680,29 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         {
           // Floor 3 — the beacon platform, cold for the first time in 400 years.
           terrain: { theme: 'crypt' },
-          enemies: ['blizzard_wisp', 'blizzard_wisp', 'honor_guard'],
-          enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 4 }],
-          entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+          // ⚠ ONE wisp, not two. Two Ring-of-Frost casters against a party
+          // that arrives here depleted, with specials spent, was the wall the
+          // owner hit — and it repeated the e5 mistake exactly: the authored
+          // entry tiles were a 2x2 block, which a single ring catches THREE of
+          // (verified against every legal centre). The party did not choose
+          // that formation, so per the opening-formation rule in CAMPAIGNS.md
+          // it must not be an alpha-strike gift. Entry is spread; one wisp
+          // makes the freeze a threat to play around instead of a coin flip.
+          enemies: ['blizzard_wisp', 'honor_guard', 'frozen_watchman'],
+          enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
+          entryTiles: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 0, y: 5 }, { x: 1, y: 6 }],
         },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-      hpScaleOverride: { easy: 1.00, medium: 1.30, hard: 1.45, nightmare: 1.70 },  // rooms
+      // Re-walked after the shape fix (owner lost decisively here, and was
+      // right that it was "definitely tuned too hard"). ⚠ The 1.30 he played
+      // measures 4% mean / 99% walled once the accidental-early-transition
+      // catastrophe is removed — that is how far off this row was.
+      //   easy      0.70 -> 89% · 0.78 -> 85% ✓
+      //   medium    0.75 -> 88% · 0.85 -> 76% · 0.90 -> 68%, 7% walls ✓ · 1.00 -> 42%, 33% walls
+      //   hard      0.98 -> 48%, 6% walls ✓
+      //   nightmare 1.10 — pending, provisional below
+      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 0.98, nightmare: 1.10 },  // rooms
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the

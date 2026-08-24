@@ -68,6 +68,8 @@ the owner actually played, ≥80 builds × 25 games.
 
 | date | campaign / enc | level | diff | scale played | measured | owner verdict | action taken |
 |---|---|---|---|---|---|---|---|
+| 2026-08-24 | unlitbeacon e8 (rooms) | L7 | medium | 1.30 | 4% mean · 99% walls (post-fix re-measure; he played it pre-fix) | *"Felt relatively easy because there's only 1-2 baddies at a time… I'd say it felt too easy overall. LOL I said all that until I realized there was a fourth room with three huge baddies. I decisively lost. This is definitely tuned too hard. I didn't play it optimally, but I played it better than your average normie playing on medium and with probably an above average build."* | Shape rebuilt (floor 1 2→3 enemies, floor 3 loses a second Ring-of-Frost caster, entry tiles spread), door mode fixed, row re-walked to 0.78/0.90/…. |
+| 2026-08-24 | unlitbeacon e7 (race) | L6 | medium | 1.45 | 69% mean at the time | *"Looked really scary, lots of freeze effects, but didn't turn out hard, felt like the AI was playing it badly… a powerful opponent playing badly, not a well balanced opponent playing reasonably well."* + *"is E7 a race? didn't seem like a race"* | Brain gained `raceUrgency` (the defending side was objective-blind); clock 9→6; row re-walked to 0.80/1.00/1.15/1.30. |
 | 2026-08-24 | unlitbeacon e5 (carve) | L4 | medium | 0.92 | 75% mean on the NEW geometry (old geometry not re-measured — the fight was a design bug, not a number) | *"A real design issue… I didn't choose to bunch them up, you did… I'm gonna get caught in a 3 unit blizzard. The only counterplay is to just waste my first turn… feels unfair. Even for a nightmare level difficulty."* | **Formation respaced** (caps any ring at 2, verified) + wisp to the back edge; row re-walked to 0.85/0.98/1.10/1.22. New standing rule in CAMPAIGNS.md. |
 | 2026-08-24 | unlitbeacon e4 (hazard) | L3 | medium | 1.15 | **56% mean · 60% median · 18% walls** (re-measured AFTER the brain fix; the owner played the wall-blind brain) | *"Felt manageable. Maybe a little on the hard end, if he hadn't wasted his flame jet, it would have been tighter. Good fight though, good use of hazards (once they're explained) to make things interesting."* | medium **1.15 → 1.02** (71% mean, 10% walls), and the whole row eased. See below. |
 | 2026-08-24 | unlitbeacon e3 (hold) | L2 | medium | 0.65 | 69% mean · 72% median · 5% walls | *"Felt like a good difficulty… on the easier end of medium."* | **No change.** Sets the floor of the acceptable early-medium window. |
@@ -112,6 +114,23 @@ row which side of the change it was played on. The observation that saved this
 one came from the owner noticing an enemy play badly — playtesters see engine
 bugs that batteries cannot, because a battery has no opinion about whether the
 opponent played well.
+
+## ⚠ "Too easy" and "too hard" can be the SAME encounter
+
+The e8 row is one report, and it contains both verdicts about one fight:
+three floors of "only 1-2 baddies at a time" and then a final floor that
+decisively killed him. The average is meaningless; the SHAPE is the finding.
+
+A battery cannot see this. It reports one win rate per encounter, so a
+back-loaded encounter and an evenly-paced one of the same difficulty are
+indistinguishable to it — and the back-loaded one is much worse to play,
+because the player spends most of it bored and the rest of it losing.
+
+**When a rooms/waves encounter reads fine in aggregate, check its shape by
+hand: enemy count and total HP per room, and remember HP and cooldowns carry
+across the door.** A party arrives at the last room depleted with specials
+spent, so the last room should be the LIGHTEST-looking one on paper, not the
+heaviest. e8 had it exactly backwards.
 
 ## How to add a row
 

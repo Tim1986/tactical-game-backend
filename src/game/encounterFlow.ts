@@ -145,8 +145,17 @@ export function checkSpawnTriggers(
  * firing mid-turn orphaned the rest of the mover's queued actions).
  * on_clear doors require the board clear of living enemies (room_cleared
  * waves fire BEFORE this check, so a clear that spawns a wave shuts the door
- * again); 'always' doors work mid-fight and abandon whoever is left behind
- * (removed from the match — they count as gone for kill-all).
+ * again); 'always' doors work mid-fight and the survivors FOLLOW THE PARTY
+ * THROUGH (owner ruling 2026-08-24: "if you have an open door, and you go
+ * through it without killing all the baddies, the rest of the baddies should
+ * follow you into the next room").
+ *
+ * They used to be DELETED from the match, which made an 'always' door a free
+ * room-skip: walk out, and everything still standing simply ceased to exist.
+ * Following is the better rule on every axis — it removes the exploit, it
+ * makes the escape hatch an honest trade (you leave a bad position but bring
+ * the problem with you), and it is what the fiction says happens when you run
+ * from someone up a staircase.
  */
 export function maybeRoomTransition(state: MatchState, mover: UnitInstance, events: GameEvent[]): boolean {
   const ep = state.encounterProgress;
@@ -158,15 +167,13 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
 
   const room = ep.rooms[0];
 
-  // Abandon living enemies + this room's unspawned waves ('always' doors).
-  const left = livingEnemies(state);
-  const leftIds = new Set(left.map((u) => u.instanceId));
-  state.units = state.units.filter((u) => !leftIds.has(u.instanceId));
-  state.initiative.order = state.initiative.order.filter((id, idx) => {
-    if (!leftIds.has(id)) return true;
-    if (idx <= state.initiative.slot) state.initiative.slot -= 1;
-    return false;
-  });
+  // Survivors of the room being left ('always' doors only — an on_clear door
+  // cannot open with anyone still standing). They keep their instance ids,
+  // their HP, their cooldowns and their initiative slots; only their tiles
+  // change, below, once the party has taken the entry tiles. This room's
+  // UNSPAWNED waves are still abandoned: they belonged to a fight the party
+  // has walked out of, and ep.waves is replaced by the new room's list anyway.
+  const pursuers = livingEnemies(state);
 
   // New carve.
   if (room.terrain && (room.terrain.blocked?.length || room.terrain.hazards?.length)) {
@@ -191,6 +198,35 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
       applyEntryHazard(state, u, events); // authored entry tiles are validated hazard-free; displaced landings are not
     }
   });
+
+  // ...and the pursuers come through the door behind them. Placed from the
+  // party's own entry tiles, so the ring-scan in resolveSpawnTile pushes them
+  // to the nearest free ground AROUND the party — they arrive at your back,
+  // which is exactly what following someone through a door looks like.
+  // Anything that cannot be placed at all is dropped rather than stacked.
+  if (pursuers.length > 0) {
+    const doorway = room.entryTiles[0] ?? mover.position;
+    const stranded: string[] = [];
+    for (const e of pursuers) {
+      const tile = resolveSpawnTile(state, doorway);
+      if (tile) {
+        e.position = tile;
+        events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: e.instanceId, position: tile, message: 'followed the party through' });
+        applyEntryHazard(state, e, events);
+      } else {
+        stranded.push(e.instanceId);
+      }
+    }
+    if (stranded.length > 0) {
+      const drop = new Set(stranded);
+      state.units = state.units.filter((u) => !drop.has(u.instanceId));
+      state.initiative.order = state.initiative.order.filter((id, idx) => {
+        if (!drop.has(id)) return true;
+        if (idx <= state.initiative.slot) state.initiative.slot -= 1;
+        return false;
+      });
+    }
+  }
 
   // Progress bookkeeping BEFORE spawning (spawn placement sees new terrain).
   ep.rooms = ep.rooms.slice(1);
