@@ -578,6 +578,10 @@ export function buildEncounterState(
           checkTiles(w.tiles, 'objective');
           return { kind: 'ally_at_tiles', unitIds: [id], tiles: w.tiles };
         }
+        case 'round_reached':
+          // Resolved to a plain number here, so nothing downstream — engine,
+          // client, win checker — ever knows this was per-difficulty.
+          return { kind: 'round_reached', round: w.roundByDifficulty?.[difficulty] ?? w.round };
         default:
           return w;
       }
@@ -587,6 +591,9 @@ export function buildEncounterState(
         const id = allyIdsByKey.get(l.allyKey);
         if (!id) throw new Error(`Encounter ${encounterId}: objective names unknown ally "${l.allyKey}"`);
         return { kind: 'ally_dead', unitIds: [id] };
+      }
+      if (l.kind === 'round_reached') {
+        return { kind: 'round_reached', round: l.roundByDifficulty?.[difficulty] ?? l.round };
       }
       return l;
     });

@@ -256,11 +256,22 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // never screening the shooters (the rule three failed layouts taught).
     e3: {
       level: 3,
+      // ⚠ REBUILT after battery 1 read 44/4/0/0% with 37-100% of builds
+      // WALLED. I wrote the exact anti-pattern this campaign's sibling file
+      // warns about in its own comments: a wall line at x=4 with the enemies
+      // BEHIND it screens the shooters and taxes only the crosser, so a party
+      // funnelling through two gaps ate a pinning ranger and an ignite
+      // sorcerer for free. Lantern e2's note says it plainly — "cover must sit
+      // on the APPROACH so the party advances behind it" — and three failed
+      // layouts taught it there.
+      //
+      // The barricade is now on the PARTY's side of the toll gap: something to
+      // advance behind, with nothing screening the goblins.
       terrain: {
-        blocked: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
+        blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 3 }],
       },
       enemies: ['kettlehelm_orc', 'bluecap_pathfinder', 'bluecap_scout', 'sparkcap_slinger'],
-      enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'exact_change', name: 'Exact Change', description: 'Clear the gate without losing anyone.', check: { kind: 'no_party_deaths' } },

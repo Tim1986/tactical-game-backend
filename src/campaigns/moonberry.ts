@@ -188,6 +188,15 @@ export const moonberryCampaign: CampaignDefinition = {
     // shape is Lantern's alone now).
     e1: {
       level: 1,
+      // ⚠ Battery 1 read this TUTORIAL as
+      // TOO HARD+WALLS at ALL FOUR tiers — 78/42/16/4% median with 14-54% of
+      // builds walled, at EASY included. The cause was mine: I kept the
+      // retuned e1 scale from the old three-lifter tutorial and then ADDED a
+      // round-3 wave on top, so a level-1 party with no specials faced four
+      // move-5 rogues. The wave earns its place (it is what teaches a new
+      // player that reinforcements exist) so the SCALE pays for it instead —
+      // dropping to two lifters overcorrected to 99-100% at every rung, which
+      // is a tutorial with nothing in it. Three bodies, much softer.
       enemies: ['lantern_lifter', 'lantern_lifter', 'lantern_lifter'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }],
       waves: [

@@ -68,6 +68,7 @@ the owner actually played, ≥80 builds × 25 games.
 
 | date | campaign / enc | level | diff | scale played | measured | owner verdict | action taken |
 |---|---|---|---|---|---|---|---|
+| 2026-08-24 | unlitbeacon e9 (survive) | L8 | medium | 1.70, 8-round clock | 60% mean · 64% median · **15% walls (at the cap)** | *"This is definitely feeling unreasonably hard. By leaps and bounds too hard."* | Per-tier clock added to the grammar (`roundByDifficulty`, 6/7/8/8 per owner call); row re-walked to 1.45/1.45/1.20/1.50. |
 | 2026-08-24 | unlitbeacon e8 (rooms) | L7 | medium | 1.30 | 4% mean · 99% walls (post-fix re-measure; he played it pre-fix) | *"Felt relatively easy because there's only 1-2 baddies at a time… I'd say it felt too easy overall. LOL I said all that until I realized there was a fourth room with three huge baddies. I decisively lost. This is definitely tuned too hard. I didn't play it optimally, but I played it better than your average normie playing on medium and with probably an above average build."* | Shape rebuilt (floor 1 2→3 enemies, floor 3 loses a second Ring-of-Frost caster, entry tiles spread), door mode fixed, row re-walked to 0.78/0.90/…. |
 | 2026-08-24 | unlitbeacon e7 (race) | L6 | medium | 1.45 | 69% mean at the time | *"Looked really scary, lots of freeze effects, but didn't turn out hard, felt like the AI was playing it badly… a powerful opponent playing badly, not a well balanced opponent playing reasonably well."* + *"is E7 a race? didn't seem like a race"* | Brain gained `raceUrgency` (the defending side was objective-blind); clock 9→6; row re-walked to 0.80/1.00/1.15/1.30. |
 | 2026-08-24 | unlitbeacon e5 (carve) | L4 | medium | 0.92 | 75% mean on the NEW geometry (old geometry not re-measured — the fight was a design bug, not a number) | *"A real design issue… I didn't choose to bunch them up, you did… I'm gonna get caught in a 3 unit blizzard. The only counterplay is to just waste my first turn… feels unfair. Even for a nightmare level difficulty."* | **Formation respaced** (caps any ring at 2, verified) + wisp to the back edge; row re-walked to 0.85/0.98/1.10/1.22. New standing rule in CAMPAIGNS.md. |
@@ -131,6 +132,28 @@ hand: enemy count and total HP per room, and remember HP and cooldowns carry
 across the door.** A party arrives at the last room depleted with specials
 spent, so the last room should be the LIGHTEST-looking one on paper, not the
 heaviest. e8 had it exactly backwards.
+
+## ⚠ Some encounters do not care about `hpScaleOverride` at all
+
+e9 is the extreme case and worth remembering before anyone reaches for the
+usual dial. On its authored board:
+
+| lever moved | effect on medium |
+|---|---|
+| scale 1.70 → 2.80 (+65%) | 89% → 78% (**11 points**) |
+| clock 8 → 7 rounds (one round) | 60% → 89% (**29 points**) |
+| +2 enemies at round 2 | 89% → 28% (**61 points**) |
+
+A `survive` objective is won by lasting, so tankier enemies live longer but
+do not kill faster — enemy HP barely registers. **Round count and wave size
+are the levers; scale is nearly decorative.** Wave size in particular is
+brutally coarse: one body is the smallest step available and it is worth
+~30 points, so a cell can be impossible to land inside band by bodies alone.
+
+Check the objective KIND before choosing a dial: kill-all and boss
+encounters respond to scale; survive, hold, escape and race respond to
+clocks, arrivals and geometry. `roundByDifficulty` exists so a survive
+objective can separate its tiers with the lever that actually works.
 
 ## How to add a row
 

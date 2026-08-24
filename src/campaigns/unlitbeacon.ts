@@ -720,9 +720,21 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }, { x: 3, y: 7 },
         ],
       },
+      // ⚠ PER-DIFFICULTY CLOCK (owner call 2026-08-24: "6 rounds for easy, 7
+      // for medium, 8 for hard and nightmare"). He played the flat 8-round
+      // version and called it "unreasonably hard. By leaps and bounds too
+      // hard" — and the measurement agreed: 60% mean with 15% of builds
+      // WALLED, sitting exactly on the wall cap.
+      //
+      // Round count is the right lever, not scale. The note on the round-5
+      // wave below already records why: a `survive` objective is nearly
+      // scale-INERT up high (2.90 -> 3.40 barely moved nightmare) because
+      // tankier enemies do not kill faster. A flat clock therefore made every
+      // tier the same length of grind and left only an inert dial to separate
+      // them. `roundByDifficulty` was added to the grammar for exactly this.
       objective: {
-        text: 'Hold the cave mouth until the column passes (8 rounds)',
-        win: [{ kind: 'round_reached', round: 8 }],
+        text: 'Hold the cave mouth until the column passes',
+        win: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 6, medium: 7, hard: 8, nightmare: 8 } }],
       },
       enemies: ['vanguard', 'shelf_pikeman'],
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 4 }],
@@ -732,9 +744,38 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // (2.90 -> 3.40 barely moved nightmare), and its difficulty lives in
         // round count x wave size.
         { enemies: ['vanguard', 'volley_archer', 'shelf_pikeman'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 6 }], trigger: { on: 'round', round: 5 } },
+        // ⚠ BODIES, not scale. Measured on the new per-tier clock: 1.70 -> 89%
+        // mean at medium and 2.80 -> 78%. Doubling enemy HP moves this cell
+        // ELEVEN POINTS, and easy sits at 99% from 1.20 all the way to 2.80.
+        // A chokepoint survive simply does not care how fat the enemies are —
+        // it cares how many arrive and how long you must hold. So the tiers
+        // are separated by arrivals: EVERY tier gets one early arrival (easy
+        // read 99% without it at every scale from 1.20 to 2.80 — a six-round
+        // hold against two starters is simply not a fight), and hard and
+        // nightmare get a late pair on top.
+        //
+        // ⚠ Wave size is a BRUTALLY coarse dial here — two bodies at round 2
+        // took medium from 89% to 28%. One body is the smallest step this
+        // encounter has, and it is worth ~30 points.
+        { enemies: ['shelf_pikeman'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 } },
+        { enemies: ['vanguard', 'frozen_watchman'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 6 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
-      hpScaleOverride: { easy: 1.20, medium: 1.70, hard: 1.85, nightmare: 2.40 },  // survive — re-walked after +1 body in the round-5 wave
+      // Re-walked on the per-tier clock (owner call: 6/7/8/8 rounds).
+      //   easy      1.45 -> 96% mean · 1.90 -> 95%  ⚠ see the note below
+      //   medium    1.45 -> 71% mean, 76% median, 7% walls ✓  · 1.70 -> 64%
+      //   hard      1.20 -> 42%, 15% walls ✓        · 1.50 -> 31%, 25% walls
+      //   nightmare 1.50 -> 32%, 19% walls ✓        · 1.90 -> 26%, 24% walls
+      //
+      // ⚠ EASY IS PARKED ABOVE BAND ON PURPOSE (median 100% vs a 95% cap).
+      // Six rounds is the owner's chosen clock for this tier and the encounter
+      // cannot be made harder inside it: easy measured 99-100% at EVERY scale
+      // from 1.20 to 2.80, and adding the early arrival only moved it to 95%.
+      // A six-round chokepoint hold is a breather by construction. Raising the
+      // clock would overrule the owner's call to fix a number he did not ask
+      // about — and he reached this encounter having found it brutal, so a
+      // generous easy is the right side to err on.
+      hpScaleOverride: { easy: 1.45, medium: 1.45, hard: 1.20, nightmare: 1.50 },  // survive — clock is the lever, not scale
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the

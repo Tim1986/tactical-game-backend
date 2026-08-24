@@ -39,8 +39,17 @@ export type WinCondition =
   | { kind: 'all_enemies_dead' }
   /** Kill the named enemies (boss); other enemies don't need to die. */
   | { kind: 'units_dead'; enemyKeys: string[] }
-  /** Survive: the round counter reaches `round` with the party alive. */
-  | { kind: 'round_reached'; round: number }
+  /** Survive: the round counter reaches `round` with the party alive.
+   *
+   *  `roundByDifficulty` overrides `round` per tier, and is THE lever for a
+   *  `survive` objective. Those encounters are nearly scale-INERT up high —
+   *  tankier enemies live longer but do not kill faster — so their difficulty
+   *  lives in round count x wave size, and a flat clock leaves only an inert
+   *  dial to separate the tiers. Resolved at BUILD time, exactly like
+   *  WaveSpec.difficulties: the runtime state carries one plain number.
+   *  (owner call 2026-08-24, unlitbeacon e9: "6 rounds for easy, 7 for
+   *  medium, 8 for hard and nightmare"). */
+  | { kind: 'round_reached'; round: number; roundByDifficulty?: Partial<Record<CampaignDifficulty, number>> }
   /** Party units on the marked tiles (escape / stand-on-the-buttons).
    *  `simultaneous` requires all tiles covered at once. */
   | { kind: 'units_at_tiles'; scope: UnitScope; tiles: BoardPosition[]; simultaneous?: boolean }
@@ -51,8 +60,9 @@ export type WinCondition =
  *  Party wipe is ALWAYS an implicit loss and never needs listing. */
 export type LossCondition =
   | { kind: 'ally_dead'; allyKey: string }
-  /** Deadline: reaching this round without having won = loss (race the clock). */
-  | { kind: 'round_reached'; round: number }
+  /** Deadline: reaching this round without having won = loss (race the clock).
+   *  `roundByDifficulty` overrides per tier — see the win-side note. */
+  | { kind: 'round_reached'; round: number; roundByDifficulty?: Partial<Record<CampaignDifficulty, number>> }
   | { kind: 'main_dead' };
 
 /** [A3] Per-encounter objective. Omitted = classic kill-all. */
