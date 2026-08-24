@@ -36,6 +36,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { processTurn, TurnValidationError } from '../game/turnProcessor.js';
+import { tickUnitStatusEffects } from '../game/abilityExecutor.js';
 import { OptimalBrain, AIBrain, normalizeAbilityMap, willDieToOwnTick } from './aiBrain.js';
 import { buildAbilityMap, UNIT_DEFS } from './defaultData.js';
 import { planPlacement } from './placement.js';
@@ -488,9 +489,28 @@ export function runMatch(
       };
       const usable = uncommitted.filter(canLegallyCommit);
       if (uncommitted.length > 0 && usable.length === 0) {
+        // ⚠ MOSTLY SHADOWED since the engine's round-1 frozen auto-skip
+        // (2026-08-23): an ALL-frozen player never receives the turn any
+        // more — the engine consumes the skip inside the previous submit.
+        // This branch still fires for the mixed case the engine deliberately
+        // leaves manual (e.g. one frozen + one doomed-to-its-own-burn), so it
+        // must match the engine's forced-commit semantics EXACTLY.
+        //
+        // It used to append the unit WITHOUT ticking its statuses. That one
+        // missing tick made every 2-turn freeze on a fully-frozen team last
+        // an effective 3 turns in the sim and nowhere else — the sim
+        // overvalued mass-freeze relative to the live game, every battery
+        // measured it, and the divergence only surfaced when the engine
+        // auto-skip started shadowing this path and 20-point swings appeared
+        // on identical content (e5/hard, 2026-08-23). A harness shortcut
+        // that re-implements an engine rule MUST tick like the engine.
         const stateCopy: MatchState = JSON.parse(JSON.stringify(state));
         const frozen = uncommitted.filter((u) => u.isAlive);
         const pick = frozen.length > 0 ? frozen[0] : uncommitted[0];
+        const pickCopy = stateCopy.units.find((u) => u.instanceId === pick.instanceId);
+        if (pickCopy?.statusEffects.some((e) => e.slug === 'frozen')) {
+          tickUnitStatusEffects(pickCopy, []);
+        }
         stateCopy.initiative.order.push(pick.instanceId);
         advanceAfterRound1Commit(stateCopy, p1Id, p2Id, activeId);
         state = stateCopy;
@@ -534,7 +554,13 @@ export function runMatch(
           stuckCandidates.find((u) =>
             u.statusEffects.some((e) => e.slug === 'frozen'),
           ) ?? stuckCandidates[0];
-        if (stuckUnit) stateCopy.initiative.order.push(stuckUnit.instanceId);
+        if (stuckUnit) {
+          // Same rule as the pre-flight above: a frozen forced commit TICKS.
+          if (stuckUnit.statusEffects.some((e) => e.slug === 'frozen')) {
+            tickUnitStatusEffects(stuckUnit, []);
+          }
+          stateCopy.initiative.order.push(stuckUnit.instanceId);
+        }
         advanceAfterRound1Commit(stateCopy, p1Id, p2Id, activeId);
         state = stateCopy;
         turns++;
