@@ -16,6 +16,10 @@ import type { PuzzleDefinition } from '../types.js';
  * denying a turn.
  *
  * Slack: 15 against 12. Vocabulary 2. Tier-0 fate. 2v1, per trap #9.
+ *
+ * Retune 2026-08-24: the Wizard starts at (0,4) [was (3,4)] so Freeze needs a
+ * move first — random lines were stumbling into freeze-then-longshot 15% of
+ * the time against the <5% bar. Line unchanged, luck removed.
  */
 export const PUZZLE_023: PuzzleDefinition = {
   id: 'puzzle-023',
@@ -27,7 +31,7 @@ export const PUZZLE_023: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 3, y: 4 } },
+    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 0, y: 4 } },
     { id: 'p2', side: 'player', slug: 'ranger', specialSlug: 'longshot', position: { x: 1, y: 2 } },
     { id: 'targ', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 6, y: 4 }, currentHealth: 12 },
   ],

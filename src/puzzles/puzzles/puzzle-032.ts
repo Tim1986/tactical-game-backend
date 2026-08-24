@@ -24,6 +24,9 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * Slack: 9 + 20 against 27. Vocabulary 2 (Opportunist; a frozen unit counts as
  * suffering a status). Tier-0 fate. 2v1.
+ *
+ * Retune 2026-08-24: Wizard to (0,4) [was (2,4)], Warlock to (7,4) [was (6,4)],
+ * HP 27 -> 29 (cold_snap 9 + opportunist Longshot 20, exact). Random 13.5% -> 4.5%.
  */
 export const PUZZLE_032: PuzzleDefinition = {
   id: 'puzzle-032',
@@ -35,10 +38,10 @@ export const PUZZLE_032: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 2, y: 4 } },
+    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 0, y: 4 } },
     // The passive is the puzzle. Ranger Opportunist is +5, not +4 (PAS-6).
     { id: 'p2', side: 'player', slug: 'ranger', specialSlug: 'longshot', passiveSlug: 'opportunist', position: { x: 1, y: 2 } },
-    { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 6, y: 4 }, currentHealth: 27 },
+    { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 7, y: 4 }, currentHealth: 29 },
   ],
   initiativeOrder: ['p1', 'p2', 'targ'],
 };

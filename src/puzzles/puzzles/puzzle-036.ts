@@ -32,6 +32,12 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * Vocabulary 1 (enemies out of reach cannot be attacked). Tier-0 fate. 2v2,
  * three turns.
+ *
+ * Retune 2026-08-24: Fighter HP 24 -> 26 (= Longshot 15 + Arrow 11 exact, the
+ * concussive stun caps the Ranger at two shots) and the Rogue starts at (0,6)
+ * [was (3,6)] so the free kill takes an aimed walk, not a reflex. Random
+ * 10% -> ~1% (<5% bar). The skirmisher must stay one-shot-able (<=16 HP) or it
+ * simply outruns the party.
  */
 export const PUZZLE_036: PuzzleDefinition = {
   id: 'puzzle-036',
@@ -47,11 +53,11 @@ export const PUZZLE_036: PuzzleDefinition = {
       position: { x: 1, y: 4 },
       statusEffects: [{ slug: 'rooted', turnsRemaining: 5, stacks: 1 }],
     },
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 3, y: 6 } },
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 0, y: 6 } },
     // Out of the Rogue's reach: six tiles against four movement and a one-tile
     // swing. Only the Ranger can touch it, and only if it still has Longshot.
-    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 6, y: 3 }, currentHealth: 24 },
-    // The free kill, standing right next to your knife.
+    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 6, y: 3 }, currentHealth: 26 },
+    // The free kill — four tiles from your knife; walk to it.
     { id: 'skir', side: 'enemy', slug: 'rogue', specialSlug: 'expose', position: { x: 4, y: 6 }, currentHealth: 12 },
   ],
   initiativeOrder: ['p1', 'p2', 'ward', 'skir'],

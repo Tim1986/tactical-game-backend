@@ -19,7 +19,11 @@ import type { PuzzleDefinition } from '../types.js';
  * puzzle would score depth 0 and be correctly rejected.
  *
  * Slack: 15 against 13. Vocabulary 2. Tier-0 fate. 2v2.
+ *
+ * Retune 2026-08-24: Wizard starts at (0,5) [was (2,5)] — Freeze now needs a
+ * move first; random win rate 8.5% -> 2.5% (<5% bar).
  */
+
 export const PUZZLE_025: PuzzleDefinition = {
   id: 'puzzle-025',
   title: 'Puzzle #25 — The Mender',
@@ -30,7 +34,7 @@ export const PUZZLE_025: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 5 } },
+    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 0, y: 5 } },
     { id: 'p2', side: 'player', slug: 'ranger', specialSlug: 'longshot', position: { x: 1, y: 2 } },
     { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 5, y: 3 }, currentHealth: 13 },
     // Full health on purpose (trap #1), and off the Ranger's line (trap #2).
