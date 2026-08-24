@@ -1,5 +1,14 @@
 # CAMPAIGN_BALANCING.md — the balancing workflow (operator: Opus 5)
 
+> **⚠ ENGINE-FREEZE: every battery run before 2026-08-24's brain fix is VOID.**
+> The brain's line-ability scorer ignored walls (it scored units behind stone
+> and cast into it), and `main_dead` carried no protect instinct. Both are
+> fixed, and both make campaign enemies play BETTER — so every pre-fix
+> certification measured a weaker opponent than ships. Arena is unaffected
+> (the terrain helpers no-op without terrain), so the AC rework and the
+> exploit battery still stand. When quoting a cell's numbers, check the run
+> post-dates that commit.
+
 > **⚠ Before tuning any early-campaign cell, read `PLAYTEST_CALIBRATION.md`** —
 > the ledger of what the owner reported after PLAYING an encounter, paired with
 > what the battery measured for it. This harness measures win rate and cannot
