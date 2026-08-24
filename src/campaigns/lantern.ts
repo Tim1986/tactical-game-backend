@@ -262,14 +262,24 @@ export const lanternCampaign: CampaignDefinition = {
       },
       enemies: ['ember_thief', 'ember_thief', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 3 }, { x: 6, y: 4 }],
+      waves: [
+        {
+          enemies: ['ember_thief', 'goblin_scrapper'],
+          placement: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          trigger: { on: 'round', round: 3 },
+          difficulties: ['hard', 'nightmare'],
+        },
+      ],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
       goals: [
         { slug: 'not_a_spark_lost', name: 'Not a Spark Lost', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
       ],
-      // PROVISIONAL. A hold-the-clock protect is weakly HP-sensitive (tankier
-      // thieves live longer but do not burn the cart faster) — expect the real
-      // levers to be round count and thief count, per the e5 siege history.
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.30, nightmare: 1.55 },
+      // ⚠ Battery 1 read TOO EASY at ALL FOUR tiers (98/90/95/73% mean). A
+      // hold-the-clock protect is weakly HP-sensitive exactly as predicted —
+      // tankier thieves live longer but do not burn the cart faster — so the
+      // scale goes up AND the top tiers get more bodies (the scoped wave
+      // above), which is the lever this encounter actually trades in.
+      hpScaleOverride: { easy: 1.30, medium: 1.70, hard: 2.00, nightmare: 2.40 },
     },
 
     // e4 — The Burning Orchard (hazard). NEW. The thieves fire the orchard to
@@ -328,15 +338,22 @@ export const lanternCampaign: CampaignDefinition = {
           placement: [{ x: 0, y: 2 }],
           trigger: { on: 'round', round: 5 },
         },
+        {
+          enemies: ['wolfpelt_runner', 'wolfpelt_runner'],
+          placement: [{ x: 7, y: 5 }, { x: 0, y: 6 }],
+          trigger: { on: 'round', round: 4 },
+          difficulties: ['hard', 'nightmare'],
+        },
       ],
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
       goals: [
         { slug: 'held_the_hollow', name: 'Held the Hollow', description: 'Still standing, all four, when the pack breaks.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      // ⚠ Round count is the COARSE lever (~25 points per step) and scale the
-      // fine one. Was certified at L3; the party is two levels stronger here,
-      // so these will move.
-      hpScaleOverride: { easy: 1.13, medium: 1.38, hard: 1.46, nightmare: 1.95 },
+      // ⚠ Certified against an L3 party; at L5 the battery read TOO EASY at
+      // easy/medium/hard (95/85/92% mean). Round count is the COARSE lever
+      // (~25 points per step) and scale the fine one — but a survive objective
+      // barely feels scale at all, so the top tiers also get a third wave.
+      hpScaleOverride: { easy: 1.50, medium: 1.90, hard: 2.20, nightmare: 2.60 },
     },
 
     // e6 — The Ridge Chase (race). NEW. The lantern's glow is MOVING: cut the
@@ -376,7 +393,8 @@ export const lanternCampaign: CampaignDefinition = {
       // here (see the difficulties-scoped-wave note in types.ts) — if the
       // tiers will not separate, add a difficulty-scoped blocking wave rather
       // than chasing scale.
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.30, nightmare: 1.50 },
+      // First numbers for the REBUILT race (kill both carriers on a clock).
+      hpScaleOverride: { easy: 1.00, medium: 1.25, hard: 1.45, nightmare: 1.70 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -418,7 +436,9 @@ export const lanternCampaign: CampaignDefinition = {
       ],
       // nightmare eased from the L4-certified 1.70: at L6 the smoke wiped the
       // party 6/6 (a scaled-up pack survives the throat and chases you down).
-      hpScaleOverride: { easy: 0.88, medium: 1.10, hard: 1.28, nightmare: 1.30 },
+      // hard/nightmare read TOO EASY at 74%/72% mean in battery 1 — an escape
+      // barely feels scale, so these climb a long way before they bite.
+      hpScaleOverride: { easy: 0.88, medium: 1.10, hard: 1.60, nightmare: 1.95 },
     },
 
     // e8 — The Underbridge (hold). NEW. Both ends of a span over the
@@ -562,7 +582,8 @@ export const lanternCampaign: CampaignDefinition = {
       goals: [
         { slug: 'the_cook_repaid', name: 'The Cook Repaid', description: 'Bring Nib through with the whole party alive.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.28, nightmare: 1.50 },
+      // TOO EASY at easy/medium/hard in battery 1 (95/76/72% mean).
+      hpScaleOverride: { easy: 1.10, medium: 1.45, hard: 1.75, nightmare: 2.05 },
     },
 
     // e11 — The Undervault (rooms). NEW. Two rooms: the cold hall where the
@@ -598,7 +619,11 @@ export const lanternCampaign: CampaignDefinition = {
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.25, nightmare: 1.45 },
+      // Walked (80 builds x 25): 1.60 -> 84% mean · 1.75 -> 72%, 4% walls ✓ ·
+      // 1.90 -> 56%, 16% walls · 2.20 -> 24%, 58% walls. A brutally steep cliff
+      // — five enemies across two rooms all cross their focus-fire breakpoints
+      // together — so the tiers are packed tight on purpose.
+      hpScaleOverride: { easy: 1.40, medium: 1.75, hard: 1.95, nightmare: 2.15 },
     },
 
     // e12 — The Lantern Court (boss). REUSED from the shipped e5, now at L10
@@ -624,7 +649,11 @@ export const lanternCampaign: CampaignDefinition = {
       ],
       // ⚠ Was certified at L5. At L10 the party has double special charges and
       // full Deep Gifts — expect these to rise substantially.
-      hpScaleOverride: { easy: 0.72, medium: 0.90, hard: 0.92, nightmare: 1.13 },
+      // Walked (80 builds x 25): 1.35 -> 83% mean · 1.50 -> 66%, 10% walls ✓ ·
+      // 1.60 -> 57%, 17% walls · 2.20 -> 12%, 87% walls. The old L5-certified
+      // row (0.72-1.13) read 100% at EVERY tier against an L10 party with
+      // double special charges — the single largest gap the rebuild created.
+      hpScaleOverride: { easy: 1.20, medium: 1.50, hard: 1.68, nightmare: 1.88 },
     },
   },
 
