@@ -49,6 +49,10 @@ export interface UnitInstance {
   /** Thorns retaliation damage for THIS unit, overriding the class default.
    *  Campaign enemies set it explicitly — see THORNS_DAMAGE_BY_CLASS. */
   thornsDamage?: number;
+  /** When set, this unit's damaging ability effects deal this FRACTION of the
+   *  TARGET's max health (min 1) instead of the effect's flat value. Campaign
+   *  enemies only — see CampaignEnemy.damagePercentOfTargetMax. */
+  damagePercentOfTargetMax?: number;
   /** CAMPAIGN-ONLY (ENCOUNTER_SPEC A2). 'phasing' moves through blocked tiles
    *  (never ends on them). Arena builds never set this. */
   moveFlags?: string[];

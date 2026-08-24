@@ -173,6 +173,8 @@ export function buildCampaignEnemyInstance(
     // chassis slug (see THORNS_DAMAGE_BY_CLASS in abilityExecutor).
     ...(passives.includes('thorns') && enemy.thornsDamage != null
       ? { thornsDamage: enemy.thornsDamage } : {}),
+    ...(enemy.damagePercentOfTargetMax != null
+      ? { damagePercentOfTargetMax: enemy.damagePercentOfTargetMax } : {}),
   };
 }
 

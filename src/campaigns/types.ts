@@ -206,6 +206,18 @@ export interface CampaignEnemy {
    *  ALWAYS set it explicitly rather than letting the chassis decide: the
    *  class-keyed default follows PLAYER balance and will drift under you. */
   thornsDamage?: number;
+  /** This enemy's damaging effects deal this fraction of the TARGET's max
+   *  health (min 1) instead of their flat values.
+   *
+   *  Built (2026-08-24, owner idea) for the Adjutant duel: an enemy whose job
+   *  is hunting THE HERO deals flat damage into hero pools that differ 2x by
+   *  class (wizard 32 vs barbarian 55), so time-to-kill-the-hero — and with
+   *  loss = main_dead, the whole encounter — split bimodally on hero class.
+   *  No scale rung could close it: e11 walled 18-22% of builds at easy/medium
+   *  while the median walked it. Percent damage makes the hunt last the same
+   *  number of turns for every hero. Applies to ALL the enemy's damage
+   *  effects, every target; multi-hit abilities apply it per strike. */
+  damagePercentOfTargetMax?: number;
   /** Nightmare-only buffs, applied after difficulty HP scaling. */
   nightmare?: { hpBonus?: number; acBonus?: number; passiveFlags?: string[] };
   /** [A6/B1] Enemy art asset key, decoupled from baseClass (Skeleton art on a

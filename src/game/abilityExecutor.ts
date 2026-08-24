@@ -388,8 +388,16 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
     return;
   }
   const isExecute = effect.healthThreshold !== undefined;
-  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx) + giftBonus(ctx);
-  const parts = damageBreakdown(ctx, target, effect.value);
+  // Percent-of-target-max damage (campaign enemies; see CampaignEnemy). The
+  // FRACTION replaces the effect's flat value as the base — status/passive
+  // modifiers still apply on top, so Weakened still blunts it and the target's
+  // own passives keep their meaning. min 1 so a fraction never rounds to a
+  // no-op hit.
+  const baseValue = ctx.caster.damagePercentOfTargetMax != null
+    ? Math.max(1, Math.round(target.maxHealth * ctx.caster.damagePercentOfTargetMax))
+    : effect.value;
+  const damage = weakenedAdjustedDamage(ctx, baseValue) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx) + giftBonus(ctx);
+  const parts = damageBreakdown(ctx, target, baseValue);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     // Only attach the breakdown when the hit was NOT capped by remaining HP —
     // a partial (overkill) hit would make base+bonuses not sum to `actual`, and

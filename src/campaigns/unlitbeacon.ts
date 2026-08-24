@@ -192,6 +192,14 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // (100-110) — so every build fights the same long duel and the hunt is
       // flavour rather than a filter.
       maxHealth: 100, armorClass: 11,
+      // 15% of the TARGET's max per strike (owner design, 2026-08-24). The
+      // rogue basic is twin (two strikes) -> ~30% of any hero per full turn:
+      // the hunt kills a wizard hero in the same number of turns as a
+      // barbarian one, which closes the hero-class bimodality that no scale
+      // rung could (walls 18-22% at easy/medium while the median walked it).
+      // 15% ≈ the old flat 8 vs a 55 HP hero; against a 32 HP hero it is 5
+      // instead of 8, which is the entire point.
+      damagePercentOfTargetMax: 0.15,
       // 4, down from 5 (2026-08-24). The duel's loss is main_dead and the
       // Adjutant is a PHASING hunter with priorityTarget: main — at movement 5
       // no hero could open distance, so builds with a fragile hero (wizard 32
@@ -657,7 +665,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'answered_alone', name: 'Answered Alone', description: 'Let the hero personally strike down the Adjutant.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 1.30, medium: 1.50, hard: 1.62, nightmare: 1.85 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+      hpScaleOverride: { easy: 1.30, medium: 1.70, hard: 1.80, nightmare: 1.90 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the

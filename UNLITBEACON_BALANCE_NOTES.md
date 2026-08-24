@@ -64,6 +64,23 @@ median 76-80 vs 65, ZERO walls — a breather) · e6/nightmare (52 vs 44 on
 identical content = the noise, directly demonstrated) · e7/easy, e8/easy
 (quantization) · e9/medium (walls +0.3).
 
+**⚠ e11 — SUPERSEDED by the percent-damage rebuild (2026-08-24, owner design).**
+The paragraph below described the state at first certification. The owner then
+proposed scaling the Adjutant's damage to the TARGET's max health, built as
+`CampaignEnemy.damagePercentOfTargetMax` (0.15/strike here): the hunt now
+kills a wizard hero in the same number of turns as a barbarian one, which
+removed the hero-class bimodality outright. Focused re-certification
+(150 builds): **hard 1.80 ✓ and nightmare 1.90 ✓ — the first time the upper
+tiers have ever certified** — easy 1.30 is the 96-vs-95 quantization park
+(walls +3), and medium 1.70 remains the campaign's one beyond-rule park:
+walls read 17-25% across five measurements vs a 15% cap. The character of
+that miss CHANGED, though: it is no longer a coin flip on hero class or the
+wisp cliff — the weakest quarter of builds lose a fair damage race against a
+170-effective-HP duelist, on the campaign's penultimate fight. Judged
+acceptable to ship; revisit only from playtest feel. Final row:
+1.30 / 1.70 / 1.80 / 1.90.
+
+*(Original first-certification finding, kept for the record:)*
 **⚠ BEYOND-RULE: e11 easy/medium/hard.** Walls 18/22/21 vs caps 10/15/25,
 easy+medium still bimodal. The wisp-cliff bimodality is GONE; the residual
 split is HERO CLASS: the loss is main_dead and the Adjutant hunts the main, so
@@ -87,5 +104,5 @@ one real blemish.
 | e8 | 1.00 | 1.30 | 1.45 | 1.70 |
 | e9 | 1.20 | 1.70 | 1.85 | 2.40 |
 | e10 | 1.15 | 1.30 | 1.60 | 1.78 |
-| e11 | 1.30 | 1.50 | 1.62 | 1.85 |
+| e11 | 1.30 | 1.70 | 1.80 | 1.90 |
 | e12 | 1.58 | 1.80 | 1.95 | 2.30 |
