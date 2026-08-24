@@ -36,6 +36,37 @@ because successive operators kept pushing scale at a cell that structurally coul
 respond to it. Once the crew stopped outrunning its own encounter, 1.60 did what 3.00
 could not.
 
+## ⚠ RE-CERTIFIED AGAINST THE ROUND-1 FROZEN AUTO-SKIP (2026-08-23, second pass)
+
+Mid-pass the engine gained an auto-skip: in round 1, a player whose every
+choosable unit is frozen no longer receives a do-nothing commit turn (owner
+request). It is a UX fix, but it is ALSO a balance change, and a large one.
+
+Measured on e5/hard at an unchanged scale of 1.25, three runs each:
+
+| | teams solving | median | walled |
+|---|---|---|---|
+| before the auto-skip | 58% | 52 | 22% ✓ |
+| after | 38-40% | 32-36 | 37-38% ✗ |
+
+Instrumented: the only units auto-skipped in this campaign are the e5 phasers
+(wraith/specter, `warlock` chassis) — i.e. it fires on the ENEMY side, when the
+party's own area freeze catches the whole enemy team. Freezing the enemy in
+round 1 used to be worth more, because the enemy spent real submits fumbling
+through forced commits; now those commits are consumed inside the freezing
+player's own turn. That is a legitimate consequence of the rule, not a defect.
+
+The first certification run predates the auto-skip and is therefore VOID. The
+owner's call (2026-08-23): keep the feature and re-tune the campaign to the
+engine as it actually ships, rather than revert to preserve the old numbers.
+Everything below reflects the re-certified state.
+
+**Lesson for the remaining campaigns: an engine change lands underneath a
+balance pass silently.** Nothing in the tooling noticed that the certification
+and the engine had diverged — the content hash covers the CAMPAIGN object only.
+Before trusting any battery, check that no gameplay commit landed after it
+started.
+
 ## The engine bug this pass uncovered
 
 Campaign enemies are built from `DEFAULT_UNITS[baseClass]` and inherit that class's
