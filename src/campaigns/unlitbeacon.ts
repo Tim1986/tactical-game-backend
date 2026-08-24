@@ -492,9 +492,17 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       terrain: { theme: 'cave' },
       objective: {
         text: 'Get everyone across the Frozen Mere',
+        // ⚠ The WHOLE far column, not a four-tile window inside it. The owner
+        // crossed, put his party on the far row, and the encounter did not
+        // end — because (7,1) and (7,6) look exactly like "across" and were
+        // not goal tiles: "all of a sudden it ended, is this because one of my
+        // guys was in the corner before? Super unsatisfying and confusing."
+        // A win condition whose shape the player cannot infer from the fiction
+        // is a gotcha. "Across" now means the far shore. ((7,0)/(7,7) are
+        // removed corners and cannot be stood on at all.)
         win: [{
           kind: 'units_at_tiles', scope: 'all',
-          tiles: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+          tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
         }],
         // The ice closes. Without a clock this encounter was completely
         // hpScale-INERT (100% at every scale from 0.90 to 2.20): you win by
