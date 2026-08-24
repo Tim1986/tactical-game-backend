@@ -18,6 +18,40 @@ walling 99% of parties, and two cells no sampled team could solve at all. None o
 remains. Every surviving failure is a cell that is slightly TOO EASY or 1–3 points over
 a wall cap — the safe direction.
 
+## ✅ FINAL STATE (2026-08-23, closed by Fable's stopping rule)
+
+**The campaign is DONE.** Final certification: `balance_runs/sealeddeep_bal1_PASS.json`
+(150×25, engine = shipped v1.0.89 semantics: ring rebalance + thorns authoring +
+round-1 auto-skip + true freeze value). 38 of 48 cells read PASS outright; the
+10 flagged cells are all within measurement resolution or documented parks:
+
+| kind | cells | status |
+|---|---|---|
+| median quantization (96 vs an unreachable 95) | e6/easy · e7/easy · e8/easy · e4/easy | walls all ≤9% — the miss is arithmetic, not content |
+| wall share ≤5 pts over cap (±5 noise) | e5/medium · e6/medium · e8/medium · e4/medium* | flip PASS/marginal between identical runs |
+| measured post-close, rung applied | e10/easy (1.46 ✓) · e11/easy (1.30 ✓) | PASS at 100 builds |
+
+\* e4/medium is also a documented no-passing-rung park (see the encounter).
+
+**THE STOPPING RULE (Fable, 2026-08-23 — owner asked why closing took so long).**
+A cell is DONE when it passes, OR its only miss is ≤5 points of wall share, OR
+it is the 96-vs-95 median quantization with wall caps intact. Do NOT re-certify
+to confirm: a re-run resamples ±5-pt noise and relabels WHICH cells are
+marginal, which reads as new failures and restarts the loop. That loop consumed
+several passes here.
+
+**Why this campaign took four certification rounds** (for the next operator):
+1. Three engine changes landed MID-PASS (ring rebalance, the thorns leak fix,
+   the round-1 auto-skip) — each invalidated prior measurements, and nothing in
+   the tooling notices; the content hash covers the campaign object only.
+   → FREEZE the engine for the duration of a balance pass.
+2. The auto-skip exposed a sim-harness bug (untucked freeze durations), voiding
+   every freeze-heavy measurement ever taken and forcing e5's full re-tune.
+3. The acceptance geometry guarantees phantom failures: the easy median ceiling
+   (95) is unreachable at 25 games/build. → For the remaining campaigns, either
+   certify easy tiers at 100 games or ratify the ceiling at 96 (owner decision;
+   targets file is frozen mid-pass by design).
+
 ## The one-line lesson
 
 **Three of the four hardest cells were not tuning problems at all, and no amount of
@@ -135,14 +169,14 @@ Do not chase a cell that is within ~5 points of a bound — re-run first.
 | e2 | 0.75 | 0.90 | 1.00 | 1.12 |
 | e3 | 0.85 | 1.00 | 1.30 | 1.25 |
 | e4 | 0.75 | 0.92 | 1.10 | 1.15 |
-| e5 | 1.05 | 1.15 | 1.25 | 1.35 |
-| e6 | 0.97 | 1.00 | 1.20 | 1.32 |
-| e7 | 0.50 | 0.75 | 0.90 | 2.00 |
-| e8 | 1.30 | 1.38 | 1.60 | 1.60 |
+| e5 | 1.00 | 1.05 | 1.12 | 1.22 |
+| e6 | 0.93 | 1.00 | 1.20 | 1.32 |
+| e7 | 0.50 | 0.68 | 0.90 | 2.00 |
+| e8 | 1.22 | 1.38 | 1.60 | 1.60 |
 | e9 | 0.78 | 0.85 | 0.92 | 0.90 |
-| e10 | 1.55 | 1.50 | 1.68 | 1.90 |
-| e11 | 1.20 | 1.40 | 1.70 | 1.85 |
-| e12 | 0.85 | 0.88 | 1.00 | 1.05 |
+| e10 | 1.46 | 1.50 | 1.68 | 1.90 |
+| e11 | 1.30 | 1.40 | 1.70 | 1.85 |
+| e12 | 0.78 | 0.88 | 1.00 | 1.05 |
 
 ## For the next campaign (Unlit Beacon, trilogy)
 

@@ -810,7 +810,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 2.00 -> 22%. That gap IS the walk's documented sampling noise, and
       // it is why rungs get certified rather than trusted. Pulled down to hit
       // the band midpoints against the battery's numbers, not the walk's.
-      hpScaleOverride: { easy: 1.55, medium: 1.50, hard: 1.68, nightmare: 1.90 },
+      hpScaleOverride: { easy: 1.46, medium: 1.50, hard: 1.68, nightmare: 1.90 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
@@ -832,7 +832,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // cleanly): easy 1.20 -> 89 · medium 1.45 -> 68 · hard 1.70 -> 54 (12%
       // walled) · nm 1.90 -> 29 but 20% walled, so nightmare parks at 1.85 —
       // one point of mean is not worth breaching the wall cap.
-      hpScaleOverride: { easy: 1.20, medium: 1.40, hard: 1.70, nightmare: 1.85 },
+      hpScaleOverride: { easy: 1.30, medium: 1.40, hard: 1.70, nightmare: 1.85 },
     },
 
     // e12 — The Sealed Deep (rooms). 3 rooms, finale. Room 0 needs exitDoors;
