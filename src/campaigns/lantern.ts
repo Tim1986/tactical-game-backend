@@ -204,7 +204,17 @@ export const lanternCampaign: CampaignDefinition = {
       // Easy sits above band by design — tutorial exemption (near-certain first win).
       // ⚠ Three identical scrappers share damage breakpoints, so the whole cell
       // moves at once and the walk is steep (~31 pts per 0.07 at medium).
-      hpScaleOverride: { easy: 0.93, medium: 1.20, hard: 1.23, nightmare: 1.28 },
+      // ⚠ TUTORIAL EXEMPTION at medium (owner standard, 2026-08-24). A
+      // campaign's FIRST fight — level 1, no specials, party at -8 max HP —
+      // is calibrated to ~85% mean / ~90% median with no walled archetype,
+      // which reads TOO EASY against the general medium band on purpose. The
+      // owner played unlitbeacon e1 at a measured-PASS 78% mean and called it
+      // "about the level I would expect of HARD for a first encounter": win
+      // rate does not measure GRIND, and every e1 in the catalog sat in that
+      // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
+      // chosen here:
+      //   1.20 -> 71% mean/80% median · 1.08 -> 80% · 1.00 -> 84%/88%, 0% walls
+      hpScaleOverride: { easy: 0.93, medium: 1.00, hard: 1.23, nightmare: 1.28 },
     },
 
     // e2 — The Old Mill (carve). Millstone cover on the APPROACH lane, never
@@ -284,7 +294,11 @@ export const lanternCampaign: CampaignDefinition = {
       goals: [
         { slug: 'through_the_smoke', name: 'Through the Smoke', description: 'Lose nobody to the fire or the hurlers.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.00, medium: 1.25, hard: 1.40, nightmare: 1.60 },
+      // ⚠ First battery: medium/hard walled 27%/29% and nightmare read 0% with
+      // 78% walled — a fire board punishes the same archetypes twice (you burn
+      // crossing it, then fight at a deficit), so it needs a GENTLER scale
+      // ladder than an open board, not a steeper one.
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
     },
 
     // e5 — The Wolfpelt Camp (siege). REUSED from the shipped e3, now at L5
@@ -335,16 +349,25 @@ export const lanternCampaign: CampaignDefinition = {
         theme: 'forest',
         blocked: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 6 }, { x: 4, y: 7 }],
       },
+      // ⚠ REBUILT after the first battery read 100% at EVERY difficulty — no
+      // scale rung can fix a race nobody loses. The original won on
+      // `units_at_tiles scope:'any'`: ONE unit touching a tile five steps from
+      // the party's own start line, inside seven rounds. That is not a race,
+      // it is a walk, and it was also a near-copy of e7's escape.
+      //
+      // The race is now against the CARRIERS: both ember thieves must fall
+      // before they crest the ridge. Their guards stand between, so the clock
+      // buys focus-fire discipline rather than footspeed — and it is a
+      // genuinely different problem from e7's "get everyone out".
       objective: {
-        text: 'Cut them off — reach the ridge line before they do (7 rounds)',
-        win: [{
-          kind: 'units_at_tiles', scope: 'any',
-          tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 4 }],
-        }],
+        text: 'Bring down both lantern-carriers before they crest the ridge (7 rounds)',
+        win: [{ kind: 'units_dead', enemyKeys: ['ember_thief'] }],
         loss: [{ kind: 'round_reached', round: 7 }],
       },
       enemies: ['ember_thief', 'ember_thief', 'goblin_slinger', 'wolfpelt_runner'],
-      enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 4 }, { x: 6, y: 5 }, { x: 4, y: 3 }],
+      // Carriers out on the far flanks with a head start; the guards plant
+      // themselves in the middle lane so the party cannot simply walk at them.
+      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'cut_them_off', name: 'Cut Them Off', description: 'Reach the ridge by round 6.', check: { kind: 'win_by_round', round: 6 } },
@@ -435,7 +458,11 @@ export const lanternCampaign: CampaignDefinition = {
       goals: [
         { slug: 'both_ends_held', name: 'Both Ends Held', description: 'Hold the span with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.30, nightmare: 1.55 },
+      // ⚠ hard/nightmare eased hard (1.30/1.55 -> 1.00/1.10): the first battery
+      // read 16%/6% with 39%/50% of builds WALLED. The round-4 scoped wave is
+      // already this encounter's difficulty dial — piling a high HP scale on
+      // top of two extra bodies double-charges the same tier.
+      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.00, nightmare: 1.10 },
     },
 
     // e9 — The Dark Between (survive). NEW, and the campaign's THESIS FIGHT:
@@ -475,9 +502,10 @@ export const lanternCampaign: CampaignDefinition = {
       goals: [
         { slug: 'kept_the_dark_out', name: 'Kept the Dark Out', description: 'Nobody lost to the black.', check: { kind: 'no_party_deaths' } },
       ],
-      // nightmare eased: the difficulty-scoped round-5 wave is already the
-      // pressure here — stacking a high scale on top wiped the party 6/6.
-      hpScaleOverride: { easy: 0.95, medium: 1.18, hard: 1.25, nightmare: 1.30 },
+      // ⚠ Same double-charge as e8, and worse: 10%/4% with half the builds
+      // walled. The round-5 scoped wave (a second croaker + a scrapper) is the
+      // top-tier pressure; the scale must come DOWN to pay for it.
+      hpScaleOverride: { easy: 0.95, medium: 1.18, hard: 0.95, nightmare: 1.05 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────

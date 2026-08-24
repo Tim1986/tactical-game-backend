@@ -253,7 +253,17 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // lose, even on nightmare. Parked on band midpoints. Note the steepness
       // (~70 pts per 1.0 of scale): three IDENTICAL warriors share every hit
       // breakpoint, so the whole cell crosses a cliff at once.
-      hpScaleOverride: { easy: 1.05, medium: 1.18, hard: 1.32, nightmare: 1.36 },
+      // ⚠ TUTORIAL EXEMPTION at medium (owner standard, 2026-08-24). A
+      // campaign's FIRST fight — level 1, no specials, party at -8 max HP —
+      // is calibrated to ~85% mean / ~90% median with no walled archetype,
+      // which reads TOO EASY against the general medium band on purpose. The
+      // owner played unlitbeacon e1 at a measured-PASS 78% mean and called it
+      // "about the level I would expect of HARD for a first encounter": win
+      // rate does not measure GRIND, and every e1 in the catalog sat in that
+      // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
+      // chosen here:
+      //   1.18 -> 73% mean/76% median · 1.06 -> 83%/88%, 0% walls · 0.98 -> 93% (too far)
+      hpScaleOverride: { easy: 1.05, medium: 1.06, hard: 1.32, nightmare: 1.36 },
     },
 
     // e2 — The Collapsed Gallery (carve). No objective — the terrain IS the

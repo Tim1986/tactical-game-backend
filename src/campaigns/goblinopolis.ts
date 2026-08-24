@@ -116,7 +116,17 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 7, y: 3 }, { x: 0, y: 5 }, { x: 7, y: 4 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }],
       noSpecials: true,
-      hpScaleOverride: { easy: 1.13, medium: 1.46, hard: 1.54, nightmare: 1.76 },
+      // ⚠ TUTORIAL EXEMPTION at medium (owner standard, 2026-08-24). A
+      // campaign's FIRST fight — level 1, no specials, party at -8 max HP —
+      // is calibrated to ~85% mean / ~90% median with no walled archetype,
+      // which reads TOO EASY against the general medium band on purpose. The
+      // owner played unlitbeacon e1 at a measured-PASS 78% mean and called it
+      // "about the level I would expect of HARD for a first encounter": win
+      // rate does not measure GRIND, and every e1 in the catalog sat in that
+      // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
+      // chosen here:
+      //   1.46 -> 74% mean/76% median · 1.32 -> 84%/88%, 1% walls · 1.22 -> 93% (too far)
+      hpScaleOverride: { easy: 1.13, medium: 1.32, hard: 1.54, nightmare: 1.76 },
     },
 
     // e2 — Blue-Ribbon Tollgate (carve). A barricade line with the toll gap on

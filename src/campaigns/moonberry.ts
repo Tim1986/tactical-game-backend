@@ -154,7 +154,17 @@ export const moonberryCampaign: CampaignDefinition = {
       // their breakpoints stagger), not another tuning pass — do not re-walk it.
       // nightmare walk: 1.28->56 · 1.32->30. Same shared-breakpoint cliff, but
       // here 1.32 lands cleanly mid-band. Do not nudge it 'to be safe'.
-      hpScaleOverride: { easy: 0.98, medium: 1.26, hard: 1.29, nightmare: 1.32 },
+      // ⚠ TUTORIAL EXEMPTION at medium (owner standard, 2026-08-24). A
+      // campaign's FIRST fight — level 1, no specials, party at -8 max HP —
+      // is calibrated to ~85% mean / ~90% median with no walled archetype,
+      // which reads TOO EASY against the general medium band on purpose. The
+      // owner played unlitbeacon e1 at a measured-PASS 78% mean and called it
+      // "about the level I would expect of HARD for a first encounter": win
+      // rate does not measure GRIND, and every e1 in the catalog sat in that
+      // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
+      // chosen here:
+      //   1.26 -> 78% mean/84% median · 1.16 -> 80% · 1.08 -> 85%/92%, 0% walls
+      hpScaleOverride: { easy: 0.98, medium: 1.08, hard: 1.29, nightmare: 1.32 },
     },
 
     // e2 — The Silver Arch (hold). Two moonstone seals, far apart: the arch
