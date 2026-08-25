@@ -16,9 +16,14 @@ surfaced the same day that aggregates can never see:
 
 ## STATUS — the operator updates this block after EVERY work session
 
-**NEXT STEP → 2 (RUN 2 IN PROGRESS).** Run 1 (12 cells, 100 games) was
-DIRECTIONAL ONLY — see §2a-results. Run 2 is 12 variants × 2 templates ×
-20 cells × 250 games ≈ 120k.
+**NEXT STEP → 2 (RUN 3 — the de-confounded sweep — IN PROGRESS.)** Runs 1–2
+are done and recorded in §2a-results; run 2 is decision-grade on MEANS but
+its slopes carry the confound described in §2a-critique, so no remedy is
+sized from them. Run 3 (classValueSweep.ts) sweeps the SAME four
+kill-relevant cells at k ∈ {0.8, 1.2, 1.6, 2.0}: within-cell slopes are
+confound-free. 15 variants (run 2's twelve + war:grasp, war:drain,
+ran:longshot) × 2 templates × 4 cells × 4 scales × 200 games ≈ 96k.
+Owner has approved taking the time to measure properly before concluding.
 
 _(superseded)_ Run 1: classValue.ts built and RUNNING — 8 classes
 × 2 company templates × 12 cells (scale 0.68–1.95) × 100 games ≈ 19k games.
@@ -152,11 +157,49 @@ wizard won 97% where sorcerer won 38%.
 3. ⚠ Run 1 also printed the SE of the MEAN beside the slope, which invites
    reading noise as signal. Run 2 prints the slope's own SE and a t-value.
 
-**Run 2 fixes all three**: 20 cells (both difficulties of ten encounters,
-every objective kind at two scales), 250 games, and VARIANTS rather than
-classes — the eight defaults plus sorcerer:flame_jet, sorcerer:ignite,
-wizard:cold_snap and rogue:dagger_toss, so a class's AoE case and its
-single-target case are measured separately.
+**Run 2 fixed all three** (20 cells, 250 games, variants). Its results:
+
+#### §2a-results — RUN 2 (20 cells × 250 games ≈ 120k, 2026-08-24)
+
+| variant | mean Δ | slope /+1.00 scale | t | verdict |
+|---|---|---|---|---|
+| warlock (fear) | **+14.0** ±2.4 | +0.5 | 0.1 | dominant, flat |
+| sorc:ignite | +3.3 | +8.9 | 1.2 | noise |
+| cleric | +2.8 | +0.4 | 0.0 | noise |
+| barbarian | 0.0 | +3.4 | 0.4 | noise |
+| sorcerer (ffh) | −0.1 | −11.1 | −1.8 | marginal |
+| wizard (freeze) | −0.2 | **+24.2** | 3.1 | SIGNIFICANT |
+| fighter | −1.2 | −11.6 | −1.5 | marginal |
+| sorc:flame_jet | −1.4 | **+18.0** | 2.6 | SIGNIFICANT |
+| wiz:cold_snap | −2.1 | +1.0 | 0.1 | noise |
+| rogue (assassinate) | −2.7 | **−16.7** | −2.7 | SIGNIFICANT |
+| ranger (piercing) | −4.1 | −7.3 | −0.8 | noise |
+| rogue:dagger_toss | **−8.2** ±2.1 | −9.7 | −1.8 | marginal |
+
+Robust findings (Opus): no GENERAL damage tax — flame_jet's slope is
+strongly positive; the sorcerer's felt problem is `ffh` specifically (at
+scale 1.95: ffh 46% vs flame_jet 94% vs ignite 99%); warlock is the real
+outlier at +14.0 mean, flat.
+
+#### §2a-critique (Fable review) — why run 2's SLOPES are not load-bearing
+
+**Scale was never randomly assigned.** A cell's hpScale is its AUTHORED
+difficulty, and the lever doctrine proves scale gets cranked high exactly
+where it is inert (survive/hold/duel) and stays low where it bites
+(kill-alls). High-scale cells are therefore systematically different KINDS
+of fights, and a cross-cell regression conflates "how does this class handle
+HP inflation" with "how does this class handle objective encounters".
+Rogue's −16.7 could be either; the two readings need different fixes. Also:
+12 significance tests at ±2 SE expect ~1 false positive, and defaults hid
+more than ffh — warlock's +14 was measured holding FEAR, ranger's −4.1
+holding PIERCING (a line that hits allies), and fighter's default is
+SECOND_WIND, i.e. the purest blockable-basics profile in the roster.
+
+**The refined hypothesis run 3 tests — the DODGE TAX:** what anti-scales is
+blockable, repeated damage. Fatter enemies need more hits; every extra hit
+is another dodge roll; the miss tax compounds with k. Unblockable bursts are
+exempt by construction; control and sustain never cared about k. Run 3 tags
+every variant with its mechanical profile and reports the grouping.
 
 #### Original spec (kept — the acceptance bar it was built against)
 
@@ -196,7 +239,28 @@ a number today (boons/gifts/second charge are additive). So the architecture
 is: L1–L5 = the shipped ramp INTO arena values; L5 = arena, exactly; L6–L10 =
 the new CAMPAIGN GROWTH CURVE.
 
-**Implementation shape (Opus):**
+**⚠ REMEDY SHAPE REVISED (Fable, 2026-08-24, after run 2 + critique):**
+a flat "+X% all damage" curve is DEAD — it would hand warlock (+14.0
+already) the same raise as the classes actually drowning and widen the real
+gap. The revised working shape, to be confirmed by run 3:
+
+- **CAMPAIGN_GROWTH's damage rung applies to BASIC attacks, flat +N per
+  level** — not a percentage on everything. Under the dodge-tax model this
+  pays the measured losers most by construction (+2 on twin is +4 every
+  turn; +2 on a once-per-battle flame_jet is nothing), never touches
+  specials, and leaves the anchor clean.
+- **`ffh` is the per-ability exceptions table's first customer** — the one
+  robust special-level finding: an ally-hitting ring anti-scales because
+  bigger k means fewer, fatter targets (owner's own report of AoE in play).
+- **Warlock is an INVESTIGATION, not a nerf**: +14 mean may be a brain
+  artifact (fear/grasp/drain may be abilities the sim's opponent has no
+  answer to). Cross-check warlock in the arena contain6 grid — if it is not
+  dominant there, the campaign sim overrates it and that is a brain finding.
+- Party max-HP per level stays as designed (it counters enemy DAMAGE, which
+  nothing above measures).
+
+**Original implementation shape (still the vehicle — the anchor, one global
+table, L6–L10; only the damage rung's FORM changed):**
 
 - `CAMPAIGN_GROWTH` in campaigns/runtime.ts — one table, level-indexed,
   L6–L10 only. Fields per level, all starting at 0 and tuned from 2a's
