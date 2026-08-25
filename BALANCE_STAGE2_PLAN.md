@@ -16,8 +16,10 @@ surfaced the same day that aggregates can never see:
 
 ## STATUS — the operator updates this block after EVERY work session
 
-**NEXT STEP → 2. Build classValue.ts (Opus).** Sonnet: nothing is currently
-delegated; check back after step 3.
+**NEXT STEP → 2 (IN PROGRESS). classValue.ts built and RUNNING** — 8 classes
+× 2 company templates × 12 cells (scale 0.68–1.95) × 100 games ≈ 19k games.
+When it lands: paste the per-class table into §2a, then size the curve (§3a).
+Sonnet: nothing delegated until step 5.
 
 - [x] 1. Trilogy battery 2 harvested (L≤5 rows + structural signals). DONE
       2026-08-24. Battery 2: goblinopolis 25/48, moonberry 19/48 (from 15 and
@@ -91,7 +93,25 @@ Wizard freezing, Cleric sustaining, Sorcerer sucks") is this table, felt.
 Also true and worth keeping in frame: kill BREAKPOINTS recede. Assassinate's
 ≤22 threshold, burst-to-kill-before-it-acts — all quietly degrade as k rises.
 
-### 2a. First: MEASURE it (Opus builds `classValue.ts`)
+### 2a. MEASURE it — `src/ai/classValue.ts` (BUILT 2026-08-24)
+
+**Design as built** (review it before trusting a re-run): one COMPANION slot
+(index 1) rotates through all 8 chassis while the other three are held fixed,
+so each win-rate difference belongs to one class — the isolation the gift
+harness skipped. Two company templates (melee-heavy, ranged-heavy) so a class
+is not judged only by its neighbours. 12 cells spanning the authored scale
+range 0.68–1.95 across two campaigns and mixed objective kinds, all L5+.
+Deep Gifts forced OFF (the current policy is measurably wrong, and leaving it
+on would fold that error into the class signal). Each class's per-cell delta
+is regressed against the cell's hpScale: **the slope, in points of win rate
+per +1.00 of enemy-HP multiplier, IS the tax.** ~19k games, ±1pt SE on a
+class's mean delta.
+
+Known caveat, written into the file: when the rotating class matches a fixed
+member the party runs a duplicate (2 of 16 rows per class) and carries a
+same-class synergy the other rows do not.
+
+#### Original spec (kept — the acceptance bar it was built against)
 
 Same isolation trick as giftPerClass, applied to class slots:
 - Template parties where ONE slot rotates through all 8 classes, the other
