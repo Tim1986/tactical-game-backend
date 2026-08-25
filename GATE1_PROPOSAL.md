@@ -50,12 +50,43 @@ gate is simpler than planned.
 | L9 | +6 | **+2** | fork #2 |
 | L10 | +9 | +2 | max level (also gains the 2nd charge) |
 
-**Why basics, not a percentage.** A flat +N on BASIC attacks pays repeated
-attackers most (a rogue swings twin every turn: +2 = +4/turn) and barely
-touches once-per-battle specials — so it lifts the classes whose value is
-grind without inflating burst, and **never touches a special's numbers**,
-keeping the anchor's contract clean. It is small on purpose: +2 on an
-11-damage sword is +18%, against enemy HP scales that already run 0.8–2.0.
+**Why basics, not a percentage — corrected rationale (owner, 2026-08-24).**
+An earlier draft justified this partly as "it lifts the classes the tax
+punished". There is no tax, and that framing was wrong anyway: a damage buff
+helping the Rogue most **is the class working as designed**, not a
+distortion to be defended. Owner's ruling: *"It should be expected that a
+damage buff disproportionately helps Rogue, that is part of the class
+design. Balance around it."*
+
+The real reasons to put the rung on basics are: it **never touches a
+special's numbers**, which is what keeps the anchor's contract clean and
+invariant-testable; it rewards sustained pressure rather than inflating
+alpha strike (already the strongest pattern in the game); and it scales
+with attack FREQUENCY, which is precisely how the roster differentiates
+itself.
+
+**The disproportion, measured, so it is balanced around rather than
+discovered later.** `+N per damage EFFECT` (same semantics as
+GIFT_DAMAGE_BONUS, which already reads "+N on every damaging effect"):
+
+| class | basic | hits | now | at +2/effect | gain |
+|---|---|---|---|---|---|
+| **rogue** | twin | **2** | 16 | **20** | **+25%** |
+| wizard | missile | 1 | 10 | 12 | +20% |
+| sorcerer | bolt | 1 | 10 | 12 | +20% |
+| fighter | sword | 1 | 11 | 13 | +18% |
+| cleric | mace | 1 | 11 | 13 | +18% |
+| ranger | arrow | 1 | 11 | 13 | +18% |
+| warlock | eldritch | 1 | 11 | 13 | +18% |
+| barbarian | strike | 1 | 13 | 15 | +15% |
+
+Rogue's edge is **+25% vs a 15–20% field** — real, intended, and modest
+enough to balance around rather than engineer away. ⚠ Two riders for §4:
+(a) rogue's twin is BLOCKABLE twice, so it also loses to misses twice —
+part of why its measured mean sits at −2.7 despite the buff advantage;
+(b) the multi-hit interaction is the reason the rung is +1/+2 rather than
+larger — at +4/effect a rogue would gain +50% and the spread would stop
+being a class trait and start being a balance problem.
 
 **Why HP too.** Enemy DAMAGE is untouched by hpScale, so HP is the only
 player-side counter to a longer campaign; +9 by L10 on 34–55 pools is one
