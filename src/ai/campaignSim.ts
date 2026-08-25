@@ -19,7 +19,7 @@
 import { runMatch, makeRng } from './simHarness.js';
 import { OptimalBrain } from './aiBrain.js';
 import { buildAbilityMap } from './defaultData.js';
-import { applyCooldownOverrides, applyCampaignAbilities } from '../game/abilityOverrides.js';
+import { applyCooldownOverrides, applyCampaignAbilities, applyCampaignAbilityTuning } from '../game/abilityOverrides.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
 import { buildEncounterState, CampaignUnitChoice, DEEP_GIFTS, DeepGiftSlug } from '../campaigns/runtime.js';
 import { CampaignDifficulty } from '../campaigns/types.js';
@@ -212,9 +212,12 @@ export function simEncounterCell(
   // E0's L10 second charge rides UnitInstance.extraCharges inside the built
   // state, so the sim exercises it with no ability-map surgery.)
   const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys, options.hpScale);
-  const abilityMap = applyCooldownOverrides(
-    applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
-    probe.cooldownOverrides,
+  const abilityMap = applyCampaignAbilityTuning(
+    applyCooldownOverrides(
+      applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
+      probe.cooldownOverrides,
+    ),
+    level,
   );
   const brain1 = new OptimalBrain();
   const brain2 = new OptimalBrain();

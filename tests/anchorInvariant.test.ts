@@ -86,3 +86,19 @@ describe('anchor: campaign L5 === arena, exactly', () => {
     }
   });
 });
+
+describe('growth is always a REWARD', () => {
+  it('every class gains something at every level from L6 to L10', () => {
+    // A level-up screen that grants a class nothing is a design failure even
+    // when the totals are right — Rogue hit exactly that at L7 before its HP
+    // rungs were smoothed.
+    for (const slug of CLASSES) {
+      for (const lvl of [6, 7, 8, 9, 10]) {
+        const now = campaignGrowthFor(slug, lvl);
+        const prev = campaignGrowthFor(slug, lvl - 1);
+        const gained = (now.maxHp - prev.maxHp) + (now.basicDamage - prev.basicDamage);
+        expect(gained, `${slug} gains nothing at L${lvl}`).toBeGreaterThan(0);
+      }
+    }
+  });
+});

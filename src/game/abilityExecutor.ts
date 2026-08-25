@@ -394,7 +394,12 @@ function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): vo
 }
 
 function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: DamageEffect): void {
-  if (effect.healthThreshold !== undefined && target.currentHealth > effect.healthThreshold) {
+  // [Gate 1] The execute threshold takes a percentage FLOOR when one is set
+  // (campaign L6+), so it does not shrink relative to scaled HP pools.
+  const execThreshold = effect.healthThreshold === undefined ? undefined
+    : Math.max(effect.healthThreshold,
+        Math.round((effect.healthThresholdPercent ?? 0) * target.maxHealth));
+  if (execThreshold !== undefined && target.currentHealth > execThreshold) {
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;
   }

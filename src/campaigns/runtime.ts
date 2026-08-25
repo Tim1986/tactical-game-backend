@@ -85,11 +85,16 @@ const GROWTH_FIELD: Record<number, GrowthRung> = {
 /** Per-class overrides. Rogue: half damage rung (Twin pays it twice) and a
  *  lighter HP rung. Add a row here rather than bending the field. */
 const GROWTH_BY_CLASS: Record<string, Record<number, GrowthRung>> = {
+  // ⚠ Rogue's HP rungs are SMOOTHED (2/3/4/5/6 rather than 2/2/4/4/6) so that
+  // every level grants something visible. With the halved damage rung, the
+  // stepped version left Rogue with literally nothing at L7 while the rest of
+  // the party gained damage — a level-up screen that says "you got nothing"
+  // is a design failure even when the totals are right.
   rogue: {
     6:  { maxHp: 2, basicDamage: 0 },
-    7:  { maxHp: 2, basicDamage: 0 },
+    7:  { maxHp: 3, basicDamage: 0 },
     8:  { maxHp: 4, basicDamage: 0 },
-    9:  { maxHp: 4, basicDamage: 1 },
+    9:  { maxHp: 5, basicDamage: 1 },
     10: { maxHp: 6, basicDamage: 1 },
   },
 };

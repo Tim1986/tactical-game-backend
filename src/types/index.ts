@@ -65,6 +65,13 @@ export interface DamageEffect {
   formula: 'flat';
   value: number;
   healthThreshold?: number; // Kill Shot: fails if target.currentHealth > threshold
+  /** [Gate 1] Campaign-only execute floor: the effective threshold becomes
+   *  max(healthThreshold, healthThresholdPercent x target.maxHealth). A FLAT
+   *  execute threshold anti-scales against campaign HP — Kill Shot's 22 is
+   *  44% of an arena pool but 29% at hpScale 1.5 — so above the anchor it
+   *  gains a percentage floor. Absent in arena, where the flat number is the
+   *  balanced one. */
+  healthThresholdPercent?: number;
 }
 
 export interface HealEffect {
