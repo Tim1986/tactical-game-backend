@@ -805,7 +805,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // gap to each tier's band, and medium's gap is the widest because its
       // shorter clock leaves the most slack. Read the clock and the scale
       // together; neither number means anything alone.
-      hpScaleOverride: { easy: 1.45, medium: 3.20, hard: 1.70, nightmare: 2.20 },  // survive
+      hpScaleOverride: { easy: 1.45, medium: 3.70, hard: 1.70, nightmare: 2.20 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -894,7 +894,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // 5.00 reads 95-100%. Never nudge these rungs by "a bit"; re-walk.
       // hard sits at 3.20 rather than the 3.00 that also passes, so medium and
       // hard are not the same fight wearing different labels.
-      hpScaleOverride: { easy: 2.60, medium: 3.00, hard: 3.20, nightmare: 3.50 },  // boss
+      hpScaleOverride: { easy: 2.60, medium: 2.90, hard: 3.20, nightmare: 3.50 },  // boss
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
