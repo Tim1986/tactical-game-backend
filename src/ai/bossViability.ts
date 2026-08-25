@@ -37,7 +37,7 @@ interface Row { encounter: string; difficulty: CampaignDifficulty; level: number
 
 /** Per-tier: which order statistic, and the bar it must clear. */
 const SPEC: Record<CampaignDifficulty, { stat: 'p10' | 'median' | 'p75'; bar: number; claim: string } | null> = {
-  easy:      { stat: 'p10',    bar: 0.60, claim: 'dumbest build wins' },
+  easy:      { stat: 'p10',    bar: 0.50, claim: 'dumbest build wins (retries are free — see plan §2c-decisions)' },
   medium:    { stat: 'median', bar: 0.55, claim: 'any competent build, any class' },
   hard:      { stat: 'p75',    bar: 0.45, claim: 'every class viable if played well' },
   nightmare: null,

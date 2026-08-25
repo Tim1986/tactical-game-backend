@@ -485,6 +485,34 @@ whole-campaign constraint: a boss-killer comp must not be walled by the
 NON-boss encounters on the way there. It belongs in the §2c viability audit,
 not here, and is not yet implemented.
 
+## 2c-decisions. RE-WALK JUDGMENT CALLS (operator, 2026-08-25 — owner said "make your best judgment and move forward")
+
+1. **e11 `loss: main_dead` removal STANDS.** The theme-preserving alternative
+   (wisps ignore the hero so the duel stays lethal without the flat-damage
+   pile-on) requires an inverse `priorityTarget` form — engine + aiBrain work,
+   FROZEN, and not an owner-reported bug. Filed as a post-certification option:
+   if the owner misses the hero-death stakes in his checkpoint playthrough,
+   build `priorityTarget: 'not-main'`, re-add `main_dead`, and re-run the e11
+   permutation test on that variant before choosing.
+2. **±5 RE-MEASURE RULE (standing).** Any cell whose failing statistic is
+   within ±5 points of its cap gets ONE re-run before any number changes. At
+   150 builds a share statistic carries ±3-4 points of noise; without this rule
+   pass N tunes noise and pass N+1 tunes it back.
+3. **e12 nightmare's bimodal flag is EXPLAINED, not fixed — and stays.** Probes
+   show the split is STRATEGIC, not class-keyed: winners kill the Marshal;
+   the "seize the Standard" tile path won 3 of 150 probe games across all
+   tiers — sim-dead. The cell passes acceptance and matches the owner's
+   nightmare philosophy (boss-killers win). ⚠ BUT the brain measures a FLOOR
+   on strategy-dependent paths (standing pitfall) — a human dashing a swift
+   hero to the corner may make the path real. CHECKPOINT ITEM: owner should
+   try seizing the Standard in his playthrough; if it is dead for a human too,
+   that is a content-design question (the flavor promises a path that does not
+   exist), not a numbers question.
+4. **Easy-tier boss bar set to p10 >= 50%** (was 60%, operator-read). Campaign
+   retries are free, so per-attempt 48% ≈ "occasionally needs a second try at
+   the finale" — a fair reading of "dumbest build can beat it". Owner can
+   override.
+
 ## 2d. THE DOUBLE-CHARGE AUDIT (owner question, 2026-08-24) + set B verdict
 
 **Set B (living cast, all four campaigns) confirms the null:** flat profile
