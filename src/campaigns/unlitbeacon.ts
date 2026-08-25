@@ -199,22 +199,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // rung could (walls 18-22% at easy/medium while the median walked it).
       // 15% ≈ the old flat 8 vs a 55 HP hero; against a 32 HP hero it is 5
       // instead of 8, which is the entire point.
-      // ⚠ 0.15 -> 0.11 (Gate 1 re-walk pass 3). Percent-of-max damage kills in a
-      // CONSTANT number of hits — seven at 0.15 — for every target, at every
-      // level, forever. That is exactly what it was added to do (it erased the
-      // hero-class bimodality where flat damage killed a wizard in 3 hits and a
-      // barbarian in 8). But it also means CAMPAIGN_GROWTH's +9 max HP buys the
-      // hero ZERO extra survivability HERE while buying real cushion in every
-      // other encounter, and this encounter's loss condition is `main_dead` —
-      // a single point of failure. Two thresholds then race: can the hero live
-      // N Adjutant turns, and can the party burn 100 x scale HP. Races have
-      // binary outcomes, which is the bimodality the battery kept flagging, and
-      // it is why THREE passes of scale tuning moved the median without ever
-      // clearing the flag. Scale sets the ratio of the two modes; it cannot
-      // narrow a distribution that has no middle.
-      // 0.11 buys the hero ten hits instead of seven, widening the survival
-      // window enough for build quality to express as a gradient again.
-      damagePercentOfTargetMax: 0.11,
+      // Percent-of-max kills in a CONSTANT number of hits at any HP total —
+      // added to erase hero-class HP variance in the Adjutant's own damage, and
+      // it does that job. Pass 3 tried 0.15 -> 0.11 on the theory that a wider
+      // survival window would fix this cell's bimodality. IT DID NOT: the
+      // median went 92% -> 100% while the bottom decile crawled 0-4% -> 8-28%.
+      // The tail was never about the Adjutant's hit count, so 0.15 stands.
+      damagePercentOfTargetMax: 0.15,
       // 4, down from 5 (2026-08-24). The duel's loss is main_dead and the
       // Adjutant is a PHASING hunter with priorityTarget: main — at movement 5
       // no hero could open distance, so builds with a fragile hero (wizard 32
@@ -860,7 +851,23 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       objective: {
         text: 'Answer the Adjutant\'s challenge',
         win: [{ kind: 'units_dead', enemyKeys: ['the_adjutant'] }],
-        loss: [{ kind: 'main_dead' }],
+        // ⚠ `loss: main_dead` REMOVED (2026-08-25). It made the HERO'S CLASS
+        // the single biggest input to this encounter — bigger than the party,
+        // the boons, or the difficulty. Permutation test, same four classes,
+        // only which one is the hero, e11 easy, 40 games each:
+        //     hero=rogue 18%   cleric 38%   fighter 83%   wizard 100%
+        // An 82-point swing on a choice the player makes at campaign start,
+        // before seeing a single board. That is this cell's bimodality: not a
+        // race between thresholds (the pass-3 theory, disproved above) but a
+        // two-population MIXTURE keyed on one up-front pick. Melee heroes lose
+        // because the brain must walk them into the Adjutant AND both wisps;
+        // percent damage cannot save them because the wisps deal flat damage.
+        // Three hero-punishing mechanics stacked here: priorityTarget 'main',
+        // percent-of-max, and instant-loss-on-hero-death. The first two are the
+        // duel's IDENTITY and are kept; the third was the one that converted
+        // pressure into a coin flip, and the duel's reward already lives in the
+        // optional `answered_alone` goal below, so nothing thematic is lost.
+        // Party wipe (the global default) is now the loss.
       },
       terrain: {
         theme: 'snow',
@@ -875,7 +882,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 1.60, medium: 1.78, hard: 2.12, nightmare: 2.26 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+      hpScaleOverride: { easy: 3.2, medium: 3.2, hard: 3.2, nightmare: 3.2 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
