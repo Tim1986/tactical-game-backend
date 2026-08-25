@@ -882,7 +882,19 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 3.2, medium: 3.2, hard: 3.2, nightmare: 3.2 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+      // Re-walked AFTER main_dead was removed (that change made the cell far
+      // easier, so every pre-2026-08-25 rung here is void). 40 builds x 12:
+      //   easy      2.60  solve 63/50  median 92/95  walls  8%  ✓
+      //   medium    3.00  solve 45/35  median 58/80  walls  8%  ✓
+      //   hard      3.20  solve 38/20  median 33/65  walls 23%  ✓ (cap 25 — tight)
+      //   nightmare 3.50  solve 20/10  median 17/45  walls 40%  ✓ (cap 50)
+      //
+      // ⚠ THIS ENCOUNTER IS A CLIFF and the whole usable range is 2.6-3.5.
+      // One step past it collapses: 4.00 reads 85-90% walls at every tier and
+      // 5.00 reads 95-100%. Never nudge these rungs by "a bit"; re-walk.
+      // hard sits at 3.20 rather than the 3.00 that also passes, so medium and
+      // hard are not the same fight wearing different labels.
+      hpScaleOverride: { easy: 2.60, medium: 3.00, hard: 3.20, nightmare: 3.50 },  // boss
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
