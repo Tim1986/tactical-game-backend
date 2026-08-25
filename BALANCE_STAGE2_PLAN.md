@@ -389,6 +389,56 @@ Process (updated for the decision): 2a table → SIZE the growth curve from the
 measured slopes → implement CAMPAIGN_GROWTH + anchor test → re-run 2a to
 verify the slope flattens → gifts (§3) → the one big re-walk + certification.
 
+## 2c. THE VIABILITY FLOOR (owner standard, 2026-08-24 — binds every step after it)
+
+Verbatim constraints, now acceptance criteria:
+
+1. **Every class and every special is PLAYABLE (not equal) in every campaign
+   at HARD.** Nightmare may demand synergy; a special may be dead weight
+   there. Hard is the floor where nothing is.
+2. **Viability is a PORTFOLIO property, not a per-encounter one.** If
+   encounter kinds A and B have no use for a damage special, the campaign
+   must contain C and D where it visibly shines — "do we take the Sorcerer,
+   who won't help in A/B but gets us through C/D?" is the intended choice.
+   A class with no shine encounters in a campaign is a content-design bug in
+   THAT CAMPAIGN, fixed by encounter mix, never by handing the class a
+   number until it stops being distinctive.
+3. **Counter-prevalence caps.** Counters create texture; past a threshold
+   they blanket-invalidate a whole special family. "Some enemies should have
+   Stalwart, but we can't make Stalwart so prevalent that root abilities are
+   unplayable." Counter → family it invalidates: stalwart → root/weaken/
+   expose riders · immovable → push/pull · warded → alpha-strike · undying →
+   execute · phasing → wall-play.
+
+**Measured prevalence at adoption (share of enemy BODIES per campaign):**
+
+| campaign | stalwart | immovable | warded | undying | phasing |
+|---|---|---|---|---|---|
+| lantern | 0% | 7% | 0% | 3% | 0% |
+| goblinopolis | 0% | **22%** | 10% | 0% | 0% |
+| moonberry | 0% | 14% | 6% | 0% | 0% |
+| sealeddeep | 11% | 0% | 5% | 0% | 13% |
+| unlitbeacon | **27%** | 0% | 0% | 0% | 18% |
+
+**Cap (provisional, Opus may tune with owner sign-off): no counter above 20%
+of a campaign's bodies**, and no single encounter's cast majority-countered
+unless the encounter is explicitly a counter showcase its briefing names.
+Two standing breaches, queued for each campaign's §4 walk (NOT hotfixed —
+the owner is mid-playthrough and the walk is the right vehicle):
+- **unlitbeacon 27% stalwart** — the owner's "roots feel unplayable" report,
+  explained: shelf_pikemen everywhere. Diet to ≤20% during its walk.
+- **goblinopolis 22% immovable** — same failure aimed at push/pull; ironic
+  in the campaign whose villain fights WITH a pull. Diet during its walk.
+
+**The instrument — viabilityAudit (Opus builds, from classValueSweep's
+machinery):** per campaign at HARD, rotate the companion slot through every
+class×special variant across ALL encounters (objective kinds included —
+shine can be a hold as easily as a kill), producing a variant × encounter
+delta table. Acceptance per variant per campaign: **(a) ≥2 shine encounters
+(≥ +5 over the slot mean), (b) campaign-wide mean ≥ −8, (c) no counter-cap
+breach.** Failures route to encounter MIX or counter diet — content work.
+Runs as part of §4 certification for every campaign.
+
 ## 3. Deep Gift revaluation
 
 **MEASURED 2026-08-24** (giftPerClass, 8 classes × 6 real L7+ cells × 150
