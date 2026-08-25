@@ -14,6 +14,24 @@ surfaced the same day that aggregates can never see:
 
 ---
 
+## STATUS — the operator updates this block after EVERY work session
+
+**NEXT STEP → 2. Build classValue.ts (Opus).** Sonnet: nothing is currently
+delegated; check back after step 3.
+
+- [x] 1. Trilogy battery 2 harvested (L≤5 rows + structural signals)
+      — battery ran pre-curve; L6+ rows void by construction. DONE 2026-08-24.
+- [ ] 2. classValue.ts built + run; §2a table published here  (OPUS)
+- [ ] 3. CAMPAIGN_GROWTH sized (§3a loop) → OWNER GATE 1 → implemented + anchor test  (OPUS)
+- [ ] 4. giftPerClass re-run post-curve → gift values + policy → OWNER GATE 2  (OPUS)
+- [ ] 5. ENGINE FREEZE → §4 re-walk + certification  (SONNET executes, OPUS signs off)
+- [ ] 6. §5 client work → version bump → owner builds  (SONNET)
+- [ ] 7. Ongoing: playtest ledger rows; spot-fixes; targeted re-certs
+
+Rules for this block: mark a step only when its section's acceptance is met;
+move the NEXT arrow; if you stopped mid-step, write one line under it saying
+exactly where. This block is the handoff — a fresh session reads it first.
+
 ## 0. STANDING RULES for this stage (Opus: read before every session)
 
 - **The aggregate ban.** Any question of the form "is X balanced for CLASS?"
