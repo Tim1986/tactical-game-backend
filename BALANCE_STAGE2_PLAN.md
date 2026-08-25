@@ -161,7 +161,29 @@ Process (updated for the decision): 2a table → SIZE the growth curve from the
 measured slopes → implement CAMPAIGN_GROWTH + anchor test → re-run 2a to
 verify the slope flattens → gifts (§3) → the one big re-walk + certification.
 
-## 3. Deep Gift revaluation (blocked on giftPerClass results)
+## 3. Deep Gift revaluation
+
+**MEASURED 2026-08-24** (giftPerClass, 8 classes × 6 real L7+ cells × 150
+games, ±1.6pt SE; raw rows in `giftPerClass_2026-08-24.json`):
+
+| class | damage +2 | movement +1 | armor +3 | best |
+|---|---|---|---|---|
+| fighter | +3.8 | **+15.4** | +8.6 | movement |
+| barbarian | +2.1 | **+15.0** | +1.1 | movement |
+| rogue | +6.2 | **+10.7** | +10.3 | movement |
+| cleric | +1.7 | **+12.4** | +8.4 | movement |
+| ranger | +8.6 | +9.2 | **+11.1** | armor |
+| wizard | +3.3 | +6.2 | **+7.3** | armor |
+| sorcerer | **+1.4** | **+17.3** | +6.3 | movement |
+| warlock | +9.2 | **+11.2** | +5.6 | movement |
+
+Readings: the shipped DEFAULT_GIFT_BY_CLASS (melee→armor, ranged→damage) is
+wrong in nearly every cell; the damage gift is never anyone's best (the tax,
+measured — sorcerer's +1.4 is the worst cell in the table); movement
+dominates 6/8 (either +1 movement is undervalued at these gift prices, or
+the other two are overpriced — the revaluation decides which). ⚠ These
+numbers were taken at PRE-CURVE damage values; the damage column will move
+when CAMPAIGN_GROWTH lands, which is exactly why gifts are valued AFTER it.
 
 - Read /tmp/giftpc.json. Per class: best gift and deltas, with SE.
 - Decide values so the MENU IS A CHOICE per class (the E1 boon standard): if
@@ -174,17 +196,95 @@ verify the slope flattens → gifts (§3) → the one big re-walk + certificatio
   sim balances against); re-run giftPerClass to confirm; document in
   campaignSim.ts replacing the HONEST LIMIT block.
 
-## 4. Order of operations (the whole stage)
+### 3a. The curve-sizing loop (how §2a's numbers become CAMPAIGN_GROWTH values)
 
-1. Trilogy battery 2 report → ordinary tuning (already normal work).
-2. `classValue.ts` built + run → §2a table published here.
-3. Owner decision on the damage-tax remedy (§2b) → implement → verify slope.
-4. giftPerClass re-run on the post-remedy engine → gift values + policy set.
-5. ENGINE FREEZE. Full 5-campaign certification (150×25, two shards each).
-6. PLAYTEST_CALIBRATION rows for whatever the owner plays next; spot-fix
-   without touching the engine; re-certify only affected campaigns.
+Iterate, don't derive-once: (1) run classValue.ts, record each class's
+slope-vs-hpScale; (2) set the damaging-effect percentage so the WORST slope
+(sorcerer, presumably) projects to ≈0 at the L9-typical scale; (3) re-run
+classValue at the new values; (4) repeat until every class's slope is flat
+within ±1 SE; (5) only then touch the per-ability exceptions table, only for
+classes still negative after the flat-curve refund, one slug at a time with a
+re-run per change. Every iteration's values + slopes get a row in a log table
+appended to this file — the walk must be reconstructible.
 
-## 5. What Fable owes this plan
+## 4. THE FINAL RE-WALK + CERTIFICATION (the stage's last act)
+
+Preconditions: CAMPAIGN_GROWTH landed + anchor test green + gift values and
+DEFAULT_GIFT_BY_CLASS updated + ENGINE FROZEN (no brain/engine/kit edits past
+this point — any such edit voids the pass and restarts §4).
+
+- **L1–L5 cells are permanent capital and are NOT re-walked** — the anchor
+  freezes the party under them; their existing certified rows stand. Only
+  L6+ cells re-walk. (Trilogy battery 2's L≤5 rows stay valid for the same
+  reason.)
+- Per campaign, in order (unlitbeacon → sealeddeep → lantern → goblinopolis
+  → moonberry): calibrate.ts walks on L6+ cells per the lever doctrine
+  (§0), then a full 150×25 two-shard battery, merged.
+- Acceptance: DIFFICULTY_TARGETS.md ACCEPTANCE as imported by calibrate —
+  never a hand-reading. Stopping rule per cell (unchanged from BAL1): PASS,
+  or ≤5 wall points over, or the 96-vs-95 quantization; anything else parks
+  as BEYOND-RULE with a written reason, escalated (see §6).
+- Record: per-campaign notes file updated; CAMPAIGN_BALANCING.md's VOID
+  banner replaced with the new certification date + engine commit.
+
+## 5. CLIENT WORK (mobile — small, but the stage isn't done without it)
+
+- Level-up screens above L5 show the growth ("+X% damage, +Y max HP") —
+  LEVEL_AWARD_INTRO in app/campaign/[slug].tsx; the strings must be BUILT
+  from CAMPAIGN_GROWTH's constants (the DEEP_GIFTS description pattern), so
+  screen and engine cannot drift.
+- Gift descriptions already build from constants; verify after revaluation.
+- `npm run sync-engine` after every backend change, as always.
+
+## 6. WHO DOES WHAT — model assignment (owner asked this be explicit)
+
+**Opus (judgment work — anything that decides what a number SHOULD be):**
+harness design/review (classValue.ts and any new instrument); every
+CAMPAIGN_GROWTH sizing iteration (§3a); gift value + policy decisions;
+per-ability exception calls; structural encounter changes (formation,
+terrain, waves, clocks) and anything BEYOND-RULE; interpreting playtest
+ledger rows; the anchor test's design; final certification sign-off per
+campaign.
+
+**Sonnet (mechanical work — anything with a written procedure and a
+machine-checkable acceptance):**
+- Running calibrate.ts walks at rungs OPUS SPECIFIES, and applying the
+  passing rung to hpScaleOverride rows verbatim with the measured numbers
+  pasted into the row's comment.
+- Running/merging the 150×25 batteries; producing the per-campaign result
+  tables; updating notes files and the VOID banner from a template.
+- Re-running classValue/giftPerClass at values Opus sets, reporting tables.
+- The client string work in §5 (pattern exists), engine syncs, doc
+  bookkeeping, puzzle-solver re-runs after any gameData change.
+
+**Sonnet's hard guardrails:** never edit the brain, the engine, gameData
+kits, CAMPAIGN_GROWTH values, or gift values; never choose rungs or invent
+levers; never reinterpret a band ("close enough" is Opus's call: the
+stopping rule is exact); anything failing its written acceptance — or any
+cell reading TOO HARD+WALLS ≥30% — stops and escalates to Opus rather than
+being tuned at. The aggregate ban (§0) binds Sonnet identically.
+
+**Owner gates (the only human stops in the whole run):**
+1. Sign-off on the sized CAMPAIGN_GROWTH values before the big re-walk.
+2. Sign-off on the gift values + per-class defaults.
+3. Playtest verdicts whenever he plays — ledger rows outrank bands (§0).
+
+## 7. Order of operations (the whole stage)
+
+1. Trilogy battery 2 report → harvest L≤5 rows + structural signals only
+   (L6+ rows are pre-curve and void by construction).
+2. `classValue.ts` built (Opus) + run → §2a table published here.
+3. CAMPAIGN_GROWTH sized via the §3a loop (Opus) → OWNER GATE 1 →
+   implemented with the anchor test.
+4. giftPerClass re-run post-curve → gift values + DEFAULT_GIFT_BY_CLASS
+   (Opus) → OWNER GATE 2.
+5. ENGINE FREEZE → §4 re-walk + certification (Sonnet executes, Opus
+   signs off per campaign).
+6. §5 client work → version bump → owner builds.
+7. PLAYTEST_CALIBRATION rows as the owner plays; spot-fixes without
+   engine edits; re-certify only affected campaigns.
+
+## 8. What Fable owes this plan
 
 - Review 2a's harness design before the big run (the aggregate ban applies
   to its author too).

@@ -1,0 +1,122 @@
+[
+  {
+    "cls": "fighter",
+    "gift": "damage",
+    "delta": 0.03777777777777777
+  },
+  {
+    "cls": "fighter",
+    "gift": "movement",
+    "delta": 0.15444444444444447
+  },
+  {
+    "cls": "fighter",
+    "gift": "armor",
+    "delta": 0.08555555555555558
+  },
+  {
+    "cls": "barbarian",
+    "gift": "damage",
+    "delta": 0.02111111111111108
+  },
+  {
+    "cls": "barbarian",
+    "gift": "movement",
+    "delta": 0.15000000000000002
+  },
+  {
+    "cls": "barbarian",
+    "gift": "armor",
+    "delta": 0.011111111111111127
+  },
+  {
+    "cls": "rogue",
+    "gift": "damage",
+    "delta": 0.062222222222222234
+  },
+  {
+    "cls": "rogue",
+    "gift": "movement",
+    "delta": 0.10666666666666669
+  },
+  {
+    "cls": "rogue",
+    "gift": "armor",
+    "delta": 0.10333333333333333
+  },
+  {
+    "cls": "cleric",
+    "gift": "damage",
+    "delta": 0.016666666666666663
+  },
+  {
+    "cls": "cleric",
+    "gift": "movement",
+    "delta": 0.12444444444444441
+  },
+  {
+    "cls": "cleric",
+    "gift": "armor",
+    "delta": 0.08444444444444443
+  },
+  {
+    "cls": "ranger",
+    "gift": "damage",
+    "delta": 0.0855555555555556
+  },
+  {
+    "cls": "ranger",
+    "gift": "movement",
+    "delta": 0.09222222222222226
+  },
+  {
+    "cls": "ranger",
+    "gift": "armor",
+    "delta": 0.11111111111111116
+  },
+  {
+    "cls": "wizard",
+    "gift": "damage",
+    "delta": 0.033333333333333326
+  },
+  {
+    "cls": "wizard",
+    "gift": "movement",
+    "delta": 0.06222222222222218
+  },
+  {
+    "cls": "wizard",
+    "gift": "armor",
+    "delta": 0.0733333333333333
+  },
+  {
+    "cls": "sorcerer",
+    "gift": "damage",
+    "delta": 0.014444444444444482
+  },
+  {
+    "cls": "sorcerer",
+    "gift": "movement",
+    "delta": 0.17333333333333334
+  },
+  {
+    "cls": "sorcerer",
+    "gift": "armor",
+    "delta": 0.06333333333333335
+  },
+  {
+    "cls": "warlock",
+    "gift": "damage",
+    "delta": 0.09222222222222226
+  },
+  {
+    "cls": "warlock",
+    "gift": "movement",
+    "delta": 0.11222222222222222
+  },
+  {
+    "cls": "warlock",
+    "gift": "armor",
+    "delta": 0.05555555555555558
+  }
+]
