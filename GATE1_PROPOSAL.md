@@ -148,7 +148,34 @@ Every L6+ cell in all five campaigns gets easier and must be re-walked —
 already budgeted as §4's single pass. L1–L5 rows are untouched by
 construction (the anchor), so roughly **half the catalog needs no work**.
 
-## 5. Decisions needed from the owner
+## ✅ 5. OWNER DECISIONS — SIGNED 2026-08-24
+
+1. **Growth table: APPROVED AS A STARTING POINT, with a structural
+   amendment — these are CLASS growth tables, not one universal table.**
+   Verbatim: *"At L9 and L10, Rogue's version should be a +1, its damage
+   scales too hard otherwise… We might also not increase their HP as much.
+   Treat the growth tables as class growth tables, not universal growth
+   tables."* And on ambition: *"not push the growth more aggressively than
+   this at least at first, because the more we scale the classes, the more
+   the specials are going to become harder to tune."* → The curve is
+   explicitly REVISABLE; per-class from the start; conservative by design.
+2. **ffh + assassinate scaling: APPROVED**, with a hard requirement —
+   *"it needs to list that scaling where the player chooses it."* The
+   campaign-adjusted numbers must appear at the point of CHOICE (the
+   level-up special picker), not only in the rulebook. Descriptions must be
+   BUILT from the constants, never retyped.
+3. **Warlock: no change, confirmed.**
+4. **Engine freeze: YES** — effective once CAMPAIGN_GROWTH + the anchor test
+   land (the freeze covers the §4 walk, not the implementation of the thing
+   being walked).
+
+**Non-gate rulings:** Wizard's arena standing is ACCEPTABLE to the owner on
+the current grid — no arena pass needed, my concern is withdrawn. Gift
+revaluation must be **balanced per class** (not a single global policy);
+sequencing left to Opus — it runs after the curve, since the damage gift's
+value moves when basics do.
+
+## 5b. Original decision request (for the record)
 
 1. **Approve / amend the growth table** (§3a) — the FEEL call: is +2 basic
    damage and +9 HP by L10 the right sense of growth?
