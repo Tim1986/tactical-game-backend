@@ -16,7 +16,11 @@ surfaced the same day that aggregates can never see:
 
 ## STATUS — the operator updates this block after EVERY work session
 
-**NEXT STEP → 2 (IN PROGRESS). classValue.ts built and RUNNING** — 8 classes
+**NEXT STEP → 2 (RUN 2 IN PROGRESS).** Run 1 (12 cells, 100 games) was
+DIRECTIONAL ONLY — see §2a-results. Run 2 is 12 variants × 2 templates ×
+20 cells × 250 games ≈ 120k.
+
+_(superseded)_ Run 1: classValue.ts built and RUNNING — 8 classes
 × 2 company templates × 12 cells (scale 0.68–1.95) × 100 games ≈ 19k games.
 When it lands: paste the per-class table into §2a, then size the curve (§3a).
 Sonnet: nothing delegated until step 5.
@@ -110,6 +114,49 @@ class's mean delta.
 Known caveat, written into the file: when the rotating class matches a fixed
 member the party runs a duplicate (2 of 16 rows per class) and carries a
 same-class synergy the other rows do not.
+
+#### §2a-results — RUN 1 (12 cells × 100 games, 2026-08-24). DIRECTIONAL ONLY.
+
+| variant | mean Δ | slope /+1.00 scale | slope SE | verdict |
+|---|---|---|---|---|
+| warlock | +11.0 | +4.6 | ±7.5 | noise |
+| cleric | +2.0 | −3.5 | ±9.4 | noise |
+| barbarian | +1.3 | +2.0 | ±9.0 | noise |
+| sorcerer | −0.7 | −9.6 | ±9.5 | noise |
+| fighter | −1.7 | −8.9 | ±8.0 | noise |
+| rogue | −2.5 | **−15.1** | ±7.4 | **SIGNIFICANT** |
+| wizard | −3.8 | **+31.9** | ±12.3 | **SIGNIFICANT** |
+| ranger | −5.6 | −1.5 | ±8.9 | noise |
+
+Low-scale (≤1.00) vs high-scale (≥1.45) shift: wizard **+20.7**, rogue
+**−10.6**, fighter −6.6, sorcerer −5.5, warlock +3.3.
+
+**What run 1 established:** the tax's DIRECTION is real — every damage class
+slopes negative, and wizard slopes strongly POSITIVE (+31.9): control gets
+better as enemies fatten, because a freeze denies one turn regardless of HP
+and fat enemies mean longer fights where denial compounds. At scale 1.95,
+wizard won 97% where sorcerer won 38%.
+
+**What it did NOT establish, and two errors it exposed:**
+1. Only 2 of 8 slopes cleared significance. Sorcerer's slope (−9.6 ± 9.5) is
+   indistinguishable from noise and its mean is −0.7, i.e. AVERAGE — which
+   contradicts the owner's play experience.
+2. ⚠ **MEASUREMENT ERROR, found by taking that contradiction seriously**
+   (owner: "if the data isn't showing Sorcerer problems, we are not measuring
+   correctly"): every class was given `specialOptions[0]`, and the sorcerer's
+   is **`ffh` — the AoE ring**. Run 1 scored the sorcerer holding its single
+   best-case tool and never measured flame_jet or ignite. Owner's objection
+   to trusting that number: "we can't count on aoe to make the damage worth
+   it, the ai brain is too good at playing around aoe, much of the time you
+   don't get good aoe targets."
+3. ⚠ Run 1 also printed the SE of the MEAN beside the slope, which invites
+   reading noise as signal. Run 2 prints the slope's own SE and a t-value.
+
+**Run 2 fixes all three**: 20 cells (both difficulties of ten encounters,
+every objective kind at two scales), 250 games, and VARIANTS rather than
+classes — the eight defaults plus sorcerer:flame_jet, sorcerer:ignite,
+wizard:cold_snap and rogue:dagger_toss, so a class's AoE case and its
+single-target case are measured separately.
 
 #### Original spec (kept — the acceptance bar it was built against)
 
