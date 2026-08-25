@@ -513,6 +513,57 @@ not here, and is not yet implemented.
    the finale" — a fair reading of "dumbest build can beat it". Owner can
    override.
 
+## 2c-finale. FINALE DIVERSITY + THE BOSS AUTO-PICK (owner constraint, 2026-08-25)
+
+Owner: *"I don't want every campaign to end with a big individual boss fight, I
+don't want nightmare every campaign to require a boss killer. Some would be
+fine, but not if every campaign ignite sorcerer is an auto pick. And given the
+presence of freeze, bosses probably generally need some minions or be immune to
+certain effects."*
+
+**Audited — finale SHAPE variety is already satisfied.** Last encounter of each
+campaign: lantern `units_dead` (4 enemies) · goblinopolis `units_at_tiles`
+(seize) · moonberry `units_at_tiles` scope:all (get everyone out) · sealeddeep
+`units_dead` (2 enemies) · unlitbeacon dual-win kill-OR-tile. Two pure boss
+kills, two positional, one dual. No action needed; **protect this when authoring
+campaign 6+** — the pull toward "final boss" is strong and this registry is how
+it gets resisted.
+
+⚠ **THE AUTO-PICK IS FREEZE, NOT IGNITE.** Measured over 150 builds/cell on
+unlitbeacon's two L10 bosses, mean win rate of builds CONTAINING each special:
+
+| cell | 1st | 2nd | worst |
+|---|---|---|---|
+| e11 nightmare | **freeze 32.6%** | heal 29.6% | dagger_toss 8.0% |
+| e11 hard | **freeze 65.2%** | concussive 62.9% | assassinate 31.6% |
+| e12 nightmare | **freeze 56.9%** | piercing 49.0% | second_wind 18.3% |
+| e12 hard | pinning 67.5% | ignite 66.2% | expose 33.2% |
+
+Freeze tops three of four boss cells and leads e12 nightmare by 8 points. Ignite
+tops none. The owner's *mechanism* was right and his *suspect* was wrong —
+lockdown beats burst against a boss, because a frozen boss deals no damage while
+its HP pool is the only thing standing.
+
+⚠ **AND MINIONS DO NOT FIX IT.** Both cells above already have minions (e11: 2
+wisps; e12: 3 guards). Freeze still dominates. The owner's "minions **or**
+immunity" is therefore not a real either/or at current numbers — minions alone
+are demonstrably insufficient, so meaningful counterplay needs the immunity
+half. **There is no status-immunity field on monsters today** (grepped: none in
+`campaigns/types.ts` or `types/matchState.ts`), so that is ENGINE work and is
+FROZEN. Filed as the top post-certification proposal.
+
+⚠ **sealeddeep e12 is the exposure.** It is a `units_dead` boss kill with only
+TWO enemies — the lone-boss shape most vulnerable to freeze lockdown, and the
+thinnest minion screen of any finale. Run the per-special read on it during its
+walk BEFORE tuning its scale; if freeze dominates there worse than unlitbeacon,
+adding bodies is the content-side lever available under the freeze.
+
+⚠ **Rogue's boss problem, for the portfolio rule.** `assassinate` and
+`dagger_toss` sit in the bottom four of ALL FOUR boss cells. Rogue is not
+merely unfavoured at bosses, its two signature specials are the worst options in
+the game there. Feed this to the §3 gift/special revaluation — the portfolio
+rule requires rogue shine somewhere, and "somewhere" cannot be a finale.
+
 ## 2d. THE DOUBLE-CHARGE AUDIT (owner question, 2026-08-24) + set B verdict
 
 **Set B (living cast, all four campaigns) confirms the null:** flat profile
