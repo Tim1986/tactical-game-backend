@@ -451,6 +451,40 @@ delta table. Acceptance per variant per campaign: **(a) ≥2 shine encounters
 breach.** Failures route to encounter MIX or counter diet — content work.
 Runs as part of §4 certification for every campaign.
 
+## 2c-boss. THE BOSS SPEC (owner, 2026-08-25 — binds every campaign finale)
+
+Verbatim intent, per difficulty:
+
+| tier | owner's bar | what that is a claim ABOUT | statistic |
+|---|---|---|---|
+| easy | "beat the final boss with literally the dumbest build in the game if you play semi competently" | the BOTTOM of the build distribution | per-class **p10** |
+| medium | "any competent build, including any class, played semi competently" | the MIDDLE, per class | per-class **median** |
+| hard | "tough for some builds, but not an extremely restrictive group. **Every class viable, not every special**" | the UPPER TAIL, per class — does a party built AROUND this class exist | per-class **p75** |
+| nightmare | "some builds get to the end and can't beat it — plan better next time. Needing one of a few boss-killers is fine, **as long as the rest of the campaign is doable with a boss-killer**" | nothing per-class. Selectivity is the product | aggregate floor only |
+
+⚠ **THIS IS NOT AN AGGREGATE SPEC, AND THE AGGREGATE CHECKS CANNOT SEE IT.**
+Measured on unlitbeacon e11 easy, 150 builds: the battery reported median 92%
+— a walkover — while **every one of the eight classes had a p10 of 0-4%**. Same
+builds, same run. The aggregate was not imprecise, it was pointed the wrong
+way: one player in ten could not finish the campaign, and the cell's verdict
+said "TOO EASY". Any future boss verdict quoting only medians/shares is
+incomplete by construction.
+
+Instrument: `src/ai/bossViability.ts <merged.json> [e11 e12 ...]`. Reads a
+merged buildBattery JSON and runs no games, so it is free to re-run on any
+archived battery result.
+
+⚠ The numeric bars (p10 >= 60%, median >= 55%, p75 >= 45%) are the OPERATOR'S
+reading of the owner's prose, not numbers the owner gave. They are the one part
+of this section he has not signed off; raise them with him rather than treating
+them as settled.
+
+⚠ Nightmare's clause has a SECOND half that is not a boss check at all — "as
+long as the rest of the campaign is doable with a boss-killer". That is a
+whole-campaign constraint: a boss-killer comp must not be walled by the
+NON-boss encounters on the way there. It belongs in the §2c viability audit,
+not here, and is not yet implemented.
+
 ## 2d. THE DOUBLE-CHARGE AUDIT (owner question, 2026-08-24) + set B verdict
 
 **Set B (living cast, all four campaigns) confirms the null:** flat profile
