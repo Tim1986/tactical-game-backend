@@ -529,6 +529,9 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['meredrowned', 'meredrowned', 'meredrowned'],
       enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 4 }],
       waves: [
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
         { enemies: ['meredrowned'], placement: [{ x: 3, y: 3 }], trigger: { on: 'round', round: 4 } },
         // HARD/NIGHTMARE ONLY — the first use of difficulty-scoped waves
         // (types.ts). This escape is hpScale-inert (you win by arriving), so
@@ -572,9 +575,6 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // geometries (corridor, flank, 1-exit, 2-exit) all measured 76-80
         // honest, so this is the encounter's floor for that tier, not a
         // missing rung. The safe-direction miss: a breather, nobody bricked.
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       goals: [
@@ -630,7 +630,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // Only EASY failed the re-walk (100% median); medium/hard/nightmare all
       // held. A race is scale-weak, so easy rises alone rather than shoving
       // the whole ladder and breaking three cells that already pass.
-      hpScaleOverride: { easy: 1.05, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
+      hpScaleOverride: { easy: 0.92, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor
@@ -711,7 +711,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 0.87, medium: 1.08, hard: 1.17, nightmare: 1.23 },  // rooms
+      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 1.17, nightmare: 1.19 },  // rooms — compressed ladder, sits on a cliff
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -764,15 +764,17 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // took medium from 89% to 28%. One body is the smallest step this
         // encounter has, and it is worth ~30 points.
         { enemies: ['shelf_pikeman'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 } },
-        // ⚠ Gate 1 re-walk: post-curve this read 100/96/70/52% — too easy at
-        // every tier. The per-tier CLOCK (6/7/8/8) is the owner's call and is
-        // NOT touched; scale is near-decorative on a survive (measured:
-        // 1.70 -> 2.80 moved medium eleven points). Bodies are the lever, so
-        // each tier above easy gains one more arrival.
-        { enemies: ['breaker'], placement: [{ x: 0, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium', 'hard', 'nightmare'] },
-        { enemies: ['volley_archer'], placement: [{ x: 7, y: 6 }], trigger: { on: 'round', round: 4 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['frozen_watchman'], placement: [{ x: 0, y: 5 }], trigger: { on: 'round', round: 5 }, difficulties: ['nightmare'] },
-        { enemies: ['vanguard', 'frozen_watchman'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 6 }, difficulties: ['hard', 'nightmare'] },
+        // ⚠ Gate 1 re-walk pass 1 tried difficulty-scoped ARRIVALS here and
+        // pass 2 REVERTED them. Measured cost of one extra body on this
+        // encounter: medium 96% -> 52%, hard 70% -> 4% (two bodies), nightmare
+        // 52% -> 0% (three). That is ~45 points per body against bands ~25
+        // points wide — the dial cannot land INSIDE a band, it can only jump
+        // over it. Bodies stay the right lever for separating a survive's
+        // tiers when the gap is LARGE (that is why the round-2 arrival above
+        // exists); they are the wrong lever for the 10-20 point trim the
+        // post-curve rows need. Scale is weak here (~11 points per 1.0) but it
+        // is CONTINUOUS, and weak-but-continuous beats strong-but-quantized
+        // whenever the target window is narrower than the step.
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       // Re-walked on the per-tier clock (owner call: 6/7/8/8 rounds).
@@ -789,7 +791,15 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // clock would overrule the owner's call to fix a number he did not ask
       // about — and he reached this encounter having found it brutal, so a
       // generous easy is the right side to err on.
-      hpScaleOverride: { easy: 1.45, medium: 1.45, hard: 1.20, nightmare: 1.50 },  // survive — clock is the lever, not scale
+      // ⚠ THE SCALE LADDER HERE IS NON-MONOTONE ON PURPOSE (medium 2.95 sits
+      // ABOVE hard 1.70). On every other encounter that would be a bug. Here
+      // it is the arithmetic of the owner's clock: medium holds SEVEN rounds
+      // and hard holds EIGHT, so hard is already a harder fight at identical
+      // scale. Scale's job on this encounter is only to close the residual
+      // gap to each tier's band, and medium's gap is the widest because its
+      // shorter clock leaves the most slack. Read the clock and the scale
+      // together; neither number means anything alone.
+      hpScaleOverride: { easy: 1.45, medium: 2.95, hard: 1.70, nightmare: 2.20 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -850,7 +860,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 1.43, medium: 1.88, hard: 2.12, nightmare: 2.26 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+      hpScaleOverride: { easy: 1.60, medium: 1.78, hard: 2.12, nightmare: 2.26 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
@@ -880,7 +890,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 1.71, medium: 2.11, hard: 2.40, nightmare: 2.77 },  // boss, dual-win
+      hpScaleOverride: { easy: 2.05, medium: 2.65, hard: 2.75, nightmare: 3.00 },  // boss, dual-win
     },
   },
 
