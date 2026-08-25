@@ -16,7 +16,12 @@ surfaced the same day that aggregates can never see:
 
 ## STATUS — the operator updates this block after EVERY work session
 
-**NEXT STEP → 2 (RUN 3 — the de-confounded sweep — IN PROGRESS.)** Runs 1–2
+**NEXT STEP → 2 (RUN 3b — piloted sweep — IN PROGRESS).** Run 3a FAILED
+(floor trap, see §2a-run3a); 3b adds a per-cell pilot so every cell is
+measured inside its own competitive window. No remedy is sized until it
+lands — we currently have NO trustworthy scale-sensitivity data.
+
+_(superseded)_ Run 3a: Runs 1–2
 are done and recorded in §2a-results; run 2 is decision-grade on MEANS but
 its slopes carry the confound described in §2a-critique, so no remedy is
 sized from them. Run 3 (classValueSweep.ts) sweeps the SAME four
@@ -53,6 +58,11 @@ exactly where. This block is the handoff — a fresh session reads it first.
 
 ## 0. STANDING RULES for this stage (Opus: read before every session)
 
+- **The window rule.** Any sweep of a difficulty parameter pilots each cell
+  first and measures only where the baseline runs ~80%→~30%. Outside that
+  band the outcome cannot move, so nothing can be detected (ceiling trap:
+  giftHarness.ts; floor trap: §2a-run3a). ⚠ `hpScale` REPLACES a cell's
+  authored scale rather than multiplying it.
 - **The aggregate ban.** Any question of the form "is X balanced for CLASS?"
   must be answered by ISOLATION: vary one unit's X at a time, everything else
   held at policy. Party-uniform application answers a different question.
@@ -180,6 +190,37 @@ Robust findings (Opus): no GENERAL damage tax — flame_jet's slope is
 strongly positive; the sorcerer's felt problem is `ffh` specifically (at
 scale 1.95: ffh 46% vs flame_jet 94% vs ignite 99%); warlock is the real
 outlier at +14.0 mean, flat.
+
+#### §2a-run3a — the FLOOR TRAP (failed run, kept as the lesson)
+
+Run 3a swept a FIXED k ∈ {0.8, 1.2, 1.6, 2.0}. Result:
+
+| cell | k=0.8 | k=1.2 | k=1.6 | k=2.0 |
+|---|---|---|---|---|
+| sealeddeep/e6 | 92% | 32% | 5% | 0% |
+| sealeddeep/e9 | 20% | 0% | 0% | 0% |
+| sealeddeep/e12 | 25% | 0% | 0% | 0% |
+| unlitbeacon/e8 | 17% | 0% | 0% | 0% |
+
+Three of four cells were dead by k=1.2 and everything was 0% by 1.6, so
+every "slope" was just the line from ~45% to a floor. All seven mechanical
+profiles came back within noise of each other (−35..−43): **the run would
+have printed those numbers whether the hypothesis was true, false or
+reversed.** No discriminating power; discarded.
+
+Two compounding causes, both avoidable:
+1. **No pilot.** This is the mirror of the CEILING trap `giftHarness.ts`
+   already documents ("a gifted party against L3 content wins ~100%, where
+   NO gift can show value"). Same lesson, opposite wall — **measure only
+   where the outcome can still move.**
+2. **`hpScale` REPLACES a cell's authored scale, it does not multiply it.**
+   k=2.0 on a cell authored at 0.88 is 2.3×, not "a bit harder". Cells were
+   also chosen partly BECAUSE they were demanding, which stacked the error.
+
+**Standing rule this earns (add to §0 discipline):** any harness that
+sweeps a difficulty parameter must PILOT each cell first and measure only
+inside the band where the baseline runs ~80%→~30%. A sweep that bottoms
+out is not a weak measurement, it is a measurement of nothing.
 
 #### §2a-critique (Fable review) — why run 2's SLOPES are not load-bearing
 
