@@ -415,9 +415,20 @@ this point — any such edit voids the pass and restarts §4).
   freezes the party under them; their existing certified rows stand. Only
   L6+ cells re-walk. (Trilogy battery 2's L≤5 rows stay valid for the same
   reason.)
-- Per campaign, in order (unlitbeacon → sealeddeep → lantern → goblinopolis
-  → moonberry): calibrate.ts walks on L6+ cells per the lever doctrine
-  (§0), then a full 150×25 two-shard battery, merged.
+- **ONE CAMPAIGN AT A TIME, owner decision 2026-08-24** — considered against
+  level-slicing (all L6s, then all L7s…) and chosen deliberately: the owner's
+  end-to-end playtest loop is this project's best instrument, and
+  level-slicing finishes nothing until the very last pass. Per-campaign is
+  SAFE only because Gate 1 + the engine freeze precede the first walk — the
+  curve is sized on cross-campaign probes and frozen, so hpScaleOverride
+  rows are campaign-local and cannot bake in a moving target.
+- Order: **unlitbeacon** (owner mid-playthrough, richest ledger) →
+  **CHECKPOINT: owner plays it end-to-end before campaign 2 begins.** If his
+  verdicts force a curve change, the blast radius is one campaign's L6+
+  rows, not five. → sealeddeep → lantern → goblinopolis → moonberry, with a
+  short owner pass after each if he wants it.
+- Per campaign: calibrate.ts walks on L6+ cells per the lever doctrine (§0),
+  then a full 150×25 two-shard battery, merged.
 - Acceptance: DIFFICULTY_TARGETS.md ACCEPTANCE as imported by calibrate —
   never a hand-reading. Stopping rule per cell (unchanged from BAL1): PASS,
   or ≤5 wall points over, or the 96-vs-95 quantization; anything else parks
