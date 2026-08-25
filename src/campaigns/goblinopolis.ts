@@ -200,6 +200,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // rather than "you are surrounded".
     e1: {
       level: 1,
+      terrain: { theme: 'town' },
       enemies: ['bluecap_scout', 'bluecap_scout', 'wet_boot_looter'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
@@ -225,6 +226,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e2: {
       level: 2,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }],
       },
       allies: {
@@ -275,6 +277,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // The barricade is now on the PARTY's side of the toll gap: something to
       // advance behind, with nothing screening the goblins.
       terrain: {
+        theme: 'town',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 3 }],
       },
       enemies: ['kettlehelm_orc', 'bluecap_pathfinder', 'bluecap_scout', 'sparkcap_slinger'],
@@ -303,13 +306,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       rooms: [
         {
-          terrain: { blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
           enemies: ['clerk_of_stamps', 'bluecap_scout'],
           enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
         },
         {
-          terrain: { blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 4 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 4 }] },
           enemies: ['clerk_of_seals', 'kettlehelm_orc', 'clerk_of_stamps'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 4 }, { x: 6, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
@@ -327,6 +330,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e5: {
       level: 5,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }],
         hazards: [
           { pos: { x: 3, y: 3 }, type: 'fire' }, { pos: { x: 3, y: 4 }, type: 'fire' },
@@ -349,6 +353,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e6: {
       level: 5,
       terrain: {
+        theme: 'canal',
         blocked: [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 6 }, { x: 3, y: 7 }],
       },
       objective: {
@@ -373,6 +378,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e7: {
       level: 6,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
@@ -411,6 +417,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e8: {
       level: 7,
       terrain: {
+        theme: 'town',
         blocked: [
           { x: 2, y: 1 }, { x: 2, y: 6 }, { x: 5, y: 1 }, { x: 5, y: 6 },
           { x: 3, y: 3 }, { x: 4, y: 4 },
@@ -455,6 +462,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e9: {
       level: 8,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 5, y: 4 }, { x: 2, y: 4 }],
       },
       objective: {
@@ -478,6 +486,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e10: {
       level: 9,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 3, y: 0 }, { x: 4, y: 7 }],
       },
       objective: {
@@ -514,6 +523,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e11: {
       level: 10,
       terrain: {
+        theme: 'interior',
         blocked: [
           { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 },
           { x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 },
@@ -553,6 +563,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e12: {
       level: 10,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }, { x: 6, y: 3 }],
       },
       objective: {

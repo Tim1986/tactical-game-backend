@@ -188,6 +188,7 @@ export const moonberryCampaign: CampaignDefinition = {
     // shape is Lantern's alone now).
     e1: {
       level: 1,
+      terrain: { theme: 'canal' },
       // ⚠ Battery 1 read this TUTORIAL as
       // TOO HARD+WALLS at ALL FOUR tiers — 78/42/16/4% median with 14-54% of
       // builds walled, at EASY included. The cause was mine: I kept the
@@ -228,6 +229,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e2: {
       level: 2,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 3 }],
       },
       allies: {
@@ -268,6 +270,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e3: {
       level: 3,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
@@ -307,6 +310,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e4: {
       level: 4,
       terrain: {
+        theme: 'canal',
         blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }],
         hazards: [
           { pos: { x: 4, y: 3 }, type: 'fire' }, { pos: { x: 4, y: 4 }, type: 'fire' },
@@ -330,13 +334,13 @@ export const moonberryCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       rooms: [
         {
-          terrain: { blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 4 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 4 }] },
           enemies: ['mirror_footman', 'lantern_lifter'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
         },
         {
-          terrain: { blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 3 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 3 }] },
           enemies: ['mirror_footman', 'silverthread_mender', 'starstep_duelist'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
@@ -355,6 +359,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e6: {
       level: 5,
       terrain: {
+        theme: 'town',
         blocked: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 6 }, { x: 4, y: 7 }],
       },
       objective: {
@@ -381,6 +386,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e7: {
       level: 6,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }],
       },
       allies: {
@@ -431,6 +437,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e8: {
       level: 7,
       terrain: {
+        theme: 'interior',
         blocked: [
           { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 5 }, { x: 2, y: 6 },
           { x: 4, y: 3 }, { x: 4, y: 4 },
@@ -452,6 +459,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e9: {
       level: 8,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
@@ -493,20 +501,20 @@ export const moonberryCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       rooms: [
         {
-          terrain: { blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
           enemies: ['mirror_footman', 'starstep_duelist'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 5 }],
           exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
         },
         {
-          terrain: { blocked: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 2, y: 4 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 2, y: 4 }] },
           enemies: ['velvet_gate_guard', 'moonhook_caller'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }],
           exitDoors: [{ x: 7, y: 4 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
         {
-          terrain: { blocked: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 5, y: 2 }, { x: 5, y: 5 }] },
+          terrain: { theme: 'interior', blocked: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 5, y: 2 }, { x: 5, y: 5 }] },
           enemies: ['silverthread_mender', 'mirror_footman', 'palace_crier'],
           enemyPlacement: [{ x: 6, y: 4 }, { x: 5, y: 3 }, { x: 6, y: 2 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
@@ -525,6 +533,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e11: {
       level: 10,
       terrain: {
+        theme: 'interior',
         blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 6 }, { x: 2, y: 1 }],
       },
       objective: {
@@ -546,6 +555,7 @@ export const moonberryCampaign: CampaignDefinition = {
     e12: {
       level: 10,
       terrain: {
+        theme: 'town',
         blocked: [
           { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 6 }, { x: 2, y: 7 },
           { x: 4, y: 2 }, { x: 4, y: 5 }, { x: 6, y: 3 },
