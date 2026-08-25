@@ -627,7 +627,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       //   medium    0.92 -> 80% · 1.00 -> 66%, 14% walls ✓ · 1.45 -> 31%
       //   hard      1.05 -> 66% · 1.15 -> 55%, 13% walls ✓
       //   nightmare 1.25 -> 36%, 24% walls ✓ · 1.40 -> 32%, 21% ✓
-      hpScaleOverride: { easy: 0.80, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
+      // Only EASY failed the re-walk (100% median); medium/hard/nightmare all
+      // held. A race is scale-weak, so easy rises alone rather than shoving
+      // the whole ladder and breaking three cells that already pass.
+      hpScaleOverride: { easy: 1.05, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor
@@ -705,7 +708,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // ⚠ The tiers sit CLOSE (0.78-1.02) because the cliff is savage: 1.00 ->
       // 42% at medium, 1.30 -> 4%. A rooms encounter compounds — every point
       // of enemy HP is paid three times over three floors with no rest.
-      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 0.98, nightmare: 1.02 },  // rooms
+            // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
+      // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
+      // below the anchor's line had to rise. Pre-curve values in git.
+      hpScaleOverride: { easy: 0.87, medium: 1.08, hard: 1.17, nightmare: 1.23 },  // rooms
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -758,6 +764,14 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // took medium from 89% to 28%. One body is the smallest step this
         // encounter has, and it is worth ~30 points.
         { enemies: ['shelf_pikeman'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 } },
+        // ⚠ Gate 1 re-walk: post-curve this read 100/96/70/52% — too easy at
+        // every tier. The per-tier CLOCK (6/7/8/8) is the owner's call and is
+        // NOT touched; scale is near-decorative on a survive (measured:
+        // 1.70 -> 2.80 moved medium eleven points). Bodies are the lever, so
+        // each tier above easy gains one more arrival.
+        { enemies: ['breaker'], placement: [{ x: 0, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium', 'hard', 'nightmare'] },
+        { enemies: ['volley_archer'], placement: [{ x: 7, y: 6 }], trigger: { on: 'round', round: 4 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['frozen_watchman'], placement: [{ x: 0, y: 5 }], trigger: { on: 'round', round: 5 }, difficulties: ['nightmare'] },
         { enemies: ['vanguard', 'frozen_watchman'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 6 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
@@ -805,7 +819,11 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'reader_unharmed', name: 'The Reading', description: 'Bring Tam to the parley ring without a scratch on anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.15, medium: 1.30, hard: 1.60, nightmare: 1.78 },  // escort
+      // ⚠ Gate 1 re-walk: 96/92/72/44%. Raised, but MODESTLY at the top —
+      // the trilogy's escort lesson applies: the VIP's HP does not scale with
+      // the party's competence, so an escort's hard/nightmare need less added
+      // pressure than a kill-all's, or the ally dies rather than the party.
+      hpScaleOverride: { easy: 1.35, medium: 1.55, hard: 1.75, nightmare: 1.88 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge
@@ -829,7 +847,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'answered_alone', name: 'Answered Alone', description: 'Let the hero personally strike down the Adjutant.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 1.30, medium: 1.70, hard: 1.80, nightmare: 1.90 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
+            // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
+      // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
+      // below the anchor's line had to rise. Pre-curve values in git.
+      hpScaleOverride: { easy: 1.43, medium: 1.88, hard: 2.12, nightmare: 2.26 },  // boss — ALL rungs must stay >=0.89 (cliff, see note)
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
@@ -856,7 +877,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'whole_line_home', name: 'The Whole Line Home', description: 'Face the Marshal and lose no one.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.58, medium: 1.80, hard: 1.95, nightmare: 2.30 },  // boss, dual-win
+            // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
+      // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
+      // below the anchor's line had to rise. Pre-curve values in git.
+      hpScaleOverride: { easy: 1.71, medium: 2.11, hard: 2.40, nightmare: 2.77 },  // boss, dual-win
     },
   },
 
