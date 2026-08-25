@@ -66,6 +66,14 @@ export interface UnitInstance {
    *  'skeleton') instead of the chassis class art; clients fall back to the
    *  chassis when the key has no assets. Arena builds never set this. */
   artKey?: string;
+  /** [Gate 1] CAMPAIGN_GROWTH's damage rung: added to EACH damage effect of
+   *  this unit's BASIC attack only. Campaign-only and per-class (see
+   *  campaigns/runtime.ts CAMPAIGN_GROWTH); absent in arena and below L6, so
+   *  the anchor holds by construction. Paired with basicAbilitySlug so the
+   *  executor can tell a basic from a special without re-deriving it. */
+  basicDamageBonus?: number;
+  /** The slug of this unit's basic attack, for basicDamageBonus. */
+  basicAbilitySlug?: string;
 }
 
 /** CAMPAIGN-ONLY (A5): runtime doctrine of one AI ally. Route progress lives

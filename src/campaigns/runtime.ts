@@ -32,6 +32,88 @@ export const PLAYER_HP_DELTA: Record<number, number> = { 1: -8, 2: -4, 3: -4, 4:
 // has chosen; the only level gates here are the HP delta and the L10 perk.
 export const MAX_CAMPAIGN_LEVEL = 10;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CAMPAIGN_GROWTH (Gate 1, owner-signed 2026-08-24) — the L6–L10 curve.
+//
+// THE ANCHOR: arena IS campaign L5. At L5 every chassis stat, special and
+// passive equals its arena value exactly; growth exists only ABOVE it. This
+// is invariant-tested (tests/anchorInvariant.test.ts) so an arena rebalance
+// propagates automatically and campaign-side drift below L6 fails CI.
+//
+// ⚠ PER-CLASS BY DESIGN, not a universal table (owner: "Treat the growth
+// tables as class growth tables, not universal growth tables"). The rung
+// below is expressed PER DAMAGE EFFECT, so a multi-hit basic is paid twice —
+// which is why the roster's one multi-hit class carries its own row.
+//
+// THE NORMALISING PRINCIPLE: growth is budgeted in damage PER TURN, then
+// converted to per-effect for each class. Single-hit basics take the number
+// straight; Rogue's Twin Strike (8+8) would DOUBLE it, so Rogue's row is
+// halved and delayed to keep its per-turn growth at or below the field's:
+//
+//   per-turn growth   L6   L7   L8   L9   L10
+//   field             +0   +1   +1   +2   +2
+//   rogue             +0   +0   +0   +2   +2   (via +1/effect on two hits)
+//
+// Rogue trades earlier growth for equal growth at cap — deliberate, and the
+// reason its HP row is lighter too: it is the roster's glass cannon (AC 8,
+// two blockable rolls a turn) and the curve should not blunt that identity.
+//
+// ⚠ EXPLICITLY A STARTING POINT (owner). Conservative on purpose: "the more
+// we scale the classes, the more the specials are going to become harder to
+// tune." Revise per class from viabilityAudit evidence, never globally.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface GrowthRung {
+  /** Added to max health (and starting health) at this level. */
+  maxHp: number;
+  /** Added to EACH damage effect of the unit's BASIC attack. Specials are
+   *  never touched — that is what keeps the anchor's contract checkable. */
+  basicDamage: number;
+}
+
+const NO_GROWTH: GrowthRung = { maxHp: 0, basicDamage: 0 };
+
+/** The field. Levels 1–5 are all zero: that is the anchor. */
+const GROWTH_FIELD: Record<number, GrowthRung> = {
+  6:  { maxHp: 3, basicDamage: 0 },
+  7:  { maxHp: 3, basicDamage: 1 },
+  8:  { maxHp: 6, basicDamage: 1 },
+  9:  { maxHp: 6, basicDamage: 2 },
+  10: { maxHp: 9, basicDamage: 2 },
+};
+
+/** Per-class overrides. Rogue: half damage rung (Twin pays it twice) and a
+ *  lighter HP rung. Add a row here rather than bending the field. */
+const GROWTH_BY_CLASS: Record<string, Record<number, GrowthRung>> = {
+  rogue: {
+    6:  { maxHp: 2, basicDamage: 0 },
+    7:  { maxHp: 2, basicDamage: 0 },
+    8:  { maxHp: 4, basicDamage: 0 },
+    9:  { maxHp: 4, basicDamage: 1 },
+    10: { maxHp: 6, basicDamage: 1 },
+  },
+};
+
+/** The growth a class has accrued by `level`. Below L6 this is always zero —
+ *  the anchor. Unknown classes take the field row. */
+export function campaignGrowthFor(classSlug: string, level: number): GrowthRung {
+  if (level <= 5) return NO_GROWTH;
+  const table = GROWTH_BY_CLASS[classSlug] ?? GROWTH_FIELD;
+  return table[Math.min(level, MAX_CAMPAIGN_LEVEL)] ?? NO_GROWTH;
+}
+
+/** Player-facing summary for the level-up screen — BUILT from the constants
+ *  above so the screen and the engine cannot drift (the DEEP_GIFTS pattern).
+ *  Returns the DELTA gained on reaching `level`, or null if nothing changed. */
+export function campaignGrowthDelta(classSlug: string, level: number): string | null {
+  const now = campaignGrowthFor(classSlug, level);
+  const prev = campaignGrowthFor(classSlug, level - 1);
+  const parts: string[] = [];
+  if (now.maxHp > prev.maxHp) parts.push(`+${now.maxHp - prev.maxHp} max HP`);
+  if (now.basicDamage > prev.basicDamage) parts.push(`+${now.basicDamage - prev.basicDamage} basic-attack damage`);
+  return parts.length ? parts.join(' · ') : null;
+}
+
 /** L10 perk: every party special gets a second charge — usable twice per
  *  encounter, back to back if the player likes (owner call 2026-08-17: charges,
  *  NOT a recharge cooldown — a cooldown forces burning the first use early to
@@ -90,13 +172,19 @@ export function buildCampaignPlayerInstance(
   if (choice?.deepGiftSlug !== undefined && !gift) {
     throw new Error(`Unknown Deep Gift "${choice.deepGiftSlug}" for ${def.slug}`);
   }
-  const maxHealth = Math.max(1, def.maxHealth + (PLAYER_HP_DELTA[level] ?? 0) + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0));
+  const growth = campaignGrowthFor(def.slug, level);
+  const maxHealth = Math.max(1, def.maxHealth + (PLAYER_HP_DELTA[level] ?? 0) + growth.maxHp
+    + (passive?.stat === 'maxHealth' ? (passive.value ?? 0) : 0));
   const armorClass = def.armorClass + (passive?.stat === 'armorClass' ? (passive.value ?? 0) : 0)
     + ((gift as { armorClass?: number } | undefined)?.armorClass ?? 0);
   const movementRange = def.movementRange + (passive?.stat === 'movementRange' ? (passive.value ?? 0) : 0)
     + ((gift as { movementRange?: number } | undefined)?.movementRange ?? 0);
   const passives = passive?.passiveFlag ? [...def.passives, passive.passiveFlag] : [...def.passives];
   if (choice?.deepGiftSlug === 'damage') passives.push('gift_damage');
+  // CAMPAIGN_GROWTH's damage rung rides the UNIT (not a passive flag) because
+  // it is a per-class NUMBER, not a boolean — abilityExecutor reads it when
+  // the ability being resolved is this unit's basic attack.
+  const basicDamageBonus = growth.basicDamage > 0 ? growth.basicDamage : undefined;
 
   const cooldowns: Record<string, number> = {};
   for (const s of abilities) cooldowns[s] = 0;
@@ -112,6 +200,7 @@ export function buildCampaignPlayerInstance(
     instanceId, definitionSlug: def.slug, ownerPlayerId: ownerId,
     position, currentHealth: maxHealth, maxHealth,
     armorClass, movementRange, abilities, passives,
+    ...(basicDamageBonus ? { basicDamageBonus, basicAbilitySlug: basicSlug } : {}),
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
     ...(extraCharges ? { extraCharges } : {}),

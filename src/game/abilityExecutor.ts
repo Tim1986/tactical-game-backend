@@ -347,6 +347,15 @@ function giftBonus(ctx: ExecutionContext): number {
   return hasPassive(ctx.caster, 'gift_damage') ? GIFT_DAMAGE_BONUS : 0;
 }
 
+/** CAMPAIGN_GROWTH's damage rung (Gate 1): a per-class flat bonus on each
+ *  damage effect of the caster's BASIC attack only — specials are never
+ *  touched, which is what keeps the arena anchor checkable. Both fields are
+ *  absent in arena and below L6, so this is a no-op everywhere else. */
+function growthBasicBonus(ctx: ExecutionContext): number {
+  const u = ctx.caster as { basicDamageBonus?: number; basicAbilitySlug?: string };
+  return u.basicDamageBonus && u.basicAbilitySlug === ctx.ability.slug ? u.basicDamageBonus : 0;
+}
+
 /**
  * Break a final damage number into its base and each modifier, so the combat
  * log can explain WHY a hit did what it did. Returns [] when nothing modified
@@ -358,15 +367,17 @@ function damageBreakdown(ctx: ExecutionContext, target: UnitInstance, base: numb
   const ven = vengefulBonus(ctx);
   const chan = channelerBonus(ctx);
   const gift = giftBonus(ctx);
+  const grow = growthBasicBonus(ctx);
   const weak = hasStatusEffect(ctx.caster, 'weakened')
     ? Math.min(WEAKENED_DAMAGE_REDUCTION, base) : 0;
-  if (opp === 0 && ven === 0 && chan === 0 && gift === 0 && weak === 0) return [];
+  if (opp === 0 && ven === 0 && chan === 0 && gift === 0 && grow === 0 && weak === 0) return [];
   const parts = [{ label: 'base', amount: base - weak }];
   if (weak > 0) parts[0] = { label: 'Weakened', amount: base - weak };
   if (opp > 0) parts.push({ label: 'Opportunist', amount: opp });
   if (ven > 0) parts.push({ label: 'Vengeful', amount: ven });
   if (chan > 0) parts.push({ label: 'Channeler', amount: chan });
   if (gift > 0) parts.push({ label: 'Deep Gift', amount: gift });
+  if (grow > 0) parts.push({ label: 'Veteran', amount: grow });
   return parts;
 }
 
@@ -396,7 +407,7 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
   const baseValue = ctx.caster.damagePercentOfTargetMax != null
     ? Math.max(1, Math.round(target.maxHealth * ctx.caster.damagePercentOfTargetMax))
     : effect.value;
-  const damage = weakenedAdjustedDamage(ctx, baseValue) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx) + giftBonus(ctx);
+  const damage = weakenedAdjustedDamage(ctx, baseValue) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + channelerBonus(ctx) + giftBonus(ctx) + growthBasicBonus(ctx);
   const parts = damageBreakdown(ctx, target, baseValue);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     // Only attach the breakdown when the hit was NOT capped by remaining HP —
@@ -421,7 +432,7 @@ function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: Damage
 }
 
 function applyLifesteal(ctx: ExecutionContext, target: UnitInstance, effect: LifestealEffect): void {
-  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + giftBonus(ctx);
+  const damage = weakenedAdjustedDamage(ctx, effect.value) + opportunistBonus(ctx, target) + vengefulBonus(ctx) + giftBonus(ctx) + growthBasicBonus(ctx);
   const parts = damageBreakdown(ctx, target, effect.value);
   const actualDamage = takeDamage(target, damage, ctx.events, ctx.caster.instanceId, (actual) => {
     const parts2 = actual === damage ? parts : [];
