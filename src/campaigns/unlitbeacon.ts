@@ -199,7 +199,22 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // rung could (walls 18-22% at easy/medium while the median walked it).
       // 15% ≈ the old flat 8 vs a 55 HP hero; against a 32 HP hero it is 5
       // instead of 8, which is the entire point.
-      damagePercentOfTargetMax: 0.15,
+      // ⚠ 0.15 -> 0.11 (Gate 1 re-walk pass 3). Percent-of-max damage kills in a
+      // CONSTANT number of hits — seven at 0.15 — for every target, at every
+      // level, forever. That is exactly what it was added to do (it erased the
+      // hero-class bimodality where flat damage killed a wizard in 3 hits and a
+      // barbarian in 8). But it also means CAMPAIGN_GROWTH's +9 max HP buys the
+      // hero ZERO extra survivability HERE while buying real cushion in every
+      // other encounter, and this encounter's loss condition is `main_dead` —
+      // a single point of failure. Two thresholds then race: can the hero live
+      // N Adjutant turns, and can the party burn 100 x scale HP. Races have
+      // binary outcomes, which is the bimodality the battery kept flagging, and
+      // it is why THREE passes of scale tuning moved the median without ever
+      // clearing the flag. Scale sets the ratio of the two modes; it cannot
+      // narrow a distribution that has no middle.
+      // 0.11 buys the hero ten hits instead of seven, widening the survival
+      // window enough for build quality to express as a gradient again.
+      damagePercentOfTargetMax: 0.11,
       // 4, down from 5 (2026-08-24). The duel's loss is main_dead and the
       // Adjutant is a PHASING hunter with priorityTarget: main — at movement 5
       // no hero could open distance, so builds with a fragile hero (wizard 32
@@ -711,7 +726,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 1.17, nightmare: 1.19 },  // rooms — compressed ladder, sits on a cliff
+      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 1.13, nightmare: 1.17 },  // rooms — compressed ladder, sits on a cliff
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -799,7 +814,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // gap to each tier's band, and medium's gap is the widest because its
       // shorter clock leaves the most slack. Read the clock and the scale
       // together; neither number means anything alone.
-      hpScaleOverride: { easy: 1.45, medium: 2.95, hard: 1.70, nightmare: 2.20 },  // survive
+      hpScaleOverride: { easy: 1.45, medium: 3.20, hard: 1.70, nightmare: 2.20 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -833,7 +848,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // the trilogy's escort lesson applies: the VIP's HP does not scale with
       // the party's competence, so an escort's hard/nightmare need less added
       // pressure than a kill-all's, or the ally dies rather than the party.
-      hpScaleOverride: { easy: 1.35, medium: 1.55, hard: 1.75, nightmare: 1.88 },  // escort
+      hpScaleOverride: { easy: 1.35, medium: 1.45, hard: 1.75, nightmare: 1.88 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge
@@ -890,7 +905,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 2.05, medium: 2.65, hard: 2.75, nightmare: 3.00 },  // boss, dual-win
+      hpScaleOverride: { easy: 2.05, medium: 2.45, hard: 2.75, nightmare: 3.00 },  // boss, dual-win
     },
   },
 
