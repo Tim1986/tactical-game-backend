@@ -31,11 +31,46 @@ gate is simpler than planned.
 
 | finding | number | proposed handling |
 |---|---|---|
-| warlock dominance | **+14.0** ±2.4, flat across scale | ⏳ arena cross-check RUNNING — nerf only if it is dominant in arena too; otherwise it is a BRAIN finding (the AI cannot answer fear/grasp) |
+| warlock "dominance" | **+14.0** ±2.4 in campaign | ✅ **RESOLVED — DO NOT NERF.** Arena cross-check (90,720 games): warlock is **5th of 8**, 41.0 vs a 39.5 grid mean. It is mid-pack in arena and #1 by 3× in campaign, so the gap is an ENVIRONMENT effect, not a class problem. Nerfing its numbers would break arena to fix a campaign symptom — and the anchor forbids exactly that. See §2b. |
 | `ffh` hole | 46% vs flame_jet 94% at k=1.95 | exceptions table #1 |
 | `assassinate` decay | ≤22 flat vs scaled HP (44%→29% of pool at k=1.5) | exceptions table #2 |
 | `rogue:dagger_toss` | −8.2 ±2.1 (worst mean) | watch; likely fixed by encounter mix |
 | ignite ×2 | ~59 dmg, stacking 7→14 | NO CHANGE — already the boss-killer; needs shine encounters, not numbers |
+
+### 2b. Warlock resolved, and a bigger finding underneath it
+
+**Arena chassis means (classProbe, 252 cells × 12 refs × 30 games = 90,720):**
+
+| class | arena mean | top-25 slots | campaign mean Δ (run 2) |
+|---|---|---|---|
+| fighter | **45.5** | 10 | −1.2 |
+| cleric | 42.2 | 12 | +2.8 |
+| barbarian | 41.8 | 8 | 0.0 |
+| sorcerer | 41.3 | 5 | −0.1 |
+| **warlock** | **41.0 (5th)** | 4 | **+14.0 (1st)** |
+| ranger | 39.0 | 6 | −4.1 |
+| rogue | 33.8 | 5 | −2.7 |
+| **wizard** | **31.5 (last)** | **0** | −0.2 |
+
+**Warlock: mid-pack in arena, dominant in campaign.** The cause is almost
+certainly FEAR (push 3 + root 2 turns) meeting what campaigns are made of —
+objectives, chokepoints, waves, attrition — where removing a body for two
+turns is worth far more than in a 4v4 sprint. Supporting evidence: in the
+piloted sweep `war:grasp` measured WORST of 15 variants while plain warlock
+(fear) measured best, so this is a SPECIAL-level effect, not a chassis one.
+⚠ Note stalwart blocks fear's ROOT but not its PUSH (STALWART_IMMUNE =
+rooted/weakened/exposed), so the counter only half-answers it.
+**Handling: no numbers change. Watch it in the viabilityAudit; if fear is
+still an outlier per campaign, the lever is counter placement and encounter
+mix, not the ability.**
+
+**The bigger finding, outside this gate's scope but logged now: WIZARD IS
+LAST IN ARENA — 31.5, and ZERO of 50 top-quartile slots.** Campaign hides
+this completely (−0.2, and the best scale response measured) because control
+shines against objectives and bosses. Under the anchor, arena L5 *is*
+campaign L5, so an arena-weak class is weak in the first half of every
+campaign too. This is an ARENA balance item for its own pass — flagged
+here so it is not lost, and deliberately NOT bundled into Gate 1.
 
 ## 3. THE PROPOSAL
 
@@ -118,6 +153,7 @@ construction (the anchor), so roughly **half the catalog needs no work**.
 1. **Approve / amend the growth table** (§3a) — the FEEL call: is +2 basic
    damage and +9 HP by L10 the right sense of growth?
 2. **Approve the two exceptions** (§3b) — or defer either.
-3. **Warlock:** hold until the arena cross-check reports (recommended), or
-   decide now.
+3. **Warlock: RESOLVED — confirm "no change" is acceptable.** Arena says
+   5th of 8; the campaign gap is environmental. Recommendation: leave the
+   numbers alone, let the viabilityAudit judge fear per campaign.
 4. Confirm the engine freezes on sign-off.
