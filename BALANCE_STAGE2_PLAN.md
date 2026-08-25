@@ -19,8 +19,16 @@ surfaced the same day that aggregates can never see:
 **NEXT STEP → 2. Build classValue.ts (Opus).** Sonnet: nothing is currently
 delegated; check back after step 3.
 
-- [x] 1. Trilogy battery 2 harvested (L≤5 rows + structural signals)
-      — battery ran pre-curve; L6+ rows void by construction. DONE 2026-08-24.
+- [x] 1. Trilogy battery 2 harvested (L≤5 rows + structural signals). DONE
+      2026-08-24. Battery 2: goblinopolis 25/48, moonberry 19/48 (from 15 and
+      11). L6+ rows discarded unread — pre-curve, void by construction. L≤5
+      failures fixed and re-walked; those rows are PERMANENT CAPITAL under the
+      anchor and will not be touched again.
+      ⚠ Lesson recorded for §4: adding waves AND keeping scale double-charges
+      the same tier. Both escorts and one hold overshot exactly that way
+      (moonberry e2 hard 12%/46% walls, e3 medium 36%/37%). An ESCORT's top
+      tiers need LESS added pressure than a kill-all's — the ally's HP does
+      not scale with the party's competence.
 - [ ] 2. classValue.ts built + run; §2a table published here  (OPUS)
 - [ ] 3. CAMPAIGN_GROWTH sized (§3a loop) → OWNER GATE 1 → implemented + anchor test  (OPUS)
 - [ ] 4. giftPerClass re-run post-curve → gift values + policy → OWNER GATE 2  (OPUS)

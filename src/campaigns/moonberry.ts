@@ -215,6 +215,8 @@ export const moonberryCampaign: CampaignDefinition = {
       // Retuned 2026-08-24 with the catalog's other e1s: 1.26 -> 78% mean,
       // 1.08 -> 85%/92% median, 0% walls.
       //   0.72 -> 95% · 0.80 -> 91% · 0.90 -> 86% mean, 92% median, 1% walls ✓
+      // ⚠ Battery 2 flags medium as TOO EASY (92% median vs an 80% cap). That
+      // is the TUTORIAL EXEMPTION working as designed — do not 'fix' it.
       //   (the pre-fix 1.08 measured 42% median with 29% of builds walled)
       hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 1.05, nightmare: 1.15 },
     },
@@ -247,14 +249,18 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['crescent_stalker', 'lantern_lifter', 'mooncap_marksman'],
       enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 2 }, { x: 6, y: 5 }],
       waves: [
-        { enemies: ['starstep_duelist'], placement: [{ x: 5, y: 6 }], trigger: { on: 'round', round: 2 }, difficulties: ['medium', 'hard', 'nightmare'] },
-        { enemies: ['crescent_stalker'], placement: [{ x: 6, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
+        // ⚠ Both scoped UP after battery 2: hard read 12% with 46% walls and
+        // nightmare 0% with 87%. A follow-mode escort dies to interception far
+        // faster than the party does — the ally's HP does not scale with the
+        // party's competence, so an escort's top tiers need LESS added
+        // pressure than a kill-all's, not more.
+        { enemies: ['starstep_duelist'], placement: [{ x: 5, y: 6 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'unremarked', name: 'Unremarked', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.60 },
+      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.15, nightmare: 1.30 },
     },
 
     // e3 — The Silver Arch (hold). REUSED from the shipped e2. Casing the
@@ -284,7 +290,9 @@ export const moonberryCampaign: CampaignDefinition = {
         },
         // A hold is scale-weak, and this one read 98/84/72/64% — too easy at
         // EVERY tier. Bodies are the lever: one more arrival for everybody.
-        { enemies: ['velvet_gate_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 } },
+        // Scoped up after battery 2 (easy 56%/18% walls, medium 36%/37%): one
+        // extra body at round 2 was worth ~40 points on a 6-round hold.
+        { enemies: ['velvet_gate_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       goals: [
@@ -311,7 +319,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'good_audition', name: 'A Good Audition', description: 'Take the stage without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.94, medium: 1.09, hard: 1.03, nightmare: 0.96 },
+      hpScaleOverride: { easy: 0.94, medium: 0.98, hard: 1.20, nightmare: 1.30 },
     },
 
     // e5 — The Servants' Wing (rooms). Two rooms, laundry then silver hall.
@@ -337,7 +345,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'below_stairs', name: 'Below Stairs', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 1.08, medium: 1.37, hard: 1.45, nightmare: 1.34 },
+      hpScaleOverride: { easy: 1.20, medium: 1.37, hard: 1.45, nightmare: 1.55 },
     },
 
     // e6 — The Invitation Courier (race). The guest list is being carried to
@@ -360,7 +368,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'guest_list', name: 'The Guest List', description: 'Intercept them by round 5.', check: { kind: 'win_by_round', round: 5 } },
       ],
-      hpScaleOverride: { easy: 0.98, medium: 1.31, hard: 1.60, nightmare: 1.93 },
+      hpScaleOverride: { easy: 1.15, medium: 1.50, hard: 1.75, nightmare: 2.00 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────

@@ -210,7 +210,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // ⚠ TUTORIAL EXEMPTION at easy AND medium (CAMPAIGNS.md §Balancing).
       // Retuned 2026-08-24 with the rest of the catalog's e1s: 1.46 -> 74%
       // mean, 1.32 -> 84%/88% median, 1% walls.
-      hpScaleOverride: { easy: 1.17, medium: 1.28, hard: 1.38, nightmare: 1.51 },
+      hpScaleOverride: { easy: 1.05, medium: 1.28, hard: 1.38, nightmare: 1.51 },
     },
 
     // e2 — The First Mile (escort). The campaign's thesis in one fight: the
@@ -248,13 +248,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 4 }],
       waves: [
         { enemies: ['wet_boot_looter', 'bluecap_scout'], placement: [{ x: 4, y: 1 }, { x: 4, y: 6 }], trigger: { on: 'round', round: 2 } },
-        { enemies: ['bellrunner'], placement: [{ x: 4, y: 4 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['bellrunner'], placement: [{ x: 4, y: 4 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'not_a_scratch', name: 'Not a Scratch', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.35, nightmare: 1.60 },
+      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.10, nightmare: 1.25 },
     },
 
     // e3 — Blue-Ribbon Tollgate (carve). REUSED from the shipped e2 and native
@@ -318,7 +318,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.14, nightmare: 1.21 },
+      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.32, nightmare: 1.21 },
     },
 
     // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
@@ -339,7 +339,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'dry_pages', name: 'Dry Pages', description: 'Lose nobody to the fire.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.98, medium: 1.22, hard: 1.34, nightmare: 1.45 },
+      hpScaleOverride: { easy: 0.98, medium: 1.10, hard: 1.34, nightmare: 1.10 },
     },
 
     // e6 — The Customs Barge (race). REUSED from the shipped e3's ferry relay,
@@ -362,7 +362,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'cleared_customs', name: 'Cleared Customs', description: 'Clear the barge by round 6.', check: { kind: 'win_by_round', round: 6 } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.70, hard: 0.68, nightmare: 0.86 },
+      hpScaleOverride: { easy: 0.80, medium: 0.86, hard: 0.92, nightmare: 1.00 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
