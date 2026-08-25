@@ -16,7 +16,19 @@ surfaced the same day that aggregates can never see:
 
 ## STATUS — the operator updates this block after EVERY work session
 
-**NEXT STEP → 2 (RUN 3b — piloted sweep — IN PROGRESS).** Run 3a FAILED
+**⚠ ENGINE FROZEN as of 2026-08-24 (owner-approved at Gate 1).** No brain,
+engine, kit, growth-curve or gift edits until all five campaigns are
+certified. Any such edit VOIDS the pass and restarts §4. Bug fixes the owner
+reports while playing are the sole exception — fix them, and say plainly
+which campaign's rows it invalidates.
+
+**NEXT STEP → §4 CAMPAIGN 1: UNLIT BEACON.** Gate 1 is implemented
+(CAMPAIGN_GROWTH per-class + anchor invariant + ffh/assassinate exceptions +
+the point-of-choice display). Re-walking its L6+ cells only — e7–e12, 24
+cells. e1–e6 are anchor-frozen and NOT re-walked. After certification: the
+owner's end-to-end checkpoint playthrough before campaign 2 starts.
+
+_(complete)_ Step 2 (RUN 3b — piloted sweep).** Run 3a FAILED
 (floor trap, see §2a-run3a); 3b adds a per-cell pilot so every cell is
 measured inside its own competitive window. No remedy is sized until it
 lands — we currently have NO trustworthy scale-sensitivity data.
