@@ -407,28 +407,61 @@ function killValue(
 }
 
 /**
- * Highest execute threshold (e.g., Kill Shot's healthThreshold) available to
- * any living ally right now — used to reward chipping enemies into range.
+ * The REAL execute window for one effect against one target.
+ *
+ * ⚠ THIS MUST MIRROR abilityExecutor's threshold exactly. An execute may carry
+ * a flat cutoff, a PERCENT-OF-MAX cutoff, or both, and the engine takes the
+ * higher. The brain used to read only the flat field, which meant that in
+ * campaign — where `applyCampaignAbilityTuning` gives assassinate a 25%-of-max
+ * window — the brain believed it could only execute below 22 HP while the
+ * engine was happy to execute a 320 HP boss below 80. The brain therefore
+ * neither cashed the window in nor chipped toward it, and assassinate measured
+ * as the WORST special in every boss cell while actually being one of the most
+ * dangerous. Found because the owner said the numbers were not plausible.
+ */
+export function executeWindow(
+  eff: { healthThreshold?: number; healthThresholdPercent?: number },
+  target: UnitInstance,
+): number {
+  return Math.max(
+    eff.healthThreshold ?? 0,
+    Math.round((eff.healthThresholdPercent ?? 0) * target.maxHealth),
+  );
+}
+
+/**
+ * Highest execute threshold available to any living ally right now — used to
+ * reward chipping enemies into range. Returns BOTH parts because the percent
+ * part cannot be resolved without knowing the target; call `killWindowFor` to
+ * combine them against a specific enemy.
  */
 function bestKillThreshold(
   allies: UnitInstance[],
   map: Map<string, AbilityDefinition>,
-): number {
-  let best = 0;
+): KillWindow {
+  let flat = 0;
+  let percent = 0;
   for (const a of allies) {
     for (const slug of a.abilities) {
       if (!abilityReady(a, slug)) continue;
       const def = map.get(slug);
       if (!def) continue;
       for (const eff of def.effects) {
-        if (eff.type === 'damage' && eff.healthThreshold !== undefined) {
-          best = Math.max(best, eff.healthThreshold);
+        if (eff.type === 'damage' && (eff.healthThreshold !== undefined || eff.healthThresholdPercent !== undefined)) {
+          flat = Math.max(flat, eff.healthThreshold ?? 0);
+          percent = Math.max(percent, eff.healthThresholdPercent ?? 0);
         }
       }
     }
   }
-  return best;
+  return { flat, percent };
 }
+
+export interface KillWindow { flat: number; percent: number }
+
+/** Resolve a KillWindow against a specific target, engine-identically. */
+export const killWindowFor = (w: KillWindow, target: UnitInstance): number =>
+  Math.max(w.flat, Math.round(w.percent * target.maxHealth));
 
 /** How many living-unit initiative slots until `targetId` acts (99 if unknown). */
 function slotsUntilUnitActs(state: MatchState, targetId: string): number {
@@ -458,10 +491,10 @@ interface ScoreCtx {
   casterPos: BoardPosition;
   myPlayerId: string;
   /** Best execute threshold available to our team (0 if none). */
-  killThreshold: number;
+  killThreshold: KillWindow;
   /** Best execute threshold available to the ENEMY team (0 if none) —
    *  used to value Ward/shielded as Kill Shot denial. */
-  enemyKillThreshold: number;
+  enemyKillThreshold: KillWindow;
 }
 
 /** A unit's effective position within a hypothetical plan. */
@@ -550,8 +583,8 @@ function scoreEffectsOnTarget(
         // damage is scored at full deterministic value — no probabilities.
 
         // Execute effect (Kill Shot): only worth anything at/below threshold.
-        if (eff.healthThreshold !== undefined) {
-          if (isEnemy && target.currentHealth <= eff.healthThreshold) {
+        if (eff.healthThreshold !== undefined || eff.healthThresholdPercent !== undefined) {
+          if (isEnemy && target.currentHealth <= executeWindow(eff, target)) {
             // Undying eats the execute (target survives at 1, flag consumed):
             // still valuable — near-full damage + the safety net stripped —
             // but NOT a kill.
@@ -636,9 +669,9 @@ function scoreEffectsOnTarget(
           } else if (raw >= target.currentHealth) {
             s += killValue(target, map); // guaranteed kill this action
           } else if (
-            ctx.killThreshold > 0 &&
-            target.currentHealth > ctx.killThreshold &&
-            target.currentHealth - raw <= ctx.killThreshold
+            killWindowFor(ctx.killThreshold, target) > 0 &&
+            target.currentHealth > killWindowFor(ctx.killThreshold, target) &&
+            target.currentHealth - raw <= killWindowFor(ctx.killThreshold, target)
           ) {
             s += WEIGHTS.killShotSetup; // banks the execute window for real
           }
@@ -675,9 +708,9 @@ function scoreEffectsOnTarget(
           } else if (raw >= target.currentHealth) {
             s += killValue(target, map);
           } else if (
-            ctx.killThreshold > 0 &&
-            target.currentHealth > ctx.killThreshold &&
-            target.currentHealth - raw <= ctx.killThreshold
+            killWindowFor(ctx.killThreshold, target) > 0 &&
+            target.currentHealth > killWindowFor(ctx.killThreshold, target) &&
+            target.currentHealth - raw <= killWindowFor(ctx.killThreshold, target)
           ) {
             s += WEIGHTS.killShotSetup;
           }
@@ -763,8 +796,8 @@ function scoreEffectsOnTarget(
           }
           s += Math.max(WEIGHTS.shieldBaseValue, biggest);
           if (
-            ctx.enemyKillThreshold > 0 &&
-            target.currentHealth <= ctx.enemyKillThreshold
+            killWindowFor(ctx.enemyKillThreshold, target) > 0 &&
+            target.currentHealth <= killWindowFor(ctx.enemyKillThreshold, target)
           ) {
             s += WEIGHTS.shieldExecuteDenial; // blocks a pending Kill Shot
           }
