@@ -439,6 +439,43 @@ delta table. Acceptance per variant per campaign: **(a) ≥2 shine encounters
 breach.** Failures route to encounter MIX or counter diet — content work.
 Runs as part of §4 certification for every campaign.
 
+## 2d. THE DOUBLE-CHARGE AUDIT (owner question, 2026-08-24) + set B verdict
+
+**Set B (living cast, all four campaigns) confirms the null:** flat profile
+spread again, with an ordering INCONSISTENT with set A (dot best in B,
+middling in A) — noise around a null, from two independent samples and two
+enemy casts. No mechanical profile has detectable scale sensitivity. The
+reframe in §2a-run3b-setA stands.
+
+**The owner asked which specials, designed for once-per-arena use, degrade
+at L10's double charge.** Audit against the real engine semantics
+(applyStatus: re-application REFRESHES duration to max AND ADDS +1 stack,
+cap 3):
+
+- **Superlinear ×2:** IGNITE — a second cast mid-burn escalates the tick
+  7→14/turn; back-to-back beats sequencing. Double ignite ≈ 59 single-target
+  damage over ~4 target turns, the game's best by a wide margin (needs the
+  boss to live ~4 turns; nothing can cleanse it — no campaign enemy has
+  purify). The owner's premise that a re-ignite "just refreshes" is FALSE in
+  the good direction, and his "drag the Sorcerer to the boss" portfolio
+  story is already mechanically true — it needs shine ENCOUNTERS, not
+  numbers. FREEZE is also superlinear on a boss (up to 4 denied turns
+  sequenced) — feeds wizard dominance; watch, don't help.
+- **Linear ×2 (fine):** all plain damage/push/heal specials.
+- **Degraded second use only vs a SINGLE enemy:** non-stacking status riders
+  (expose, pinning's root, concussive's freeze) — sequence around duration
+  in duels, split targets elsewhere. Playable; no redesign.
+- **⚠ The one true arena-designed-degrades-in-campaign special:
+  ASSASSINATE.** Its ≤22 execute threshold is FLAT while campaign HP scales
+  (44% of an arena pool; 29% at k=1.5). Executes anti-scale with the
+  difficulty dial itself. Exceptions-table candidate #2 (after ffh): e.g. a
+  campaign-only percent-of-max threshold above the anchor. Decide at Gate 1.
+
+**Design rule adopted:** boss/finale encounters carry a ≥6–7 round budget so
+DoT and second charges can deliver (sims: current bosses run 6–10 rounds —
+codify so no future finale is authored as a 4-round burst check that
+silently deletes ignite).
+
 ## 3. Deep Gift revaluation
 
 **MEASURED 2026-08-24** (giftPerClass, 8 classes × 6 real L7+ cells × 150
