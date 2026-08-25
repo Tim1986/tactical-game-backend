@@ -80,7 +80,58 @@ Same isolation trick as giftPerClass, applied to class slots:
 - Acceptance: enough cells that per-class deltas carry ≤2pt SE; publish the
   table in this file.
 
-### 2b. Remedy options (decision AFTER 2a's numbers; owner gates)
+### 2b. ⚠ DECIDED (owner, 2026-08-24): the Level Ladder becomes the tuning surface
+
+The owner chose campaign-only damage normalization, with four requirements
+that together define the architecture. Verbatim constraints:
+
+1. **Campaign classes get their own balance tuning, independent of arena.**
+2. **Mechanics of specials never change — numbers only.** A freeze stays a
+   freeze, a push stays 2 tiles; damage/heal VALUES are the tuning surface.
+3. **ONE set of campaign tuning numbers, shared by every campaign.** No
+   per-campaign unit scaling. (Campaigns keep their per-encounter ENEMY
+   hpScaleOverride rows — the player-side curve is global.)
+4. **THE ANCHOR: arena = campaign at a specific level.** "I need arena to
+   represent a specific level, not an entirely different universe." At the
+   anchor level the party's chassis, specials and passives are EXACTLY the
+   arena numbers; below it is the existing stripped ladder; above it the
+   growth curve begins and the numbers become whatever viability requires.
+
+**The anchor is L5, and it already nearly holds:** PLAYER_HP_DELTA reaches 0
+at L4, specials complete at L3, passives at L5, and nothing above L5 changes
+a number today (boons/gifts/second charge are additive). So the architecture
+is: L1–L5 = the shipped ramp INTO arena values; L5 = arena, exactly; L6–L10 =
+the new CAMPAIGN GROWTH CURVE.
+
+**Implementation shape (Opus):**
+
+- `CAMPAIGN_GROWTH` in campaigns/runtime.ts — one table, level-indexed,
+  L6–L10 only. Fields per level, all starting at 0 and tuned from 2a's
+  measurements: party max-HP bonus; damaging-effect bonus (the damage-tax
+  payback — likely a percentage so big and small hits scale together, with
+  Math.max(1, round(...)) like percent damage uses); and a small PER-ABILITY
+  exceptions table for outliers the flat curve cannot save (the sorcerer kit
+  is the expected customer — numbers only, keyed by slug, empty until 2a
+  proves a need).
+- Applied in buildCampaignPlayerInstance / the ability-map layer exactly
+  where cooldownOverrides and campaign abilities already compose — the sim
+  and the client share it by construction.
+- **The ANCHOR INVARIANT becomes a test** (the rulebookSpec pattern): build
+  a campaign party at L5 for every class/special/passive combination and
+  assert chassis stats and every ability number are byte-identical to
+  arena's. Any future arena rebalance then propagates to the anchor
+  automatically, and any campaign-side drift below L6 fails CI.
+- Player-facing: the level-up screens above L5 say what grew ("+X% damage,
+  +Y HP") — the growth is a reward the player can read, and it is also the
+  sales pitch: arena is level 5; campaigns continue past it.
+
+**Consequences accepted up front:** every L6+ cell in every campaign gets
+easier when the curve lands and must be re-walked — that is folded into the
+stage's final re-walk + certification, not done twice. Curve SIZING comes
+from 2a: the target is a flat class-value slope (the tax refunded), not
+maximum generosity.
+
+### 2b-archive. Options as originally analyzed (kept for the record)
 
 - **(A) Shrink the tax at its source: cap hpScale (~≤1.5) and express
   difficulty through arrivals/clocks/enemy damage.** Structurally right —
@@ -106,9 +157,9 @@ Same isolation trick as giftPerClass, applied to class slots:
 - **(E) Content shaping** (more multi-enemy encounters where AoE shines).
   Real but soft; a complement, never the fix.
 
-Process: 2a table → pick A/B/A+B shape with the owner → implement behind the
-sim first → re-run 2a to verify the slope flattens → only then content
-re-walks.
+Process (updated for the decision): 2a table → SIZE the growth curve from the
+measured slopes → implement CAMPAIGN_GROWTH + anchor test → re-run 2a to
+verify the slope flattens → gifts (§3) → the one big re-walk + certification.
 
 ## 3. Deep Gift revaluation (blocked on giftPerClass results)
 
