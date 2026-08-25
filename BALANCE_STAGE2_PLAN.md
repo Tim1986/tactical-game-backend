@@ -222,6 +222,36 @@ sweeps a difficulty parameter must PILOT each cell first and measure only
 inside the band where the baseline runs ~80%→~30%. A sweep that bottoms
 out is not a weak measurement, it is a measurement of nothing.
 
+#### §2a-run3b-setA — the piloted sweep's verdict (Fable concurrence)
+
+Set A (piloted windows, k50 re-analysis by Opus — slope-on-a-sigmoid across
+different window widths is meaningless; k50 relative to the cell mean is
+scale-invariant): **no mechanical profile shows detectable scale
+sensitivity.** Full spread 0.056 of k across all seven profiles, inside
+every SE. The dodge-tax prediction is not merely unsupported — the ordering
+came out inverted (blockable-repeated highest, unblockable-burst near the
+bottom), and flat is the honest read.
+
+**Why the null was inevitable (Fable, post-hoc derivation that should have
+been pre-hoc):** hit resolution is a FRESH d20 per attack, no memory
+(rulebook DGE-1). A per-hit miss chance is a flat multiplicative factor on
+blockable damage at every scale — needing more hits does not raise the
+per-hit miss rate, so there is no compounding term and no k-interaction for
+any sweep to find. The toll is real (~10–30% by AC) but constant, and
+already priced into arena balance. ⚠ Lesson for §0: DERIVE the predicted
+parameter-dependence before building the harness to measure it — two lines
+of algebra would have replaced 96k games. (Side catch: CAMPAIGNS.md §4
+described a "dodge meter" that guarantees every Nth miss — a mechanic that
+does not exist; fixed 2026-08-24.)
+
+**The reframe pending set B:** class imbalance lives in MEANS and
+ENCOUNTER-KIND FIT, not scale response. Run 2's wizard "+31.9 slope" was
+kind-fit in costume — wizard excels in the encounter kinds that happen to
+carry big authored scales. The fix list is specific (ffh, dagger_toss,
+warlock investigation, encounter-kind mix as a design lever), and
+CAMPAIGN_GROWTH's job becomes visible progression sized for FEEL — a
+simpler Gate 1, not a tax refund.
+
 #### §2a-critique (Fable review) — why run 2's SLOPES are not load-bearing
 
 **Scale was never randomly assigned.** A cell's hpScale is its AUTHORED
