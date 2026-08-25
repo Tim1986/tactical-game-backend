@@ -92,12 +92,31 @@ const TEMPLATES: Record<string, string[]> = {
  *  sweeping it measures nothing (lever doctrine). No survive/hold/escape.
  *  unlitbeacon e11 excluded — its Adjutant deals percent-of-max damage and
  *  hunts the hero, which makes it a different experiment. */
-const CELLS: Array<{ camp: string; enc: string; diff: CampaignDifficulty; level: number }> = [
-  { camp: 'sealeddeep',  enc: 'e6',  diff: 'medium', level: 5 },
-  { camp: 'sealeddeep',  enc: 'e9',  diff: 'medium', level: 8 },
-  { camp: 'sealeddeep',  enc: 'e12', diff: 'medium', level: 10 },
-  { camp: 'unlitbeacon', enc: 'e8',  diff: 'medium', level: 7 },
-];
+const CELL_SETS: Record<string, Array<{ camp: string; enc: string; diff: CampaignDifficulty; level: number }>> = {
+  // Set A: the original probes. Skews 3/4 sealeddeep (that is where the
+  // kill-relevant candidates were) — which also means 3/4 UNDEAD cast.
+  a: [
+    { camp: 'sealeddeep',  enc: 'e6',  diff: 'medium', level: 5 },
+    { camp: 'sealeddeep',  enc: 'e9',  diff: 'medium', level: 8 },
+    { camp: 'sealeddeep',  enc: 'e12', diff: 'medium', level: 10 },
+    { camp: 'unlitbeacon', enc: 'e8',  diff: 'medium', level: 7 },
+  ],
+  // Set B (owner call 2026-08-24: run a second probe in parallel): balances
+  // the sample with unlitbeacon's dual-win finale and the trilogy rebuilds'
+  // kill-relevant L6+ cells — a LIVING enemy cast (goblins/orcs/humans)
+  // against set A's undead, different geometry, one non-crawl boss. The
+  // trilogy's provisional authored scales are irrelevant here: the pilot
+  // finds each cell's own window and hpScale REPLACES the authored value.
+  b: [
+    { camp: 'unlitbeacon',  enc: 'e12', diff: 'medium', level: 10 },  // dual-win finale (units_dead half)
+    { camp: 'lantern',      enc: 'e12', diff: 'medium', level: 10 },  // boss, living cast
+    { camp: 'goblinopolis', enc: 'e9',  diff: 'medium', level: 8 },   // mid-campaign boss, flat board
+    { camp: 'moonberry',    enc: 'e8',  diff: 'medium', level: 7 },   // carve kill-all, palace
+  ],
+};
+const SET = (() => { const i = process.argv.indexOf('--set'); return i > 0 ? process.argv[i + 1] : 'a'; })();
+const CELLS = CELL_SETS[SET];
+if (!CELLS) throw new Error(`Unknown cell set "${SET}" (a|b)`);
 
 const PILOT_GRID = [0.30, 0.40, 0.50, 0.60, 0.70, 0.85, 1.00, 1.20, 1.40, 1.70, 2.00];
 const WIN_HI = 0.80;   // easy end of the measurable window
