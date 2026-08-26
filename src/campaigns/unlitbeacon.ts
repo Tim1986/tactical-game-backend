@@ -805,7 +805,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // gap to each tier's band, and medium's gap is the widest because its
       // shorter clock leaves the most slack. Read the clock and the scale
       // together; neither number means anything alone.
-      hpScaleOverride: { easy: 1.45, medium: 3.70, hard: 1.70, nightmare: 2.20 },  // survive
+      hpScaleOverride: { easy: 1.45, medium: 4.10, hard: 1.70, nightmare: 2.20 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -839,7 +839,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // the trilogy's escort lesson applies: the VIP's HP does not scale with
       // the party's competence, so an escort's hard/nightmare need less added
       // pressure than a kill-all's, or the ally dies rather than the party.
-      hpScaleOverride: { easy: 1.35, medium: 1.45, hard: 1.75, nightmare: 1.88 },  // escort
+      hpScaleOverride: { easy: 1.35, medium: 1.50, hard: 1.75, nightmare: 1.88 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge
