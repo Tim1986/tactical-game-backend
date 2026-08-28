@@ -393,12 +393,49 @@ function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): vo
   });
 }
 
+/**
+ * The HP at or below which an execute effect (Kill Shot) actually kills, for
+ * THIS target. Returns undefined for a non-execute effect.
+ *
+ * [Gate 1] The threshold takes a percentage FLOOR when one is set (campaign
+ * L6+), so it does not shrink relative to scaled HP pools.
+ *
+ * ⚠ EXPORTED because three places must agree on this number, or the player is
+ * lied to (owner 2026-08-28: Kill Shot offered a full-health enemy as a legal
+ * target and then consumed the once-per-battle special doing nothing):
+ *   1. applyDamage below — what actually happens.
+ *   2. processUseAbility's validation — refuses the cast outright.
+ *   3. the client's targeting tint + tap handler — never offers the target.
+ * Never re-derive it; import this.
+ */
+export function executeThreshold(
+  effect: { healthThreshold?: number; healthThresholdPercent?: number },
+  target: { maxHealth: number },
+): number | undefined {
+  if (effect.healthThreshold === undefined) return undefined;
+  return Math.max(effect.healthThreshold,
+    Math.round((effect.healthThresholdPercent ?? 0) * target.maxHealth));
+}
+
+/**
+ * True when `ability` is an execute that CANNOT kill `target` at its current
+ * health — i.e. casting it would burn the special for nothing. Abilities with
+ * no execute effect are never "blocked" by this.
+ */
+export function executeWouldFail(
+  ability: { effects: readonly { type: string; healthThreshold?: number; healthThresholdPercent?: number }[] },
+  target: { currentHealth: number; maxHealth: number },
+): boolean {
+  for (const e of ability.effects) {
+    if (e.type !== 'damage' || e.healthThreshold === undefined) continue;
+    const t = executeThreshold(e, target);
+    if (t !== undefined && target.currentHealth > t) return true;
+  }
+  return false;
+}
+
 function applyDamage(ctx: ExecutionContext, target: UnitInstance, effect: DamageEffect): void {
-  // [Gate 1] The execute threshold takes a percentage FLOOR when one is set
-  // (campaign L6+), so it does not shrink relative to scaled HP pools.
-  const execThreshold = effect.healthThreshold === undefined ? undefined
-    : Math.max(effect.healthThreshold,
-        Math.round((effect.healthThresholdPercent ?? 0) * target.maxHealth));
+  const execThreshold = executeThreshold(effect, target);
   if (execThreshold !== undefined && target.currentHealth > execThreshold) {
     ctx.events.push({ type: 'ATTACK_MISSED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Kill Shot failed — target HP too high' });
     return;

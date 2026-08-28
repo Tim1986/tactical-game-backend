@@ -662,6 +662,44 @@ export const RULE_CHECKS: RuleCheck[] = [
       const low = mkUnit(P2, 2, 1, { currentHealth: 15 });
       cast(exec, caster, low);
       assert(low.currentHealth === 0 && !low.isAlive, 'execute must kill at/below the threshold');
+
+      // The window is TARGET LEGALITY, not just a fizzle: processTurn must
+      // refuse the cast so the once-per-battle special is never spent for
+      // nothing (owner 2026-08-28). The executor guard above stays as a
+      // backstop; this is the gate the player actually meets.
+      const exSlug = 'spec_execute';
+      const exAb = mkAbility({ slug: exSlug, range: 1, isUnblockable: true,
+        effects: [{ type: 'damage', formula: 'flat', value: 99, healthThreshold: 15 }] });
+      const amap = new Map([[exSlug, exAb]]);
+      const shooter = mkUnit(P1, 1, 1, { abilities: [exSlug], cooldowns: { [exSlug]: 0 } });
+      const tooHealthy = mkUnit(P2, 2, 1, { currentHealth: 16, maxHealth: 40 });
+      assertThrows(
+        () => processTurn(mkLegacyState([shooter, tooHealthy]), [
+          { type: 'USE_ABILITY', unitInstanceId: shooter.instanceId, abilitySlug: exSlug, target: tooHealthy.position },
+          { type: 'END_TURN' }], P1, P1, P2, amap),
+        'execute threshold', 'an execute must be REFUSED against a target above the window');
+      // In the window it is a legal cast.
+      const killable = mkUnit(P2, 2, 1, { currentHealth: 15, maxHealth: 40 });
+      const okShooter = mkUnit(P1, 1, 1, { abilities: [exSlug], cooldowns: { [exSlug]: 0 } });
+      const okRes = processTurn(mkLegacyState([okShooter, killable]), [
+        { type: 'USE_ABILITY', unitInstanceId: okShooter.instanceId, abilitySlug: exSlug, target: killable.position },
+        { type: 'END_TURN' }], P1, P1, P2, amap);
+      assert(!okRes.updatedState.units.find((u) => u.instanceId === killable.instanceId)!.isAlive,
+        'an execute inside the window must still be legal and lethal');
+
+      // CAMPAIGN L6+: the 25%-of-max floor widens the window, so a target the
+      // flat number would reject is legal when it is under a quarter of a big
+      // pool (100 max, 24 current: above the flat 15, below the 25 floor).
+      const pctAb = mkAbility({ slug: 'spec_execute_pct', range: 1, isUnblockable: true,
+        effects: [{ type: 'damage', formula: 'flat', value: 99, healthThreshold: 15, healthThresholdPercent: 0.25 }] });
+      const pctMap = new Map([['spec_execute_pct', pctAb]]);
+      const bigTarget = mkUnit(P2, 2, 1, { currentHealth: 24, maxHealth: 100 });
+      const pctShooter = mkUnit(P1, 1, 1, { abilities: ['spec_execute_pct'], cooldowns: { spec_execute_pct: 0 } });
+      const pctRes = processTurn(mkLegacyState([pctShooter, bigTarget]), [
+        { type: 'USE_ABILITY', unitInstanceId: pctShooter.instanceId, abilitySlug: 'spec_execute_pct', target: bigTarget.position },
+        { type: 'END_TURN' }], P1, P1, P2, pctMap);
+      assert(!pctRes.updatedState.units.find((u) => u.instanceId === bigTarget.instanceId)!.isAlive,
+        'the campaign 25% floor must widen the execute window, not narrow it');
     },
   },
   {

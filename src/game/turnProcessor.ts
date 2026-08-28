@@ -9,7 +9,7 @@ import { chebyshevDistance, manhattanDistance, getUnitAtPosition, isTileOccupied
 import { canAimAtAlly } from './abilityTargeting.js';
 import { reachableFrom, hasLineOfSight, isTerrainBlocked, wallsBlockLine } from '../ai/geometry.js';
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
-import { executeAbility, applyEntryHazard } from './abilityExecutor.js';
+import { executeAbility, applyEntryHazard, executeWouldFail } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
 import { checkSpawnTriggers, maybeRoomTransition } from './encounterFlow.js';
 
@@ -833,6 +833,18 @@ function processUseAbility(state: MatchState, action: UseAbilityAction, playerId
       if (!alliedTarget) throw new TurnValidationError('That ability can only be used on your own units');
     } else if (alliedTarget) {
       throw new TurnValidationError('That ability can only target enemies');
+    }
+    // EXECUTE WINDOW (owner report 2026-08-28). Kill Shot used to accept ANY
+    // enemy: the cast was legal, the once-per-battle special was consumed, and
+    // applyDamage then quietly emitted "Kill Shot failed — target HP too high"
+    // and did nothing. Spending your special on a no-op is not a play the
+    // player chose, it is a UI lie they were allowed to act on. The window is
+    // now part of TARGET LEGALITY, so the engine refuses the cast and the
+    // client (which shares executeWouldFail) never offers the target at all.
+    // Threshold is per-target: flat 22 in arena, or the campaign L6+ 25%-of-max
+    // floor, whichever is higher — see executeThreshold.
+    if (executeWouldFail(ability, targetUnit)) {
+      throw new TurnValidationError('Target is above the execute threshold — Kill Shot cannot kill it yet');
     }
     // LOS: single-target abilities are blocked by a living unit on a true line
     // (orthogonal/diagonal) between caster and target; non-aligned targets are
