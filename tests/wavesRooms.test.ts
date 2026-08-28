@@ -234,7 +234,25 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
     expect(movedHealer.position).toEqual({ x: 1, y: 3 });             // party entered room 2
   });
 
-  it('a unit that merely ENDS its turn on a door without moving does not transition', async () => {
+  // ⚠ THIS TEST WAS INVERTED ON 2026-08-27. It used to assert that ending a
+  // turn on an open door WITHOUT moving does NOT transition — and that rule
+  // was a softlock, not a requirement:
+  //   1. a unit steps onto an 'on_clear' door while enemies live (door shut,
+  //      transition correctly declines);
+  //   2. the party kills the last enemy, opening the door;
+  //   3. that unit is already ON the door and has no reason to move again;
+  //   4. the transition only fired on MOVEMENT, so it never fired again.
+  // The party mills at an open door forever. campaignSim scored 13-15% of e8
+  // medium games as "draws (stall)" with exactly this fingerprint, which also
+  // made e8 read as a melee WALL (13%) in the battery.
+  //
+  // The movement test was never what fixed the D2 Goblinopolis bug — that fix
+  // was about TIMING (run the transition at END of turn so queued actions
+  // resolve in the old room's geometry), and the test above still guards it.
+  // The real invariant is the one maybeRoomTransition's docstring states:
+  // "a party unit ENDED ITS TURN on an ACTIVE exit door". Both halves are
+  // asserted below.
+  it('a unit that ENDS its turn on a NEWLY-OPENED door transitions even without moving', async () => {
     const { processTurn } = await import('../src/game/turnProcessor.js');
     const { buildAbilityMap } = await import('../src/ai/defaultData.js');
     const map = buildAbilityMap();
@@ -253,7 +271,33 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
       { type: 'MOVE', unitInstanceId: sitter.instanceId, destination: { x: 7, y: 3 } }, // hold position
       { type: 'END_TURN' },
     ] as never, P, P, E, map);
-    expect(r.updatedState.encounterProgress!.roomIndex).toBe(0);      // no move, no transition
+    expect(r.updatedState.encounterProgress!.roomIndex).toBe(1);      // door open -> it goes through
+  });
+
+  it('...but an on_clear door with enemies still standing does NOT transition', async () => {
+    // The other half of the invariant: it is the door being ACTIVE that
+    // matters, not movement. With a living enemy on the board the same
+    // stand-still turn must NOT advance the room.
+    const { processTurn } = await import('../src/game/turnProcessor.js');
+    const { buildAbilityMap } = await import('../src/ai/defaultData.js');
+    const map = buildAbilityMap();
+    const sitter = mk(P, 7, 3, { movementRange: 3 });   // starts ON the door
+    const buddy  = mk(P, 5, 3);
+    const foe    = mk(E, 4, 3);                          // ALIVE, on the board
+    const g1 = mk(E, 0, 0);
+    const ep = progress({
+      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      rooms: [{ units: [g1], placement: [{ x: 6, y: 3 }], waves: [], exitDoors: [], doorMode: 'on_clear', entryTiles: [{ x: 1, y: 3 }, { x: 1, y: 4 }] }],
+    }, [sitter.instanceId, buddy.instanceId]);
+    const st = mkState([sitter, buddy, foe], ep);
+    st.objective = { partyId: P, enemyId: E, mainId: sitter.instanceId, text: 'x', win: [{ kind: 'all_enemies_dead' }], loss: [] } as never;
+    st.turnContext = undefined;
+    st.initiative.activeUnitId = sitter.instanceId;
+    const r = processTurn(st, [
+      { type: 'MOVE', unitInstanceId: sitter.instanceId, destination: { x: 7, y: 3 } },
+      { type: 'END_TURN' },
+    ] as never, P, P, E, map);
+    expect(r.updatedState.encounterProgress!.roomIndex).toBe(0);      // door shut -> stays put
   });
 
   it('units_dead naming a boss in a LATER room does not vacuously win before the boss spawns', () => {

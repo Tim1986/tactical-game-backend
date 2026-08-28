@@ -54,9 +54,10 @@ export const MAX_CAMPAIGN_LEVEL = 10;
 //   field             +0   +1   +1   +2   +2
 //   rogue             +0   +0   +0   +2   +2   (via +1/effect on two hits)
 //
-// Rogue trades earlier growth for equal growth at cap — deliberate, and the
-// reason its HP row is lighter too: it is the roster's glass cannon (AC 8,
-// two blockable rolls a turn) and the curve should not blunt that identity.
+// Rogue trades earlier growth for equal growth at cap — deliberate. Its HP row
+// used to be lighter for the same "don't blunt the glass cannon" reason; the
+// owner overruled that on 2026-08-27 and Rogue's HP now matches the field
+// (see the note on the rogue row below). Only the DAMAGE row is still shaped.
 //
 // ⚠ EXPLICITLY A STARTING POINT (owner). Conservative on purpose: "the more
 // we scale the classes, the more the specials are going to become harder to
@@ -82,20 +83,35 @@ const GROWTH_FIELD: Record<number, GrowthRung> = {
   10: { maxHp: 9, basicDamage: 2 },
 };
 
-/** Per-class overrides. Rogue: half damage rung (Twin pays it twice) and a
- *  lighter HP rung. Add a row here rather than bending the field. */
+/** Per-class overrides. Rogue: half damage rung (Twin pays it twice); its HP
+ *  row now MATCHES the field. Add a row here rather than bending the field. */
 const GROWTH_BY_CLASS: Record<string, Record<number, GrowthRung>> = {
-  // ⚠ Rogue's HP rungs are SMOOTHED (2/3/4/5/6 rather than 2/2/4/4/6) so that
-  // every level grants something visible. With the halved damage rung, the
-  // stepped version left Rogue with literally nothing at L7 while the rest of
-  // the party gained damage — a level-up screen that says "you got nothing"
-  // is a design failure even when the totals are right.
+  // ⚠ ROGUE'S HP MATCHES THE FIELD. It used to be a lighter row (2/3/4/5/6),
+  // reasoning that the glass cannon should not be blunted. The owner played
+  // it and overruled that outright (2026-08-27, medium run): "Rogue should be
+  // getting as much max HP as the others, for SURE, Rogue needs it more than
+  // anyone." At L8 the screen read "+3 max HP" for everyone and "+1" for
+  // Rogue — "completely shafted... not at all what I wanted."
+  //
+  // ⚠ BUT DO NOT SIMPLY COPY THE FIELD ROW (3/3/6/6/9). The field takes its
+  // L7 and L9 rungs as DAMAGE, and Rogue's damage is deliberately delayed to
+  // the cap, so a straight copy leaves Rogue with literally NOTHING at L7 —
+  // the level-up-screen design failure the old smoothing existed to prevent.
+  // Both constraints are satisfiable at once: 3/4/6/6/9 is field-equal at
+  // L6/L8/L9/L10 and one point AHEAD at L7, which is exactly the level the
+  // field spends on damage that Rogue does not get. Every level grants
+  // something visible and the cap is identical.
+  //
+  // The DAMAGE row is unchanged and is NOT a defect — the owner confirmed it
+  // as intended in the same pass: "+1 attack at the end when other classes
+  // get +2 attack." Twin Strike pays the rung twice, so +1/effect ≈ the
+  // field's +2/turn.
   rogue: {
-    6:  { maxHp: 2, basicDamage: 0 },
-    7:  { maxHp: 3, basicDamage: 0 },
-    8:  { maxHp: 4, basicDamage: 0 },
-    9:  { maxHp: 5, basicDamage: 1 },
-    10: { maxHp: 6, basicDamage: 1 },
+    6:  { maxHp: 3, basicDamage: 0 },
+    7:  { maxHp: 4, basicDamage: 0 },
+    8:  { maxHp: 6, basicDamage: 0 },
+    9:  { maxHp: 6, basicDamage: 1 },
+    10: { maxHp: 9, basicDamage: 1 },
   },
 };
 
@@ -630,12 +646,12 @@ export function buildEncounterState(
       rooms: later,
       exitDoors: room0.exitDoors,
       doorMode: room0.doorMode ?? 'on_clear',
-      partyIds, roomIndex: 0,
+      partyIds, roomIndex: 0, roomEnteredRound: 0,
     };
   } else if (enc.waves?.length) {
     encounterProgress = {
       waves: resolveWaves(enc.waves, enc.terrain, effNoSpecials, 'encounter'),
-      rooms: [], exitDoors: [], doorMode: 'on_clear', partyIds, roomIndex: 0,
+      rooms: [], exitDoors: [], doorMode: 'on_clear', partyIds, roomIndex: 0, roomEnteredRound: 0,
     };
   }
 

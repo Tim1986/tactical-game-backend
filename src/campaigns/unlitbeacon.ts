@@ -336,7 +336,16 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // 1.12 reads TOO EASY against the general medium band by design, exactly
       // as lantern e1's easy does. hard/nightmare are untouched — the owner
       // did not complain about them, and those tiers are meant to bite.
-      hpScaleOverride: { easy: 0.95, medium: 1.12, hard: 1.28, nightmare: 1.32 },  // kill-all (tutorial: easy AND medium sit high on purpose)
+      // ⚠ LADDER RE-ANCHORED TO THE OWNER'S PLAY, NOT THE SIM (2026-08-27).
+      // Owner on the shipped MEDIUM (1.12): "about where hard difficulty
+      // should be, maybe just slightly too easy for hard, much too hard for
+      // medium." So 1.12 becomes HARD (nudged to 1.15 for the "slightly too
+      // easy" half) and medium drops well beneath it. The battery is NOT the
+      // authority here — see MEDIUM_RUN_ACTION_PLAN.md Part 0: its win rates
+      // have rho=+0.12 against the owner's difficulty ranking, i.e. no
+      // predictive power at all, so binary-searching this cell would be
+      // churning noise. These numbers are owner-anchored and await his retest.
+      hpScaleOverride: { easy: 0.85, medium: 0.98, hard: 1.15, nightmare: 1.32 },  // kill-all
     },
 
     // e2 — Barricade Night (siege). Hold the square while the column keeps
@@ -355,7 +364,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         { enemies: ['vanguard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 } },
         { enemies: ['breaker'], placement: [{ x: 6, y: 0 }], trigger: { on: 'round', round: 5 } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 1.00, hard: 1.10, nightmare: 1.20 },  // kill-all + waves, L2 party is body-count fragile
+      // Owner 2026-08-27: "feels a bit easy even for medium... this feels
+      // impossible to lose." Whole ladder lifted one notch; medium is the
+      // measured complaint, the rest move with it to stay monotone.
+      hpScaleOverride: { easy: 0.90, medium: 1.12, hard: 1.22, nightmare: 1.32 },  // kill-all + waves
     },
 
     // e3 — The Two Bridges (hold). Cover both bridgeheads at once while
@@ -435,7 +447,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // 69-72% window the owner has bracketed by feel (PLAYTEST_CALIBRATION).
       // A rare case where a playtest verdict and an engine fix pointed the
       // same direction, and the verdict was recorded early enough to catch it.
-      hpScaleOverride: { easy: 0.88, medium: 1.02, hard: 1.12, nightmare: 1.20 },  // hazard carve
+      // ⚠ Owner played the shipped MEDIUM (1.02) twice — once with a melee
+      // comp (lost decisively, four retries) and once with 2M/2R (won first
+      // try, "still very difficult"). Verdict both times: "definitely a hard
+      // level of difficulty, definitely not medium." So 1.02 becomes HARD
+      // unchanged and medium drops beneath it.
+      // ⚠ HP IS NOT THE WHOLE STORY HERE. The owner names the fire tiles, the
+      // enemy ranged AI and rogue movement as the real pressure, and calls
+      // this "a very punishing filter to melee heavy comps." If a later
+      // encounter filters equally hard the OTHER way, nightmare becomes
+      // unbeatable for every comp — that pairing is the thing to watch, not
+      // this number.
+      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 1.02, nightmare: 1.15 },  // hazard carve
     },
 
     // e5 — The Icefall (carve). Fighting UP a frozen cascade: ice pillars,
@@ -451,9 +474,37 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           { x: 5, y: 2 }, { x: 6, y: 5 },
         ],
       },
-      enemies: ['volley_archer', 'volley_archer', 'blizzard_wisp', 'frozen_watchman'],
-      // ⚠ Wisp pushed to the back edge (was (5,4)) — see the placement note.
-      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 4 }, { x: 6, y: 3 }],
+      // ⚠ THE WISP IS NO LONGER ON THE BOARD AT TURN 1 (owner, 2026-08-27).
+      // It arrives as a round-2 wave instead. This is the fix that finally
+      // reconciles two of his rulings that had been fighting each other:
+      //
+      //   2026-08-24: "my characters start out bunched up. I didn't choose to
+      //   bunch them up, YOU did. So on my first turn I'm gonna get caught in
+      //   a 3 unit blizzard." -> the party was SPREAD to cap any ring at 2.
+      //   2026-08-27: "completely spread apart and way in the back, there's no
+      //   way for me to get across the field without getting picked apart."
+      //   -> that same spread is what makes the approach miserable.
+      //
+      // Spreading solved the ring and CAUSED the approach problem. His own
+      // steer resolves it — "as long as he starts off far away enough that he
+      // can't nail the whole party on turn 1, it should be fine" — except that
+      // pure distance provably cannot do it: the wisp moves 3, PHASES (the ice
+      // pillars do not slow it), blizzard has range 3 and the ring adds 1, so
+      // its turn-1 reach is 7 on an 8-wide board. There is nowhere to put it.
+      //
+      // Removing it from turn 1 achieves what moving it back could not. With
+      // no wisp on the board there is no turn-1 ring to dodge, so the party is
+      // free to start FORWARD and COMPACT. By the time it arrives the party
+      // has moved under its own control — which honours the actual principle
+      // of the opening-formation rule (the player must not be punished for a
+      // formation he did not choose), not merely its letter.
+      enemies: ['volley_archer', 'volley_archer', 'frozen_watchman'],
+      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 6, y: 3 }],
+      waves: [
+        // Back edge, so it still has to commit and strand itself to land a
+        // ring — the trade the fight was designed around is preserved.
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 2 } },
+      ],
       // ⚠ SPREAD, and this is the load-bearing fix (owner 2026-08-24: "my
       // characters start out bunched up. I didn't choose to bunch them up, YOU
       // did. So on my first turn, in almost every scenario, I'm gonna get
@@ -477,7 +528,28 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // party to land even that — a 34 HP caster, in reach, having spent its
       // once-per-battle special. That is the trade the fight was missing:
       // eat a two-unit freeze, then kill the thing that cast it.
-      playerPlacement: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 0, y: 5 }, { x: 2, y: 6 }],
+      // COMPACT, and only slightly forward. Was (0,1)(1,3)(0,5)(2,6): spanning
+      // SIX rows (y1-y6) against enemies that only span y2-y5, so two units
+      // began the fight walking sideways just to join their own party. Now
+      // y2-y5, mirroring the enemy line instead of overhanging it.
+      //
+      // ⚠ DO NOT PUSH THIS TO THE x=2 FRONT. That was tried (2,2)(1,3)(2,4)
+      // (2,5) and it is a comp-swap, not a fix: melee 87% / ranged 25% /
+      // balanced 84%. It buys the melee approach exactly what it costs the
+      // ranged standoff, and 25% is a WALL — below the 35% medium floor, i.e.
+      // a locked party that cannot pass. The x=1 version measures 72/56/75,
+      // mean 68% in band, every floor held: the tightest spread of the three
+      // formations tried and the only one with no walled comp.
+      //
+      // ⚠ THE REAL LESSON, AND IT IS FOR THE DEPLOYMENT FEATURE (Part 4): one
+      // authored formation cannot serve both comps here. Forward is correct
+      // for melee and wrong for ranged; back is the reverse. Every choice we
+      // make on the player's behalf robs one comp to pay another. Letting the
+      // player pick his own opening squares dissolves the whole problem —
+      // which is why the owner asked for e5 specifically to offer MORE
+      // candidate squares than usual once that lands.
+      // ⚠ (2,3) is an ice pillar — the x=2 column is not fully available.
+      playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }],
       // Re-walked on the new geometry (the owner predicted it: "that would
       // also make the encounter easier, so it'll need a rebalance as well").
       // The cliff here is savage — 16 points of win rate per 0.04 of scale —
@@ -590,7 +662,14 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // goal never gates acceptance.)
         { slug: 'dry_boots', name: 'Dry Boots', description: 'Cross the Frozen Mere by round 4.', check: { kind: 'win_by_round', round: 4 } },
       ],
-      hpScaleOverride: { easy: 1.20, medium: 1.30, hard: 1.20, nightmare: 1.70 },  // escape — re-walked against the round-6 clock
+      // ⚠ THE LADDER WAS INVERTED (medium 1.30 sat ABOVE hard 1.20). Fixed by
+      // raising HARD, never by touching medium: the owner played this exact
+      // medium and approved it ("fine, good challenge design, solid difficulty
+      // for medium"), so medium's number is now an anchor and moves for
+      // nobody. Note this is an ESCAPE, where BALANCE_STAGE2_PLAN §0 rules
+      // scale largely decorative — the round-6 clock is the real lever — so
+      // the inversion was cosmetic rather than a live difficulty bug.
+      hpScaleOverride: { easy: 1.10, medium: 1.30, hard: 1.45, nightmare: 1.70 },  // escape — clock is the real lever
     },
 
     // e7 — The Storm Door (race). ONE unit must reach the Vigil's door before
@@ -683,7 +762,34 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           doorMode: 'on_clear',
           surprise: true,
           waves: [
-            { enemies: ['shelf_pikeman'], placement: [{ x: 6, y: 4 }], trigger: { on: 'door', tile: { x: 6, y: 3 } } },
+            // ⚠ WAS DOOR-TRIGGERED, AND THAT WAS THE BUG. It fired when a
+            // party unit stepped on (6,3) — right beside the exit — so the
+            // owner sent one unit ahead, stepped through, and found a fresh
+            // enemy in his face while the UI still said room 2: "That is
+            // unacceptable. It deceives the player, makes him feel cheated.
+            // If you want another wave to come, it needs to be triggered by
+            // time, not by the door — going through the door implies going to
+            // the NEXT ROOM." (2026-08-27)
+            //
+            // Now a room clock: three full rounds after the party ENTERS this
+            // room, wherever anyone happens to be standing. Same pressure —
+            // you cannot take this room at a stroll — with no ambush bolted
+            // onto the exit. An absolute 'round' would not work here: room 2
+            // is reached at an unpredictable round, so it would fire on entry
+            // or never (hence the 'rounds_after_entry' trigger).
+            //
+            // ⚠ HARD/NIGHTMARE ONLY. Converting this from a door trigger to a
+            // clock made it UNDODGEABLE — previously a party that simply never
+            // stepped on (6,3) never fought it at all, so the encounter had
+            // been quietly banking on players eating an ambush they could have
+            // walked around. Made unconditional it cost the melee comp 11% ->
+            // 1% and the balanced comp 68% -> 44%. Per the owner's difficulty
+            // policy (2026-08-27) — "It should be manageable with 3 melee in
+            // medium difficulty... If you need 2 ranged to do well for hard
+            // and nightmare, that is a perfectly fine outcome" — the honest
+            // clock is kept where the pressure is wanted and dropped where it
+            // is not.
+            { enemies: ['shelf_pikeman'], placement: [{ x: 6, y: 4 }], trigger: { on: 'rounds_after_entry', rounds: 3 }, difficulties: ['hard', 'nightmare'] },
           ],
         },
         {
@@ -717,7 +823,21 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 1.13, nightmare: 1.17 },  // rooms — compressed ladder, sits on a cliff
+      // ⚠ NON-MONOTONE IN SCALE, MONOTONE IN OUTCOME — read it with the wave,
+      // exactly like e9 must be read with its clock. hard/nightmare carry the
+      // floor-2 shelf_pikeman that medium does not, and a body is worth far
+      // more than a scale step here, so their SCALE drops to pay for it.
+      // Re-walked 2026-08-27 after the wave became undodgeable (it had been
+      // door-triggered, so a party that avoided one tile never fought it):
+      //   medium 1.04 -> mean 66%, melee 39%   (no wave)
+      //   hard   0.92 -> mean 51%, melee 14%   (wave)
+      //   night  1.00 -> mean 24%, best 45%    (wave, solvable)
+      // 1.13/1.17 with the wave on was mean 23% at hard and UNSOLVABLE at
+      // nightmare (best party 10% against the 40% bar) — do not restore them.
+      // Hard sits 15pt under medium, comfortably outside the +/-4pt noise
+      // floor at 150 games; an earlier 0.88 probe read 63% and was only 3pt
+      // from medium, i.e. not actually a different difficulty.
+      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 0.92, nightmare: 1.00 },  // rooms — compressed ladder, sits on a cliff
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -797,7 +917,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // clock would overrule the owner's call to fix a number he did not ask
       // about — and he reached this encounter having found it brutal, so a
       // generous easy is the right side to err on.
-      // ⚠ THE SCALE LADDER HERE IS NON-MONOTONE ON PURPOSE (medium 2.95 sits
+      // ⚠ THE SCALE LADDER HERE IS NON-MONOTONE ON PURPOSE (medium 4.10 sits
       // ABOVE hard 1.70). On every other encounter that would be a bug. Here
       // it is the arithmetic of the owner's clock: medium holds SEVEN rounds
       // and hard holds EIGHT, so hard is already a harder fight at identical

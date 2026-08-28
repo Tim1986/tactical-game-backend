@@ -127,6 +127,8 @@ export function checkSpawnTriggers(
   for (const w of ep.waves) {
     const fire =
       (w.trigger.on === 'round' && state.roundNumber >= w.trigger.round)
+      || (w.trigger.on === 'rounds_after_entry'
+          && state.roundNumber >= (ep.roomEnteredRound ?? 0) + w.trigger.rounds)
       || (w.trigger.on === 'room_cleared' && boardClear)
       || (w.trigger.on === 'door' && !!mover && partyIds.has(mover.instanceId)
           && (moverTiles ?? [mover.position]).some(
@@ -228,12 +230,43 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
     }
   }
 
+  // ⚠ CLEAR THE FALLEN GARRISON — but ENEMIES ONLY, never party or allies.
+  // Owner 2026-08-27: "By the time we get to room 3, there are so many dead
+  // enemies that the initiative column gets really filled up. Let's clear out
+  // the dead enemies when you go through a new room." Corpses from a room the
+  // party has already walked out of are pure clutter in the strip.
+  //
+  // ⚠ THE SCOPE IS LOAD-BEARING. winCondition's `ally_dead` loss detects a
+  // fallen escort by finding it PRESENT-BUT-DEAD in state.units
+  // (`some(u => !u.isAlive && ids.includes(u))`). Purging every corpse would
+  // delete the evidence and silently disable escort-death losses — the run
+  // would simply continue after Tam died. Party corpses are likewise left
+  // alone (revival/counting and the initiative strip both expect them).
+  // `units_dead` WINS are unaffected either way: they test for anyone still
+  // ALIVE, which stays false once the body is gone.
+  {
+    const keepIds = new Set<string>([...ep.partyIds, ...Object.keys(state.allies ?? {})]);
+    const purge = new Set(state.units.filter((u) => !u.isAlive && !keepIds.has(u.instanceId))
+      .map((u) => u.instanceId));
+    if (purge.size > 0) {
+      state.units = state.units.filter((u) => !purge.has(u.instanceId));
+      state.initiative.order = state.initiative.order.filter((id, idx) => {
+        if (!purge.has(id)) return true;
+        if (idx <= state.initiative.slot) state.initiative.slot -= 1;
+        return false;
+      });
+    }
+  }
+
   // Progress bookkeeping BEFORE spawning (spawn placement sees new terrain).
   ep.rooms = ep.rooms.slice(1);
   ep.waves = room.waves;
   ep.exitDoors = room.exitDoors;
   ep.doorMode = room.doorMode;
   ep.roomIndex += 1;
+  // Reset the room clock so 'rounds_after_entry' waves in the NEW room are
+  // measured from this moment, not from the start of the encounter.
+  ep.roomEnteredRound = state.roundNumber;
 
   // The room's garrison enters as a wave (weave + optional surprise).
   spawnWave(state, { units: room.units, placement: room.placement, trigger: { on: 'room_cleared' }, surprise: room.surprise }, events);

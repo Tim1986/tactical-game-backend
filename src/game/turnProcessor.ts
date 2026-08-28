@@ -489,8 +489,33 @@ function finalizeTurnInternal(
     checkSpawnTriggers(ws, events, actingUnit, tc.visited);
   }
 
-  if (!forcedCommit && actingUnit.isAlive
-    && (actingUnit.position.x !== startPos.x || actingUnit.position.y !== startPos.y)) {
+  // ⚠ DO NOT RE-ADD A "MOVED THIS TURN" REQUIREMENT HERE. It used to read
+  // `&& position !== startPos`, and that was a hard softlock:
+  //
+  //   1. A unit steps onto the door while enemies are still alive. An
+  //      'on_clear' door is shut, so maybeRoomTransition correctly declines.
+  //   2. The party kills the last enemy. The door is now OPEN.
+  //   3. That unit is already standing on the door and has no reason to move
+  //      again — the door tile is its best-scoring position.
+  //   4. The transition only fired on MOVEMENT, so it never fires again. The
+  //      party mills at an open door until the turn cap.
+  //
+  // Measured at 13-15% of e8 medium games (campaignSim flagged them as
+  // "draws (stall)"), and every stalled game had the same fingerprint: room
+  // cleared, foesAlive 0, door active, and a party unit parked ON the door.
+  // It was scored as difficulty, which is part of why e8 read as a melee WALL
+  // (13%) in the battery.
+  //
+  // This is a LIVE GAME BUG, not just a sim artifact: a human who parks a
+  // unit on the door before clearing the room has to step off and back on to
+  // unstick it.
+  //
+  // The correct rule is the one this function's own docstring states — "a
+  // party unit ENDED ITS TURN on an active exit door". Whether it moved to
+  // get there is irrelevant; what matters is that the door may have OPENED
+  // while it stood there. Firing at end-of-turn (rather than mid-turn) is
+  // what protects the mover's queued actions; the movement test never did.
+  if (!forcedCommit && actingUnit.isAlive) {
     maybeRoomTransition(ws, actingUnit, events);
   }
 

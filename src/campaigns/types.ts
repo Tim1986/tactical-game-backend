@@ -77,6 +77,18 @@ export interface ObjectiveSpec {
 export type WaveTrigger =
   | { on: 'room_cleared' }
   | { on: 'round'; round: number }
+  /** N full rounds after the party ENTERED the current room. Use this for
+   *  reinforcements in a later room: an absolute 'round' is unusable there
+   *  because the room is reached at an unpredictable round, so it fires on
+   *  entry or never.
+   *
+   *  ⚠ PREFER THIS OVER 'door' FOR ROOM REINFORCEMENTS. Owner ruling
+   *  2026-08-27, after a door-triggered wave in unlitbeacon e8 put an enemy
+   *  in his face the moment he stepped through: "That is unacceptable. It
+   *  deceives the player, makes him feel cheated. If you want another wave to
+   *  come, it needs to be triggered by time, not by the door — going through
+   *  the door implies going to the NEXT ROOM." */
+  | { on: 'rounds_after_entry'; rounds: number }
   /** A party unit ends a move on the door tile: the door opens. */
   | { on: 'door'; tile: BoardPosition };
 

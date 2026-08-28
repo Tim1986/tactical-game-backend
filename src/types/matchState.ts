@@ -89,7 +89,11 @@ export type AllyBehaviorState =
 export interface PendingWave {
   units: UnitInstance[];
   placement: BoardPosition[];
-  trigger: { on: 'room_cleared' } | { on: 'round'; round: number } | { on: 'door'; tile: BoardPosition };
+  /** Mirrors campaigns/types.ts WaveTrigger — keep the two in step.
+   *  'rounds_after_entry' is measured from EncounterProgressState
+   *  .roomEnteredRound, which is why that field exists. */
+  trigger: { on: 'room_cleared' } | { on: 'round'; round: number }
+    | { on: 'rounds_after_entry'; rounds: number } | { on: 'door'; tile: BoardPosition };
   surprise?: boolean;
 }
 
@@ -119,6 +123,12 @@ export interface EncounterProgressState {
   /** Party instance ids in party order (entry placement + initiative weave). */
   partyIds: UUID[];
   roomIndex: number;
+  /** state.roundNumber when the CURRENT room was entered (0 for room 1).
+   *  Exists so a wave can be scheduled relative to entering a room rather
+   *  than at an absolute round — see WaveTrigger 'rounds_after_entry'. A
+   *  later room is reached at an unpredictable absolute round, so an absolute
+   *  trigger for one either fires the instant the party walks in or never. */
+  roomEnteredRound: number;
 }
 
 /**

@@ -49,12 +49,25 @@ const living = (s: { units: { ownerPlayerId: string; isAlive: boolean }[] }) =>
 /** Clear floor 1 and climb. Floor 1's door is `on_clear` as of 2026-08-24, so
  *  every floor-2 test has to earn the transition rather than walking out of a
  *  live fight (which is exactly the accident that change was made to stop). */
-function climbToFloor2(state: ReturnType<typeof buildE8>['state']) {
+/**
+ * @param armDoorTrigger re-points floor 2's pending wave at a DOOR trigger.
+ *
+ * ⚠ THE DOOR-MACHINERY TESTS BELOW MUST OWN THEIR OWN FIXTURE. They used to
+ * lean on e8 happening to author a door-triggered wave, so when the owner had
+ * that wave changed to a room clock on 2026-08-27 ("going through the door
+ * implies going to the NEXT ROOM"), three unrelated engine tests broke with
+ * it. The `on: 'door'` trigger is still a supported feature other content can
+ * use, so its coverage must not be hostage to one encounter's tuning.
+ */
+function climbToFloor2(state: ReturnType<typeof buildE8>['state'], armDoorTrigger = false) {
   const ep = state.encounterProgress!;
   const mover = state.units.find((u) => u.instanceId === ep.partyIds[0])!;
   for (const e of living(state)) e.isAlive = false;
   mover.position = { ...ep.exitDoors[0] };
   maybeRoomTransition(state, mover, []);
+  if (armDoorTrigger && state.encounterProgress!.waves[0]) {
+    state.encounterProgress!.waves[0].trigger = { on: 'door', tile: { x: 6, y: 3 } };
+  }
   return mover;
 }
 
@@ -66,10 +79,12 @@ describe('e8 room flags', () => {
     // Floor 1 is 'on_clear' (see the coverage note above).
     expect(ep.doorMode).toBe('on_clear');
     expect(ep.rooms.length).toBe(2);
-    // Floor 2 carries surprise + the door-triggered landing guard.
+    // Floor 2 carries surprise + the landing guard on a room clock.
     expect(ep.rooms[0].surprise).toBe(true);
     expect(ep.rooms[0].waves).toHaveLength(1);
-    expect(ep.rooms[0].waves[0].trigger).toEqual({ on: 'door', tile: { x: 6, y: 3 } });
+    // ⚠ Was a door trigger; the owner had it changed to a room clock
+    // (2026-08-27) because a door-sprung ambush "deceives the player".
+    expect(ep.rooms[0].waves[0].trigger).toEqual({ on: 'rounds_after_entry', rounds: 3 });
   });
 
   it("floor 1's on_clear door REFUSES while the garrison lives, then opens", () => {
@@ -105,7 +120,7 @@ describe('e8 room flags', () => {
 
   it("the landing guard spawns only when a PARTY unit steps on the door tile", () => {
     const { state } = buildE8();
-    const mover = climbToFloor2(state);          // now on floor 2
+    const mover = climbToFloor2(state, true);    // now on floor 2, door trigger armed
 
     const ep = state.encounterProgress!;
     expect(ep.waves).toHaveLength(1);           // landing guard still pending
@@ -146,9 +161,32 @@ describe('e8 room flags', () => {
     expect(state.encounterProgress!.waves).toHaveLength(1);   // still pending
   });
 
+  it("a room clock is measured from ENTERING the room, not the absolute round", () => {
+    // The whole reason 'rounds_after_entry' exists. A later room is reached at
+    // an unpredictable absolute round, so an absolute trigger would fire the
+    // instant the party walks in (exactly the "baddie in my face" the owner
+    // rejected) or never fire at all.
+    const { state } = buildE8();
+    state.roundNumber = 11;                       // floor 1 took a while
+    const mover = climbToFloor2(state);           // keeps the authored room clock
+    const ep = state.encounterProgress!;
+    expect(ep.waves[0].trigger).toEqual({ on: 'rounds_after_entry', rounds: 3 });
+    expect(ep.roomEnteredRound).toBe(11);         // clock reset on entry
+
+    // Two rounds in: not yet, even though the absolute round is far past 3.
+    state.roundNumber = 13;
+    checkSpawnTriggers(state, [], mover);
+    expect(state.encounterProgress!.waves).toHaveLength(1);
+
+    // Three full rounds after entry: it lands, wherever anyone is standing.
+    state.roundNumber = 14;
+    checkSpawnTriggers(state, [], mover);
+    expect(state.encounterProgress!.waves).toHaveLength(0);
+  });
+
   it('springs on the end-of-turn sweep', () => {
     const { state } = buildE8();
-    const mover = climbToFloor2(state);
+    const mover = climbToFloor2(state, true);
 
     // The party unit stepping on (6,3) springs it.
     const before = new Set(state.units.map((u) => u.instanceId));
@@ -185,6 +223,16 @@ describe('door trigger vs move_self (Fable review of 5fc1aad)', () => {
     for (const e of state.units.filter((u) => u.ownerPlayerId === ENEMY && u.isAlive)) e.isAlive = false;
     barb.position = { ...ep0.exitDoors[0] };
     maybeRoomTransition(state, barb, []);
+
+    // ⚠ Arm a DOOR trigger explicitly — this test is about the move_self
+    // landing sweep, not about e8's authored content. e8's floor-2 wave moved
+    // to a room clock on 2026-08-27 (owner: a door-sprung ambush "deceives the
+    // player"), and this test broke with it despite testing unrelated engine
+    // behaviour. The 'door' trigger is still supported, so it keeps its
+    // coverage on a fixture this test owns.
+    if (state.encounterProgress!.waves[0]) {
+      state.encounterProgress!.waves[0].trigger = { on: 'door', tile: { x: 6, y: 3 } };
+    }
 
     // Floor 2: put the barbarian in leap range of the trigger tile (6,3), give
     // it the turn, and make the leap legal (tile free — the test above pins
