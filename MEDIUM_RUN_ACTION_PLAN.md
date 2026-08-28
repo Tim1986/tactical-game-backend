@@ -471,3 +471,55 @@ not a "make e9 easier" one.
 `e4` medium now reads mean 90% (was 66%) after its 1.02 -> 0.90 re-anchor —
 above band by the sim, which is the intended direction given he called the old
 medium "hard", but it may have overshot. His retest rules.
+
+---
+
+## DONE 2026-08-27 (session 4): Tam
+
+Two engine bugs, one of which was making the escort actively dangerous.
+
+**1. An armed escort could not use a support kit.** `planAllyTurn`'s
+`bestAttackFrom` scores only abilities with damage > 0, so Tam — a cleric
+carrying `['mace','heal']` — could NEVER fire his heal. Every turn it was
+filtered out. Owner: "he doesn't use his special or attack... he isn't helping
+himself", then the consequence: "if they targeted him aggressively enough with
+him being useless enough, I don't think I could save him." He was right, and it
+was not tuning: the escort's defining ability was dead code.
+
+Added `bestSupportFrom`, preferred over the swing. Triage rule kept deliberately
+simple because the complaint was UNPREDICTABILITY: heal the lowest-health
+friendly in range, self included, only when at least half of it would land
+(heal is cooldown 99 — once per battle — so a scratch is a real waste, and
+hoarding it forever was the bigger one).
+
+⚠ First attempt shipped 217 validation errors on one e10 cell and FAILED the
+smoke gate. Cause: a self-heal after moving targeted `f.position`, the tile the
+unit is about to LEAVE — "No unit at target position", and the whole turn was
+rejected, putting the ally straight back to doing nothing. Self must target the
+POST-move tile, and its range is 0 for the same reason. Caught only by running
+the sim after the change; the unit tests all passed.
+
+**2. `follow` idled until the hero drifted 3 tiles, then lurched.** Threshold
+was `> 2`, which reads as malfunction rather than doctrine: "he moves every
+other turn or something... moved once in the first four rounds... Round 5 he
+moved two spaces forward? Very confusing." Now `> 1`: a short step whenever the
+hero moves. Smoother, and STATABLE — the UI can promise "Tam stays beside your
+hero" and the player can watch him do it. Owner confirmed the follow-the-hero
+doctrine itself is fine; it just had to be communicated.
+
+**Measured on e10 medium** (150 games/comp), and it was destabilising the whole
+encounter, not just Tam:
+
+| | melee | ranged | balanced | mean | |
+|---|---|---|---|---|---|
+| before | **31% WALL** | 69% | 74% | 58% ⚠ | +217 validation errors |
+| after | **65%** | 89% | 83% | **79% ✓** | zero, PASS |
+
+The melee wall is gone. ⚠ Note ranged (89%) and balanced (83%) now sit ABOVE
+the medium band individually even though the mean passes — e10 may now be too
+easy. Left alone deliberately: the owner said the encounter "doesn't feel too
+hard" APART from Tam, so making Tam work is the fix he asked for and his
+retest should rule on the scale rather than me pre-emptively tightening it.
+
+4 tests added (heals an ally · heals ITSELF · does not burn it on a scratch ·
+follow ends adjacent). 504/504 pass.

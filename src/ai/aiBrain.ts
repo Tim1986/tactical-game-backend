@@ -1704,6 +1704,59 @@ function planAllyTurn(
     return best?.action ?? null;
   };
 
+  // ⚠ ALLIES MUST BE ABLE TO USE SUPPORT ABILITIES, NOT ONLY DAMAGE.
+  // bestAttackFrom above filters to abilities with damage > 0, so a support
+  // kit is INERT: Tam Emberwright (unlitbeacon e10) is a cleric carrying
+  // ['mace','heal'] whose heal could never fire — every turn it was skipped by
+  // the damage filter. The owner played it and reported exactly that shape:
+  // "he doesn't use his special or attack... he isn't helping himself", and
+  // then the survivability consequence — "if they targeted him aggressively
+  // enough with him being useless enough, I don't think I could save him."
+  // He was right, and it was not a tuning problem: an armed escort's defining
+  // ability was dead code.
+  //
+  // Triage rule, deliberately simple because the owner's complaint was that
+  // Tam is UNPREDICTABLE: heal the lowest-health friendly in range, but only
+  // when at least half the heal would land. Heal is once-per-battle
+  // (cooldown 99), so burning it on a scratch is a real loss — and hoarding it
+  // forever, which is what the old behaviour amounted to, is a bigger one.
+  // Self is a legal target (the ability reads "yourself or an ally"), which is
+  // what lets Tam actually save himself.
+  const friendlies = state.units.filter((u) => u.isAlive && u.ownerPlayerId === myPlayerId);
+  const bestSupportFrom = (pos: BoardPosition): TurnAction | null => {
+    let best: { score: number; action: TurnAction } | null = null;
+    for (const slug of unit.abilities) {
+      if ((unit.cooldowns[slug] ?? 0) > 0) continue;
+      const def = map.get(slug);
+      if (!def) continue;
+      const healAmt = def.effects.reduce((acc, e) => acc + (e.type === 'heal' ? ((e as { value?: number }).value ?? 0) : 0), 0);
+      if (healAmt <= 0) continue;
+      for (const f of friendlies) {
+        const missing = f.maxHealth - f.currentHealth;
+        if (missing * 2 < healAmt) continue;           // don't burn it on a scratch
+        // ⚠ SELF-TARGET MUST USE THE POST-MOVE TILE. `pos` is where this unit
+        // will STAND after the move in this same plan, so f.position for self
+        // is the tile it is about to LEAVE — targeting it threw "No unit at
+        // target position" and the whole turn was rejected, which put the ally
+        // right back to doing nothing (217 validation errors on one e10 cell).
+        // Distance to self is 0 for the same reason: measuring from `pos` to
+        // the old tile could exceed range on a long move.
+        const self = f.instanceId === unit.instanceId;
+        const tgt = self ? pos : f.position;
+        if (!self && manhattanDistance(pos, f.position) > def.range) continue;
+        // Same LoS contract the damage path uses — proposing an illegal action
+        // would just get the turn rejected and Tam would do nothing at all.
+        if (def.targetingType === 'single' && LOS_ENFORCED && !self
+          && !hasLineOfSight(pos, f.position, state.units, [unit.instanceId, f.instanceId], state.terrain)) continue;
+        const score = 1000 - f.currentHealth;          // lowest health first
+        if (!best || score > best.score) {
+          best = { score, action: { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: slug, target: tgt } };
+        }
+      }
+    }
+    return best?.action ?? null;
+  };
+
   // Walk as far along the path to `goal` as this turn's movement allows;
   // falls back to the reachable tile that closes the most distance.
   const stepToward = (goal: BoardPosition): BoardPosition | null => {
@@ -1728,7 +1781,9 @@ function planAllyTurn(
 
   const finish = (move: BoardPosition | null, fight: boolean): TurnPlan => {
     const pos = move ?? unit.position;
-    const attack = fight ? bestAttackFrom(pos) : null;
+    // Support outranks a swing: a 27-point heal is worth more than a mace hit,
+    // and an escort that heals is the difference between an asset and luggage.
+    const attack = fight ? (bestSupportFrom(pos) ?? bestAttackFrom(pos)) : null;
     const actions: TurnAction[] = [];
     if (move) actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: move });
     if (attack) actions.push(attack);
@@ -1752,9 +1807,19 @@ function planAllyTurn(
     return finish(stepToward(goal), true);
   }
 
-  // follow: shadow the main character at <=2 tiles; fight with the kit.
+  // follow: stay BESIDE the hero, and fight with the kit.
+  //
+  // ⚠ THE THRESHOLD WAS 2 AND THAT IS WHAT MADE HIM LOOK BROKEN. At >2 the
+  // ally does nothing until the hero has drifted three tiles away, then closes
+  // the whole gap at once — so he alternates standing-still turns with big
+  // catch-up lunges. The owner read that as malfunction, not doctrine: "It
+  // seems like he moves every other turn or something... He has moved once in
+  // the first four rounds... Round 5 he moved two spaces forward? Very
+  // confusing." At >1 he takes a short step whenever the hero moves, which is
+  // both smoother and STATABLE — the UI can promise "Tam stays beside your
+  // hero" and the player can watch him do exactly that.
   const main = state.units.find((u) => u.isAlive && u.instanceId === state.objective?.mainId);
-  if (main && manhattanDistance(unit.position, main.position) > 2) {
+  if (main && manhattanDistance(unit.position, main.position) > 1) {
     return finish(stepToward(main.position), true);
   }
   return finish(null, true);

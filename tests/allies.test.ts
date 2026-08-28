@@ -231,3 +231,56 @@ describe('A5 — round-1 ally commit fallback (Moonberry D2 bug)', () => {
     expect(committing.unitInstanceId).toBe(healthy.instanceId);   // party first
   });
 });
+
+describe('A5 — an armed escort must actually use its kit (owner medium run, 2026-08-27)', () => {
+  it('HEALS a wounded party member instead of standing there', () => {
+    // The bug: planAllyTurn scored only abilities with damage > 0, so Tam
+    // Emberwright — a cleric carrying ['mace','heal'] — could never fire his
+    // heal. Owner: "he doesn't use his special or attack... he isn't helping
+    // himself." An escort's defining ability was dead code.
+    const hero = mk(P, 1, 1, { currentHealth: 20, maxHealth: 50 });   // 30 missing
+    const tam  = mk(P, 1, 2, { abilities: ['mace', 'heal'] });
+    const foe  = mk(E, 7, 7);
+    const st = mkState([hero, tam, foe], { [tam.instanceId]: { mode: 'follow' } }, hero.instanceId);
+    const plan = planBestTurn(st, tam, P, amap as never);
+    const cast = plan.actions.find((a) => a.type === 'USE_ABILITY') as { abilitySlug: string; target: { x: number; y: number } } | undefined;
+    expect(cast?.abilitySlug).toBe('heal');
+    expect(cast?.target).toEqual(hero.position);
+  });
+
+  it('can heal ITSELF — which is what lets an escort be saved at all', () => {
+    const hero = mk(P, 1, 1);
+    const tam  = mk(P, 1, 2, { abilities: ['mace', 'heal'], currentHealth: 15, maxHealth: 70 });
+    const st = mkState([hero, tam, mk(E, 7, 7)], { [tam.instanceId]: { mode: 'follow' } }, hero.instanceId);
+    const cast = planBestTurn(st, tam, P, amap as never).actions
+      .find((a) => a.type === 'USE_ABILITY') as { abilitySlug: string; target: { x: number; y: number } } | undefined;
+    expect(cast?.abilitySlug).toBe('heal');
+    expect(cast?.target).toEqual(tam.position);
+  });
+
+  it('does NOT burn a once-per-battle heal on a scratch', () => {
+    // heal is cooldown 99 (once per encounter) for 27 points. Firing it to top
+    // up 4 HP is a real loss, so it waits until at least half would land.
+    const hero = mk(P, 1, 1, { currentHealth: 46, maxHealth: 50 });   // only 4 missing
+    const tam  = mk(P, 1, 2, { abilities: ['mace', 'heal'] });
+    const st = mkState([hero, tam, mk(E, 7, 7)], { [tam.instanceId]: { mode: 'follow' } }, hero.instanceId);
+    const cast = planBestTurn(st, tam, P, amap as never).actions.find((a) => a.type === 'USE_ABILITY');
+    expect(cast).toBeUndefined();
+  });
+
+  it('follow keeps him BESIDE the hero rather than lurching every few rounds', () => {
+    // Was: only move when >2 tiles away, so he stood still until the hero had
+    // drifted three tiles then closed the whole gap at once. Owner read that as
+    // malfunction — "he moves every other turn or something". At >1 he takes a
+    // short step whenever the hero moves, which is also what the UI can now
+    // promise: "Tam stays beside your hero."
+    const hero = mk(P, 1, 1);
+    const tam  = mk(P, 3, 1, { abilities: ['mace'] });                 // 2 away: old code idled
+    const st = mkState([hero, tam, mk(E, 7, 7)], { [tam.instanceId]: { mode: 'follow' } }, hero.instanceId);
+    const move = planBestTurn(st, tam, P, amap as never).actions
+      .find((a) => a.type === 'MOVE') as { destination: { x: number; y: number } } | undefined;
+    expect(move).toBeDefined();
+    const d = Math.abs(move!.destination.x - hero.position.x) + Math.abs(move!.destination.y - hero.position.y);
+    expect(d).toBeLessThan(2);                                          // ends up adjacent
+  });
+});
