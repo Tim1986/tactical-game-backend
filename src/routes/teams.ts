@@ -30,6 +30,12 @@ const PlacementSchema = z.array(
 const UnitCustomizationSchema = z.object({
   specialSlug: z.string(),
   passiveSlug: z.string().nullable(),
+  // Cosmetic passthrough. Bounded so a hostile client cannot store arbitrary
+  // data on a team it will hand to another player's client, but deliberately
+  // NOT checked against "does this set exist / is it complete" — art ships on
+  // the client's own release cadence, and an unknown set must degrade to the
+  // default rather than make a team unsaveable on an older build.
+  skinSetNum: z.number().int().min(1).max(99).optional(),
 });
 
 const CreateTeamSchema = z.object({

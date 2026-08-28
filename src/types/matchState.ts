@@ -66,6 +66,11 @@ export interface UnitInstance {
    *  'skeleton') instead of the chassis class art; clients fall back to the
    *  chassis when the key has no assets. Arena builds never set this. */
   artKey?: string;
+  /** COSMETIC ONLY (Phase B): the skin set this unit's OWNER chose, copied from
+   *  their team at match creation so the other player can render it. Like
+   *  artKey it is pure art routing — the server never reads it, and a client
+   *  that does not recognise the value falls back to the default set. */
+  skinSetNum?: number;
   /** [Gate 1] CAMPAIGN_GROWTH's damage rung: added to EACH damage effect of
    *  this unit's BASIC attack only. Campaign-only and per-class (see
    *  campaigns/runtime.ts CAMPAIGN_GROWTH); absent in arena and below L6, so

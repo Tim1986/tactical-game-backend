@@ -101,6 +101,8 @@ export function buildUnitInstance(
     armorClass, movementRange,
     abilities, passives,
     passiveSlug: customization?.passiveSlug ?? undefined,
+    // Cosmetic passthrough: copied, never interpreted (see UnitInstance).
+    skinSetNum: customization?.skinSetNum,
     isAlive: true, hasMovedThisTurn: false, hasActedThisTurn: false,
     cooldowns, statusEffects: initialStatuses,
   };

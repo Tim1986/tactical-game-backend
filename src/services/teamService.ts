@@ -183,7 +183,15 @@ function resolveCustomizations(
     const passiveSlug = given?.passiveSlug && def?.passiveOptions.some((p) => p.slug === given.passiveSlug)
       ? given.passiveSlug
       : defaultPassive;
-    return { specialSlug, passiveSlug };
+    // Cosmetic, stored verbatim within bounds. Validating it against the art
+    // manifest would couple team-saving to a client-side release, so an unknown
+    // set is kept and the CLIENT falls back when it cannot draw it.
+    const raw = given?.skinSetNum;
+    const skinSetNum = typeof raw === 'number' && Number.isInteger(raw) && raw >= 1 && raw <= 99
+      ? raw : undefined;
+    return skinSetNum === undefined
+      ? { specialSlug, passiveSlug }
+      : { specialSlug, passiveSlug, skinSetNum };
   });
 }
 

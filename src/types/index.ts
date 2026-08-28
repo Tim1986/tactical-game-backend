@@ -238,6 +238,12 @@ export interface UnitDefinition {
 export interface UnitCustomization {
   specialSlug: string;
   passiveSlug: string | null;
+  /** COSMETIC ONLY (Phase B, SKIN_SELECTION_PLAN.md): which skin set this unit
+   *  wears. The server stores and echoes it and NEVER interprets it — no stat,
+   *  ability or balance surface reads this field. It exists so an OPPONENT can
+   *  see the skin you picked; before it, a skin was local-only and every
+   *  opponent saw Set 1. Absent means the default set. */
+  skinSetNum?: number;
 }
 
 export interface Team {
