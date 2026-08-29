@@ -19,7 +19,8 @@ import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const URL_BASE = (process.env.BACKEND_URL ?? 'https://tactical-game-backend-production.up.railway.app').replace(/\/$/, '');
-const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;
+const VERIFY_TIMEOUT_MS = 10 * 60 * 1000;   // patience for a build that is PROGRESSING
+const STUCK_TIMEOUT_MS  = 30 * 60 * 1000;   // hard stop even while Railway says BUILDING
 const POLL_EVERY_MS = 10 * 1000;
 const SETTLE_MS = 45 * 1000;          // wait after "verified" to catch a silent revert
 const SETTLE_CHECKS = 3;
@@ -49,6 +50,19 @@ if (branch !== 'master') console.warn(`⚠ On '${branch}', not 'master'. Deployi
 const dirty = out('git status --porcelain --untracked-files=no').split('\n').filter((l) => l && !/ buildInfo\.json$/.test(l));
 if (dirty.length) die(`✋ Uncommitted TRACKED changes — commit or stash first so GitHub matches production:\n${dirty.map((l) => `    ${l}`).join('\n')}`);
 
+/** Railway's own view of the newest deployment: BUILDING / DEPLOYING / SUCCESS /
+ *  FAILED / CRASHED. Best-effort — an old CLI, a login expiry or a changed output
+ *  format must never turn a healthy deploy into a hard failure, so anything
+ *  unparseable comes back as null and the caller falls back to plain polling. */
+const deploymentStatus = () => {
+  try {
+    const line = execSync('railway deployment list', { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString().split('\n').map((l) => l.trim()).filter(Boolean)
+      .find((l) => /\|\s*(BUILDING|DEPLOYING|SUCCESS|FAILED|CRASHED|REMOVED|INITIALIZING|QUEUED)\s*\|/.test(l));
+    return line?.match(/\|\s*([A-Z]+)\s*\|/)?.[1] ?? null;
+  } catch { return null; }
+};
+
 const fetchVersion = async () => {
   const res = await fetch(`${URL_BASE}/version?cb=${Date.now()}`, { cache: 'no-store' });
   return (await res.json())?.data ?? {};
@@ -74,20 +88,56 @@ console.log('\n▶ railway up');
 run('railway up');
 
 // 5) VERIFY the running server flipped to our commit.
-console.log(`\n▶ Verifying /version reports ${head} (up to 10 min)...`);
-const deadline = Date.now() + VERIFY_TIMEOUT_MS;
+//
+// ⚠ "TIMED OUT" AND "FAILED" ARE DIFFERENT ANSWERS, AND SO IS "STILL BUILDING".
+// This used to be one flat 10-minute wait that ended in "The build did not land
+// … re-run `npm run ship`". On 2026-08-28 a perfectly healthy build took ~35
+// minutes; the script declared failure at 10, the owner re-ran it, and the
+// re-run would have started a SECOND build racing the first. The old image
+// serving `/version` during a build is CORRECT behaviour, not a stale-cache
+// bug — so the deployment's own status has to be part of the verdict.
+console.log(`\n▶ Verifying /version reports ${head}...`);
+const start = Date.now();
 let seen = '(unreachable)';
 let verified = false;
-while (Date.now() < deadline) {
+let lastStatus = null;
+let building = false;
+while (Date.now() - start < STUCK_TIMEOUT_MS) {
   await sleep(POLL_EVERY_MS);
   try {
     const d = await fetchVersion();
     seen = d.commit ?? '(no commit field — server predates build stamping)';
     if (d.commit === head) { console.log(`\n✅ Live at ${head} (built ${d.builtAt}).`); verified = true; break; }
-    console.log(`  …still ${seen}, waiting for ${head}`);
-  } catch (e) { console.log(`  …/version not reachable yet (${e.message})`); }
+  } catch (e) { seen = `(unreachable: ${e.message})`; }
+
+  const status = deploymentStatus();
+  if (status !== lastStatus && status) console.log(`  …Railway: ${status}`);
+  lastStatus = status;
+  building = status === 'BUILDING' || status === 'DEPLOYING' || status === 'INITIALIZING' || status === 'QUEUED';
+
+  if (status === 'FAILED' || status === 'CRASHED') {
+    die(`❌ BUILD ${status}. Railway rejected this deploy, so production is UNCHANGED and still\n` +
+        `   serving '${seen}' — nothing is broken, but nothing shipped either.\n` +
+        `   Read the build log:  railway logs --build\n` +
+        `   Fix the error, commit, and re-run \`npm run ship\`.`);
+  }
+  if (!building && Date.now() - start > VERIFY_TIMEOUT_MS) break;   // settled on the WRONG commit
+  console.log(`  …still ${seen}, waiting for ${head}${building ? ` (${status.toLowerCase()})` : ''}`);
 }
-if (!verified) die(`❌ NOT VERIFIED after 10 min. /version reports '${seen}', expected '${head}'.\n   The build did not land. Open the Railway dashboard build logs and re-run \`npm run ship\`.`);
+if (!verified) {
+  if (building) {
+    die(`⏳ STILL BUILDING after ${Math.round((Date.now() - start) / 60000)} min — this deploy has NOT failed.\n` +
+        `   Production is still serving '${seen}', which is correct while a build runs.\n` +
+        `   ⚠ Do NOT re-run \`npm run ship\` — that starts a SECOND build racing this one.\n` +
+        `   Watch it instead:   railway deployment list      (wait for SUCCESS)\n` +
+        `   Then confirm:       curl -s ${URL_BASE}/version\n` +
+        `   If it reports ${head}, you are shipped and can carry on with the app builds.`);
+  }
+  die(`❌ NOT VERIFIED. Railway reports the deployment as ${lastStatus ?? 'an unknown state'} but /version\n` +
+      `   still says '${seen}', expected '${head}'. A finished deploy serving the WRONG commit is the\n` +
+      `   stale-image bug: check that GitHub auto-deploy is disconnected (see the settle-check note\n` +
+      `   below), then re-run \`npm run ship\`.`);
+}
 
 // 6) SETTLE re-check — Railway/GitHub can auto-redeploy a CACHED old image
 //    seconds after a good deploy (e.g. an env change or a webhook). Watch that
