@@ -231,6 +231,16 @@ export interface MatchState {
    * The script is disclosed to the player as "fate" text on the puzzle intro.
    */
   rollScript?: Array<'hit' | 'miss'>;
+  /**
+   * True when `rollScript` was AUTHORED (a puzzle's disclosed fate) rather than
+   * captured from real randomness. The offline client also fills rollScript —
+   * with the rolls it already rolled and showed the player — and that is a
+   * REPLAY, whose outcomes did come from chance and must still count toward
+   * `luck`. Without this flag the two cases are indistinguishable, and offline
+   * matches would have reported a luck score of zero for the human while still
+   * counting Fable's rolls.
+   */
+  rollScriptAuthored?: boolean;
   /** Index of the next rollScript entry to consume. */
   rollIndex?: number;
   /**
@@ -240,6 +250,26 @@ export interface MatchState {
    * server-side, so it has no effect on online play.
    */
   rollLog?: Array<'hit' | 'miss'>;
+  /**
+   * LUCK, per player id, in units of EXPECTED HITS. Display-only: nothing in
+   * the engine reads it, and it never influences a roll — this is a record of
+   * variance, not a correction for it.
+   *
+   * Each dodge roll contributes `actual - expected` to the ATTACKER's owner and
+   * the negative of that to the target's owner, where expected is the roll's own
+   * hit probability. A 5%-chance hit is worth +0.95; a 95%-chance hit is worth
+   * +0.05. Summed over a match the number reads directly: "+2.4" means that
+   * player landed 2.4 more hits than the odds gave them.
+   *
+   * ⚠ AUTHORED SCRIPTS ARE EXCLUDED (rollScriptAuthored). A puzzle publishes
+   * every outcome up front, so there is no variance to attribute. A REPLAYED
+   * script is not the same thing — see rollScriptAuthored.
+   */
+  luck?: Record<string, number>;
+  /** How many rolls `luck` was accumulated over. Shown beside the score so the
+   *  player can weigh it: +1.5 across four rolls is a wild game, +1.5 across
+   *  eighty is noise. Display-only, like `luck` itself. */
+  luckRolls?: number;
   /**
    * Roll-on-demand (online): mid-turn scaffolding that must survive between the
    * separate HTTP calls that resolve one action at a time. Set by `beginTurn`,

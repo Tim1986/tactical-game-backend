@@ -79,6 +79,8 @@ export function buildPuzzleState(
     board: { width: 8, height: 8 },
     units,
     rollScript: def.rollScript ?? [],
+    // Authored fate, disclosed to the player up front — never counted as luck.
+    rollScriptAuthored: true,
     rollIndex: 0,
     turnNumber: 1,
     roundNumber: 2, // past round 1: fixed-order initiative, Charge still available

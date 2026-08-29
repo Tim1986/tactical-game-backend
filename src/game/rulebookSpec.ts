@@ -19,7 +19,7 @@ import {
 } from '../types/matchState.js';
 import { AbilityDefinition } from '../types/index.js';
 import { processTurn } from './turnProcessor.js';
-import { executeAbility } from './abilityExecutor.js';
+import { executeAbility, missChanceOf } from './abilityExecutor.js';
 import {
   applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns,
 } from './abilityExecutor.js';
@@ -247,15 +247,23 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
-    rule: 'TRN-5', name: 'dead units are skipped in the initiative order',
+    rule: 'TRN-5', name: 'a dead unit has NO turn: silently passed over, costing no turn number and no log line',
     run: () => {
       const a = mkUnit(P1, 1, 1);
       const dead = mkUnit(P2, 2, 1, { isAlive: false, currentHealth: 0 });
       const c = mkUnit(P1, 3, 1);
       const d = mkUnit(P2, 4, 1);
       const state = mkInitiativeState([a, dead, c, d], [a.instanceId, dead.instanceId, c.instanceId, d.instanceId]);
+      const before = state.turnNumber;
       const r = processTurn(state, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
       assert(r.updatedState.initiative!.activeUnitId === c.instanceId, 'dead unit slot must be skipped');
+      // Owner ruling 2026-08-28. The dead slot used to emit TURN_SKIPPED and
+      // consume a turn number; by late game, and in campaigns where whole waves
+      // lie dead, the log was mostly "defeated, turn skipped".
+      assert(!r.events.some((e) => e.type === 'TURN_SKIPPED' && e.sourceUnitInstanceId === dead.instanceId),
+        'a dead unit must produce NO combat-log entry');
+      assert(r.updatedState.turnNumber === before + 1,
+        'passing over a dead unit must cost no turn number — only the acting unit advances it');
     },
   },
   {
@@ -519,6 +527,65 @@ export const RULE_CHECKS: RuleCheck[] = [
       }), caster, t);
       assert(t.currentHealth === 100 && !has(t, 'rooted') && !has(t, 'shielded'),
         'a status on an absorbed damaging hit must be negated with it (no damage, no root, shield spent)');
+
+      // ⚠ THE ATTACK MUST LAND FIRST (owner ruling 2026-08-28). A shielded unit
+      // dodges like any other, so a MISS never touches the shield. Before this,
+      // the shield resolved ahead of the roll — which made any attack on a
+      // shielded unit functionally unblockable and let a player strip a Warded
+      // target with their cheapest attack at no risk.
+      // armorClass 26 = 100% dodge, so this is deterministic, not a 70% flake.
+      const dodgy = mkUnit(P2, 2, 1, {
+        armorClass: 26,
+        statusEffects: [{ slug: 'shielded', turnsRemaining: 99, stacks: 1, sourceUnitInstanceId: 'x' }],
+      });
+      const evMiss = cast(mkAbility({}), caster, dodgy);
+      assert(has(dodgy, 'shielded'), 'a DODGED attack must leave the shield standing');
+      assert(dodgy.currentHealth === 100, 'a dodged attack deals no damage');
+      assert(evMiss.some((e) => e.type === 'DODGED'), 'the dodge must be reported as a dodge, not an absorption');
+      assert(!evMiss.some((e) => e.type === 'SHIELD_ABSORBED'), 'a dodged attack must not spend the shield');
+    },
+  },
+  {
+    rule: 'DGE-7', name: 'luck scores each roll by how unlikely it was, cancels between the sides, and never feeds back',
+    run: () => {
+      // 100% dodge and 0% dodge give deterministic outcomes, so the two ends of
+      // the formula can be checked without touching Math.random.
+      const caster = mkUnit(P1, 1, 1);
+      const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+
+      // A CERTAIN miss (dodge 1.0): the attacker forfeits the 0% it was owed,
+      // so nothing is lost — expected and actual agree exactly.
+      const dodger = mkUnit(P2, 2, 1, { armorClass: 26 });
+      const s1 = mkLegacyState([caster, dodger]);
+      executeAbility({ state: s1, caster, targetPosition: dodger.position, ability: mkAbility({}), events: [] });
+      assert(near(s1.luck?.[P1] ?? 0, 0), 'a miss that was certain to miss costs the attacker nothing');
+      assert(near(s1.luck?.[P2] ?? 0, 0), 'and gains the target nothing');
+
+      // Dodge 30% (AC 12): a landed hit is worth exactly the 0.30 it beat.
+      const ac12 = mkUnit(P2, 2, 1, { armorClass: 12 });
+      const s2 = mkLegacyState([caster, ac12]);
+      const realRandom = Math.random;
+      Math.random = () => 0.999;                       // above the miss chance -> hit
+      try {
+        executeAbility({ state: s2, caster, targetPosition: ac12.position, ability: mkAbility({}), events: [] });
+      } finally { Math.random = realRandom; }
+      assert(near(s2.luck?.[P1] ?? 0, missChanceOf(12)), 'a hit is worth the dodge chance it beat');
+      assert(near((s2.luck?.[P1] ?? 0) + (s2.luck?.[P2] ?? 0), 0), 'the two sides must always cancel');
+      assert(s2.luckRolls === 1, 'the roll count must track the rolls scored');
+
+      // No roll, no luck: an unblockable hit involves no chance at all.
+      const s3 = mkLegacyState([caster, mkUnit(P2, 2, 1, { armorClass: 12 })]);
+      executeAbility({ state: s3, caster, targetPosition: { x: 2, y: 1 },
+        ability: mkAbility({ isUnblockable: true }), events: [] });
+      assert(s3.luck === undefined, 'an unblockable attack rolls nothing and scores nothing');
+
+      // A record, not a correction: a lopsided score must not alter an outcome.
+      const loaded = mkLegacyState([caster, mkUnit(P2, 2, 1, { armorClass: 26 })]);
+      loaded.luck = { [P1]: -99, [P2]: 99 };
+      const evLoaded: GameEvent[] = [];
+      executeAbility({ state: loaded, caster, targetPosition: { x: 2, y: 1 }, ability: mkAbility({}), events: evLoaded });
+      assert(evLoaded.some((e) => e.type === 'DODGED'),
+        'a 100% dodge must still dodge no matter how unlucky the attacker has been — luck never smooths');
     },
   },
   {
@@ -1430,14 +1497,17 @@ export const RULE_CHECKS: RuleCheck[] = [
     rule: 'END-1', name: 'round 11 emits ENDGAME_STARTED announcement',
     run: () => {
       const a = mkUnit(P1, 1, 1); const b = mkUnit(P2, 7, 6);
-      // Set to last turn of round 10 so next END_TURN crosses into round 11
-      const state = mkInitiativeState([a, b], [a.instanceId, b.instanceId], 0);
+      // A round is one LAP of the initiative order (owner ruling 2026-08-28 —
+      // dead slots no longer consume a turn number, so turnNumber/8 would
+      // drift). Start on the LAST slot of round 10, so ending this turn wraps
+      // the order and crosses into round 11.
+      const state = mkInitiativeState([a, b], [a.instanceId, b.instanceId], 1);
       (state as any).roundNumber = 10; (state as any).turnNumber = 80;
-      const r = processTurn(state, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
+      const r = processTurn(state, [{ type: 'END_TURN' }], P2, P1, P2, new Map());
       const announced = r.events.some((e) => e.type === 'ENDGAME_STARTED');
-      assert(announced, 'ENDGAME_STARTED must be emitted when round transitions to 11');
-      // Must not emit again on subsequent round-11 turns
-      const r2 = processTurn(r.updatedState, [{ type: 'END_TURN' }], P2, P1, P2, new Map());
+      assert(announced, 'ENDGAME_STARTED must be emitted when the order wraps into round 11');
+      // Must not emit again mid-round (this turn does not wrap).
+      const r2 = processTurn(r.updatedState, [{ type: 'END_TURN' }], P1, P1, P2, new Map());
       assert(!r2.events.some((e) => e.type === 'ENDGAME_STARTED'), 'ENDGAME_STARTED must not repeat on subsequent turns');
     },
   },

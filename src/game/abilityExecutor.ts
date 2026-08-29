@@ -32,7 +32,12 @@ export const WEAKENED_DAMAGE_REDUCTION = 4;
  * attack; puzzle matches carry a pre-scripted outcome queue (MatchState.rollScript)
  * so the whole fight is deterministic — the script is disclosed to the player.
  */
-function rollMisses(state: MatchState, missChance: number): boolean {
+function rollMisses(
+  state: MatchState,
+  missChance: number,
+  attackerOwnerId?: string,
+  defenderOwnerId?: string,
+): boolean {
   let missed: boolean;
   if (state.rollScript) {
     const i = state.rollIndex ?? 0;
@@ -41,9 +46,45 @@ function rollMisses(state: MatchState, missChance: number): boolean {
   } else {
     missed = Math.random() < missChance;
   }
+  // Luck is attributed wherever the outcome CAME FROM CHANCE — including a
+  // replayed script, which is the offline client handing back rolls it already
+  // made. Only an authored puzzle fate is excluded (see MatchState.luck).
+  if (!state.rollScriptAuthored) {
+    recordLuck(state, attackerOwnerId, defenderOwnerId, !missed, missChance);
+  }
   // Record for the offline client's dry-run capture (see MatchState.rollLog).
   if (state.rollLog) state.rollLog.push(missed ? 'miss' : 'hit');
   return missed;
+}
+
+/**
+ * Attribute one roll's variance to the two players (MatchState.luck).
+ *
+ * `actual - expected`, where actual is 1 for a hit and expected is the roll's
+ * own hit probability. That choice is deliberate over a log-likelihood
+ * "surprise" score: it stays additive and keeps a unit the player can read —
+ * the running total IS "hits above expectation". It is also exactly
+ * zero-sum between the two sides, so one number describes the whole match.
+ *
+ * ⚠ DISPLAY ONLY. Nothing may branch on this. If a future change makes a roll,
+ * a stat or an AI decision read `state.luck`, that is luck SMOOTHING, which is
+ * the one thing this feature was explicitly not to be.
+ */
+function recordLuck(
+  state: MatchState,
+  attackerOwnerId: string | undefined,
+  defenderOwnerId: string | undefined,
+  hit: boolean,
+  missChance: number,
+): void {
+  // A unit rolling against its own side (never possible today) would net to
+  // zero anyway; skip rather than record two cancelling entries.
+  if (!attackerOwnerId || !defenderOwnerId || attackerOwnerId === defenderOwnerId) return;
+  const delta = (hit ? 1 : 0) - (1 - missChance);
+  const luck = (state.luck ??= {});
+  luck[attackerOwnerId] = (luck[attackerOwnerId] ?? 0) + delta;
+  luck[defenderOwnerId] = (luck[defenderOwnerId] ?? 0) - delta;
+  state.luckRolls = (state.luckRolls ?? 0) + 1;
 }
 
 /** Per-attack dodge chance: 5% per AC point above 6, capped at 1.0. */
@@ -132,17 +173,26 @@ function executeSingleHit(
   dealsDamage: boolean,
   needsHitRoll: boolean,
 ): void {
-  if (dealsDamage && hasStatusEffect(target, 'shielded')) {
-    consumeShield(ctx, target);
-    return;
-  }
-  // Per-attack dodge roll: exposed units never dodge; unblockable skips roll (needsHitRoll=false).
+  // ⚠ DODGE RESOLVES BEFORE THE SHIELD (owner ruling 2026-08-28, DGE-5).
+  // It used to be the other way round, which made an attack on a shielded unit
+  // functionally unblockable: the shield was consumed with no roll at all, so
+  // the target could not dodge and the attacker could strip a Warded unit with
+  // its cheapest attack at zero risk. Now a shielded unit dodges like anyone
+  // else, and a MISS leaves the shield standing. Known and accepted balance
+  // consequence: Warded and the Cleric's Ward are both stronger.
+  // Exposed units never dodge; unblockable skips the roll (needsHitRoll=false)
+  // and still consumes the shield, which is DGE-5's "even from an unblockable
+  // hit" — that clause is about the SHIELD, not about dodging.
   if (needsHitRoll && !hasStatusEffect(target, 'exposed')) {
     const dodge = missChanceOf(target.armorClass ?? 6);
-    if (dodge > 0 && rollMisses(ctx.state, dodge)) {
+    if (dodge > 0 && rollMisses(ctx.state, dodge, ctx.caster.ownerPlayerId, target.ownerPlayerId)) {
       ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
       return;
     }
+  }
+  if (dealsDamage && hasStatusEffect(target, 'shielded')) {
+    consumeShield(ctx, target);
+    return;
   }
   for (const effect of ctx.ability.effects) {
     applyEffect(ctx, target, effect);
@@ -161,13 +211,17 @@ function executeMultiHit(
       applyEffect(ctx, target, effect);
       continue;
     }
-    // Shield absorbs the first damage hit and is consumed; subsequent hits resolve normally.
-    if (hasStatusEffect(target, 'shielded')) {
-      consumeShield(ctx, target);
+    // Same order as the single-hit path: the blow must LAND before the shield
+    // has anything to absorb, so a dodged blow leaves the shield up and the
+    // NEXT blow of the same ability meets it.
+    if (dodge > 0 && rollMisses(ctx.state, dodge, ctx.caster.ownerPlayerId, target.ownerPlayerId)) {
+      ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
       continue;
     }
-    if (dodge > 0 && rollMisses(ctx.state, dodge)) {
-      ctx.events.push({ type: 'DODGED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Dodged' });
+    // Shield absorbs the first landed damage hit and is consumed; subsequent
+    // hits resolve normally.
+    if (hasStatusEffect(target, 'shielded')) {
+      consumeShield(ctx, target);
       continue;
     }
     applyEffect(ctx, target, effect);

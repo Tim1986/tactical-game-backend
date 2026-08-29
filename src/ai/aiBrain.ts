@@ -1935,11 +1935,28 @@ export function planBestTurn(
   const END: TurnAction = { type: 'END_TURN' };
   let best: TurnPlan = { score: -Infinity, actions: [END] };
 
-  // ENDGAME DRAIN (round 11+): engine applies it when the post-END_TURN round
-  // is >= 11 (roundFromTurn(turnNumber + 1) = floor(turnNumber / 8) + 1), so
-  // the last turn of round 10 already drains. Penalize any candidate whose
-  // FINAL position is farther (Manhattan) from the nearest enemy than start.
-  const drainApplies = Math.floor(state.turnNumber / 8) + 1 >= 11;
+  // ENDGAME DRAIN (round 11+). Read the round the engine is actually keeping,
+  // not a turnNumber/8 estimate of it: a round is one LAP of the initiative
+  // order, and since dead slots stopped consuming turn numbers (TRN-5) that
+  // estimate drifts by one turn per death — which by round 10 could leave the
+  // brain retreating into a drain it did not know had started. Penalize any
+  // candidate whose FINAL position is farther (Manhattan) from the nearest
+  // enemy than its start.
+  const roundNow = state.roundNumber ?? 1;
+  // The engine drains the acting unit when the round is 11+ AFTER this turn
+  // advances the order, so the LAST live slot of round 10 already drains. That
+  // used to fall out of the turnNumber/8 arithmetic for free; with wrap-based
+  // rounds it has to be asked directly — is there any living unit still to act
+  // this lap? Getting this wrong in either direction is a real cost: too early
+  // and the brain refuses good ground for seven turns, too late and it retreats
+  // into damage it could have seen coming.
+  const ord = state.initiative?.order ?? [];
+  const slotNow = state.initiative?.slot ?? 0;
+  const liveLater = ord.slice(slotNow + 1).some((uid) => {
+    const u = state.units.find((x) => x.instanceId === uid);
+    return !!u?.isAlive;
+  });
+  const drainApplies = roundNow >= 11 || (roundNow === 10 && !liveLater);
   const nearestEnemyDist = (pos: BoardPosition) =>
     enemies.length ? Math.min(...enemies.map((e) => manhattanDistance(pos, e.position))) : 0;
   const startEnemyDist = nearestEnemyDist(unit.position);

@@ -17,7 +17,10 @@ export class TurnValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'TurnValidationError'; }
 }
 
-/** Round 1 = turns 1–8, round 2 = turns 9–16, etc. (dead-unit skips still count). */
+/** LEGACY ONLY — matches created before the initiative system, which have no
+ *  order to lap. Live matches count a round as one wrap of the initiative
+ *  order (see the note at the round-2 transition); do not reintroduce this
+ *  derivation there, because a dead slot no longer consumes a turn number. */
 export function roundFromTurn(turnNumber: number): number {
   return Math.floor((turnNumber - 1) / 8) + 1;
 }
@@ -88,12 +91,13 @@ function advanceSlot(
     const unit = units.find((u) => u.instanceId === uid);
 
     if (!unit || !unit.isAlive) {
-      events.push({
-        type: 'TURN_SKIPPED',
-        sourceUnitInstanceId: uid,
-        message: `${unit?.definitionSlug ?? uid} — defeated, turn skipped`,
-      });
-      skippedSlots++;
+      // ⚠ A DEAD UNIT HAS NO TURN AT ALL (owner ruling 2026-08-28, TRN-5).
+      // No event and no turn number: its slot is passed over as if it were not
+      // in the order. It used to emit TURN_SKIPPED and consume a turn, which by
+      // late game — and in campaigns, where whole waves are dead — buried the
+      // combat log under "defeated, turn skipped" lines nobody needed.
+      // A FROZEN unit is the opposite case and still counts (see below): it is
+      // alive and losing a turn, which is information the player wants.
       slot = (slot + 1) % orderLen;
       if (slot === 0) newRoundStarted = true;
       continue;
@@ -376,9 +380,14 @@ function advanceRound1AfterCommit(
     initiative.slot = firstSlot.slot;
     initiative.activeUnitId = firstSlot.activeUnitId;
     ws.turnNumber += firstSlot.skippedSlots;
-    // CAMPAIGN (A4): with spawns the order length varies, so campaign rounds
-    // are ORDER-WRAP based, not turnNumber/8. Arena keeps roundFromTurn.
-    ws.roundNumber = (ws.objective || ws.encounterProgress) ? 2 : roundFromTurn(ws.turnNumber);
+    // ⚠ ROUNDS ARE ORDER WRAPS, IN EVERY MATCH. Arena used to derive them as
+    // turnNumber/8, which was exactly equivalent while every slot — dead ones
+    // included — consumed a turn number. Now that dead slots consume nothing,
+    // a lap of the order is no longer 8 turns, so deriving from turnNumber
+    // would drift the round (and with it the round-11 endgame) further out of
+    // step with every death. Campaigns were already wrap-based because spawns
+    // vary the order length (A4); arena now shares that definition.
+    ws.roundNumber = 2;
     checkSpawnTriggers(ws, events); // round-trigger waves due at round 2
     // Reset all turn flags at round boundary
     for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
@@ -444,7 +453,6 @@ function autoSkipRound1FrozenPlayers(
     // Same accounting as the manual bare-END_TURN submission this replaces:
     // the skipped slot consumes a turn number, and arena rounds re-derive.
     ws.turnNumber++;
-    if (!(ws.objective || ws.encounterProgress)) ws.roundNumber = roundFromTurn(ws.turnNumber);
   }
 }
 
@@ -519,6 +527,12 @@ function finalizeTurnInternal(
     maybeRoomTransition(ws, actingUnit, events);
   }
 
+  // ⚠ CAPTURED BEFORE the advance below, which is what increments the round.
+  // It used to be read after, back when the round was re-derived from
+  // turnNumber further down — so with wrap-based counting it saw the ALREADY
+  // incremented value and the `prevRound < 11` edge test could never fire.
+  // (Campaigns, which have always been wrap-based, had this bug latently.)
+  const prevRound = ws.roundNumber;
   if (isRound1) {
     // Commit acting unit
     initiative.order.push(actingUnit.instanceId);
@@ -528,8 +542,8 @@ function finalizeTurnInternal(
     const next = advanceSlot(initiative, ws.units, events);
     if (next.newRoundStarted) {
       for (const u of ws.units) { u.hasMovedThisTurn = false; u.hasActedThisTurn = false; }
+      ws.roundNumber += 1;                 // one lap of the order = one round
       if (ws.objective || ws.encounterProgress) {
-        ws.roundNumber += 1;               // campaign: rounds are order wraps (A4)
         checkSpawnTriggers(ws, events);    // round-trigger waves due this round
       }
     }
@@ -541,9 +555,7 @@ function finalizeTurnInternal(
     ws.turnNumber += next.skippedSlots;
   }
 
-  const prevRound = ws.roundNumber;
   ws.turnNumber++;
-  if (!(ws.objective || ws.encounterProgress)) ws.roundNumber = roundFromTurn(ws.turnNumber);
   events.push({ type: 'TURN_ENDED' });
 
   // Owner 2026-08-23: a round-1 player whose only choosable units are frozen
