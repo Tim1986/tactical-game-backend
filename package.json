@@ -29,11 +29,11 @@
     "express-rate-limit": "^7.3.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "node-cron": "^3.0.3",
+    "node-cron": "^4.6.0",
     "pg": "^8.12.0",
     "pino": "^9.3.2",
     "pino-pretty": "^11.2.2",
-    "uuid": "^10.0.0",
+    "uuid": "^11.1.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -50,7 +50,7 @@
     "supertest": "^7.0.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
-    "vitest": "^2.0.3"
+    "vitest": "^3.2.7"
   },
   "_cacheBust": 1782934835108
 }
