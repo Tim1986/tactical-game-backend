@@ -29,7 +29,13 @@ const info = {
   commit: git('rev-parse --short HEAD') ?? 'unknown',
   commitFull: git('rev-parse HEAD') ?? 'unknown',
   branch: git('rev-parse --abbrev-ref HEAD') ?? 'unknown',
-  dirty: (git('status --porcelain') ?? '') !== '',
+  // 'dirty' should mean 'code differs from the stamped commit'. The stamp
+  // itself modifies tracked buildInfo.json moments before this check ran, so
+  // every deploy reported dirty:true and the flag was meaningless (G1 flag 2,
+  // 2026-08-30). Exclude the stamp file and untracked noise; ship.mjs already
+  // refuses to deploy any OTHER tracked dirt, so this now stays false unless
+  // someone bypasses ship.mjs with genuinely modified code.
+  dirty: (git("status --porcelain --untracked-files=no -- . ':(exclude)buildInfo.json'") ?? '') !== '',
   builtAt: new Date().toISOString(),
 };
 
