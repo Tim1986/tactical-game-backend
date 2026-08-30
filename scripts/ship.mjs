@@ -69,8 +69,31 @@ const fetchVersion = async () => {
 };
 
 // 1) Push to GitHub (source of truth).
-console.log('▶ git push standalone master');
-run('git push standalone master');
+//
+// ⚠ DRIFT GUARD (added 2026-08-30). This pushes `master`, but GitHub's DEFAULT
+// branch is what Dependabot, the security tab and the web UI actually read. For
+// months the default was `main` while every deploy pushed `master`, so `main`
+// fell 307 commits behind and Dependabot scanned a lockfile old enough to still
+// contain `tar` — 20 of 26 open alerts were phantoms of that stale tree (SEC3).
+// The default is now `master`; this check fails loudly if the two ever diverge
+// again rather than letting the security surface quietly rot.
+const DEPLOY_BRANCH = 'master';
+try {
+  const def = out(`gh api repos/Tim1986/tactical-game-backend -q .default_branch`).trim();
+  if (def && def !== DEPLOY_BRANCH) {
+    console.error(
+      `\n✖ GitHub's default branch is '${def}' but this script pushes '${DEPLOY_BRANCH}'.\n` +
+      `  Dependabot and the security tab read the DEFAULT branch, so they would be\n` +
+      `  scanning stale code. Fix with:\n` +
+      `    gh api -X PATCH repos/Tim1986/tactical-game-backend -f default_branch=${DEPLOY_BRANCH}\n`);
+    process.exit(1);
+  }
+} catch {
+  console.warn('⚠ Could not check GitHub default branch (gh unavailable?) — continuing.\n');
+}
+
+console.log(`▶ git push standalone ${DEPLOY_BRANCH}`);
+run(`git push standalone ${DEPLOY_BRANCH}`);
 
 // 2) Stamp buildInfo.json so /version can report this commit.
 console.log('\n▶ npm run stamp');
