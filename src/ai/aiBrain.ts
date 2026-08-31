@@ -71,7 +71,7 @@ import {
 import { isInAoe } from '../game/boardUtils.js';
 import {
   BURNING_DAMAGE_PER_STACK, missChanceOf, WEAKENED_DAMAGE_REDUCTION,
-  OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS,
+  OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS, executeWouldFail,
 } from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
@@ -2591,6 +2591,205 @@ export class OptimalBrain implements AIBrain {
 // and for measuring how much the OptimalBrain's heuristics matter.
 // ---------------------------------------------------------------------------
 
+/**
+ * Which of my units is taking this turn. Round 2+ the initiative names it;
+ * in round 1 any uncommitted, unfrozen unit may commit. Shared by the two
+ * scripted brains so a change to the turn rules cannot make them disagree.
+ */
+function resolveActingUnit(state: MatchState, myPlayerId: string): UnitInstance | null {
+  const { initiative } = state;
+  if (initiative.activeUnitId) {
+    const u = state.units.find((x) => x.instanceId === initiative.activeUnitId);
+    return u && u.ownerPlayerId === myPlayerId && u.isAlive ? u : null;
+  }
+  if (initiative.isRound1) {
+    const committed = new Set(initiative.order);
+    return state.units.find(
+      (u) => u.ownerPlayerId === myPlayerId && u.isAlive
+        && !committed.has(u.instanceId) && !isFrozen(u),
+    ) ?? null;
+  }
+  return null;
+}
+
+/**
+ * CasualBrain — "pretty basic gameplay", the easy tier's yardstick.
+ *
+ * WHY A THIRD BRAIN. The sims had two speeds: OptimalBrain (plays every game
+ * near-perfectly) and BaselineBrain (walks at the nearest enemy and swings). The
+ * gap between them measures whether an encounter rewards skill — but it is far
+ * too wide to answer the question the EASY tier actually asks, which is "does a
+ * player who understands their kit but is not reading the board still get
+ * through?". BaselineBrain never casts a special or heals anybody, so it is a
+ * loose lower bound on a person, and the easy-tier numbers it produced could not
+ * be acted on (see SKILL2 in UNLITBEACON_BALANCE_NOTES.md).
+ *
+ * WHAT IT MODELS. Someone who knows what their buttons do and reads the unit in
+ * front of them, and nothing further:
+ *
+ *   DOES   use its special the moment it is off cooldown and something is in
+ *          range; heal a visibly hurt ally; take an obvious kill when one is
+ *          available; otherwise hit whatever is closest to dying.
+ *   DOES NOT  avoid hazards, dodge AoE and line attacks, retreat when hurt,
+ *          kite, focus fire as a team, play the objective, or think about
+ *          where it wants to be standing next turn.
+ *
+ * That second list is deliberately exactly the "complex tactics" the owner has
+ * said easy must not require (2026-08-31). So an easy tier this brain clears is
+ * an easy tier that delivers its promise, and one it fails names the specific
+ * tactic being demanded.
+ *
+ * ⚠ IT WALKS INTO HAZARDS AND STANDS IN LINE ATTACKS ON PURPOSE. That is not an
+ * omission to be fixed later — it is the modelled behaviour. e4's Flame Jet
+ * (16 unblockable, line, range 4) punishing a careless approach is the thing
+ * being measured; a brain that sidestepped it would report the trap as absent.
+ *
+ * ⚠ NOT A PREDICTION OF A PERSON. Like every brain here it is a fixed policy,
+ * so it has no bad days and never panics. Read it as a floor with a known shape,
+ * and anchor it against a real sloppy run before trusting an absolute number.
+ */
+export class CasualBrain implements AIBrain {
+  selectActions(
+    state: MatchState,
+    myPlayerId: string,
+    abilityMap: Map<string, AbilityDefinition>,
+  ): TurnAction[] {
+    const unit = resolveActingUnit(state, myPlayerId);
+    if (!unit || isFrozen(unit)) return [{ type: 'END_TURN' }];
+
+    const enemies = state.units.filter((u) => u.isAlive && u.ownerPlayerId !== myPlayerId);
+    const allies = state.units.filter((u) => u.isAlive && u.ownerPlayerId === myPlayerId);
+    if (enemies.length === 0) return [{ type: 'END_TURN' }];
+
+    const basic = basicDef(unit, abilityMap);
+    const specialSlug = specialSlugOf(unit, abilityMap);
+    const special = specialSlug && abilityReady(unit, specialSlug)
+      ? abilityMap.get(specialSlug) : undefined;
+
+    const sumEffect = (d: AbilityDefinition, kind: 'damage' | 'heal' | 'lifesteal'): number =>
+      d.effects.reduce((t, e) => t + (e.type === kind ? ((e as { value?: number }).value ?? 0) : 0), 0);
+
+    // ── HEAL FIRST. A casual player notices a hurt friend, and does it before
+    // committing to a move, which is why this is checked before targeting.
+    // A 'self' heal (First Aid) can only ever mean the caster.
+    if (special && sumEffect(special, 'heal') > 0) {
+      const pool = special.targetingType === 'self' ? [unit] : allies;
+      const hurt = pool
+        .filter((a) => a.currentHealth < a.maxHealth * 0.6)
+        .sort((a, b) => a.currentHealth / a.maxHealth - b.currentHealth / b.maxHealth)[0];
+      if (hurt && (special.targetingType === 'self'
+          || manhattanDistance(unit.position, hurt.position) <= (special.range ?? 0))) {
+        return [
+          { type: 'USE_ABILITY', unitInstanceId: unit.instanceId, abilitySlug: special.slug, target: hurt.position },
+          { type: 'END_TURN' },
+        ];
+      }
+    }
+
+    // ── PICK A TARGET. Something I can kill outright, else whatever is closest
+    // to dying, else whatever is closest. No threat assessment, no coordination.
+    const reachOf = (d: AbilityDefinition | undefined): number => d?.range ?? 1;
+    const bestReach = Math.max(reachOf(basic), special && sumEffect(special, 'damage') > 0 ? reachOf(special) : 0);
+    const canHit = (from: BoardPosition, e: UnitInstance, reach: number): boolean =>
+      manhattanDistance(from, e.position) <= reach
+      && hasLineOfSight(from, e.position, state.units, [unit.instanceId, e.instanceId], state.terrain);
+
+    // Lifesteal (Essence Drain) is damage too — counting only 'damage' effects
+    // made the Warlock's entire special invisible to this brain.
+    const damageOf = (d: AbilityDefinition | undefined): number =>
+      (d ? sumEffect(d, 'damage') + sumEffect(d, 'lifesteal') : 0);
+    /**
+     * ⚠ LEGALITY IS NOT SKILL. A casual player is careless, not delusional —
+     * their client greys out an illegal target and never offers it. The first
+     * version of this brain fired Kill Shot on sight, the engine refused it as
+     * above the execute window, and the unit forfeited its whole turn: 5,326
+     * rejected actions across 36 cells, and a "casual" party that scored BELOW
+     * the walk-and-swing baseline. Modelled sloppiness must still produce legal
+     * moves, so the engine's own predicate gates the cast.
+     */
+    const castIsLegal = (d: AbilityDefinition, from: BoardPosition, at: UnitInstance): boolean => {
+      if (executeWouldFail(d, at)) return false;
+      // Leap specials (Leaping Slam) land the caster on the tile — it must be free.
+      if (d.effects.some((e) => e.type === 'move_self')) {
+        if (state.units.some((u) => u.isAlive && u.instanceId !== unit.instanceId && samePos(u.position, at.position))) return false;
+        if (isTerrainBlocked(state.terrain, at.position)) return false;
+      }
+      // A placed AoE needs wall-clear sight to its centre.
+      if (d.targetingType === 'aoe' && (d.range ?? 0) > 0 && wallsBlockLine(from, at.position, state.terrain)) return false;
+      return true;
+    };
+    const inRangeNow = enemies.filter((e) => canHit(unit.position, e, bestReach));
+    const lethalNow = inRangeNow.filter((e) => e.currentHealth <= Math.max(damageOf(basic), damageOf(special)));
+    // ⚠ WEAKEST-IN-RANGE, NEAREST OTHERWISE. Picking the globally weakest enemy
+    // reads like smart focus fire but plays like nothing a person does: it sent
+    // units sprinting across the board past the enemy in front of them, and
+    // measured BELOW the mindless baseline on 6 cells. A player who is not
+    // reading the board engages what is next to them; the only discrimination
+    // they make is between things they can already reach.
+    const target = lethalNow.length > 0 || inRangeNow.length > 0
+      ? [...(lethalNow.length > 0 ? lethalNow : inRangeNow)].sort((a, b) =>
+          a.currentHealth - b.currentHealth
+          || manhattanDistance(unit.position, a.position) - manhattanDistance(unit.position, b.position)
+          || a.instanceId.localeCompare(b.instanceId))[0]
+      : [...enemies].sort((a, b) =>
+          manhattanDistance(unit.position, a.position) - manhattanDistance(unit.position, b.position)
+          || a.currentHealth - b.currentHealth
+          || a.instanceId.localeCompare(b.instanceId))[0];
+
+    const actions: TurnAction[] = [];
+    let pos = unit.position;
+
+    // ── CLOSE THE DISTANCE. Straight at the target, shortest gap wins. No
+    // hazard check and no thought about what can reach me back — the point.
+    if (!canHit(pos, target, bestReach) && !isRooted(unit)) {
+      const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
+      // Simply: the tile that gets me closest, preferring one I can attack from.
+      // Distance only — no hazard check, no thought about what reaches me back.
+      let best: BoardPosition | null = null;
+      let bestKey: [number, number] = [1, manhattanDistance(pos, target.position)];
+      for (const t of tiles) {
+        const key: [number, number] = [canHit(t, target, bestReach) ? 0 : 1, manhattanDistance(t, target.position)];
+        if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) { bestKey = key; best = t; }
+      }
+      if (best) {
+        actions.push({ type: 'MOVE', unitInstanceId: unit.instanceId, destination: best });
+        pos = best;
+      }
+    }
+
+    // ── SWING. Special if it reaches and does damage, else the basic attack.
+    // Specials are spent on sight rather than saved for a better moment, which
+    // is one of the clearest tells of unpractised play.
+    //
+    // A range-0 AoE (Whirlwind, Ground Slam) is centred on the CASTER, so it is
+    // in range whenever anything stands inside its radius — checking it against
+    // the target's distance the way a ranged ability is checked would mean this
+    // brain never once used a Barbarian's special.
+    const selfAoe = special && (special.range ?? 0) === 0 && special.targetingType === 'aoe';
+    if (special && damageOf(special) > 0 && selfAoe
+        && enemies.some((e) => isInAoe(pos, e.position, special.areaRadius, special.areaShape))) {
+      actions.push({
+        type: 'USE_ABILITY', unitInstanceId: unit.instanceId,
+        abilitySlug: special.slug, target: pos,
+      });
+      actions.push({ type: 'END_TURN' });
+      return actions;
+    }
+    const useSpecial = !!special && !selfAoe && damageOf(special) > 0
+      && canHit(pos, target, reachOf(special)) && castIsLegal(special, pos, target);
+    const chosen = useSpecial ? special : basic;
+    if (chosen && canHit(pos, target, reachOf(chosen)) && castIsLegal(chosen, pos, target)) {
+      actions.push({
+        type: 'USE_ABILITY', unitInstanceId: unit.instanceId,
+        abilitySlug: chosen.slug, target: target.position,
+      });
+    }
+
+    actions.push({ type: 'END_TURN' });
+    return actions;
+  }
+}
+
 export class BaselineBrain implements AIBrain {
   selectActions(
     state: MatchState,
@@ -2665,29 +2864,7 @@ export class BaselineBrain implements AIBrain {
     return actions;
   }
 
-  private resolveUnit(
-    state: MatchState,
-    myPlayerId: string,
-  ): UnitInstance | null {
-    const { initiative } = state;
-    if (initiative.activeUnitId) {
-      const u = state.units.find(
-        (x) => x.instanceId === initiative.activeUnitId,
-      );
-      return u && u.ownerPlayerId === myPlayerId && u.isAlive ? u : null;
-    }
-    if (initiative.isRound1) {
-      const committed = new Set(initiative.order);
-      return (
-        state.units.find(
-          (u) =>
-            u.ownerPlayerId === myPlayerId &&
-            u.isAlive &&
-            !committed.has(u.instanceId) &&
-            !isFrozen(u),
-        ) ?? null
-      );
-    }
-    return null;
+  private resolveUnit(state: MatchState, myPlayerId: string): UnitInstance | null {
+    return resolveActingUnit(state, myPlayerId);
   }
 }

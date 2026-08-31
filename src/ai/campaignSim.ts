@@ -17,7 +17,7 @@
  * measures nothing); they also self-caffeinate on macOS (App Nap pitfall).
  */
 import { runMatch, makeRng } from './simHarness.js';
-import { OptimalBrain, BaselineBrain } from './aiBrain.js';
+import { OptimalBrain, BaselineBrain, CasualBrain } from './aiBrain.js';
 import type { BoardPosition } from '../types/matchState.js';
 import { frontlineOrder } from './simPlacement.js';
 import { buildAbilityMap } from './defaultData.js';
@@ -221,10 +221,11 @@ export function simEncounterCell(
      *  content — the calibration walk's lever. */
     hpScale?: number;
     /** [SKILL1] Which brain plays the PLAYER's side. 'baseline' is the naive
-     *  walk-to-nearest-and-swing bot, and stands in for a player who is not
-     *  reading the fight. The gap between the two is the only handle the sims
-     *  have on "how much does playing well matter here" — see skillDelta. */
-    playerBrain?: 'optimal' | 'baseline';
+     *  walk-to-nearest-and-swing bot (a loose floor); 'casual' knows its kit
+     *  but not the board, and is the EASY tier's yardstick. The gap between
+     *  brains is the only handle the sims have on "how much does playing well
+     *  matter here" — see skillDelta. */
+    playerBrain?: 'optimal' | 'casual' | 'baseline';
     /** [PLACE1-SEARCH] Fight from an EXPLICIT opening instead of the
      *  melee-forward heuristic. This is what placementSearch.ts sweeps; a cell
      *  is only a difficulty statement relative to an opening, so the search
@@ -314,7 +315,9 @@ function simEncounterCellInner(
     ),
     level,
   );
-  const brain1 = options.playerBrain === 'baseline' ? new BaselineBrain() : new OptimalBrain();
+  const brain1 = options.playerBrain === 'baseline' ? new BaselineBrain()
+    : options.playerBrain === 'casual' ? new CasualBrain()
+    : new OptimalBrain();
   const brain2 = new OptimalBrain();
 
   assertBrainModels(probe.state, encounterId);

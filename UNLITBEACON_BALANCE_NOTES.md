@@ -642,3 +642,118 @@ e11 reads 23% optimal on EASY and 0% baseline. The placement sweep already
 showed its best medium opening is 94% against a 37% median. An encounter that a
 perfect brain loses three times out of four on the easiest tier is not tuned, it
 is trapped. Re-open with the placement data in hand.
+
+---
+
+## [SKILL3] CasualBrain — the easy tier's yardstick
+
+Built 2026-08-31 at the owner's request. `playerBrain: 'optimal' | 'casual' | 'baseline'`.
+
+Models a player who **knows their kit but is not reading the board**:
+
+* **DOES** — use its special the moment it is off cooldown and something is in
+  range; heal a visibly hurt ally (below 60%); take an obvious kill; otherwise
+  hit the weakest thing already in reach, and walk at the nearest thing if
+  nothing is.
+* **DOES NOT** — avoid hazards, dodge AoE and line attacks, retreat when hurt,
+  kite, focus fire as a team, play the objective, or think about next turn.
+
+That second list is deliberately the "complex tactics" the owner has said easy
+must not require. An easy tier this brain clears delivers its promise; one it
+fails names the specific tactic being demanded.
+
+### Two things learned building it
+
+1. **Legality is not skill.** v1 fired Kill Shot on sight; the engine refuses an
+   execute above its window, so the unit forfeited its whole turn — 5,326
+   rejected actions across 36 cells, and a "casual" party scoring BELOW the
+   mindless baseline. A real casual player's client greys out the illegal
+   target. The brain now gates casts through the engine's own
+   `executeWouldFail`, plus leap-tile and AoE-wall-sight checks. **Now zero
+   validation errors.**
+2. **Weakest-target focus fire is not casual, it is expert.** v1 picked the
+   globally weakest enemy, which sent units sprinting past the enemy in front of
+   them and measured below baseline on six cells. Corrected to
+   weakest-in-reach, nearest-otherwise.
+
+### ⚠ BaselineBrain's own numbers are slightly understated
+
+Measured while validating: over 12 cells x 60 games, **BaselineBrain produced
+471 validation errors; CasualBrain and OptimalBrain produced 0.** The naive bot
+submits illegal actions and forfeits those turns. Every baseline figure in
+SKILL1/SKILL2 is therefore a *little* lower than the policy itself deserves.
+It does not change any conclusion — the gaps are tens of points — but the
+baseline column is not a clean floor and should not be quoted as one.
+
+### The ladder, all three brains (owner comp, 100 games)
+
+| enc | easy b/c/o | medium b/c/o | nightmare b/c/o |
+|---|---|---|---|
+| e1 | 86/**100**/100 | 40/**98**/100 | 2/57/81 |
+| e2 | 57/33/100 | 15/4/94 | 0/0/43 |
+| e3 | 98/**99**/100 | 74/**77**/85 | 11/13/19 |
+| e4 | 29/**75**/100 | 11/0/100 | 0/0/61 |
+| e5 | 5/**71**/100 | 4/42/97 | 0/0/69 |
+| e6 | 20/56/99 | 0/6/100 | 0/0/83 |
+| e7 | 0/0/97 | 0/0/91 | 0/0/8 |
+| e8 | 0/0/65 | 0/0/20 | 0/0/2 |
+| e9 | 62/6/93 | 1/0/32 | 0/0/7 |
+| e10 | 90/**88**/100 | 78/**79**/100 | 29/35/66 |
+| e11 | 0/0/23 | 0/0/3 | 0/0/0 |
+| e12 | 0/0/83 | 0/0/48 | 0/0/14 |
+
+**Easy tier verdict: 6 of 12 encounters (e6 e7 e8 e9 e11 e12) still fail the
+promise** — a player who knows their kit but not the board cannot clear them.
+e7, e8, e11 and e12 give the casual brain flat 0%.
+
+Four cells remain outside [baseline, optimal] (e2, e4/medium, e9). Casual play
+being *worse* than mindless play is a real phenomenon — spending a
+once-per-battle special badly, over-committing into a survival objective — but
+these four are not yet distinguished from residual modelling error. Do not read
+them as content findings.
+
+---
+
+## e5 anchor — owner, 2026-08-31
+
+> *"E5 the wisp shows up later, I was wondering where it was. I'm gonna approve
+> this for medium play, but it felt on the easy side for me... Without the wisp
+> to play around, it felt easy to just charge in and overrun everything. I think
+> the wisp needs to be there in the start on hard and nightmare, and it just
+> needs to have its placement and movement tuned so it can't crush you too
+> easily."*
+
+**Verdict: APPROVED for medium, easy side.** Proposed change: **wisp present
+from turn 1 on hard and nightmare**, with placement and movement tuned so an
+early wisp does not simply win the fight for the enemy.
+
+### The instruments agree, and say WHY
+
+e5 medium: casual **42%**, optimal **97%** — a skill delta of +55. But easy is
+casual 71 / optimal 100, and the owner's *"easy to just charge in and overrun
+everything"* is precisely what a +29 easy delta describes: the fight does not
+punish a straight-ahead approach until it is too late to matter.
+
+The wisp is the thing that would punish it. Delaying its arrival removes the
+tactical object from the part of the fight where positioning is still cheap —
+which is the same failure as e3 (nothing to play around) arriving by a
+different route.
+
+**This is the SKILL2 lever in its cleanest form.** "Wisp from turn 1 on
+hard/nightmare, later on easy/medium" changes the *skill demanded* per tier
+without touching a single HP number. It is a better instance of the pattern
+than the Flame Jet proposal because the wisp is already built, already tuned as
+a threat, and its arrival turn is already per-encounter data.
+
+### On the owner's self-doubt about easy
+
+> *"I'm starting to doubt my ability to properly balance easy levels of
+> gameplay, I assume tactics are natural that probably aren't."*
+
+This is exactly the gap CasualBrain exists to close, and it is not a personal
+failing — it is unfixable by introspection. An expert cannot un-know the
+tactics they use automatically; that is what expertise IS. The brain does not
+know them either, and unlike a person it can be asked the same question a
+thousand times without learning. **Read the casual column, not your own
+experience, for the easy tier.** The owner's on-device runs stay the anchor for
+medium and above, where his skill is the thing being measured.
