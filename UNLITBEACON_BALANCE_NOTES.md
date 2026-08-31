@@ -1366,3 +1366,76 @@ measure −0.05..+0.21, but that is a lunge — real pose that must survive.
 Correcting per group would slide the unit sideways the instant it swung. Orcs
 are left alone: a correction smaller than the measurement's own noise is a coin
 toss, not a fix.
+
+---
+
+## e8 anchor — owner, 2026-08-31
+
+> *"Finally finished E8, this is a long one. I think this is good medium
+> difficulty. Feels a little easy, some of that was AI mistakes. It's very
+> manageable if you play okay, doesn't ever feel oppressive. Last room isn't as
+> horrible as it once was. Good medium overall."*
+
+**Verdict: GOOD MEDIUM, slightly easy.** ⚠ Discounted by the owner himself for
+"AI mistakes" — the E8 enemy-passivity finding is the likely culprit, so read
+this anchor as an UPPER bound on how easy e8 is: a brain that commits properly
+makes it harder, not easier.
+
+⚠ The sims cannot corroborate: e8's numbers were invalidated by the DOOR1
+crossing rule (the brain does not know it). This anchor is play-only.
+
+---
+
+## ⚠ e9 — RING OF FIRE READ 16 DAMAGE. Two exact explanations, unresolved
+
+> *"I opened with my Ring of Fire and it only did 16 damage. With gift damage
+> that makes sense, but it also means my Ring of Fire never scaled."*
+
+Also his read of the encounter: *"Survivor round, and I have a pretty bad party
+for it. No roots, no freezes, it's a damage party in an encounter with absurd HP
+on the baddies. I at least have the shield boon."* — comp-mismatch note, not yet
+a difficulty verdict.
+
+### The arithmetic, both ways
+
+Ring of Fire (`ffh`) is 14 in arena and **18 from level 6** via
+`applyCampaignAbilityTuning`. e9 is level 8. The Deep Gift of Fangs adds +2.
+
+* **Scaling lost:** 14 + 2 = **16** ← the owner's reading.
+* **Scaling fine, caster Weakened:** 18 + 2 − 4 = **16** ← equally exact.
+
+**The vanguard in e9 casts `roar` (Leaping Slam), which applies `weakened`,**
+and `WEAKENED_DAMAGE_REDUCTION` is 4. So both stories land on 16 with nothing
+left over. This cannot be settled from the number alone.
+
+⚠ Against the Weakened story: he says he OPENED with it, and campaign matches
+are always human-first, so on a literal first action he cannot have been
+weakened yet. That points at the scaling — but "opened with" may be loose.
+
+### What the engine actually does — verified, and it is correct
+
+`tests/ffhCampaignScaling.test.ts` builds e9 at level 8 through the same helper
+chain the game uses and casts it: **20 damage** (18 tuned + 2 gift). At level 5
+it is 14. The tuning is applied, stacks on top of the gift, and does not
+double-count. So the engine half of this is sound.
+
+### The latent defect found while looking — FIXED
+
+Both live call sites read `campaign?.level ?? 1`. **A campaign match whose level
+went missing would resolve every tuned ability at its ARENA value** — Ring of
+Fire silently reverting 18 → 14 — with no error, no log line, and no symptom
+except a number four points too small. That is precisely the reported shape.
+
+`requireCampaignLevel()` now throws in development and warns in production
+instead of quietly resolving into wrong numbers. I cannot show this is what
+happened; I can show it was possible, and it no longer is.
+
+### ⚠ HOW TO SETTLE IT — one look at the combat log
+
+`damageBreakdown()` names every modifier on a hit: `base`, `Weakened`,
+`Deep Gift`, `Veteran`. The log line for that cast decides it outright:
+
+* reads **base 14 + Deep Gift 2** → the scaling is broken, and the fix is live.
+* names **Weakened** → nothing is broken; the encounter did its job.
+
+Until one of those is seen, do not tune e9 and do not close this.
