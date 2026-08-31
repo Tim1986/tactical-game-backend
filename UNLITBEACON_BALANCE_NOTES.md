@@ -1513,3 +1513,93 @@ exactly the per-class shape the current three lack.
 
 ⚠ Measured under the OLD brain, before the shield, empty-cast and crossing
 fixes. Re-run with the rest of the re-baseline.
+
+---
+
+## ⚠⚠ e9 — MEDIUM IS THE HARDEST TIER. Found chasing the owner's e9 report
+
+> *"an encounter with absurd HP on the baddies"* … *"Can't even kill it once
+> it's there."*
+
+He is not exaggerating and it is not a comp problem.
+
+| tier | hpScale | Vanguard HP | Pikeman HP |
+|---|---|---|---|
+| easy | 1.45 | 75 | 72 |
+| **medium** | **4.10** | **213** | **204** |
+| hard | 1.70 | 88 | 85 |
+| nightmare | 2.20 | 119 | 116 |
+
+**Medium is 2.4x hard.** A player on medium fights a 213 HP Vanguard; a player
+on nightmare fights 119. The encounter is hardest on the second-easiest tier.
+
+### How it happened — one nudge at a time, with nothing watching
+
+| commit | date | e9 hpScale |
+|---|---|---|
+| 4b0f792 | 08-24 | easy 1.45 · med 1.45 · hard 1.20 · night 1.50 |
+| 37d1857 | 08-25 | med **2.95** |
+| 14fcbe4 | 08-25 | med **3.20** |
+| 86ef860 | 08-25 | med **3.70** |
+| c0bf6cc | 08-25 | med **4.10** |
+
+Four passes in one day, each raising medium alone to chase THAT CELL's win-rate
+band, while hard and nightmare sat untouched. No check ever compared a tier to
+the tier above it, so the ladder inverted without a single failure.
+
+This is the whole methodological failure in one encounter: **one lever, one
+saturated metric, per-cell, no invariant.** It is also why e9 has read as a
+brutal outlier in every battery — those numbers were describing a mis-tiered
+encounter, not a hard one.
+
+### Campaign-wide: 17 encounters are inverted
+
+`lantern e8, e9 · goblinopolis e2, e4, e5, e7, e8, e10 · moonberry e3, e7, e8,
+e9, e10 · sealeddeep e3, e9 · unlitbeacon e8, e9`
+
+`tests/difficultyOrdering.test.ts` now holds the invariant with those seventeen
+listed explicitly. The list can only SHRINK — a new inversion fails, and so does
+a listed one that gets fixed, so the rebalance cannot quietly leave them.
+
+⚠ Not fixed here. These are real difficulty decisions and belong to the owner.
+
+---
+
+## e9 design note — Leaping Slam and counterplay
+
+> *"Leaping Slam on a baddie in this wall encounter is MAYBE fair for Hard or
+> Nightmare, that feels very unfair for easy and medium. Gets over my phalanx,
+> and pops all my shields... There's no counterplay to Leaping Slam... I'm not
+> gonna say definitely no, it's thematic, but be careful on things like this
+> with no counterplay, that should factor heavily into the balance of an
+> encounter."*
+
+**Not a change request. A weighting principle: an ability with no counterplay
+must cost more in an encounter's difficulty budget than its raw numbers say.**
+
+What Leaping Slam actually does (`roar`): leap up to 2 tiles **even if rooted,
+straight over anything in the way**, then 3 unblockable ring damage to every
+adjacent unit, allies included, plus **weakened for 2 turns**. The caster lands
+unharmed in the centre.
+
+Every clause defeats a different defence the player might have prepared:
+
+| the player's answer | why it fails |
+|---|---|
+| a phalanx / body-blocking | leaps *over* units |
+| roots | explicitly ignores root |
+| walls (e9 is the wall encounter) | leaps over them |
+| shields (Keeper's Oilskins) | **AoE damage pops every shield at once** |
+| armour / dodge | unblockable |
+| killing it first | 213 HP on medium (see above) |
+
+⚠ **The shield interaction is the sharpest edge.** One Leaping Slam strips the
+whole party's Oilskins — a boon the player spent a fork choice on — in a single
+action, because each target's shield absorbs its own hit. The boon reads as
+"every unit starts each encounter shielded" and is deleted by one enemy ability
+in an encounter that has that ability. Worth checking whether the fork that
+grants Oilskins is a real choice against this back half at all.
+
+⚠ Diagnosis order for the rebalance: **fix the 4.10 first, then re-read this.**
+"Can't kill it" is at least partly the mis-tiered HP, and the counterplay
+question deserves to be judged against a correctly-tiered encounter.
