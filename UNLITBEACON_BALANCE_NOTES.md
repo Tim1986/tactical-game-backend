@@ -406,3 +406,50 @@ used rank in the bottom six (#24 and #19). The "structural bimodality"
 diagnosed at [pass 3] and blamed on `loss:main_dead` was, at least in part,
 this: the encounter is winnable and the sim was placing into the trap every
 single time. Re-open the e11 conclusion.
+
+---
+
+## e3 anchor — owner, 2026-08-31 (calibration run 3)
+
+> *"I maintain this is a good calibration for an easy level fight, maybe the
+> hard end of easy. Easy for my comp, but I'm reading it as generally too easy
+> for medium. I want it to be a little harder on medium."*
+
+Owner's comp: Barbarian/Whirlwind · Sorcerer/Ring of Fire · Warlock/Essence
+Drain · Rogue/Kill Shot. Second consecutive run reading e3 as too easy (run 2:
+*"Felt too easy honestly"*), so this is a confirmed anchor, not a one-off.
+
+**Verified: e3 has not been rebalanced since the run-2 read.** Its content block
+in `unlitbeacon.ts` is byte-identical (same SHA) across `20d612e`, `a8f5684`,
+`1abb91f` and HEAD. The brain change in `1abb91f` gates on `ally_at_tiles`;
+e3's win is `units_at_tiles`, and `objectiveUrgencyMult` is called from exactly
+one line inside the escort block. Two runs, same content, same brain, same read.
+
+Current lever: `hpScaleOverride: { easy 0.50, medium 0.65, hard 0.75, nightmare 0.85 }`.
+
+### ⚠ Do not tune this to the owner's number — read the placement sweep first
+
+e3's placement spread is **60 points** (best 96, worst 36, median 84). The owner
+played it with an opening HE chose, on the shipped placement picker. His "too
+easy" is a read on a *good* opening, and the sweep says a good opening on e3 is
+worth up to 60 points over a bad one.
+
+So "make medium a little harder" has two very different implementations:
+
+1. **Raise `hpScaleOverride.medium`** — moves the whole distribution down. The
+   owner gets the harder fight he asked for; a player who places poorly goes
+   from a 36% cell to something well below it. That player is the one the
+   medium band exists to protect.
+2. **Narrow the spread** — make the encounter less placement-dependent, so the
+   median rises toward the owner's experience and the floor comes up with it.
+   e3's own header already records that this encounter "was not a difficulty
+   setting, it was a COMP CHECK", and a 60-point placement spread is the same
+   failure in a new axis.
+
+**Recommendation: (2), then re-measure, then (1) only if the median is still
+too high.** Tuning HP against a 60-point placement spread is tuning inside the
+error bar — exactly the mistake the sweep just exposed across the whole
+campaign. e3 also sits at median 84 against a 65-80 band, so it IS above band;
+the question is only which lever closes the gap without punishing the floor.
+
+⚠ BLOCKED ON OWNER — content change, trilogy rule. Nothing edited.
