@@ -233,7 +233,7 @@ function consumeShield(ctx: ExecutionContext, target: UnitInstance): void {
   ctx.events.push({ type: 'SHIELD_ABSORBED', sourceUnitInstanceId: ctx.caster.instanceId, targetUnitInstanceId: target.instanceId, message: 'Shield absorbed the hit' });
 }
 
-function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
+export function resolveTargets(ctx: ExecutionContext): UnitInstance[] {
   const { state, caster, targetPosition, ability } = ctx;
   const aliveUnits = state.units.filter((u) => u.isAlive);
   switch (ability.targetingType) {

@@ -1309,3 +1309,60 @@ scope is narrow (status-only area/line abilities vs shielded targets) but the
 Oilskins boon makes it reachable in most of Unlit Beacon's back half. **A full
 re-run is required after the calibration run finishes**, together with the
 door-crossing brain work.
+
+### [BR2b] The empty cast — made impossible rather than explained
+
+Owner, on the whiff: *"No unit gained frozen icon, there weren't any other
+nearby units it had to spare, no unit was already frozen, it just cast ring of
+frost and nothing happened. If nothing's gonna happen, you should just use an
+attack anyway."*
+
+**I could not reproduce it.** ~9,000 randomised boards — synthetic, and the
+REAL e8 room 2 built from content with its actual roster and terrain — produced
+**2,148 blizzard casts and zero empty ones**, before and after the shield fix.
+Every centre the brain proposed covered at least one unit, and none was ever out
+of range from the tile it fires from.
+
+So the guarantee is now ENFORCED rather than argued for. `planBestTurn`'s
+`consider()` — the single funnel every candidate turn passes through — runs the
+plan's ability through the ENGINE's own `resolveTargets`, at the tile the cast
+will actually fire from, and **discards any plan that resolves to zero targets**.
+The runner-up, normally an ordinary attack, wins by default. That is the owner's
+instruction implemented literally, and it closes the whole family: whatever
+produced the empty cast, an empty cast can no longer be chosen.
+
+Leaps (`move_self`) are exempt — they relocate the caster whether or not they
+catch anybody, so an empty one is a positioning choice, not a wasted turn.
+
+⚠ Because the cause is still unknown, this is a NET, not a diagnosis. If the
+owner ever sees a unit take an action with no visible effect again, that is the
+same ghost and it is now behaving differently — worth a fresh report.
+
+---
+
+## Goblin art off-centre — FIXED
+
+Owner: *"My rogue goblin does not look like he is standing idle in the middle of
+the square... my sorcerer goblin isn't either, though not as pronounced."*
+
+`boardArtScale`'s (c, f) tables normalize HEIGHT and the floor line. **Nothing
+ever normalized the horizontal axis.** Measured feet offsets, as a fraction of
+frame width:
+
+| chassis | goblins | orcs |
+|---|---|---|
+| ranger 0.054 · warlock 0.048 · **rogue 0.038** · wizard 0.037 · **sorcerer 0.030** | 3–6% off | barbarian 0.013 · fighter 0.002 · cleric 0.003 — within 2% |
+
+Every goblin is off; no orc is. And **rogue > sorcerer**, which is the owner's
+own ranking, recovered from the art rather than assumed.
+
+⚠ MEASURED AT THE FEET. Full-silhouette dx reads −0.02..+0.01 for the same
+art and would have reported no problem — a figure leaning with an outstretched
+arm has a shifted bbox and still stands centred. Same lesson as measuring race
+height head-top-to-feet instead of bbox.
+
+⚠ ONE VALUE PER CHASSIS, FROM IDLE, APPLIED TO EVERY GROUP. Attack frames
+measure −0.05..+0.21, but that is a lunge — real pose that must survive.
+Correcting per group would slide the unit sideways the instant it swung. Orcs
+are left alone: a correction smaller than the measurement's own noise is a coin
+toss, not a fix.

@@ -84,3 +84,57 @@ describe('status-only AoE vs a shielded party', () => {
     expect(BLIZZARD.effects.every((e) => e.type !== 'damage' && e.type !== 'lifesteal')).toBe(true);
   });
 });
+
+describe('the brain never spends a turn on nothing', () => {
+  it('no planned cast resolves to zero targets, over randomised boards', () => {
+    // Owner ruling 2026-08-31: "if nothing's gonna happen, you should just use
+    // an attack anyway." He watched a Blizzard Wisp cast Ring of Frost into
+    // empty air; no amount of fuzzing the centre-choosing code reproduced it,
+    // so the guarantee is enforced in `consider()` rather than argued for.
+    // This asserts the guarantee itself, not the path that threatened it.
+    const rnd = (m: number): number => Math.floor(Math.random() * m);
+    let casts = 0;
+    for (let i = 0; i < 400; i++) {
+      n = 0;
+      const used = new Set<string>();
+      const pick = (): { x: number; y: number } => {
+        for (;;) {
+          const x = rnd(8), y = rnd(8);
+          if ((x === 0 || x === 7) && (y === 0 || y === 7)) continue;
+          if (used.has(`${x},${y}`)) continue;
+          used.add(`${x},${y}`);
+          return { x, y };
+        }
+      };
+      const w = pick(), ap = pick(), bp = pick(), cp = pick();
+      const wisp = mk(E, w.x, w.y);
+      const ally = mk(E, cp.x, cp.y, { abilities: ['sword'] });
+      const a = mk(P, ap.x, ap.y, { abilities: ['sword'] });
+      const b = mk(P, bp.x, bp.y, { abilities: ['sword'] });
+      const units = [wisp, ally, a, b];
+      const st = {
+        board: { width: 8, height: 8 }, units, turnNumber: 5, roundNumber: 2,
+        activePlayerId: E, phase: 'action',
+        initiative: { order: units.map((u) => u.instanceId), slot: 0,
+          round1FirstPlayerId: P, activeUnitId: wisp.instanceId, isRound1: false },
+      } as unknown as MatchState;
+      const acts = new OptimalBrain().selectActions(st, E, map) as
+        { type: string; abilitySlug?: string; target?: { x: number; y: number }; destination?: { x: number; y: number } }[];
+      let from = wisp.position;
+      for (const act of acts) {
+        if (act.type === 'MOVE' && act.destination) { from = act.destination; continue; }
+        if (act.type !== 'USE_ABILITY' || !act.target) continue;
+        const def = map.get(act.abilitySlug!)!;
+        if (def.effects.some((e) => e.type === 'move_self')) continue;
+        casts++;
+        const hit = units.filter((u) => u.isAlive
+          && isInAoe(act.target!, u.position, def.areaRadius, (def as { areaShape?: 'ring' }).areaShape));
+        const singleHit = def.targetingType === 'single'
+          && units.some((u) => u.isAlive && u.position.x === act.target!.x && u.position.y === act.target!.y);
+        expect(hit.length > 0 || singleHit || def.targetingType === 'self' || def.targetingType === 'line',
+          `${def.slug} cast from ${JSON.stringify(from)} at ${JSON.stringify(act.target)} hit nobody`).toBe(true);
+      }
+    }
+    expect(casts).toBeGreaterThan(50);   // the fuzz must actually exercise casts
+  });
+});

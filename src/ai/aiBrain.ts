@@ -71,7 +71,7 @@ import {
 import { isInAoe } from '../game/boardUtils.js';
 import {
   BURNING_DAMAGE_PER_STACK, missChanceOf, WEAKENED_DAMAGE_REDUCTION,
-  OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS, executeWouldFail,
+  OPPORTUNIST_BONUS_BY_CLASS, VENGEFUL_BONUS_BY_CLASS, executeWouldFail, resolveTargets,
 } from '../game/abilityExecutor.js';
 
 // ---------------------------------------------------------------------------
@@ -1937,6 +1937,46 @@ function planAllyTurn(
   return finish(null, true);
 }
 
+/**
+ * True when a planned turn casts an ability that would resolve to NO targets.
+ *
+ * Uses the engine's own `resolveTargets`, at the position the cast actually
+ * fires from (moves earlier in the same plan are applied first), so the brain's
+ * idea of "does this hit anything" is the engine's idea by construction.
+ *
+ * ⚠ A leap is exempt. `move_self` abilities relocate the caster whether or not
+ * they catch anybody, so an empty one is a positioning choice rather than a
+ * wasted turn, and refusing it would remove a real option.
+ */
+function planCastsIntoTheVoid(
+  state: MatchState,
+  unit: UnitInstance,
+  actions: TurnAction[],
+  map: Map<string, AbilityDefinition>,
+): boolean {
+  let from = unit.position;
+  for (const a of actions) {
+    if (a.type === 'MOVE' || a.type === 'CHARGE') {
+      from = (a as { destination: BoardPosition }).destination;
+      continue;
+    }
+    if (a.type !== 'USE_ABILITY') continue;
+    const def = map.get((a as { abilitySlug: string }).abilitySlug);
+    if (!def) continue;
+    if (def.effects.some((e) => e.type === 'move_self')) continue;   // leaps relocate regardless
+    const caster = from === unit.position ? unit : { ...unit, position: from };
+    const hits = resolveTargets({
+      state,
+      caster,
+      targetPosition: (a as { target: BoardPosition }).target,
+      ability: def,
+      events: [],
+    } as never);
+    if (hits.length === 0) return true;
+  }
+  return false;
+}
+
 export function planBestTurn(
   state: MatchState,
   unit: UnitInstance,
@@ -2082,6 +2122,20 @@ export function planBestTurn(
   };
 
   const consider = (score: number, actions: TurnAction[]) => {
+    // ⚠ NEVER SPEND A TURN ON NOTHING (owner ruling 2026-08-31: "if nothing's
+    // gonna happen, you should just use an attack anyway"). Every scoring path
+    // above already intends to hit something, but intent is not a guarantee —
+    // the owner watched a Blizzard Wisp cast Ring of Frost into empty air, and
+    // no amount of fuzzing the CENTRE-CHOOSING code reproduced it. So the
+    // guarantee is enforced here instead of argued for: a plan whose ability
+    // resolves to zero targets is discarded outright, and the runner-up — an
+    // ordinary attack, or a move — wins by default.
+    //
+    // The check runs through the ENGINE's own resolveTargets at the tile the
+    // cast will actually fire from, so it cannot disagree with what happens.
+    // That closes the whole family, not one ability: whatever produced the
+    // empty cast, an empty cast can no longer be chosen.
+    if (planCastsIntoTheVoid(state, unit, actions, map)) return;
     const adjusted = score - drainPenalty(actions);
     if (adjusted > best.score) best = { score: adjusted, actions };
   };
