@@ -354,6 +354,12 @@ export function willDieToOwnTick(u: UnitInstance): boolean {
   return u.currentHealth <= BURNING_DAMAGE_PER_STACK * burning.stacks;
 }
 
+/** Whether an ability's effects include damage at all — the only thing a
+ *  shield stops (DGE-5: "a purely non-damaging effect passes through"). */
+function defIsDamaging(def: AbilityDefinition): boolean {
+  return def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+}
+
 function abilityReady(u: UnitInstance, slug: string): boolean {
   return (u.cooldowns[slug] ?? 0) <= 0;
 }
@@ -1215,7 +1221,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
       }
 
       case 'single': {
-        const damaging = def.effects.some((e) => e.type === 'damage' || e.type === 'lifesteal');
+        const damaging = defIsDamaging(def);
         for (const t of units) {
           if (!t.isAlive) continue;
           const tPos = effPos(ctx, t);
@@ -1264,6 +1270,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
       }
 
       case 'aoe': {
+        const damagingAoe = defIsDamaging(def);
         // A leap (move_self) relocates the caster to the blast centre, so the
         // centre doubles as a landing tile: it must be unoccupied, and the
         // caster must not be scored as a victim of its own blast at the tile it
@@ -1308,7 +1315,19 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
             // AOE ally exclusion (e.g. Roar): filter allies out entirely
             // before any scoring, matching the engine's resolveTargets.
             if (def.excludeAllies && t.ownerPlayerId === caster.ownerPlayerId) continue;
-            const hits = !hasStatus(t, 'shielded');
+            // ⚠ A SHIELD ONLY STOPS A DAMAGING HIT (DGE-5). This read
+            // `!hasStatus(t, 'shielded')` for EVERY aoe, damaging or not, so a
+            // status-only blast believed a shielded target was untouchable —
+            // and Ring of Frost is pure `apply_status`. Against a party
+            // carrying the Keeper's Oilskins (every unit starts shielded) the
+            // Blizzard Wisp counted zero enemies hit at every centre on the
+            // board, the once-per-game gate skipped them all, and it NEVER
+            // cast its signature ability: measured 0 casts in 2,500 boards
+            // against 22% unshielded (owner repro 2026-08-31, e8 final room).
+            // The engine has always applied the freeze — "a purely
+            // non-damaging effect passes through" — so this was the brain
+            // hallucinating an immunity the rules do not grant.
+            const hits = !damagingAoe || !hasStatus(t, 'shielded');
             // HARD VETO: never place an AOE where it could kill a teammate.
             if (hits && wouldKillTeammate(def, caster, t)) {
               vetoed = true;
@@ -1365,6 +1384,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
       }
 
       case 'line': {
+        const damagingLine = defIsDamaging(def);
         for (const [dx, dy] of LINE_DIRECTIONS) {
           let score = -reserve;
           let hitAny = false;
@@ -1392,7 +1412,7 @@ function enumerateAbilityActions(ctx: ScoreCtx): Candidate[] {
                 samePos(effPos(ctx, u), p),
             );
             if (t) {
-              const hits = !hasStatus(t, 'shielded');
+              const hits = !damagingLine || !hasStatus(t, 'shielded');
               if (hits && wouldKillTeammate(def, caster, t)) {
                 vetoed = true;
                 break;

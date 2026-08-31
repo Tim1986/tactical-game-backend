@@ -1245,3 +1245,67 @@ and the brain was not told.
 Teaching it is a BR1 brain change, which invalidates certification and demands
 a full re-run. **Deliberately not done mid-calibration.** Until it is, e8, e10,
 e12 and every other door encounter must be read from play, not from the sims.
+
+---
+
+## [BR2] The Blizzard Wisp and the shield — brain fix, 2026-08-31
+
+> *"In E8 last room, the blizzard wisp just whiffed its ring of frost, cast but
+> didn't hit any units. Could have hit 2 of my units. That cannot ever happen."*
+
+### Found: the brain hallucinated an immunity the rules do not grant
+
+`scoreActions` treated `shielded` as "cannot be hit" for EVERY aoe and line
+ability, damaging or not. Ring of Frost is pure `apply_status` (unblockable,
+ring shape, centre spared), and DGE-5 is explicit that **a purely non-damaging
+effect passes through a shield**. The engine has always frozen those units.
+
+The owner's party carries the Keeper's Oilskins boon — *every unit starts each
+encounter shielded* — so in e8 the wisp counted **zero enemies hit at every
+centre on the board**, the once-per-game cluster gate (`aoeSpecialMinEnemies`)
+skipped all of them, and the ability was never cast.
+
+Measured over 2,500 randomised boards per condition:
+
+| party | casts | cast rate | whiffs | casts hitting <2 party |
+|---|---|---|---|---|
+| unshielded (before) | 554 | 22% | 0 | 0 |
+| **shielded (before)** | **0** | **0%** | — | — |
+| shielded (after) | 563 | 23% | 0 | 0 |
+| mixed (after) | 529 | 21% | 0 | 0 |
+
+Fix narrows the gate rather than removing it: a shield still discounts a
+DAMAGING blast, because there it really does absorb the hit. `defIsDamaging()`
+is now the single predicate, matching `scoreEffectsOnTarget`'s existing check
+(which was already correct — only the aoe and line paths had the bug).
+
+**This is general, not wisp-specific.** Every status-only area or line ability
+in the game was invisible to the brain against a shielded target.
+
+### ⚠ WHAT I COULD NOT REPRODUCE — read this before treating it as closed
+
+The bug I found and fixed makes the wisp **never cast**. The owner reports it
+**casting and hitting nothing**. Those are different observations.
+
+4,000 randomised boards produced **zero** zero-hit blizzard casts, before or
+after the fix, and every cast hit two party units. The brain never proposes an
+aoe centre unless `hitAny` is true, so a literal whiff should be unreachable
+through this path.
+
+Two candidates for what was actually seen, neither confirmed:
+1. **The centre tile is spared.** A ring centred ON a party unit freezes its
+   neighbours and NOT the unit the blast visually landed on. From the player's
+   seat that reads as a miss on the obvious target.
+2. Units already frozen, so re-applying changed nothing visible.
+
+⚠ If it recurs, the detail needed is: **did any unit gain the frozen icon, and
+where was the ring drawn relative to the party?**
+
+### ⚠ BR1 RIDER — certification is invalidated
+
+This is a brain change. Every campaign balance number predating it describes a
+different AI, and a shielded party is exactly the condition it changes. The
+scope is narrow (status-only area/line abilities vs shielded targets) but the
+Oilskins boon makes it reachable in most of Unlit Beacon's back half. **A full
+re-run is required after the calibration run finishes**, together with the
+door-crossing brain work.
