@@ -741,7 +741,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           // the last floor. Front-load some of it so the climb ramps.
           enemies: ['shelf_pikeman', 'frozen_watchman', 'breaker'],
           enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 3 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           // ⚠ 'on_clear', NOT 'always' — changed the moment survivors began
           // FOLLOWING the party through (owner ruling, same day). These doors
           // sit at x=7, BEHIND the enemy line, so a unit chasing a pikeman
@@ -763,7 +763,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           enemies: ['frozen_watchman', 'breaker'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-          exitDoors: [{ x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           doorMode: 'on_clear',
           surprise: true,
           waves: [
@@ -810,7 +810,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
           // makes the freeze a threat to play around instead of a coin flip.
           enemies: ['blizzard_wisp', 'honor_guard', 'frozen_watchman'],
           enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
-          entryTiles: [{ x: 0, y: 1 }, { x: 1, y: 3 }, { x: 0, y: 5 }, { x: 1, y: 6 }],
+          entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
       ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],

@@ -18,7 +18,7 @@ import {
 } from '../types/matchState.js';
 import { isInBounds } from './boardUtils.js';
 import { isTerrainBlocked } from '../ai/geometry.js';
-import { applyEntryHazard } from './abilityExecutor.js';
+import { applyEntryHazard, takeDamage } from './abilityExecutor.js';
 
 /** Any waves or rooms still to come? Suppresses kill-all / the mercy rule. */
 export function hasPendingContent(state: MatchState): boolean {
@@ -159,13 +159,64 @@ export function checkSpawnTriggers(
  * the problem with you), and it is what the fiction says happens when you run
  * from someone up a staircase.
  */
+/**
+ * The cost of a crossing. 1 damage to a party member at the end of its own turn
+ * while the room it is in has an exit to reach.
+ *
+ * Owner spec, 2026-08-31: *"If everyone needs to get across, there needs to be a
+ * cost. Tick one damage on each unit at the end of their turns, this encourages
+ * playing strategically and advancing with reasonable speed."*
+ *
+ * ⚠ PARTY ONLY, DELIBERATELY. Ticking the enemies too would make waiting pay —
+ * stand still and the garrison bleeds out for free — which is the exact
+ * opposite of the pressure this exists to create.
+ *
+ * ⚠ ONLY IN ROOMS WITH A DOOR. An encounter with nothing to cross to has no
+ * crossing to charge for, so this is inert in every single-room encounter and
+ * in the last room of a multi-room one (its exitDoors are empty).
+ *
+ * ⚠ AND ONLY ONCE THE DOOR IS UNLOCKED (owner clarification 2026-08-31). The
+ * clock starts when leaving becomes POSSIBLE — it is a charge for dawdling on
+ * the threshold, not a tax on the fight itself. An 'on_clear' room does not
+ * tick until its garrison is dead; a fight you cannot yet walk away from must
+ * not bleed you for fighting it.
+ */
+export const ROOM_ATTRITION_DAMAGE = 1;
+
+export function applyRoomAttrition(state: MatchState, unit: UnitInstance, events: GameEvent[]): void {
+  const ep = state.encounterProgress;
+  if (!ep || ep.exitDoors.length === 0) return;
+  if (ep.doorMode === 'on_clear' && livingEnemies(state).length > 0) return;
+  if (!ep.partyIds.includes(unit.instanceId) || !unit.isAlive) return;
+  takeDamage(unit, ROOM_ATTRITION_DAMAGE, events, unit.instanceId, (actual) => {
+    events.push({
+      type: 'DAMAGE_DEALT', sourceUnitInstanceId: unit.instanceId,
+      targetUnitInstanceId: unit.instanceId, value: actual,
+      message: `${actual} from the cold`,
+    });
+  });
+}
+
 export function maybeRoomTransition(state: MatchState, mover: UnitInstance, events: GameEvent[]): boolean {
   const ep = state.encounterProgress;
   if (!ep || ep.rooms.length === 0) return false;
   if (!ep.partyIds.includes(mover.instanceId)) return false;
-  const onDoor = ep.exitDoors.some((d) => d.x === mover.position.x && d.y === mover.position.y);
-  if (!onDoor) return false;
+  const onDoorTile = (u: UnitInstance): boolean =>
+    ep.exitDoors.some((d) => d.x === u.position.x && d.y === u.position.y);
+  if (!onDoorTile(mover)) return false;
   if (ep.doorMode === 'on_clear' && livingEnemies(state).length > 0) return false;
+  // ⚠ THE WHOLE PARTY CROSSES, NOT ONE SCOUT (owner spec 2026-08-31). A single
+  // unit stepping on the tile used to swap the room out from under everyone,
+  // which made the door a scene-change trigger wearing the costume of a
+  // tactical object — "the door isn't doing anything, it's artificial" — and
+  // spent that one unit's turn to do it. Now the door is the objective: every
+  // living party member must be standing on one, and the room ends when the
+  // last of them arrives. Allies are excluded: they follow, they are not the
+  // party's responsibility to shepherd onto a tile.
+  const livingParty = ep.partyIds
+    .map((id) => state.units.find((u) => u.instanceId === id))
+    .filter((u): u is UnitInstance => !!u && u.isAlive);
+  if (!livingParty.every(onDoorTile)) return false;
 
   const room = ep.rooms[0];
 
@@ -282,6 +333,14 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
   // Reset the room clock so 'rounds_after_entry' waves in the NEW room are
   // measured from this moment, not from the start of the encounter.
   ep.roomEnteredRound = state.roundNumber;
+  // ⚠ THE NEW ROOM STARTS AT THE TOP OF THE ORDER (owner spec 2026-08-31).
+  // The transition used to leave the initiative wherever the crossing unit
+  // happened to sit, so a room could open on the enemy's half of the lap and
+  // whoever crossed last was skipped — "we go in at that point in the
+  // initiative order... very awkward gameplay". A new room is a new scene, so
+  // the lap restarts.
+  state.initiative.slot = 0;
+  state.initiative.activeUnitId = state.initiative.order[0] ?? state.initiative.activeUnitId;
 
   // The room's garrison enters as a wave (weave + optional surprise).
   spawnWave(state, { units: room.units, placement: room.placement, trigger: { on: 'room_cleared' }, surprise: room.surprise }, events);

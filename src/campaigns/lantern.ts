@@ -609,7 +609,7 @@ export const lanternCampaign: CampaignDefinition = {
           },
           enemies: ['coalgate_warden', 'goblin_scrapper'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 4 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
         {
           terrain: {

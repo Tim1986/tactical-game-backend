@@ -337,7 +337,7 @@ export const moonberryCampaign: CampaignDefinition = {
           terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 4 }] },
           enemies: ['mirror_footman', 'lantern_lifter'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 5 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
         {
           terrain: { theme: 'interior', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 3 }] },
@@ -504,13 +504,13 @@ export const moonberryCampaign: CampaignDefinition = {
           terrain: { theme: 'interior', blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }] },
           enemies: ['mirror_footman', 'starstep_duelist'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 5 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
         {
           terrain: { theme: 'interior', blocked: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 2, y: 4 }] },
           enemies: ['velvet_gate_guard', 'moonhook_caller'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }],
-          exitDoors: [{ x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
         {

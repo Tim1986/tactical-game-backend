@@ -652,6 +652,13 @@ export function buildEncounterState(
       }
       const isLast = idx === enc.rooms!.length - 1;
       if (!isLast && !(r.exitDoors?.length)) throw new Error(`Encounter ${encounterId}: room ${idx} needs exitDoors (not the last room)`);
+      // ⚠ THE WHOLE PARTY HAS TO FIT. Since 2026-08-31 a room ends when EVERY
+      // living party member stands on an exit door, so a room with fewer doors
+      // than party members can never be left — a silent softlock that would only
+      // show up in play. Every shipped door room had 1-2 tiles for a party of 4.
+      if (!isLast && (r.exitDoors?.length ?? 0) < enc.playerPlacement.length) {
+        throw new Error(`Encounter ${encounterId}: room ${idx} has ${r.exitDoors?.length ?? 0} exit doors for a party of ${enc.playerPlacement.length} — the whole party must fit`);
+      }
       return {
         ...(r.terrain ? { terrain: { blocked: r.terrain.blocked ?? [], hazards: r.terrain.hazards ?? [] } } : {}),
         units: buildSpawnGroup(r.enemies, !!r.noSpecials),
@@ -664,6 +671,9 @@ export function buildEncounterState(
       };
     });
     if (!(room0.exitDoors?.length)) throw new Error(`Encounter ${encounterId}: room 0 needs exitDoors`);
+    if (room0.exitDoors.length < enc.playerPlacement.length) {
+      throw new Error(`Encounter ${encounterId}: room 0 has ${room0.exitDoors.length} exit doors for a party of ${enc.playerPlacement.length} — the whole party must fit`);
+    }
     for (const d of room0.exitDoors) {
       if (!isInBounds(d) || terrainBlocked.some((b) => b.x === d.x && b.y === d.y)) {
         throw new Error(`Encounter ${encounterId}: room 0 exit door (${d.x},${d.y}) is invalid`);

@@ -1189,3 +1189,59 @@ wearing the costume of a tactical object. Options:
 "get everyone across" read as epic, and e8's door currently reads as a chore.
 It also solves the entry-shape problem structurally rather than by editing
 tiles.
+
+---
+
+## [DOOR1] The crossing — owner spec, 2026-08-31. IMPLEMENTED
+
+> *"If everyone needs to get across, there needs to be a cost. Tick one damage
+> on each unit at the end of their turns... Once every unit is on a door tile
+> (locked until all enemies are dead), then it advances to the next room.
+> Regardless of whose turn it just was, in the next room they jump to the
+> previously chosen opening setup... and the initiative starts at the beginning
+> of the initiative order."* Clarified: *"the ticking only starts once the door
+> is unlocked."*
+
+Four engine changes, all shipped:
+
+1. **The whole party crosses.** `maybeRoomTransition` now requires every LIVING
+   party member to be standing on a door tile. Allies are excluded — they
+   follow, they are not the party's to shepherd.
+2. **Attrition.** `applyRoomAttrition`: 1 damage to a party member at the end of
+   its own turn, **only once the door is unlocked** and only in rooms that have
+   an exit. Party only — ticking enemies too would make waiting pay, the exact
+   opposite of the intended pressure.
+3. **The opening carries** (see the placement note above), so the party arrives
+   in the arrangement it chose.
+4. **Initiative restarts at the top** of the order on entering a room. A new
+   room is a new scene.
+
+### ⚠ CONTENT CHANGE MADE WITHOUT ASKING — and why it had to be
+
+The rule is unimplementable against shipped content: **every door room in every
+campaign had 1–2 door tiles for a party of 4**, so "everyone on a door tile"
+could never be satisfied and every multi-room encounter would have softlocked.
+
+Widened all nine door rooms to a uniform 4-tile column `(7,2)–(7,5)`, verified
+free of walls and enemy placements in each: `unlitbeacon e8` (2 rooms),
+`moonberry e5, e10` (3), `sealeddeep e12` (2), `goblinopolis e4` (1),
+`lantern e11` (1). Also squared up **e8 room 2's entry tiles** — a scattered
+column `(0,1) (1,3) (0,5) (1,6)` — to the same 2x2 block as rooms 0 and 1,
+which the owner explicitly authorised.
+
+`buildEncounterState` now REFUSES a room with fewer doors than party members,
+so this class of softlock cannot be authored again, and two tests sweep every
+registered campaign for door count and entry-shape consistency.
+
+### ⚠ e8's SIM NUMBERS ARE NOW MEANINGLESS — do not read them
+
+e8/medium fell from 20% to **10%** after this change, and that is not a
+difficulty statement. The brain has no concept of the crossing rule: it does not
+know to gather the party on the doors, so it mills at an open threshold paying
+attrition until the turn cap. This is the same blind spot as e6 before the
+CasualBrain learned to read objectives — the encounter got a new win condition
+and the brain was not told.
+
+Teaching it is a BR1 brain change, which invalidates certification and demands
+a full re-run. **Deliberately not done mid-calibration.** Until it is, e8, e10,
+e12 and every other door encounter must be read from play, not from the sims.

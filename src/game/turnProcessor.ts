@@ -11,7 +11,7 @@ import { reachableFrom, hasLineOfSight, isTerrainBlocked, wallsBlockLine } from 
 import { tickUnitStatusEffects, applyStartOfTurnStatusDamage, decrementStatusDurations, tickUnitCooldowns, resetUnitTurnFlags, willDieToStartTick, takeDamage } from './abilityExecutor.js';
 import { executeAbility, applyEntryHazard, executeWouldFail } from './abilityExecutor.js';
 import { checkWinCondition } from './winCondition.js';
-import { checkSpawnTriggers, maybeRoomTransition } from './encounterFlow.js';
+import { checkSpawnTriggers, maybeRoomTransition, applyRoomAttrition } from './encounterFlow.js';
 
 export class TurnValidationError extends Error {
   constructor(message: string) { super(message); this.name = 'TurnValidationError'; }
@@ -523,6 +523,12 @@ function finalizeTurnInternal(
   // get there is irrelevant; what matters is that the door may have OPENED
   // while it stood there. Firing at end-of-turn (rather than mid-turn) is
   // what protects the mover's queued actions; the movement test never did.
+  // THE COST OF THE CROSSING (owner spec 2026-08-31). Charged at the end of the
+  // unit's own turn, before the door is tested, so a party that dawdles at an
+  // open door pays for the hesitation. Inert outside rooms that have an exit.
+  if (!forcedCommit) {
+    applyRoomAttrition(ws, actingUnit, events);
+  }
   if (!forcedCommit && actingUnit.isAlive) {
     maybeRoomTransition(ws, actingUnit, events);
   }

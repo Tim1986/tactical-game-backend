@@ -59,11 +59,22 @@ const living = (s: { units: { ownerPlayerId: string; isAlive: boolean }[] }) =>
  * it. The `on: 'door'` trigger is still a supported feature other content can
  * use, so its coverage must not be hostage to one encounter's tuning.
  */
+function crossWholeParty(state: ReturnType<typeof buildE8>['state']): void {
+  // ⚠ THE WHOLE PARTY CROSSES (owner spec 2026-08-31). Parking one unit on a
+  // door no longer opens the room, so every fixture that used to walk a single
+  // mover through has to stand the party on the doors first.
+  const ep = state.encounterProgress!;
+  ep.partyIds.forEach((id, i) => {
+    const u = state.units.find((x) => x.instanceId === id);
+    if (u?.isAlive) u.position = { ...ep.exitDoors[Math.min(i, ep.exitDoors.length - 1)] };
+  });
+}
+
 function climbToFloor2(state: ReturnType<typeof buildE8>['state'], armDoorTrigger = false) {
   const ep = state.encounterProgress!;
   const mover = state.units.find((u) => u.instanceId === ep.partyIds[0])!;
   for (const e of living(state)) e.isAlive = false;
-  mover.position = { ...ep.exitDoors[0] };
+  crossWholeParty(state);
   maybeRoomTransition(state, mover, []);
   if (armDoorTrigger && state.encounterProgress!.waves[0]) {
     state.encounterProgress!.waves[0].trigger = { on: 'door', tile: { x: 6, y: 3 } };
@@ -98,8 +109,11 @@ describe('e8 room flags', () => {
     mover.position = { ...ep.exitDoors[0] };
     expect(maybeRoomTransition(state, mover, [])).toBe(false);
 
-    // Clear the floor, and the same tile now works.
+    // Clear the floor, and the same tile now works — once the REST of the
+    // party is standing on the doors too.
     for (const e of living(state)) e.isAlive = false;
+    expect(maybeRoomTransition(state, mover, []), 'one unit is not a crossing').toBe(false);
+    crossWholeParty(state);
     const events: GameEvent[] = [];
     expect(maybeRoomTransition(state, mover, events)).toBe(true);
     expect(events.some((e) => e.type === 'ROOM_ENTERED')).toBe(true);
@@ -221,6 +235,7 @@ describe('door trigger vs move_self (Fable review of 5fc1aad)', () => {
     const ep0 = state.encounterProgress!;
     const barb = state.units.find((u) => ep0.partyIds.includes(u.instanceId) && u.definitionSlug === 'barbarian')!;
     for (const e of state.units.filter((u) => u.ownerPlayerId === ENEMY && u.isAlive)) e.isAlive = false;
+    crossWholeParty(state);
     barb.position = { ...ep0.exitDoors[0] };
     maybeRoomTransition(state, barb, []);
 

@@ -868,7 +868,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
           terrain: { theme: 'crypt', blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 5 }, { x: 3, y: 6 }] },
           enemies: ['skeleton_warrior', 'skeleton_archer'],
           enemyPlacement: [{ x: 5, y: 2 }, { x: 6, y: 3 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           doorMode: 'on_clear',
         },
         {
@@ -877,7 +877,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
           enemies: ['zombie', 'ghoul'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 4 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           doorMode: 'on_clear',
         },
         {

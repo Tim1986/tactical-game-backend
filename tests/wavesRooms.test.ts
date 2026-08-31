@@ -134,7 +134,7 @@ describe('A4 — room transitions', () => {
     const p1 = mk(P, 3, 3), p2 = mk(P, 3, 4), e1 = mk(E, 5, 5);
     const g1 = mk(E, 0, 0), g2 = mk(E, 0, 0);
     const ep = progress({
-      exitDoors: [{ x: 7, y: 3 }], doorMode,
+      exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }], doorMode,
       rooms: [{
         terrain: { blocked: [{ x: 4, y: 4 }], hazards: [] },
         units: [g1, g2], placement: [{ x: 6, y: 3 }, { x: 6, y: 4 }],
@@ -150,6 +150,10 @@ describe('A4 — room transitions', () => {
     p1.position = { x: 7, y: 3 };
     expect(maybeRoomTransition(st, p1, [])).toBe(false); // e1 still alive
     e1.isAlive = false;
+    // ⚠ THE WHOLE PARTY CROSSES (owner spec 2026-08-31): one unit on the door
+    // is no longer enough, so the door still refuses until p2 arrives.
+    expect(maybeRoomTransition(st, p1, [])).toBe(false);
+    p2.position = { x: 7, y: 4 };
     const events: never[] = [];
     expect(maybeRoomTransition(st, p1, events as never)).toBe(true);
     expect(st.terrain?.blocked).toEqual([{ x: 4, y: 4 }]);      // new carve
@@ -166,10 +170,11 @@ describe('A4 — room transitions', () => {
   // door rather than being deleted. Deleting them made the door a free
   // room-skip — walk out and everything still standing ceased to exist.
   it("an 'always' door lets living enemies FOLLOW the party through", () => {
-    const { st, p1, e1 } = twoRoomState('always');
+    const { st, p1, p2, e1 } = twoRoomState('always');
     const hpBefore = e1.currentHealth;
     const oldPos = { ...e1.position };
     p1.position = { x: 7, y: 3 };
+    p2.position = { x: 7, y: 4 };                               // whole party on the doors
     expect(maybeRoomTransition(st, p1, [])).toBe(true);          // enemies alive, door works anyway
 
     const follower = st.units.find((u) => u.instanceId === e1.instanceId);
@@ -200,10 +205,13 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
     // Party unit with heal, standing 2 from the door; wounded ally beside the
     // door's OLD-room neighborhood. Board clear -> on_clear door is active.
     const healer = mk(P, 5, 3, { abilities: ['heal'], cooldowns: { heal: 0 }, movementRange: 3 });
-    const buddy  = mk(P, 6, 2, { currentHealth: 20 });
+    const buddy  = mk(P, 7, 4, { currentHealth: 20 });  // parked on the second door
     const g1 = mk(E, 0, 0);
+    // Two doors: the whole party must fit on them (owner spec 2026-08-31), and
+    // the buddy is parked on the second one so the healer's arrival is what
+    // completes the crossing — which is the moment this test is about.
     const ep = progress({
-      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }], doorMode: 'on_clear',
       rooms: [{
         units: [g1], placement: [{ x: 6, y: 3 }], waves: [],
         exitDoors: [], doorMode: 'on_clear',
@@ -221,7 +229,7 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
     // "Target out of range" because the transition teleported the healer first.
     const r = processTurn(st, [
       { type: 'MOVE', unitInstanceId: healer.instanceId, destination: { x: 7, y: 3 } },
-      { type: 'USE_ABILITY', unitInstanceId: healer.instanceId, abilitySlug: 'heal', target: { x: 6, y: 2 } },
+      { type: 'USE_ABILITY', unitInstanceId: healer.instanceId, abilitySlug: 'heal', target: { x: 7, y: 4 } },
       { type: 'END_TURN' },
     ] as never, P, P, E, map);
     const ws = r.updatedState;
@@ -257,10 +265,10 @@ describe('A4 — transition timing regression (D2 Goblinopolis bug)', () => {
     const { buildAbilityMap } = await import('../src/ai/defaultData.js');
     const map = buildAbilityMap();
     const sitter = mk(P, 7, 3, { movementRange: 3 });   // starts ON the door
-    const buddy  = mk(P, 5, 3);
+    const buddy  = mk(P, 7, 4);                        // ...and so does the rest of the party
     const g1 = mk(E, 0, 0);
     const ep = progress({
-      exitDoors: [{ x: 7, y: 3 }], doorMode: 'on_clear',
+      exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }], doorMode: 'on_clear',
       rooms: [{ units: [g1], placement: [{ x: 6, y: 3 }], waves: [], exitDoors: [], doorMode: 'on_clear', entryTiles: [{ x: 1, y: 3 }, { x: 1, y: 4 }] }],
     }, [sitter.instanceId, buddy.instanceId]);
     const st = mkState([sitter, buddy], ep);

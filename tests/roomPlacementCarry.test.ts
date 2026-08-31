@@ -47,3 +47,38 @@ describe('multi-room placement', () => {
     expect(party[3].position).toEqual(tiles[0]);
   });
 });
+
+describe('[owner spec 2026-08-31] the whole party crosses, and pays for dawdling', () => {
+  it('every shipped door room fits the whole party', () => {
+    // The rule makes a room with fewer doors than party members unleavable.
+    // Every door room shipped with 1-2 tiles for a party of 4 before this.
+    for (const [cs, c] of Object.entries(CAMPAIGNS)) {
+      for (const [id, enc] of Object.entries(c.encounters)) {
+        const rooms = (enc as { rooms?: { exitDoors?: unknown[] }[] }).rooms ?? [];
+        for (const [i, r] of rooms.entries()) {
+          const doors = r.exitDoors?.length ?? 0;
+          if (doors === 0) continue;                       // last room, nothing to cross to
+          expect(doors, `${cs} ${id} room${i}`).toBeGreaterThanOrEqual(enc.playerPlacement.length);
+        }
+      }
+    }
+  });
+
+  it('multi-room entry tiles keep ONE shape across every room', () => {
+    // "Multi room encounters need the same shape of opening squares in each
+    // room" — a scattered column cannot express the block the player arranged.
+    const norm = (ts: { x: number; y: number }[]): string =>
+      [...ts].map((t) => `${t.x},${t.y}`).sort().join(' ');
+    for (const [cs, c] of Object.entries(CAMPAIGNS)) {
+      for (const [id, enc] of Object.entries(c.encounters)) {
+        const rooms = (enc as { rooms?: { entryTiles?: { x: number; y: number }[] }[] }).rooms ?? [];
+        const shapes = rooms.map((r) => r.entryTiles).filter((t): t is { x: number; y: number }[] => !!t);
+        if (shapes.length < 2) continue;
+        const first = norm(shapes[0]);
+        for (const [i, sh] of shapes.entries()) {
+          expect(norm(sh), `${cs} ${id} room entry shape ${i}`).toBe(first);
+        }
+      }
+    }
+  });
+});

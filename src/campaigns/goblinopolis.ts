@@ -309,7 +309,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
           terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
           enemies: ['clerk_of_stamps', 'bluecap_scout'],
           enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }],
-          exitDoors: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
         {
           terrain: { theme: 'interior', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 4 }] },
