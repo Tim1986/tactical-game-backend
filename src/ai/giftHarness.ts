@@ -76,6 +76,8 @@ if (process.platform === 'darwin') {
 
 // ── PILOT: which cells can actually show a delta? ────────────────────────────
 console.log(`PILOT (${pilotGames} games/cell, L${LEVEL}, giftless) — finding cells with a visible band\n`);
+const PER_CLASS = process.argv.includes('--per-class');
+const perClassRows: { cls: string; deltas: Record<string, number> }[] = [];
 const usable: { cell: Cell; party: string; slugs: string[]; baseline: number }[] = [];
 for (const cell of allCells()) {
   for (const [party, slugs] of Object.entries(REPRESENTATIVE_PARTIES)) {
@@ -106,6 +108,30 @@ for (const u of usable) {
     deltas[g] = wr - baseline;
   }
   rows.push({ cell: u.cell, party: u.party, baseline, deltas });
+
+  // ── PER-CLASS (--per-class). Owner, twice: "these need to be balanced
+  // against each other by their relative VALUE FOR EACH CLASS."
+  //
+  // ⚠ THE WHOLE-PARTY MEASUREMENT ABOVE CANNOT ANSWER THAT, and reading it as
+  // if it could is the reason the request has gone unmet. Handing the same
+  // gift to all four units measures "is Fangs good for a PARTY"; the choice a
+  // player actually makes is per unit, and +1 damage means something entirely
+  // different to a Rogue paying it twice through Twin Strike than to a Cleric.
+  // Giving the gift to ONE unit and leaving the other three giftless isolates
+  // exactly the quantity the menu is asking about.
+  if (PER_CLASS) {
+    for (let i = 0; i < u.slugs.length; i++) {
+      const cls = u.slugs[i];
+      const per: Record<string, number> = {};
+      for (const g of GIFTS) {
+        const gifts = u.slugs.map((_, j) => (j === i ? g : 'none')) as (DeepGiftSlug | 'none')[];
+        per[g] = simEncounterCell(u.cell.campaign, u.cell.encounter, u.cell.difficulty, u.party, u.slugs,
+          { games, level: LEVEL, gifts }).winRate - baseline;
+      }
+      perClassRows.push({ cls, deltas: per });
+      console.log(`      └ ${cls.padEnd(10)} ${GIFTS.map((g) => `${g} ${(per[g] * 100 >= 0 ? '+' : '')}${(per[g] * 100).toFixed(1)}`).join('  ')}`);
+    }
+  }
   const d = GIFTS.map((g) => `${g} ${(deltas[g] * 100 >= 0 ? '+' : '')}${(deltas[g] * 100).toFixed(1)}`).join('  ');
   console.log(`  ${u.cell.campaign.padEnd(13)} ${u.cell.encounter} ${u.cell.difficulty.padEnd(10)} ${u.party.padEnd(9)} base ${(baseline * 100).toFixed(0).padStart(3)}%  ${d}`);
 }
@@ -220,4 +246,24 @@ const jsonPath = getArg('--json');
 if (jsonPath) {
   fs.writeFileSync(jsonPath, JSON.stringify({ level: LEVEL, games, rows, winners, overallMeans }, null, 2));
   console.log(`\nJSON written: ${jsonPath}`);
+}
+
+// ── PER-CLASS VERDICT ───────────────────────────────────────────────────────
+if (PER_CLASS && perClassRows.length > 0) {
+  console.log('\n══ PER-CLASS GIFT VALUE (one gifted unit, three giftless) ══');
+  const byClass = new Map<string, Record<string, number[]>>();
+  for (const r of perClassRows) {
+    const acc = byClass.get(r.cls) ?? {};
+    for (const g of GIFTS) (acc[g] ??= []).push(r.deltas[g]);
+    byClass.set(r.cls, acc);
+  }
+  console.log('class        ' + GIFTS.map((g) => g.padEnd(9)).join('') + ' best');
+  for (const [cls, acc] of [...byClass.entries()].sort()) {
+    const mean = (g: string): number => acc[g].reduce((t, v) => t + v, 0) / acc[g].length;
+    const best = GIFTS.slice().sort((a, b) => mean(b) - mean(a))[0];
+    console.log(`${cls.padEnd(12)} ` + GIFTS.map((g) => `${(mean(g) * 100 >= 0 ? '+' : '')}${(mean(g) * 100).toFixed(1)}`.padEnd(9)).join('') + ` ${best}`);
+  }
+  console.log('\n⚠ A gift no class ever wants, or one every class wants, is a non-choice.');
+  console.log('  Read the SPREAD within each row: a class whose three numbers are equal');
+  console.log('  has no decision to make at its Deep Gift.');
 }

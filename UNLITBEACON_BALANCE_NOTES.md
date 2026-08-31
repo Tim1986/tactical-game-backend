@@ -956,3 +956,61 @@ Whatever the rework decides about the cap, **L10 should be the damage level**
 and Rogue's levels should not read as HP-only four times running. A per-effect
 row is not the obstacle — Twin Strike paying the rung twice is a real
 constraint on the TOTAL, not on which rungs are non-empty.
+
+---
+
+## ⚠ DEEP GIFTS — owner reiteration, 2026-08-31 (REPEAT REQUEST)
+
+> *"I'm at my first deep gift. I want to reiterate that these need to be
+> balanced against each other by their relative value for each class."*
+
+**Second time asked. The tool existed and was measuring the wrong thing.**
+
+`giftHarness.ts` handed the SAME gift to all four units (`gifts: [g,g,g,g]`)
+and reported the party-level win-rate delta. That answers "is Gift of Fangs
+good for a party" — it cannot answer the question actually being asked, because
+the choice a player makes is PER UNIT. +1 damage means something entirely
+different to a Rogue paying it twice through Twin Strike than to a Cleric.
+Reading the whole-party number as if it were the per-class number is why the
+request has gone unmet twice.
+
+Added `--per-class`: the gift goes to ONE unit, the other three stay giftless,
+which isolates exactly the quantity the menu asks about. Per-class means are
+aggregated across every mid-band cell the pilot finds.
+
+**How to read it, for the rework:** the number that matters is the SPREAD
+within a class's row, not the size of any one delta. A class whose three gifts
+measure the same has no decision to make at its Deep Gift — that is the E1 boon
+failure repeating one level down. A gift no class prefers, or one every class
+prefers, is a non-choice regardless of how strong it is.
+
+---
+
+## e8 placement-screen defects — owner, 2026-08-31
+
+> *"In the setup for E8, it says there are walls on this battlefield, but none
+> show up on the placement map... I started the encounter and there are walls
+> that don't show up on the placement map, [much] less enemies, and also there
+> are DOORS. For the first time in the game there are doors and I don't know
+> what they are during placement. Also... the lock mechanic is getting cut off
+> on the combat log: 'Stair Locked — Cl…'"*
+
+All four confirmed and fixed (mobile). Root cause of the first three is one
+thing: **a multi-room encounter keeps everything on `rooms[0]`.** e8 has no
+top-level `terrain`, `enemies`, `enemyPlacement` or `exitDoors` at all, and the
+placement picker read only the top-level fields — so it drew a bare 8x8 with
+nothing on it, for an encounter whose own briefing text promises walls.
+
+The picker now reads through to `rooms[0]`, and gained a `doors` prop plus a
+legend, since a door had never been shown to the player before the fight that
+introduces them.
+
+⚠ The picker deliberately shows only room 0. That is correct — room 0 is the
+board you are placing onto — but it means the enemy count on screen is smaller
+than the encounter's total by design. If that reads as a lie to a player, the
+briefing is the place to say "three rooms", not the picker.
+
+The truncation was a REGRESSION from this session: the status line was clamped
+to one row, and on e8 it carries "Room 1/3" AND the lock state, which does not
+fit 200pt at 11px. Now two rows, with the panel ceiling raised to pay for it —
+the log surrenders a row instead of the board losing space.
