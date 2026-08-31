@@ -157,6 +157,17 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       maxHealth: 36, armorClass: 11, specialSlug: 'freeze',
       nightmare: { acBonus: 1 },
     },
+    // [B4] The easy-tier variant: same witch, no freeze. A quiet voice, not a
+    // different enemy — stats identical so only the KIT changes with the tier.
+    winters_voice_quiet: {
+      baseClass: 'wizard', artKey: 'witch', name: 'Winter\'s Voice',
+      maxHealth: 36, armorClass: 11,
+      // ⚠ Explicit basic-only kit: omitting specialSlug does NOT mean "no
+      // special" — the builder falls back to the class's first special option
+      // (freeze, the exact thing being removed).
+      abilities: ['missile'],
+      nightmare: { acBonus: 1 },
+    },
     // ── Sorrel's crew: living bosses, raised labour ──
     glacier_poacher: {
       baseClass: 'sorcerer', artKey: 'cultist', name: 'Glacier Poacher',
@@ -167,6 +178,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       baseClass: 'sorcerer', artKey: 'cultist', name: 'Torchhand',
       maxHealth: 34, armorClass: 9, specialSlug: 'flame_jet',
       nightmare: { acBonus: 1 },
+    },
+    // [B4] Tier variants of the Torchhand — identical body, different kit.
+    poacher_torchhand_unlit: {
+      baseClass: 'sorcerer', artKey: 'cultist', name: 'Torchhand',
+      maxHealth: 34, armorClass: 9,
+      // ⚠ Explicit basic-only kit — see winters_voice_quiet: an omitted
+      // specialSlug would fall back to ffh, not to nothing.
+      abilities: ['bolt'],
+    },
+    poacher_torchhand_soft: {
+      baseClass: 'sorcerer', artKey: 'cultist', name: 'Torchhand',
+      maxHealth: 34, armorClass: 9, specialSlug: 'flame_jet_soft',
     },
     poacher_cutter: {
       // ⚠ SKELETON art, not cultist — owner 2026-08-31: four enemies sharing one
@@ -249,6 +272,17 @@ export const unlitBeaconCampaign: CampaignDefinition = {
   // normalized shapes of grasp (pull) and roar (move_self + landing ring) from
   // gameData when wiring these — field names below follow those two.
   abilities: {
+    // [B4] The medium-tier Torchhand's jet: 13 instead of 16. Same shape, same
+    // range, same unblockable clause — the mistake still costs, it just does
+    // not decide the fight by itself on the tier most players are on.
+    flame_jet_soft: {
+      id: 'flame_jet_soft', slug: 'flame_jet_soft', name: 'Flame Jet',
+      description: 'Deals 13 unblockable damage to an enemy within 4 steps.',
+      targetingType: 'line', range: 4, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [{ type: 'damage', formula: 'flat', value: 13 }],
+    },
     undertow: {
       id: 'undertow', slug: 'undertow', name: 'Undertow',
       description: 'Deals 5 unblockable damage, drags the target 2 tiles toward the caster, and roots them for 1 turn.',
@@ -439,6 +473,16 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         ],
       },
       enemies: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand'],
+      // [B4] Owner (e4 anchor): Flame Jet is the fight's trap and "very
+      // punishing if you walk into it" — which is the design, on the tiers
+      // that demand play. "Taking flame jet out in easy mode is a great idea.
+      // Maybe nerfing it in medium would be the type of lever that could be
+      // pulled." Easy: the torch is unlit (no special). Medium: a softer jet
+      // (13, down from 16). Hard/nightmare: the full 16 (21 above L5).
+      enemiesByDifficulty: {
+        easy: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand_unlit'],
+        medium: ['poacher_cutter', 'poacher_cutter', 'glacier_poacher', 'poacher_torchhand_soft'],
+      },
       enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 6 }, { x: 6, y: 2 }, { x: 6, y: 6 }],
       playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       // ⚠ medium 1.15 -> 1.02 (owner played it 2026-08-24). Two things
@@ -508,7 +552,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       waves: [
         // Back edge, so it still has to commit and strand itself to land a
         // ring — the trade the fight was designed around is preserved.
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 2 } },
+        // [B4] Owner (e5 anchor): "the wisp needs to be there in the start on
+        // hard and nightmare" — without it, "it felt easy to just charge in
+        // and overrun everything". Same wisp, same far-corner placement (so an
+        // early wisp cannot crush the opening), one round earlier on the tiers
+        // that demand play. Easy/medium keep the round-2 arrival.
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 2 }, difficulties: ['easy', 'medium'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
       ],
       // ⚠ SPREAD, and this is the load-bearing fix (owner 2026-08-24: "my
       // characters start out bunched up. I didn't choose to bunch them up, YOU
@@ -586,6 +636,15 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
+          // [B4] Owner (e6 anchor): "Knowing all six squares are valid would
+          // make it even easier. For hard and nightmare, it should just be
+          // four valid exit squares." Safe ONLY because goal tiles are drawn —
+          // the original four-tile version was a gotcha of invisibility, not
+          // narrowness (b88b063).
+          tilesByDifficulty: {
+            hard: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+            nightmare: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+          },
         }],
         // The ice closes. Without a clock this encounter was completely
         // hpScale-INERT (100% at every scale from 0.90 to 2.20): you win by
@@ -615,7 +674,10 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
         { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
         { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
-        { enemies: ['meredrowned'], placement: [{ x: 3, y: 3 }], trigger: { on: 'round', round: 4 } },
+        // [B7] Root viability: the late chaser is a MELEE reaver, not a fourth
+        // drowned — an escape is exactly where rooting a pursuer is the play,
+        // and e6's roster had no rootable melee at all (viabilityAudit).
+        { enemies: ['vanguard'], placement: [{ x: 3, y: 3 }], trigger: { on: 'round', round: 4 } },
         // HARD/NIGHTMARE ONLY — the first use of difficulty-scoped waves
         // (types.ts). This escape is hpScale-inert (you win by arriving), so
         // hard and nightmare sat TOO EASY with no lever that would not also
@@ -707,6 +769,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         loss: [{ kind: 'round_reached', round: 6 }],
       },
       enemies: ['winters_voice', 'winters_voice', 'blizzard_wisp', 'blizzard_wisp'],
+      // [B4] Owner (e7 anchor): "Freeze is punishing in a race against time...
+      // it's a lever we might adjust for easy. Maybe just take one of the
+      // freezes away." One Voice falls silent on easy; the other three casters
+      // are untouched, so the race still has teeth.
+      enemiesByDifficulty: {
+        easy: ['winters_voice', 'winters_voice_quiet', 'blizzard_wisp', 'blizzard_wisp'],
+      },
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 2 }, { x: 4, y: 5 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       // Re-walked against the 6-round clock AND the objective-aware defenders

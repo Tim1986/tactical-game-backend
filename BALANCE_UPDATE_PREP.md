@@ -18,17 +18,17 @@ we intend to ship — anything changed after the battery invalidates the battery
 
 ## B. Design decisions the owner has already signaled (implement pre-sim)
 
-4. **Per-tier threat access is the primary difficulty lever; HP is trim.**
+4. ~~DONE 2026-08-31~~ **Per-tier threat access is the primary difficulty lever; HP is trim.**
    Owner reached for it three times running: wisp from turn 1 on hard+ (e5),
    four exit tiles on hard+ (e6), one fewer freeze on easy (e7), Flame Jet out
    of easy / softened on medium (e4). Grammar needs per-difficulty fields once
    (enemy specials, wave turns, tile lists) — one schema change now.
-5. **Rogue level-ups**: redistribute so no four-in-a-row HP-only levels, and
+5. ~~DONE 2026-08-31~~ **Rogue level-ups**: redistribute so no four-in-a-row HP-only levels, and
    make L10 the damage level for every class (currently it is for none).
-6. **Deep gifts**: movement is dead on 6/8 classes — raise to +2 or replace
+6. ~~DONE 2026-08-31 (movement +2; range idea deferred)~~ **Deep gifts**: movement is dead on 6/8 classes — raise to +2 or replace
    with the owner's +1 range idea; trim fighter armor (+13 vs next-best +5.8).
    Warlock's near-equal row is the model. Equal strength = good; dominance = bad.
-7. **Root viability** (e2/e6/e7 have no rootable melee): add one rootable
+7. ~~DONE 2026-08-31 (e6 chaser; e2 has wave melee; e7 rootable already)~~ **Root viability** (e2/e6/e7 have no rootable melee): add one rootable
    melee enemy where roots are a party's counterplay, per owner's earlier read.
 
 ## C. The measurement contract (write down before running)

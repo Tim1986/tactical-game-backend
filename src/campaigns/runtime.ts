@@ -74,12 +74,19 @@ export interface GrowthRung {
 
 const NO_GROWTH: GrowthRung = { maxHp: 0, basicDamage: 0 };
 
-/** The field. Levels 1–5 are all zero: that is the anchor. */
+/** The field. Levels 1–5 are all zero: that is the anchor.
+ *
+ *  [B5, 2026-08-31] REDISTRIBUTED, same cap (+9 HP / +2 damage): the second
+ *  damage point moved L9 → L10, because the owner describes the LAST level-up
+ *  as the damage level ("at the very last level up [Rogue] gets +1 attack
+ *  damage when other classes get +2") and the old table gave L10 damage to
+ *  nobody — every class got +3 max HP at the cap. Deltas now read
+ *  HP / DMG / HP / HP / DMG. */
 const GROWTH_FIELD: Record<number, GrowthRung> = {
   6:  { maxHp: 3, basicDamage: 0 },
   7:  { maxHp: 3, basicDamage: 1 },
   8:  { maxHp: 6, basicDamage: 1 },
-  9:  { maxHp: 6, basicDamage: 2 },
+  9:  { maxHp: 9, basicDamage: 1 },
   10: { maxHp: 9, basicDamage: 2 },
 };
 
@@ -106,11 +113,18 @@ const GROWTH_BY_CLASS: Record<string, Record<number, GrowthRung>> = {
   // as intended in the same pass: "+1 attack at the end when other classes
   // get +2 attack." Twin Strike pays the rung twice, so +1/effect ≈ the
   // field's +2/turn.
+  // [B5, 2026-08-31] Rogue's REPEAT report resolved. Same caps (+9 HP, +1 per
+  // effect = the field's +2/turn through Twin Strike), but the shape honours
+  // both of the owner's asks at once: the damage point lands at L10 — the
+  // level he calls the damage level — and no level-up is ever a bare "+1 max
+  // HP" again (3/2/2/2 spreads the HP so every rung is visible progress).
+  // Four HP-first levels is the arithmetic consequence of ONE damage point
+  // that must land last; the old failure was invisibility, not order.
   rogue: {
     6:  { maxHp: 3, basicDamage: 0 },
-    7:  { maxHp: 4, basicDamage: 0 },
-    8:  { maxHp: 6, basicDamage: 0 },
-    9:  { maxHp: 6, basicDamage: 1 },
+    7:  { maxHp: 5, basicDamage: 0 },
+    8:  { maxHp: 7, basicDamage: 0 },
+    9:  { maxHp: 9, basicDamage: 0 },
     10: { maxHp: 9, basicDamage: 1 },
   },
 };
@@ -149,7 +163,14 @@ export const hasSecondSpecialChargeAtLevel = (level: number): boolean => level >
  *  whole AC spread). Damage is a flag consumed by abilityExecutor's giftBonus
  *  (+GIFT_DAMAGE_BONUS per damage effect); movement/armor are build-time stat
  *  deltas. ONE source of truth — sim, UI copy, and build all read this. */
-export const GIFT_MOVEMENT_BONUS = 1;
+// [B6, 2026-08-31] 1 → 2. Measured per class (GIFT1): at +1, movement was
+// NEGATIVE for barbarian and ranger, ≤+3.4 for four more, and won nowhere —
+// one dead option on six of eight classes. +2 movement is a different plan
+// (reach the objective, kite, flank), priced to compete with +2 damage/+2 AC.
+// The owner's +1-range idea stays on the table as a possible REPLACEMENT if
+// the battery still shows movement dominated — it needs engine-wide reach
+// support and deserves its own pass, not a smuggle.
+export const GIFT_MOVEMENT_BONUS = 2;
 export const GIFT_ARMOR_BONUS = 3;
 export const DEEP_GIFTS = {
   // Descriptions are BUILT from the constants, not typed alongside them — the
@@ -486,7 +507,13 @@ export function buildEncounterState(
   if (!room0 && !enc.enemies) {
     throw new Error(`Encounter ${encounterId}: needs either enemies+enemyPlacement or rooms`);
   }
-  const effEnemies = room0 ? room0.enemies : enc.enemies!;
+  // [B4] Per-tier roster: a 1:1 variant swap, validated to the same length so
+  // the shared enemyPlacement stays correct by construction.
+  const tierEnemies = !room0 ? enc.enemiesByDifficulty?.[difficulty] : undefined;
+  if (tierEnemies && tierEnemies.length !== enc.enemies!.length) {
+    throw new Error(`Encounter ${encounterId}: enemiesByDifficulty.${difficulty} has ${tierEnemies.length} entries but enemies has ${enc.enemies!.length} — per-tier rosters are 1:1 swaps`);
+  }
+  const effEnemies = room0 ? room0.enemies : (tierEnemies ?? enc.enemies!);
   const effEnemyPlacement = room0 ? room0.enemyPlacement : enc.enemyPlacement!;
   const effNoSpecials = room0 ? !!room0.noSpecials : !!enc.noSpecials;
   // The four extreme corners are removed from the board (60-tile cross) —
@@ -718,9 +745,13 @@ export function buildEncounterState(
           });
           return { kind: 'units_dead', unitIds };
         }
-        case 'units_at_tiles':
-          checkTiles(w.tiles, 'objective');
-          return { kind: 'units_at_tiles', scope: w.scope, tiles: w.tiles, ...(w.simultaneous ? { simultaneous: true } : {}) };
+        case 'units_at_tiles': {
+          // [B4] Per-tier goal tiles, resolved HERE so the engine, the brain
+          // and the client's highlight all see a single list.
+          const tiles = w.tilesByDifficulty?.[difficulty] ?? w.tiles;
+          checkTiles(tiles, 'objective');
+          return { kind: 'units_at_tiles', scope: w.scope, tiles, ...(w.simultaneous ? { simultaneous: true } : {}) };
+        }
         case 'ally_at_tiles': {
           const id = allyIdsByKey.get(w.allyKey);
           if (!id) throw new Error(`Encounter ${encounterId}: objective names unknown ally "${w.allyKey}"`);

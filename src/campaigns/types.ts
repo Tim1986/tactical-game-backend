@@ -52,7 +52,12 @@ export type WinCondition =
   | { kind: 'round_reached'; round: number; roundByDifficulty?: Partial<Record<CampaignDifficulty, number>> }
   /** Party units on the marked tiles (escape / stand-on-the-buttons).
    *  `simultaneous` requires all tiles covered at once. */
-  | { kind: 'units_at_tiles'; scope: UnitScope; tiles: BoardPosition[]; simultaneous?: boolean }
+  | { kind: 'units_at_tiles'; scope: UnitScope; tiles: BoardPosition[]; simultaneous?: boolean;
+      /** [B4] Per-tier goal tiles — the SKILL2 lever in tile form (owner, e6:
+       *  "for hard and nightmare, it should just be four valid exit squares").
+       *  Overrides `tiles` wholesale for the listed tier; resolved at build so
+       *  every consumer (engine, brain, client highlight) sees one list. */
+      tilesByDifficulty?: Partial<Record<CampaignDifficulty, BoardPosition[]>> }
   /** An ally (escort) has reached one of the tiles. */
   | { kind: 'ally_at_tiles'; allyKey: string; tiles: BoardPosition[] };
 
@@ -263,6 +268,12 @@ export interface CampaignEncounter {
    *  of (enemies+enemyPlacement) or rooms must be given; the build throws
    *  otherwise. */
   enemies?: string[];
+  /** [B4] Per-tier roster — the SKILL2 lever for enemy KIT access (owner, e4:
+   *  "taking flame jet out in easy mode is a great idea"; e7: "maybe just take
+   *  one of the freezes away" on easy). MUST be the same length as `enemies`
+   *  (a 1:1 variant swap — placement stays valid by construction); use a wave
+   *  with `difficulties` to change the COUNT per tier instead. */
+  enemiesByDifficulty?: Partial<Record<CampaignDifficulty, string[]>>;
   /** ABSOLUTE board coordinates (8×8) — no mirroring is applied, unlike
    *  buildInitialState. Optional under the same rule as `enemies`. */
   enemyPlacement?: BoardPosition[];

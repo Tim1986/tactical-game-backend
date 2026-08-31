@@ -1872,3 +1872,48 @@ the correct shape (line vs ring) and directly answers the owner's "Flame Jet
 feels pretty bad compared to Ring of Fire". The battery's choiceReport
 --axis specials re-measures the intra-class spread; revise per special from
 evidence.
+
+---
+
+## [B-LIST] Design decisions implemented, 2026-08-31
+
+### B4 — per-tier threat access (grammar + four applications)
+
+Grammar: `enemiesByDifficulty` (1:1 roster swap, length-validated) and
+`tilesByDifficulty` on `units_at_tiles`, both resolved at build so engine,
+brain and client see one truth. Waves already had `difficulties`.
+
+* **e4**: easy = Torchhand UNLIT (basic only) · medium = `flame_jet_soft` (13)
+  · hard/nightmare = full jet. ⚠ Trap found: an omitted `specialSlug` falls
+  back to the class's FIRST special option, not to nothing — variants carry an
+  explicit basic-only kit, or the "quiet" witch would have kept freeze and the
+  unlit torch would have gained ffh.
+* **e5**: wisp round 2 on easy/medium, **round 1 on hard/nightmare** (same
+  far-corner placement so an early wisp cannot crush the opening).
+* **e6**: six exit tiles easy/medium, **four on hard/nightmare** (7,2–7,5).
+* **e7**: easy swaps one Voice for `winters_voice_quiet` — same body, no
+  freeze. Three casters still fight.
+
+### B5 — growth tables (same caps, new shape)
+
+Field: HP/DMG/HP/HP/DMG — the second damage point moved L9→L10, so **L10 is
+now the damage level for every class** (it was for none). Rogue: 3/2/2/2 HP
+then +1 damage-per-effect at L10 — no bare "+1 max HP" rung remains, and the
+cap is unchanged (+9 HP, +2 damage per turn via Twin Strike).
+
+### B6 — Gift of Stride 1 → 2
+
+At +1 it measured negative for barbarian/ranger and won nowhere (GIFT1). +2 is
+a plan, priced against +2 damage / +2 AC. Fighter-armor dominance left for the
+battery to re-measure; the owner's +1-range gift stays a candidate REPLACEMENT
+(engine-wide reach support — its own pass, not a smuggle).
+
+### B7 — root viability
+
+e6's round-4 chaser is now a **vanguard** (rootable melee reaver) instead of a
+fourth drowned — an escape is exactly where rooting the pursuer is the play.
+e2 already gets rootable melee via its waves (vanguard r3, breaker r5); e7's
+whole roster is rootable (no stalwart) and the owner himself flagged it as the
+push/pull encounter. e12's marshal stays stalwart — a boss should be.
+
+**Everything above is provisional until the battery. Both smokes pass.**
