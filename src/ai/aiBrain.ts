@@ -2686,6 +2686,41 @@ export class CasualBrain implements AIBrain {
       }
     }
 
+    // ── READ THE OBJECTIVE. A player who is told "get everyone across the ice"
+    // walks east; that is basic literacy, not tactics, and a brain that ignores
+    // it is not modelling a casual player, it is modelling an illiterate one.
+    // Found 2026-08-31: without this, e6 scored 6% on medium while the owner
+    // called the same encounter trivial ("I don't understand how anyone loses
+    // this"). The brain was fighting until the round-6 clock ran out. Its
+    // number was an artifact, not a difficulty.
+    //
+    // Deliberately shallow: walk at the nearest goal tile, swing at whatever is
+    // already in reach on the way. No route planning around threats, no picking
+    // WHICH tile to hold, no splitting the party across marks — those are the
+    // tactics the easy tier must not demand.
+    const objective = (state as { objective?: { partyId: string; win: { kind: string; simultaneous?: boolean; tiles?: BoardPosition[] }[] } }).objective;
+    const goalWin = unit.ownerPlayerId === objective?.partyId
+      ? objective.win.find((w) => w.kind === 'units_at_tiles')
+      : undefined;
+    const goalTiles = goalWin?.tiles ?? [];
+    const nearestTile = (from: BoardPosition): BoardPosition | null => goalTiles.length > 0
+      ? [...goalTiles].sort((a, b) =>
+          manhattanDistance(from, a) - manhattanDistance(from, b) || a.x - b.x || a.y - b.y)[0]
+      : null;
+    // "Every mark at once" needs a body on EACH tile, so everybody walking to
+    // the same nearest one wins nothing and stops the party fighting as well —
+    // e3 fell from 77% to 37% on medium before this. Claiming the mark you are
+    // closest to is the shallowest possible split and is what the objective
+    // text already says out loud; it is not a plan.
+    const myGoal = goalWin?.simultaneous
+      ? (goalTiles.find((t) => {
+          const closest = [...allies].sort((a, b) =>
+            manhattanDistance(a.position, t) - manhattanDistance(b.position, t)
+            || a.instanceId.localeCompare(b.instanceId))[0];
+          return closest?.instanceId === unit.instanceId;
+        }) ?? nearestTile(unit.position))
+      : nearestTile(unit.position);
+
     // ── PICK A TARGET. Something I can kill outright, else whatever is closest
     // to dying, else whatever is closest. No threat assessment, no coordination.
     const reachOf = (d: AbilityDefinition | undefined): number => d?.range ?? 1;
@@ -2739,16 +2774,35 @@ export class CasualBrain implements AIBrain {
     const actions: TurnAction[] = [];
     let pos = unit.position;
 
-    // ── CLOSE THE DISTANCE. Straight at the target, shortest gap wins. No
-    // hazard check and no thought about what can reach me back — the point.
-    if (!canHit(pos, target, bestReach) && !isRooted(unit)) {
+    // ── MOVE. Toward the goal if there is one and I am not standing on it,
+    // otherwise at the target. No hazard check and no thought about what can
+    // reach me back — that is the point.
+    // ⚠ WHEN to go for the goal. Marching at the objective unconditionally made
+    // e6 exactly right (6% -> 100%, matching the owner's "I don't understand
+    // how anyone loses this") and e3 badly wrong (99% -> 60%, on an encounter
+    // he calls trivial). The difference between them is a CLOCK. e6 loses at
+    // round 6, so you go now; e3 has no deadline, so the natural unpractised
+    // play is to kill what is in front of you and stroll onto the mark
+    // afterwards. Fight first, travel when the fighting is out of reach —
+    // unless the round counter is the thing killing you.
+    const hasClock = [...(objective?.win ?? []), ...((objective as { loss?: { kind: string }[] } | undefined)?.loss ?? [])]
+      .some((c) => c.kind === 'round_reached');
+    const enemyIsReachable = manhattanDistance(pos, target.position) <= unit.movementRange + bestReach;
+    const goForGoal = myGoal !== null && (hasClock || !enemyIsReachable);
+    const onGoal = myGoal !== null && goalTiles.some((t) => samePos(pos, t));
+    const needMove = goForGoal ? !onGoal : !canHit(pos, target, bestReach);
+    if (needMove && !isRooted(unit)) {
       const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
       // Simply: the tile that gets me closest, preferring one I can attack from.
       // Distance only — no hazard check, no thought about what reaches me back.
       let best: BoardPosition | null = null;
-      let bestKey: [number, number] = [1, manhattanDistance(pos, target.position)];
+      let bestKey: [number, number] = goForGoal && myGoal
+        ? [1, manhattanDistance(pos, myGoal)]
+        : [1, manhattanDistance(pos, target.position)];
       for (const t of tiles) {
-        const key: [number, number] = [canHit(t, target, bestReach) ? 0 : 1, manhattanDistance(t, target.position)];
+        const key: [number, number] = goForGoal && myGoal
+          ? [goalTiles.some((g) => samePos(t, g)) ? 0 : 1, manhattanDistance(t, myGoal)]
+          : [canHit(t, target, bestReach) ? 0 : 1, manhattanDistance(t, target.position)];
         if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) { bestKey = key; best = t; }
       }
       if (best) {

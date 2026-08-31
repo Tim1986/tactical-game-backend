@@ -74,10 +74,30 @@ describe('CasualBrain behaviour', () => {
     expect(c.winRate).toBeGreaterThan(b.winRate);
   });
 
-  it('still loses to the optimal brain — it is a floor, not a player', () => {
+  it('still loses to the optimal brain where tactics decide it', () => {
+    // ⚠ NOT e6 — the owner calls e6 trivial ("I don't understand how anyone
+    // loses this") and once the brain learned to read the objective it scores
+    // 100% there, same as optimal. A cell where both max out proves nothing;
+    // e5/medium is casual ~42 vs optimal ~97.
+    const c = simEncounterCell('unlitbeacon', 'e5', 'medium', 'custom', PARTY,
+      { games: 16, playerBrain: 'casual' });
+    const o = simEncounterCell('unlitbeacon', 'e5', 'medium', 'custom', PARTY, { games: 16 });
+    expect(o.winRate).toBeGreaterThan(c.winRate);
+  });
+
+  it('reads a units_at_tiles objective under a clock', () => {
+    // Regression: without this the brain fought until e6's round-6 clock ran
+    // out and scored 6% on an encounter the owner calls trivial.
     const c = simEncounterCell('unlitbeacon', 'e6', 'medium', 'custom', PARTY,
       { games: 16, playerBrain: 'casual' });
-    const o = simEncounterCell('unlitbeacon', 'e6', 'medium', 'custom', PARTY, { games: 16 });
-    expect(o.winRate).toBeGreaterThan(c.winRate);
+    expect(c.winRate).toBeGreaterThan(0.8);
+  });
+
+  it('does NOT abandon a fight for an objective with no deadline', () => {
+    // The mirror defect: marching at e3's bridgeheads regardless dropped it
+    // from 99% to 60% on easy. No clock means kill first, stroll on after.
+    const c = simEncounterCell('unlitbeacon', 'e3', 'easy', 'custom', PARTY,
+      { games: 16, playerBrain: 'casual' });
+    expect(c.winRate).toBeGreaterThan(0.8);
   });
 });

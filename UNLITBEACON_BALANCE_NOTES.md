@@ -757,3 +757,86 @@ know them either, and unlike a person it can be asked the same question a
 thousand times without learning. **Read the casual column, not your own
 experience, for the easy tier.** The owner's on-device runs stay the anchor for
 medium and above, where his skill is the thing being measured.
+
+---
+
+## e6 anchor — owner, 2026-08-31
+
+> *"Difficulty here feels too easy. Fine for easy difficulty, feels too easy for
+> medium. I honestly don't understand how any loses this if they have any brain
+> at all. Knowing all six squares are valid would make it even easier. For hard
+> and nightmare, it should just be four valid exit squares."*
+
+Design note, same run: *"I like that these guys have root abilities. It's
+annoying for melee, but we also need to make it a choice to not take Stalwart
+as a passive."* — roots in e6 are intentional pressure on the Stalwart pick;
+carry into the passive-balance work, do not soften them.
+
+**Verdict: TOO EASY for medium. Correctly tuned for easy.**
+Proposed: **four exit tiles on hard/nightmare, six on easy/medium.**
+
+### The six-square question, answered
+
+Not a display bug, and the owner's memory is right. e6's goal was `(7,2)`-`(7,5)`
+until `b88b063` (2026-08-24) widened it to `(7,1)`-`(7,6)` — the full far
+column. `(7,0)` and `(7,7)` are removed board corners and remain unstandable.
+All six current tiles are validated in-bounds and unwalled at encounter-build
+time by `runtime.ts`, so the green highlight cannot show an illegal tile.
+
+⚠ The widening was itself an owner fix: the 4-tile version was a GOTCHA —
+he crossed, stood on the far shore, and nothing happened until a stray unit
+shuffled onto a qualifying tile. **Narrowing back to four is safe now only
+because the goal tiles are DRAWN.** The original defect was invisibility, not
+narrowness. Any hard/nightmare narrowing must keep the highlight honest.
+
+### [SKILL3a] The instrument disagreed with the owner, and the instrument was wrong
+
+e6/medium measured casual **6%** while the owner called it trivial. Diagnosis:
+CasualBrain ignored objectives entirely, so it fought until e6's round-6 clock
+killed it. **Its number was an artifact, not a difficulty.**
+
+Fixed — the brain now reads a `units_at_tiles` win. Two failed attempts worth
+recording, because each named a real distinction:
+
+1. **March at the objective always** → e6 6%→**100%** (owner confirmed), but
+   e3 99%→60% on an encounter he calls trivial.
+2. **Split across marks for `simultaneous`** (claim the tile you are nearest)
+   → necessary for e3's two bridgeheads, insufficient alone.
+3. **The distinction is a CLOCK.** e6 loses at round 6, so you go now. e3 has
+   no deadline, so the natural unpractised play is to kill what is in front of
+   you and stroll onto the mark afterwards. Final rule: fight first, travel
+   when the fighting is out of reach — unless a round counter is what is
+   killing you.
+
+After: e3 easy **98** / medium **76**; e6 easy **100** / medium **100**.
+Both now match the owner's reads on encounters he has actually played.
+
+### ⚠ CORRECTION to SKILL2/SKILL3's "6 of 12 fail the easy promise"
+
+That count was inflated by this artifact. e6 was counted as failing at 56%
+and actually scores 100%. **Do not quote the earlier easy-tier failure count.**
+
+Remaining known blind spots, stated so nobody reads a 0% as content:
+
+* **e7** (0% at every tier) — `units_at_tiles` under a clock, i.e. a race. The
+  brain heads for the goal correctly and still loses, so this one may be real,
+  but optimal scores 97% on easy and its placement spread is 90 points. Treat
+  as UNKNOWN until the owner plays it.
+* **e12** (0% at every tier) — win is `units_dead` on a NAMED enemy. The brain
+  fights whatever is nearest and has no concept of a priority target. Its
+  number here is meaningless.
+* **e8** (0%) — three sequential rooms; no per-room reasoning.
+
+### Sim view of e6, with a brain that can read it
+
+| | easy | medium | nightmare |
+|---|---|---|---|
+| casual | 100% | **100%** | 1% |
+| optimal | 99% | 100% | 83% |
+
+A player who merely knows their kit and reads the objective wins medium
+**every single time**. That is the owner's *"I don't understand how any loses
+this"*, measured — and it is the strongest case in the campaign so far for a
+medium-tier change. The nightmare cliff (casual 1%) suggests the tier levers
+already bite hard here, so the medium fix should come from the same family:
+**fewer exit tiles**, not more enemy HP.
