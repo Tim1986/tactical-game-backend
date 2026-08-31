@@ -384,7 +384,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // have rho=+0.12 against the owner's difficulty ranking, i.e. no
       // predictive power at all, so binary-searching this cell would be
       // churning noise. These numbers are owner-anchored and await his retest.
-      hpScaleOverride: { easy: 0.85, medium: 0.98, hard: 1.15, nightmare: 1.32 },  // kill-all
+      hpScaleOverride: { easy: 0.85, medium: 0.98, hard: 1.31, nightmare: 1.39 },  // kill-all
     },
 
     // e2 — Barricade Night (siege). Hold the square while the column keeps
@@ -406,7 +406,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // Owner 2026-08-27: "feels a bit easy even for medium... this feels
       // impossible to lose." Whole ladder lifted one notch; medium is the
       // measured complaint, the rest move with it to stay monotone.
-      hpScaleOverride: { easy: 0.90, medium: 1.12, hard: 1.22, nightmare: 1.32 },  // kill-all + waves
+      hpScaleOverride: { easy: 0.87, medium: 1.02, hard: 1.09, nightmare: 1.17 },  // kill-all + waves
     },
 
     // e3 — The Two Bridges (hold). Cover both bridgeheads at once while
@@ -455,7 +455,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       goals: [
         { slug: 'every_lantern_lit', name: 'Every Lantern Lit', description: 'Hold both bridgeheads with the whole party still standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.50, medium: 0.65, hard: 0.75, nightmare: 0.85 },  // hold — re-walked after guards moved ONTO the marks
+      hpScaleOverride: { easy: 0.51, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the
@@ -507,7 +507,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // encounter filters equally hard the OTHER way, nightmare becomes
       // unbeatable for every comp — that pairing is the thing to watch, not
       // this number.
-      hpScaleOverride: { easy: 0.78, medium: 0.90, hard: 1.02, nightmare: 1.15 },  // hazard carve
+      hpScaleOverride: { easy: 1.06, medium: 1.13, hard: 1.17, nightmare: 1.28 },  // hazard carve
     },
 
     // e5 — The Icefall (carve). Fighting UP a frozen cascade: ice pillars,
@@ -613,7 +613,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       //   medium    0.96 -> 73% · 0.98 -> 64% ✓ · 1.00 -> 57% · 1.15 -> 35%, 40% walled
       //   hard      1.02 -> 62% ✓ · 1.10 -> 49% ✓
       //   nightmare 1.12 -> 38% ✓ · 1.22 -> 23% ✓
-      hpScaleOverride: { easy: 0.85, medium: 0.98, hard: 1.10, nightmare: 1.22 },  // carve
+      hpScaleOverride: { easy: 0.91, medium: 0.95, hard: 1.13, nightmare: 1.15 },  // carve
     },
 
     // e6 — The Frozen Mere (novel). The drowned company rises through the
@@ -652,7 +652,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // makes bodies cost you rounds — CAMPAIGN_BALANCING.md's escape note.
         // Set LATER than the 'Dry Boots' achievement (round 8) so that goal
         // stays a real choice rather than a restatement of the loss.
-        loss: [{ kind: 'round_reached', round: 6 }],
+        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { nightmare: 7 } }],
       },
       // Start distance is the SPREAD lever (CAMPAIGN_BALANCING.md), and e6's
       // problem was spread, not mean: ranged crossed ~98% at every scale from
@@ -671,9 +671,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       enemies: ['meredrowned', 'meredrowned', 'meredrowned'],
       enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 5, y: 4 }],
       waves: [
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 1 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
+        // [TUNE-POST] One round later than authored (was r1/r2/r3): the
+        // 4-exit narrowing (B4) and the campaign press (BR3) landed on top of
+        // round-1 wisps and hard collapsed to 3% for the owner's comp — three
+        // sound levers stacking into a wall. Back off the one the owner did
+        // not explicitly specify; exits stay four per his e6 ruling.
+        // [TUNE-POST] Owner (e6 anchor): "feels too easy for medium". The
+        // encounter is hpScale-INERT (you win by arriving), so medium gets the
+        // same lever the other tiers use: one wisp, late, far corner.
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 4 }, difficulties: ['nightmare'] },
         // [B7] Root viability: the late chaser is a MELEE reaver, not a fourth
         // drowned — an escape is exactly where rooting a pursuer is the play,
         // and e6's roster had no rootable melee at all (viabilityAudit).
@@ -789,7 +798,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // Only EASY failed the re-walk (100% median); medium/hard/nightmare all
       // held. A race is scale-weak, so easy rises alone rather than shoving
       // the whole ladder and breaking three cells that already pass.
-      hpScaleOverride: { easy: 0.92, medium: 1.00, hard: 1.15, nightmare: 1.30 },  // race with a real clock
+      hpScaleOverride: { easy: 0.84, medium: 0.84, hard: 1.13, nightmare: 1.20 },  // race with a real clock
     },
 
     // e8 — The Vigil (rooms). Three floors UP the tower — the host's honor
@@ -911,7 +920,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // Hard sits 15pt under medium, comfortably outside the +/-4pt noise
       // floor at 150 games; an earlier 0.88 probe read 63% and was only 3pt
       // from medium, i.e. not actually a different difficulty.
-      hpScaleOverride: { easy: 0.87, medium: 0.98, hard: 0.98, nightmare: 1 },  // rooms — compressed ladder, sits on a cliff
+      hpScaleOverride: { easy: 0.65, medium: 0.80, hard: 0.84, nightmare: 0.85 },  // rooms — compressed ladder, sits on a cliff
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -999,7 +1008,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // gap to each tier's band, and medium's gap is the widest because its
       // shorter clock leaves the most slack. Read the clock and the scale
       // together; neither number means anything alone.
-      hpScaleOverride: { easy: 1.45, medium: 1.55, hard: 1.7, nightmare: 2.2 },  // survive
+      hpScaleOverride: { easy: 1.45, medium: 1.55, hard: 1.55, nightmare: 1.70 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the
@@ -1033,7 +1042,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // the trilogy's escort lesson applies: the VIP's HP does not scale with
       // the party's competence, so an escort's hard/nightmare need less added
       // pressure than a kill-all's, or the ally dies rather than the party.
-      hpScaleOverride: { easy: 1.35, medium: 1.50, hard: 1.75, nightmare: 1.88 },  // escort
+      hpScaleOverride: { easy: 1.50, medium: 1.79, hard: 1.90, nightmare: 2.20 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge
@@ -1068,7 +1077,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         blocked: [{ x: 2, y: 2 }, { x: 5, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 5 }],
       },
       enemies: ['the_adjutant', 'blizzard_wisp', 'blizzard_wisp'],
-      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
+      // [TUNE-POST] One step closer (spreadSweep offset +1): at the old
+      // far-wall start the RANGED comp was bricked (20% medium, spread 80pts —
+      // enemies too far to threaten deny the standoff party nothing, then
+      // collapse on it at once through the walls). One step in: spread 22pts,
+      // ranged 76%, every comp alive. Mean rises above band; hpScale takes it
+      // back down — mean is hpScale's job, spread was this one's.
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
         { slug: 'answered_alone', name: 'Answered Alone', description: 'Let the hero personally strike down the Adjutant.', check: { kind: 'killing_blow_by_main' } },
@@ -1088,7 +1103,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // 5.00 reads 95-100%. Never nudge these rungs by "a bit"; re-walk.
       // hard sits at 3.20 rather than the 3.00 that also passes, so medium and
       // hard are not the same fight wearing different labels.
-      hpScaleOverride: { easy: 2.60, medium: 2.90, hard: 3.20, nightmare: 3.50 },  // boss
+      hpScaleOverride: { easy: 2.70, medium: 3.10, hard: 3.50, nightmare: 3.60 },  // boss
     },
 
     // e12 — The Standard (novel finale). Marshal Vail fights with the
@@ -1118,7 +1133,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 2.05, medium: 2.45, hard: 2.75, nightmare: 3.00 },  // boss, dual-win
+      hpScaleOverride: { easy: 1.72, medium: 2.01, hard: 2.49, nightmare: 2.56 },  // boss, dual-win
     },
   },
 

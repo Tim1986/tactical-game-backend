@@ -1,0 +1,28 @@
+unlitbeacon e11 — enemy start-distance sweep, 50 games/party
+player centroid (2,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    86%   92%   66%   100%   34pts    oob
+-2      hard      81%   94%   52%    98%   46pts    oob
+        (mean manhattan gap 6.0; placement 7,4 7,2 7,5)
+
+-1      medium    86%   92%   66%   100%   34pts    oob
+-1      hard      81%   94%   52%    98%   46pts    oob
+        (mean manhattan gap 6.0; placement 7,4 7,2 7,5)
+
+0       medium    55%   46%   20%   100%   80pts   floor:r oob
+0       hard      45%   32%    8%    96%   88pts   floor:r
+        (mean manhattan gap 5.7; placement 6,4 7,2 7,5)
+
++1      medium    91%   98%   76%    98%   22pts    oob
++1      hard      65%   80%   28%    86%   58pts   
+        (mean manhattan gap 4.0; placement 5,4 6,3 6,4)
+
++2      medium    67%   54%   50%    98%   48pts   
++2      hard      59%   56%   22%    98%   76pts   
+        (mean manhattan gap 3.0; placement 4,4 5,3 5,4)
+
++3      medium    89%   98%   70%   100%   30pts    oob
++3      hard      80%   94%   46%   100%   54pts    oob
+        (mean manhattan gap 2.0; placement 3,4 4,4 4,3)
+

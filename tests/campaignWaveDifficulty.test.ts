@@ -22,13 +22,16 @@ describe('difficulty-scoped waves', () => {
     return state.encounterProgress?.waves.length ?? 0;
   };
 
-  it('e6 doses extra waves by tier: hard +2, nightmare +3, easy/medium untouched', () => {
+  it('e6 doses extra waves by tier: medium +1, hard +1, nightmare +3', () => {
+    // [TUNE-POST 2026-08-31] The dosing changed twice in the balance pass:
+    // medium gained one wisp (owner: "feels too easy for medium", and the
+    // encounter is hpScale-inert so the wisp IS the medium lever), and hard
+    // dropped to one after the 4-exit narrowing + press stacked it into a
+    // 3% wall. The LADDER of pressure is the invariant, not the exact dose.
     const easy = pendingWaveCount('easy');
-    const hard = pendingWaveCount('hard');
-    const nightmare = pendingWaveCount('nightmare');
-    expect(pendingWaveCount('medium')).toBe(easy);
-    expect(hard).toBe(easy + 2);
-    expect(nightmare).toBe(easy + 3);
+    expect(pendingWaveCount('medium')).toBe(easy + 1);
+    expect(pendingWaveCount('hard')).toBe(easy + 1);
+    expect(pendingWaveCount('nightmare')).toBe(easy + 3);
   });
 
   it('unscoped waves are untouched on every difficulty', () => {

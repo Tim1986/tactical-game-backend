@@ -1966,3 +1966,43 @@ movement negative is new (Stride +2 helps everyone except the class that
 channels standing still — Channeler synergy makes moving a cost). A
 class-flavoured menu problem for the next gift pass, alongside fighter armor
 still dominant (+11.1).
+
+---
+
+## [TUNE-POST] The tuning pass, 2026-08-31 — 37 failing cells → 3 documented residuals
+
+Method per the contract: campaignTune for means, spreadSweep for walls, owner
+anchors senior to the tuner, monotonicity enforced by test. One nudge round
+after the confirm battery, then STOP — no curve-chasing.
+
+### Applied
+* **hpScale ladders** from campaignTune for e2, e4, e5, e7, e8, e10, e12
+  (reconciled monotonic). e2/e3/e5 nightmare un-bricked from "unsolvable".
+* **Owner anchors overrode the tuner**: e1 easy/medium untouched (intentional
+  opener); e3 medium kept at 0.65 (he wants it firm — tuner wanted 0.58, hard
+  clamped to 0.66 for the ladder); e9 medium kept at 1.55 (in band, replay
+  pending).
+* **e6, hpScale-inert, tuned by WAVES**: medium +1 wisp (r3) answering "feels
+  too easy for medium"; hard backed to one wisp after 4-exits + press stacked
+  into a 3% wall; nightmare 3 wisps + clock 7. Hard 53% ✓, nightmare 31% ✓.
+* **e11 structural fix**: enemies one step closer (spreadSweep offset +1) —
+  spread 80→22pts, ranged un-bricked 20→76; hpScale re-raised (2.70/3.10/3.50/
+  3.60) to pull means into band. **e11 passes at every tier for the first time
+  in its history** (90/77/—/32).
+* **e8**: 0.65/0.80/0.84/0.85 — melee medium ~45 (was 9).
+
+### Residuals — documented, not hidden
+1. **e8 melee at hard/nightmare** stays below floor (nightmare best-party 36%).
+   Multi-room geometry, outside spreadSweep's reach; the mean is in band. This
+   is a comp check at top tiers until the rooms themselves are reshaped.
+2. **e9 hard 39%** (band 45-65). hpScale is already at its monotonic floor
+   (= medium); the extra survival round (8 vs 7) IS the hard tier. Six points
+   under at ±10 noise — accepted, owner replay will adjudicate.
+3. **e12 ranged at hard+** below floor — the marshal hunt punishes a no-burst
+   comp structurally. Tracked for the e12 room/objective reshape, not HP.
+
+Accepted deviations (owner rulings, not failures): e1 easy/medium ~97-98,
+e6 easy 99, e9 easy 99, e12 nightmare ~46-51 (band edge).
+
+Full data: balance_runs/battery_unlitbeacon_TUNED.json, tune_POST.log,
+sweep_e11.log, CONFIRM.log.
