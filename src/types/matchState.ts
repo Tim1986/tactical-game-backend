@@ -127,6 +127,13 @@ export interface EncounterProgressState {
   doorMode: 'on_clear' | 'always';
   /** Party instance ids in party order (entry placement + initiative weave). */
   partyIds: UUID[];
+  /** [PLACE1] The opening the player chose, carried so that EVERY room of a
+   *  multi-room encounter uses it. Without it the party re-entered in party
+   *  order at each door, which silently discarded the choice and put the
+   *  hero wherever entryTiles[0] happened to be (owner repro 2026-08-31, e8:
+   *  "now my Barbarian is in the back"). Undefined = identity, the historical
+   *  behaviour. */
+  placementOrder?: number[];
   roomIndex: number;
   /** state.roundNumber when the CURRENT room was entered (0 for room 1).
    *  Exists so a wave can be scheduled relative to entering a room rather

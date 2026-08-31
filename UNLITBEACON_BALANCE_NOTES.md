@@ -1109,3 +1109,83 @@ could be pointed at campaign encounters.
 
 ⚠ BR1 RIDER: any brain change invalidates balance certification and requires a
 full re-run. Do not fix this mid-calibration without the owner's call.
+
+---
+
+## Owner report batch 2, 2026-08-31 (E8 rooms)
+
+### Fixed
+
+* **Tiny Sorcerer** — was the NAME text shrinking (`adjustsFontSizeToFit`) to
+  make room for "✨ Undying, gift_damage" on the same row. Removing the gift
+  slug from the passive line resolved it; owner confirmed. No art bug.
+* **Shield absorb hid its roll.** The log said *"attacks X. Blocked by
+  shield!"*, which reads as though no roll happened. Since DGE-5 (2026-08-28) a
+  shielded target dodges FIRST, so an absorb means the attack rolled and LANDED.
+  Now *"attacks X. Hit — blocked by shield!"*. The engine was right (see
+  `tests/shieldMultiHit.test.ts`); the log was hiding a die it really threw.
+* **Multi-room placement discarded the player's opening.** The party re-entered
+  each room in PARTY ORDER (slot i takes `entryTiles[i]`), so the choice made at
+  the first door was thrown away. `encounterProgress.placementOrder` now carries
+  it, and each member keeps ITS OWN tile index so the arrangement survives a
+  death instead of survivors shuffling forward.
+
+### ⚠ CONTENT: e8 room 2's entry tiles are a different shape — BLOCKED ON OWNER
+
+> *"Multi room encounters need the same shape of opening squares in each room."*
+
+| | tiles |
+|---|---|
+| room 0 placement | (0,3) (0,4) (1,3) (1,4) — a 2x2 block |
+| room 1 entry | (0,3) (0,4) (1,3) (1,4) — same block ✓ |
+| **room 2 entry** | **(0,1) (1,3) (0,5) (1,6) — a scattered column** ✗ |
+
+The engine fix above makes the player's ORDER carry, but it cannot make a
+scattered column feel like the 2x2 block they arranged. Room 2's `entryTiles`
+should become the same block. Trilogy rule — not edited.
+
+### ⚠ DESIGN: the door is artificial — owner wants options
+
+> *"I have to walk my way there and I can't charge. Also, whichever unit walks
+> in, they lose their turn, and we go in at that point in the initiative order.
+> This results in very awkward gameplay, and a misleading door tile. The door
+> isn't doing anything, it's artificial. We need to rethink this."*
+
+Three separable complaints. Options below; all are content/engine changes and
+none is implemented.
+
+**(a) Cannot CHARGE onto the door.** Charge is the move-again action, and the
+door transition fires on entering the tile. Cheapest real fix: allow the door
+tile as a charge destination and run the transition after it resolves. No
+design change, removes an arbitrary restriction. **Recommend regardless of what
+is chosen below.**
+
+**(b) The entering unit loses its turn.** Currently the room swaps mid-initiative
+and the mover is done. Options:
+  1. **Free transition** — the room swaps and the mover keeps its action. Most
+     generous, removes the feel-bad entirely; makes the door a reward.
+  2. **Room change at end of round** — everyone walks to the door, the party
+     transitions together at the round boundary. Removes the "we go in at that
+     point in the initiative order" awkwardness and makes the door a party
+     decision rather than one unit's sacrifice.
+  3. Keep the cost but SHOW it — the tile says "ends your turn". Cheapest, and
+     the least satisfying.
+
+**(c) "The door isn't doing anything, it's artificial."** This is the real
+complaint and (a)/(b) do not answer it. The door is a scene-change trigger
+wearing the costume of a tactical object. Options:
+  1. **Make it a real objective tile** — the room ends when the whole party is
+     on/through it, so the door is the goal (this is e6's shape, which the owner
+     liked, and it makes the "same opening squares" problem disappear because
+     the party arrives together).
+  2. **Make it contested** — enemies can hold or close it, so reaching it is a
+     fight rather than a walk.
+  3. **Delete it** — rooms flow when the room is cleared, with no tile at all.
+     Honest, and removes a misleading affordance; loses the sense of place.
+  4. **Make it cost something** — a door that must be forced (an action, a
+     check, a breaker enemy holding the key) so it is a decision.
+
+⚠ (c1) is the strongest fit for what the owner has praised elsewhere: e6's
+"get everyone across" read as epic, and e8's door currently reads as a chore.
+It also solves the entry-shape problem structurally rather than by editing
+tiles.

@@ -188,12 +188,27 @@ export function maybeRoomTransition(state: MatchState, mover: UnitInstance, even
 
   // Party enters in party order (living members only), on the entry tiles —
   // then the allies (A5) file in behind them via the same ring-scan fallback.
+  // ⚠ THE PLAYER'S OPENING CARRIES INTO EVERY ROOM. This used to walk the
+  // party in in PARTY ORDER — slot i takes entryTiles[i] — which threw away the
+  // placement chosen at the door of room 1 and put the hero on whatever
+  // entryTiles[0] happened to be. On e8 that is a back corner, so a Barbarian
+  // placed at the front re-entered at the rear every time (owner repro
+  // 2026-08-31). A party member keeps ITS OWN tile index, so the arrangement
+  // survives a death instead of the survivors shuffling forward into each
+  // other's places. Allies still file in behind on whatever is left.
   const allyIds = Object.keys(state.allies ?? {});
+  const slotOf = (id: string): number => ep.partyIds.indexOf(id);
+  const tileIndexFor = (u: UnitInstance, fallbackIdx: number): number => {
+    const slot = slotOf(u.instanceId);
+    if (slot < 0) return fallbackIdx;                       // an ally, not party
+    return ep.placementOrder?.[slot] ?? slot;
+  };
   const living = [...ep.partyIds, ...allyIds]
     .map((id) => state.units.find((u) => u.instanceId === id))
     .filter((u): u is UnitInstance => !!u && u.isAlive);
   living.forEach((u, i) => {
-    const tile = resolveSpawnTile(state, room.entryTiles[i] ?? room.entryTiles[room.entryTiles.length - 1] ?? u.position);
+    const idx = tileIndexFor(u, i);
+    const tile = resolveSpawnTile(state, room.entryTiles[idx] ?? room.entryTiles[room.entryTiles.length - 1] ?? u.position);
     if (tile) {
       u.position = tile;
       events.push({ type: 'UNIT_MOVED', sourceUnitInstanceId: u.instanceId, position: tile, message: 'entered the next room' });

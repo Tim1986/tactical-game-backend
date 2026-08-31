@@ -675,6 +675,7 @@ export function buildEncounterState(
       exitDoors: room0.exitDoors,
       doorMode: room0.doorMode ?? 'on_clear',
       partyIds, roomIndex: 0, roomEnteredRound: 0,
+      ...(placementOrder ? { placementOrder } : {}),
     };
   } else if (enc.waves?.length) {
     encounterProgress = {
