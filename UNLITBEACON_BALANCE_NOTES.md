@@ -1439,3 +1439,77 @@ happened; I can show it was possible, and it no longer is.
 * names **Weakened** → nothing is broken; the encounter did its job.
 
 Until one of those is seen, do not tune e9 and do not close this.
+
+---
+
+## e9 RESOLVED — Ring of Fire really was showing arena numbers
+
+Owner's log, decisive: *"I opened, I was not weakened at that point.*
+> *Sorcerer uses Special Ability Ring of Fire!*
+> *Sorcerer hits Vanguard and Shelf Pikeman. Hits for 16 damage each. Unblockable."*
+
+No Weakened, opening cast, 16 damage. The Weakened explanation is dead.
+
+### Root cause: `localMatchBridge` dropped `campaign.level`
+
+The bridge projects a stored local match into the shape the client reads, and
+its campaign block listed `slug, unitNames, cooldownOverrides, campaignAbilities,
+theme` — **no `level`**. The field is optional in both the stored type and
+`MatchDetail`, so nothing complained anywhere.
+
+The match screen tunes its ability map with
+`applyCampaignAbilityTuning(map, campaign.level)`, so with the field missing it
+fell back to level 1 and showed **arena numbers for an entire run**. The engine
+was unaffected — `localMatchService` reads the stored match directly, not
+through the bridge — so it resolved 18 + 2 = 20 while the log said 16.
+
+**The scaling was never broken. The display was, for every tuned ability, all
+run.** Ring of Fire is the visible case because it is the only special whose
+number changes; `assassinate`'s window moved the same way, silently — the client
+would have offered Kill Shot on the arena's flat-22 threshold while the engine
+used the campaign's 25%-of-max one.
+
+Fixes: `projectCampaign()` is now a pure, tested function in its own module
+(the bridge imports the engine and cannot be unit-tested), and
+`requireCampaignLevel()` throws in dev rather than resolving a missing level
+into wrong numbers. Either would have caught this on day one.
+
+⚠ **e9's difficulty read is void.** The owner fought it believing his opener hit
+for 16; it hit for 20. Re-read e9 after a build.
+
+---
+
+## [GIFT1] Per-class Deep Gift value — the measurement the owner asked for twice
+
+`giftHarness --per-class`, one gifted unit against three giftless, aggregated
+over every mid-band cell the pilot found. Win-rate delta vs a giftless party:
+
+| class | damage | movement | armor | best |
+|---|---|---|---|---|
+| barbarian | +3.4 | **−0.2** | **+7.5** | armor |
+| cleric | +6.0 | +2.9 | +5.9 | damage |
+| fighter | +5.3 | +5.8 | **+13.0** | armor |
+| ranger | **+8.6** | **−0.1** | +6.2 | damage |
+| rogue | +6.1 | +3.4 | +3.7 | damage |
+| sorcerer | +5.4 | +2.9 | +5.5 | armor |
+| warlock | +4.9 | +4.9 | +4.6 | movement |
+| wizard | +5.4 | +1.4 | +6.8 | armor |
+
+### Read the SPREAD, not the winner
+
+* **Warlock has no decision at all** — 4.9 / 4.9 / 4.6. Three gifts, one
+  outcome. That is the E1 boon failure repeating one level down.
+* **Movement is a trap for half the roster** — negative for barbarian and
+  ranger, +1.4 for wizard, and it wins nowhere except a Warlock tie.
+* **Fighter armor (+13.0) is the strongest single number in the table** and
+  roughly double that class's next-best. An auto-pick, which is also a
+  non-choice.
+* Cleric and sorcerer are the two healthy rows: two live options, one dead one.
+
+The owner's own **+1 range** idea is the most promising fix on this evidence:
+it is the only proposed gift whose value is class-dependent by construction
+(+1 on a melee reach of 1 doubles it; +1 on a Ranger's 6 is noise), which is
+exactly the per-class shape the current three lack.
+
+⚠ Measured under the OLD brain, before the shield, empty-cast and crossing
+fixes. Re-run with the rest of the re-baseline.
