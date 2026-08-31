@@ -1648,3 +1648,52 @@ counterplay the owner is asking for — with no ability edit at all.
 
 ⚠ This is the second finding in a row where a mis-tiered number masqueraded as a
 design flaw. Check the ladder before redesigning the mechanic.
+
+---
+
+## Calibration run 3 — CLOSED at e9, 2026-08-31
+
+Owner: *"confirmed kill shot broken, will end here at E9, I can't even have a
+decent read on high level encounters with this comp if my kill shot is broken."*
+
+Correct call. **Kill Shot was the second casualty of the dropped
+`campaign.level`**, and it was invisible in a way Ring of Fire was not.
+
+`assassinate`'s execute window is a flat 22 HP in arena and
+**max(22, 25% of the target's max HP)** from level 6 — applied by the same
+`applyCampaignAbilityTuning` the bridge starved of its level. The client's
+targeting tint and tap handler share `executeWouldFail` with the engine, so with
+an untuned map they computed the ARENA threshold: on e9's 213 HP Vanguard the
+client refused the target until 22 HP, while the engine would have allowed it at
+**53**. The Rogue's whole reason to exist was switched off for the back half of
+the run, and nothing said so.
+
+⚠ Every anchor in run 3 from the first level-6 encounter onward was taken with a
+Rogue whose special could not fire and a Sorcerer reading 14-damage numbers.
+**Treat e1-e5 as sound and e6-e9 as provisional.** The FIGHT anchors are the
+most affected (they lean on damage throughput); the structural findings —
+placement spread, skill delta, the tier inversion, the door design — are
+independent of it and stand.
+
+### Outstanding data — nothing is running
+
+| item | state |
+|---|---|
+| Placement search (24 openings x 12 encounters) | DONE — `balance_runs/placement_search_medium.json` |
+| Per-class Deep Gift values | DONE — GIFT1 above |
+| Skill delta (casual/optimal/baseline x 3 tiers) | DONE — SKILL1/2/3 above |
+| Difficulty-ordering sweep | DONE — 17 inversions, test holds the line |
+| Seeded battery re-run | SUPERSEDED — predates three brain fixes and DOOR1 |
+
+**No background jobs are running.** Nothing is pending.
+
+### What must be re-measured after the next build, in order
+
+1. **Nothing until the brain is taught DOOR1.** e8/e10/e12 and every door
+   encounter currently sim as unwinnable because the brain does not know the
+   crossing rule. Any battery run before that is measuring the gap, not the
+   content.
+2. Then the full re-baseline that BR1 demands — three brain changes have landed
+   (shields vs status blasts, the empty-cast net, and DOOR1 once taught).
+3. Then re-run GIFT1: those numbers were measured under the old brain.
+4. The owner then re-plays e6-e9 with a working Kill Shot and tuned numbers.
