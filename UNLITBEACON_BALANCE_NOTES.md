@@ -173,3 +173,64 @@ yet) and e12 (finale, root-immunity is the point) alone.
 
 ⚠ Not applied. Content changes stay blocked on the owner (Trilogy rule), and
 any change re-runs the battery.
+
+## Calibration run 2 — owner's DAMAGE comp, medium (2026-08-31)
+
+Owner restarted deliberately without roots to get a clean baseline:
+**Barbarian/Whirlwind · Sorcerer/Ring of Fire · Rogue/Kill Shot ·
+Warlock/Essence Drain.** (Passives/gifts irrelevant through e3 — passives
+unlock L4/L5, gifts L7/L8.)
+
+| Enc | Type | Owner's verdict | THIS BUILD, sim @200g |
+|---|---|---|---|
+| e1 | FIGHT | "very easy — easy end of medium, pushing it" | **100%** |
+| e2 | FIGHT | "fine, a little more difficult — **medium-to-hard end of medium**, could lose if I played badly" | **100%** |
+| e3 | OBJ | "**too easy** — this is a good calibration for the EASY difficulty" | **70%** |
+
+### ⚠ THE HEADLINE: the sim and the human DISAGREE ON WHICH IS HARDER
+
+Sim says e2 (100%) is easier than e3 (70%). The owner says the opposite, and
+emphatically. That is not a magnitude error the operator can calibrate around
+— it is an ORDERING error, and it breaks the contract BALANCE_PROCESS_V2 asks
+for ("60% in one encounter should be approximately 60% in another").
+
+**It is explained, and it confirms the simFloor caveat with human data.**
+e2 is a straight FIGHT; e3 is an OBJECTIVE (hold both bridgeheads
+simultaneously). The brain plays kill-everything well and objectives badly —
+so on e3 it grinds a fight it does not need to win, while the owner reports
+the human line is trivial: *"the archer can't even profitably run away from
+you because you can just take the bridge."*
+
+**Calibration rule, now evidence-backed rather than suspected:**
+
+| Encounter type | Sim vs human | How to use the number |
+|---|---|---|
+| FIGHT (e1,e2,e4,e5,e8,e11,e12) | sim ≈ human, sim slightly optimistic | Band-check directly |
+| OBJECTIVE (e3,e6,e7,e9,e10) | **sim badly UNDERSTATES the human** | FLOOR only. Never band-check. Owner calibrates on device |
+
+⚠ Five of twelve encounters are objectives, so **the campaign-level mean of
+any sim is not a difficulty statement** — it blends two incomparable scales.
+Report FIGHT cells and OBJECTIVE cells separately from here on.
+
+### What this says about the medium band
+
+On FIGHT cells the owner's read maps roughly:
+- 100% (e1) = "very easy", acceptable only as a pre-specials opener
+- 100% (e2) = "medium-to-hard end of medium" ← **same sim number, opposite feel**
+
+Two 100% cells feeling completely different means **win rate alone is
+saturated at the top and cannot distinguish them**. e2 was close for a human
+because of HP attrition and threat, none of which a win/loss counter sees.
+**Recommendation for V2: capture a MARGIN statistic alongside win rate**
+(party HP remaining at win, and turns taken). At 100% win rate, margin is the
+only signal left, and it is exactly what "could I have lost if I played badly"
+measures.
+
+### Owner's damage comp on the LATER encounters (same run, 200g)
+
+e4 74 · e5 97 · e6 100 · e7 100 · e8 57 · **e9 30** · e10 63 · e11 81 · e12 61
+
+⚠ **e9 = 30% on MEDIUM for a coherent damage comp** — far below the 65-80
+band and the worst cell in the run. e9 is a `round_reached` survival
+objective, so the simFloor caveat applies and a human will do better — but
+this is the cell to watch when the owner reaches it.

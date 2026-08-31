@@ -129,6 +129,23 @@ medium"), so the numbers must mean the same thing everywhere. That holds iff:
 - Statistics are labeled: a NORMIE mean, a sampled-build mean, and a
   top-build number are three different scales. Never mix them in one claim.
 
+**⚠ SEPARATE FIGHT CELLS FROM OBJECTIVE CELLS IN EVERY REPORT.** Confirmed
+with human data 2026-08-31, not merely suspected: on unlitbeacon the owner
+found e2 (a FIGHT) harder than e3 (an OBJECTIVE) while the sim scored them
+100% and 70% — an ORDERING error, not a magnitude one, which no per-campaign
+calibration constant can fix. Five of unlitbeacon's twelve encounters are
+objectives, so a campaign-level sim mean blends two incomparable scales and
+is not a difficulty statement. Band-check FIGHT cells; treat OBJECTIVE cells
+as floors for owner device calibration.
+
+**⚠ WIN RATE SATURATES — capture a MARGIN statistic too.** The same owner
+session scored e1 and e2 both at 100% for the same build and called one "very
+easy" and the other "medium-to-hard end of medium, I could have lost." At the
+top of the range a win/loss counter has no resolution left, and margin is
+what "could I have lost by playing badly" actually measures. Record party HP
+remaining at win and turns taken alongside win rate; a 100% cell won at 20%
+HP is not the same content as a 100% cell won at 90%.
+
 **⚠ The objective-encounter caveat — sim numbers there are FLOORS.** The brain
 plays kill-things well and objectives worse than a human: on unlitbeacon e7 (a
 pure footrace) every mobility investment made the sim result WORSE — backwards
