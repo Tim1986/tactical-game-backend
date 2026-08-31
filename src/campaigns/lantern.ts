@@ -484,7 +484,7 @@ export const lanternCampaign: CampaignDefinition = {
       // read 16%/6% with 39%/50% of builds WALLED. The round-4 scoped wave is
       // already this encounter's difficulty dial — piling a high HP scale on
       // top of two extra bodies double-charges the same tier.
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.00, nightmare: 1.10 },
+      hpScaleOverride: { easy: 0.95, medium: 1.07, hard: 1.07, nightmare: 1.1 },
     },
 
     // e9 — The Dark Between (survive). NEW, and the campaign's THESIS FIGHT:
@@ -527,7 +527,7 @@ export const lanternCampaign: CampaignDefinition = {
       // ⚠ Same double-charge as e8, and worse: 10%/4% with half the builds
       // walled. The round-5 scoped wave (a second croaker + a scrapper) is the
       // top-tier pressure; the scale must come DOWN to pay for it.
-      hpScaleOverride: { easy: 0.95, medium: 1.18, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.95, medium: 1.06, hard: 1.06, nightmare: 1.06 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────

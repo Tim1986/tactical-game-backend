@@ -5,10 +5,10 @@ we intend to ship — anything changed after the battery invalidates the battery
 
 ## A. Repairs (not tuning — do these mechanically, first)
 
-1. **Fix all 17 difficulty-ladder inversions.** Rule: hpScale must be
+1. ~~DONE 2026-08-31~~ **Fix all 17 difficulty-ladder inversions.** Rule: hpScale must be
    non-decreasing easy→nightmare. e9 medium 4.10 → between 1.45 and 1.70.
    Shrink KNOWN_INVERSIONS in difficultyOrdering.test.ts to zero.
-2. **Finish the brain batch NOW — including enemy passivity (E8).** Three brain
+2. ~~DONE 2026-08-31 (BR3, campaign press)~~ **Finish the brain batch NOW — including enemy passivity (E8).** Three brain
    changes are already in (shields/status, empty-cast net, door crossing).
    Passivity is the one still open; fixing it after the battery voids the
    battery. Diagnose the hold-back, fix, re-run the exploit suite.

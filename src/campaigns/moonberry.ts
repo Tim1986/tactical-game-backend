@@ -301,7 +301,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'cased_it', name: 'Cased It', description: 'Hold with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.00, nightmare: 1.10 },
+      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
     },
 
     // e4 — The Ferry Stage (hazard). REUSED from the shipped e3: twin marksmen
@@ -427,7 +427,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_landing', name: 'Held the Landing', description: 'Nobody down when the door opens.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.00, nightmare: 1.10 },
+      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
     },
 
     // e8 — The Hall of Mirrors (carve). The carve showcase: a maze of mirror
@@ -450,7 +450,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'no_reflection', name: 'No Reflection', description: 'Cross without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 1.03, medium: 1.36, hard: 1.55, nightmare: 1.50 },
+      hpScaleOverride: { easy: 1.03, medium: 1.36, hard: 1.52, nightmare: 1.52 },
     },
 
     // e9 — The Unmasking (survive). Mid-ball, someone calls "impostors!" — the
@@ -487,7 +487,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'still_masked', name: 'Still Masked', description: 'Nobody lost in the sweep.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -523,7 +523,7 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'the_whole_take', name: 'The Whole Take', description: 'Clear all three rooms with the party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.94, medium: 1.18, hard: 1.25, nightmare: 1.15 },
+      hpScaleOverride: { easy: 0.94, medium: 1.18, hard: 1.2, nightmare: 1.2 },
     },
 
     // e11 — The Cartographer's Stage (boss). REUSED from the shipped e5, now

@@ -842,7 +842,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // Hard sits 15pt under medium, comfortably outside the +/-4pt noise
       // floor at 150 games; an earlier 0.88 probe read 63% and was only 3pt
       // from medium, i.e. not actually a different difficulty.
-      hpScaleOverride: { easy: 0.87, medium: 1.04, hard: 0.92, nightmare: 1.00 },  // rooms — compressed ladder, sits on a cliff
+      hpScaleOverride: { easy: 0.87, medium: 0.98, hard: 0.98, nightmare: 1 },  // rooms — compressed ladder, sits on a cliff
     },
 
     // e9 — The Long Night (survive). Sheltering in the road-cave as the
@@ -930,7 +930,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // gap to each tier's band, and medium's gap is the widest because its
       // shorter clock leaves the most slack. Read the clock and the scale
       // together; neither number means anything alone.
-      hpScaleOverride: { easy: 1.45, medium: 4.10, hard: 1.70, nightmare: 2.20 },  // survive
+      hpScaleOverride: { easy: 1.45, medium: 1.55, hard: 1.7, nightmare: 2.2 },  // survive
     },
 
     // e10 — The Muster Field (escort — but ARMED, the registry's fix for the

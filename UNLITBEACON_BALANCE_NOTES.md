@@ -1818,3 +1818,25 @@ everything — these deltas are part of the new floor, not a regression.
 **The brain batch is now CLOSED**: shields/status (BR2), empty-cast net (BR2b),
 door crossing (DOOR2), campaign press (BR3). Per the owner: stopping here —
 ladder repairs, content changes and the re-baseline are next steps, not started.
+
+---
+
+## [LADDER1] All 17 inversions repaired (A1 of the prep list). 2026-08-31
+
+Method: PAVA (pool adjacent violators) — the minimal-change monotonic repair.
+Every inverted row's values differed by ≤0.2, so pooling neighbours to their
+mean splits the difference between two half-trusted numbers. One exception:
+**unlitbeacon e9**, where history proves medium's 4.10 was walked up in four
+passes chasing a broken measurement while hard/nightmare were sane — set to
+**1.45 / 1.55 / 1.70 / 2.20** per the prep doc, not pooled.
+
+All 17 rows now monotonic; KNOWN_INVERSIONS emptied and the test enforces an
+empty list forever. Full table of before→after in commit message / git diff.
+
+Spot-check, e9 medium (the worst case): Vanguard 213 HP → **81 HP**, and the
+cell went from a 33% outlier to **72% — inside its 65-80 band** — with the
+ladder reading 98 / 72 / 8 / 7 across tiers. Hard and nightmare now sit below
+band (8/7%), which is a real tuning question for the rebalance, but it is a
+QUESTION now rather than an inversion: harder tiers are harder.
+
+⚠ These are repair values, not final tuning. The battery re-measures everything.

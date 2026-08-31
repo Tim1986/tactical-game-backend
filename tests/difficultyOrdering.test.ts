@@ -23,13 +23,11 @@ import { CAMPAIGNS } from '../src/campaigns/index.js';
 const TIERS = ['easy', 'medium', 'hard', 'nightmare'] as const;
 
 /** Known, pre-existing inversions awaiting the rebalance. NEVER add to this. */
-const KNOWN_INVERSIONS = new Set([
-  'lantern e8', 'lantern e9',
-  'goblinopolis e2', 'goblinopolis e4', 'goblinopolis e5', 'goblinopolis e7',
-  'goblinopolis e8', 'goblinopolis e10',
-  'moonberry e3', 'moonberry e7', 'moonberry e8', 'moonberry e9', 'moonberry e10',
-  'sealeddeep e3', 'sealeddeep e9',
-  'unlitbeacon e8', 'unlitbeacon e9',
+const KNOWN_INVERSIONS = new Set<string>([
+  // EMPTIED 2026-08-31 — all seventeen repaired (PAVA pooling; unlitbeacon e9
+  // special-cased to 1.45/1.55/1.70/2.20 since its medium 4.10 was walked up
+  // chasing a broken measurement while hard and nightmare were sane).
+  // This list must STAY empty: a new inversion fails the test outright.
 ]);
 
 function inversions(): string[] {
@@ -57,11 +55,4 @@ describe('enemy HP must not go DOWN as difficulty goes up', () => {
     expect(stale, 'these are fixed now — delete them from KNOWN_INVERSIONS').toEqual([]);
   });
 
-  it('records how bad the worst one is, so it cannot be forgotten', () => {
-    const e9 = (CAMPAIGNS.unlitbeacon.encounters.e9 as { hpScaleOverride?: Record<string, number> }).hpScaleOverride!;
-    // Medium is 2.4x hard. This assertion is a tripwire, not an endorsement:
-    // when the rebalance fixes e9 it fails, and this whole block comes out.
-    expect(e9.medium).toBeGreaterThan(e9.hard);
-    expect(e9.medium / e9.hard).toBeGreaterThan(2);
-  });
 });

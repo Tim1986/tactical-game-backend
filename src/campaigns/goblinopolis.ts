@@ -256,7 +256,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'not_a_scratch', name: 'Not a Scratch', description: 'Finish with the whole party standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.95, medium: 1.15, hard: 1.10, nightmare: 1.25 },
+      hpScaleOverride: { easy: 0.95, medium: 1.12, hard: 1.12, nightmare: 1.25 },
     },
 
     // e3 — Blue-Ribbon Tollgate (carve). REUSED from the shipped e2 and native
@@ -321,7 +321,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.32, nightmare: 1.21 },
+      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.27, nightmare: 1.27 },
     },
 
     // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
@@ -343,7 +343,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'dry_pages', name: 'Dry Pages', description: 'Lose nobody to the fire.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.98, medium: 1.10, hard: 1.34, nightmare: 1.10 },
+      hpScaleOverride: { easy: 0.98, medium: 1.1, hard: 1.22, nightmare: 1.22 },
     },
 
     // e6 — The Customs Barge (race). REUSED from the shipped e3's ferry relay,
@@ -408,7 +408,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'true_weight', name: 'True Weight', description: 'Hold the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.10, hard: 1.00, nightmare: 1.10 },
+      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
     },
 
     // e8 — The Impound Yard (siege). Snagg impounds the bell "pending review";
@@ -451,7 +451,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_yard', name: 'Held the Yard', description: 'Survive with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
     },
 
     // e9 — The Audit (boss). MID-CAMPAIGN, deliberately: Snagg is the
@@ -515,7 +515,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'above_the_water', name: 'Above the Water', description: 'Nobody lost to the flood.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
     },
 
     // e11 — The Stair of Stamps (escape). Up the tower's switchback with the

@@ -334,7 +334,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
       // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
       // verdict, and 1.55 breaches the wall cap outright.
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.30, nightmare: 1.25 },
+      hpScaleOverride: { easy: 0.85, medium: 1, hard: 1.27, nightmare: 1.27 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -792,7 +792,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // Cliffy above 0.95 — identical bodies, shared breakpoint: hard goes 82%
       // solving at 0.85 to 12% at 1.00. Stay inside 0.78-0.92 and re-walk in
       // small steps if anything moves.
-      hpScaleOverride: { easy: 0.78, medium: 0.85, hard: 0.92, nightmare: 0.90 },
+      hpScaleOverride: { easy: 0.78, medium: 0.85, hard: 0.91, nightmare: 0.91 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
