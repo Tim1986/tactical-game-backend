@@ -840,3 +840,119 @@ this"*, measured — and it is the strongest case in the campaign so far for a
 medium-tier change. The nightmare cliff (casual 1%) suggests the tier levers
 already bite hard here, so the medium fix should come from the same family:
 **fewer exit tiles**, not more enemy HP.
+
+---
+
+## e7 anchor — owner, 2026-08-31
+
+> *"I really like this setup. Lots of walls, tough to get through, and with an
+> end target of one square in 6 rounds. This feels epic and different
+> immediately... Overall difficulty wise I'd say is fine for medium. I don't
+> think I'd ever lose at this difficulty, but there's at least a clock. Let's
+> call this easy side of medium."*
+
+**Verdict: EASY SIDE OF MEDIUM. Approved. Owner explicitly likes the design.**
+
+### Design notes to carry into the rework (not difficulty findings)
+
+* **Push/pull has a home here.** *"No enemies have Stalwart, which means this is
+  a reasonable fight for a push or pull effect."* Same for e4's hazards, and e6
+  if it were harder. Three named encounters where displacement effects would be
+  worth taking — relevant to the passive/special viability work, since push and
+  pull currently have nowhere to shine.
+* **Freeze is the easy-tier lever here.** *"Freeze is punishing in a race
+  against time, I don't mind that, it's thematic, but it's a lever we might
+  adjust for easy. Maybe just take one of the freezes away."* Note this is the
+  SKILL2 pattern again, third encounter running: the per-tier dial the owner
+  reaches for is never enemy HP. e5 wisp arrival, e6 exit-tile count, e7 freeze
+  count. **The rework should treat per-tier ability/threat access as the primary
+  difficulty lever and HP scale as the trim.**
+
+### ⚠ OPEN DISAGREEMENT: the instrument says e7 is brutal, the owner says trivial
+
+| | easy | medium | nightmare |
+|---|---|---|---|
+| casual | 9% | **0%** | 0% |
+| optimal | 97% | 91% | 8% |
+
+The owner would *"never lose at this difficulty"*; the casual brain never wins
+it. One of the two is wrong and it is not yet established which.
+
+Fixed one real cause while investigating — the brain steered by Manhattan
+distance, which walks a party into a wall and holds it there. e7 is a race
+across nine walls, so it never arrived. A wall-only BFS from the goal now
+supplies the distance (units deliberately ignored as obstacles: a casual player
+routes around terrain and shoves past their own line). **That moved e7 easy from
+0% to 9% and medium not at all**, so walls were a genuine defect but not this
+one's explanation.
+
+Remaining hypotheses, UNTESTED:
+1. **`scope: 'any'` — one body suffices.** A human sends the fastest unit and
+   screens with the rest. The brain marches all four at the tile. This is the
+   most likely cause and is arguably basic play for an objective that literally
+   names one square.
+2. **Corridor jam.** Four units funnelling through nine walls block each other;
+   the BFS ignores units, so the brain does not see the queue it is forming.
+3. **Freeze**, which the owner names as the fight's defining threat and against
+   which the brain has no answer at all.
+
+**I have deliberately stopped tuning here.** Each encounter-specific fix so far
+(objectives, clocks, simultaneous marks, walls) generalised. Chasing e7 to
+match one reported number would start curve-fitting the instrument to the
+answers, which destroys its value as an independent check. e7 stands as a
+recorded disagreement until either the owner replays it deliberately sloppily,
+or hypothesis 1 is implemented as the general rule it probably is.
+
+---
+
+## ⚠ ROGUE LEVEL-UP — owner frustration, 2026-08-31 (REPEAT REPORT)
+
+> *"Going to level up I'm immediately frustrated again, a lot of my previous
+> comments have been ignored. Rogue is getting shafted on these level ups, it
+> should not be getting just max HP every time. I suggested at the very last
+> level up it gets +1 attack damage when other classes get +2, not that it
+> should never get a buff other than one HP. This needs to be fixed in the next
+> rework."*
+
+**This is the second time. Do not let it reach a third.** Owner has asked for
+the fix in the NEXT REWORK, so nothing is edited now.
+
+### What the screen actually says today
+
+| level | Fighter (the field) | Rogue |
+|---|---|---|
+| L6 | +3 max HP | +3 max HP |
+| L7 | **+1 basic-attack damage** | +1 max HP |
+| L8 | +3 max HP | +2 max HP |
+| L9 | **+1 basic-attack damage** | **+1 basic-attack damage** |
+| L10 | +3 max HP | +3 max HP |
+
+Cumulative at L10: field +9 HP / +2 damage; Rogue +9 HP / +1 damage.
+
+### What was actually fixed last time, and what was misread
+
+The 2026-08-27 report was about **HP**, and that part was fixed — Rogue's HP row
+was raised to match the field exactly. The damage row was left alone on the
+strength of a quoted confirmation in the code comment: *"+1 attack at the end
+when other classes get +2 attack."*
+
+**That quote was read as approval of the whole shape and it was not.** The owner
+was describing the CAP (Rogue ends +1 where others end +2), not endorsing four
+straight levels of HP-only. Today's message says so explicitly: *"not that it
+should never get a buff other than one HP."*
+
+### The two defects, separated
+
+1. **Distribution.** Rogue's single damage point lands at L9, so L6, L7, L8 and
+   L10 are all HP-only — four of five level-ups with nothing but a health bar.
+   The field alternates HP and damage and always feels like progress.
+2. **The last level-up.** The owner's stated intent is *"at the very last level
+   up it gets +1 attack damage when other classes get +2."* The table does not
+   do this for anyone: the field's damage lands at L7 and L9, and **L10 is
+   +3 max HP for every class including Rogue.** So the level the owner
+   describes as the damage level currently grants no damage to anybody.
+
+Whatever the rework decides about the cap, **L10 should be the damage level**
+and Rogue's levels should not read as HP-only four times running. A per-effect
+row is not the obstacle — Twin Strike paying the rung twice is a real
+constraint on the TOTAL, not on which rungs are non-empty.

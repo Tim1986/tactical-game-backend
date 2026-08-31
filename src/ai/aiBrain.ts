@@ -2712,7 +2712,7 @@ export class CasualBrain implements AIBrain {
     // e3 fell from 77% to 37% on medium before this. Claiming the mark you are
     // closest to is the shallowest possible split and is what the objective
     // text already says out loud; it is not a plan.
-    const myGoal = goalWin?.simultaneous
+    const myGoalTile = goalWin?.simultaneous
       ? (goalTiles.find((t) => {
           const closest = [...allies].sort((a, b) =>
             manhattanDistance(a.position, t) - manhattanDistance(b.position, t)
@@ -2787,21 +2787,49 @@ export class CasualBrain implements AIBrain {
     // unless the round counter is the thing killing you.
     const hasClock = [...(objective?.win ?? []), ...((objective as { loss?: { kind: string }[] } | undefined)?.loss ?? [])]
       .some((c) => c.kind === 'round_reached');
+    /**
+     * ⚠ WALLS. Steering by Manhattan distance walks a party into a wall and
+     * holds it there — e7 is a race to ONE tile across nine walls, and the
+     * brain scored 0% at every tier while the owner said he could not imagine
+     * losing it. Not reading a maze is not "casual", it is broken: a person
+     * sees the gap. One wall-only BFS from the goal per decision, which is
+     * cheap and exact; units are ignored as obstacles on purpose, since a
+     * casual player routes around terrain and shoves through their own line.
+     */
+    const goalDist = (() => {
+      if (!myGoalTile) return null;
+      const dist = new Map<number, number>();
+      const key = (p: BoardPosition): number => p.x * BOARD_SIZE + p.y;
+      const queue: BoardPosition[] = [myGoalTile];
+      dist.set(key(myGoalTile), 0);
+      for (let i = 0; i < queue.length; i++) {
+        const cur = queue[i];
+        const d = dist.get(key(cur))!;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as [number, number][]) {
+          const n = { x: cur.x + dx, y: cur.y + dy };
+          if (!isInBounds(n) || dist.has(key(n)) || isTerrainBlocked(state.terrain, n)) continue;
+          dist.set(key(n), d + 1);
+          queue.push(n);
+        }
+      }
+      return (p: BoardPosition): number => dist.get(key(p)) ?? (manhattanDistance(p, myGoalTile) + BOARD_SIZE);
+    })();
+
     const enemyIsReachable = manhattanDistance(pos, target.position) <= unit.movementRange + bestReach;
-    const goForGoal = myGoal !== null && (hasClock || !enemyIsReachable);
-    const onGoal = myGoal !== null && goalTiles.some((t) => samePos(pos, t));
+    const goForGoal = myGoalTile !== null && (hasClock || !enemyIsReachable);
+    const onGoal = myGoalTile !== null && goalTiles.some((t) => samePos(pos, t));
     const needMove = goForGoal ? !onGoal : !canHit(pos, target, bestReach);
     if (needMove && !isRooted(unit)) {
       const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
       // Simply: the tile that gets me closest, preferring one I can attack from.
       // Distance only — no hazard check, no thought about what reaches me back.
       let best: BoardPosition | null = null;
-      let bestKey: [number, number] = goForGoal && myGoal
-        ? [1, manhattanDistance(pos, myGoal)]
+      let bestKey: [number, number] = goForGoal && myGoalTile && goalDist
+        ? [1, goalDist(pos)]
         : [1, manhattanDistance(pos, target.position)];
       for (const t of tiles) {
-        const key: [number, number] = goForGoal && myGoal
-          ? [goalTiles.some((g) => samePos(t, g)) ? 0 : 1, manhattanDistance(t, myGoal)]
+        const key: [number, number] = goForGoal && myGoalTile && goalDist
+          ? [goalTiles.some((g) => samePos(t, g)) ? 0 : 1, goalDist(t)]
           : [canHit(t, target, bestReach) ? 0 : 1, manhattanDistance(t, target.position)];
         if (key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) { bestKey = key; best = t; }
       }
