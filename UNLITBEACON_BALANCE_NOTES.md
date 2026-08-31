@@ -234,3 +234,45 @@ e4 74 · e5 97 · e6 100 · e7 100 · e8 57 · **e9 30** · e10 63 · e11 81 · 
 band and the worst cell in the run. e9 is a `round_reached` survival
 objective, so the simFloor caveat applies and a human will do better — but
 this is the cell to watch when the owner reaches it.
+
+---
+
+## Calibration run 3 — 2026-08-31, build 1.0.99 (escort AI + placement picker)
+
+⚠ **This run supersedes all earlier OBJECTIVE anchors.** Runs 1–2 were taken
+against a noisier (unseeded) sim and a brain with no escort doctrine, so their
+objective-cell reads describe software that no longer exists. FIGHT anchors
+from run 2 (e1, e2) remain comparable and are reproduced here for continuity.
+
+**Owner's build (fixed for the whole run):** Barbarian/Whirlwind ·
+Sorcerer/Ring of Fire · Warlock/Essence Drain · Rogue/Kill Shot.
+A four-way damage comp with no healer and no control beyond Ring of Fire —
+percentile-rank this build before reading any cell as "too easy/too hard".
+
+| Enc | Kind | Owner's read | Anchor |
+|---|---|---|---|
+| e1 | FIGHT | "Fine for medium. On the easy side, but it should be for first encounter." | **Easy end of medium — INTENDED.** Do not tune. |
+| e2 | FIGHT | "Very easy overall, but not overly so. Calibrate as the easy side for medium." | **Easy end of medium.** ⚠ Reverses run 2's "medium-to-hard". |
+| e3 | OBJECTIVE | (no difficulty read — the run surfaced a UI defect instead) | none yet |
+
+### ⚠ e2 anchor REVERSED — placement is now a variable
+
+Run 2 read e2 as "medium-to-hard"; run 3 reads the same encounter, same build,
+as "very easy". The owner's own hypothesis: *"Previous run might have been a
+fluke, or maybe the placement made a big difference."*
+
+The placement picker shipped between these two runs. That is not a neutral
+change to balance: **opening placement is now a player-controlled lever on
+every encounter**, and e2 is evidence that the lever is worth a full difficulty
+band. Two consequences:
+
+1. **Two runs of one encounter can no longer be averaged** unless the placement
+   was the same. Record placement alongside every future anchor.
+2. The sim's `placementOrder` default is the engine's auto-placement, i.e. the
+   WORST case a competent human would accept. Sim numbers are therefore a
+   floor on FIGHT cells too now, not just objective ones — by an amount e2
+   suggests can reach a whole band.
+
+Owner has calibrated e2 to the easy side. Taking the later read as authoritative
+(it is the one made with the shipped feature), but this cell is the first place
+to look if the medium band later feels inconsistent.
