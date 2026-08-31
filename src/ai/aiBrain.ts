@@ -235,6 +235,29 @@ export const WEIGHTS = {
   supportProjection: 1,
   /** Danger multiplier when the incoming expected damage could kill us. */
   dangerLethalMult: 2.2,
+  /**
+   * CAMPAIGN PRESS (2026-08-31, owner repro in e8): the horde must come.
+   *
+   * The caution stack above (danger x unsupportedDangerMult) was tuned in
+   * ARENA 4v4 mirrors, where both sides want to win and somebody eventually
+   * blinks. A campaign enemy team is outnumbered by design (2-3 units vs a
+   * 4-stack phalanx), so near the player's stack the danger term dwarfs the
+   * 1.5/tile approach pull and the equilibrium is to hover just outside
+   * threat range forever. Against a player who hangs back, enemies arrived
+   * piecemeal over ~5 rounds (measured: e2 spread 5.0, 9.5 hover-turns/game
+   * vs a turtle) — "only one of them came, the other two are hanging back...
+   * making the fight much easier" (owner, e8).
+   *
+   * So on the NON-party side of a campaign, patience expires: danger decays
+   * toward pressDangerFloor between pressStartRound and pressEndRound,
+   * counted from ROOM ENTRY (a fresh room deserves fresh caution). The
+   * fiction agrees — the horde is the attacker; the player is the one
+   * defending a barricade. Arena, PvP and the player's own sim side are
+   * untouched, so the exploit-bot suite still guards the arena tuning.
+   */
+  pressStartRound: 1,
+  pressEndRound: 4,
+  pressDangerFloor: 0.1,
   /** Pull toward closing the gap to attackable targets (per tile of gap). */
   approach: 1.5,
   /** Lean toward approaching low-HP enemies (per point of target HP). */
@@ -1504,6 +1527,22 @@ function dangerAt(
   return mx + (guaranteed.reduce((s, v) => s + v, 0) - mx) * WEIGHTS.dangerSecondary;
 }
 
+/**
+ * CAMPAIGN PRESS: danger multiplier for a campaign ENEMY unit, decaying from 1
+ * to pressDangerFloor as the room wears on. 1 (no effect) for the party side,
+ * for arena/PvP, and during the opening grace rounds. See the WEIGHTS note.
+ */
+function campaignPressMult(state: MatchState, unit: UnitInstance): number {
+  const obj = (state as { objective?: { partyId: string } }).objective;
+  if (!obj || unit.ownerPlayerId === obj.partyId) return 1;
+  const entered = state.encounterProgress?.roomEnteredRound ?? 0;
+  const r = state.roundNumber - entered;
+  const { pressStartRound: start, pressEndRound: end, pressDangerFloor: floor } = WEIGHTS;
+  if (r <= start) return 1;
+  if (r >= end) return floor;
+  return 1 - (1 - floor) * ((r - start) / (end - start));
+}
+
 /** First-strike danger multiplier, fading to 1 late-game (see WEIGHTS). */
 function firstStrikeMultFor(state: MatchState): number {
   const r = state.roundNumber;
@@ -1715,7 +1754,7 @@ function positionScore(
     const danger = dangerAt(state, unit, pos, myPlayerId, map);
     if (danger > 0) {
       const lethal = danger >= unit.currentHealth;
-      let mult = 1;
+      let mult = campaignPressMult(state, unit);
       // FIRST-STRIKE (v8): in reach without swinging = the enemy hits first.
       if (!attacking) mult *= firstStrikeMultFor(state);
       // COORDINATED ADVANCE (v8): a lone unit in threat range is the

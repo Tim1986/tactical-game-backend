@@ -1776,3 +1776,45 @@ The real findings:
   tie. That is one dead option on 6 of 8 classes.
 * **Fighter armour (+13.0) is over-tuned** — roughly double its own next-best.
 * Cleric, sorcerer and warlock are the models to aim the other five at.
+
+---
+
+## [BR3] Campaign press — the horde comes (A2 of the prep list). 2026-08-31
+
+Owner repro (e8): *"I am hanging back, letting them come to me, but only one of
+them came, the other two are hanging back."*
+
+### Diagnosis, measured with a turtle probe
+
+The caution stack (danger 0.35 x unsupportedDangerMult 2.0, projection support)
+was tuned in ARENA 4v4 mirrors. A campaign enemy team is outnumbered by design,
+so near a 4-stack phalanx the danger term dwarfs the 1.5/tile approach pull and
+the equilibrium is to hover outside threat range forever. Against a TurtleBot
+party, individual e8 enemies logged **28-32 consecutive idle turns** — no
+attack, no approach — in a single game. (An early "arrival spread" metric
+flagged e2 too; that turned out to be ranged units legitimately shooting from
+distance. The idle metric — no attack AND no net approach — is the honest one.)
+
+### Fix: `campaignPressMult`
+
+On the NON-party side of a campaign only, patience expires: the danger term
+decays from 1.0 to 0.1 between rounds 1 and 4, counted from ROOM ENTRY. Arena,
+PvP, and the player's own sim side are untouched — the exploit-bot suite still
+guards the arena tuning (all green). The fiction agrees: the horde is the
+attacker; the player is defending the barricade.
+
+After: max idle **2 turns/game** (was 28-32). Turtling now gets you charged.
+
+### A/B, owner's comp, medium, 150 games (press vs no-press, same content)
+
+e1 +0 · e2 −4 · e3 −6 · e4 +0 · e5 +0 · e6 −9 · e7 −1 · **e8 −10** · e9 −4 ·
+e10 +1 · e11 −1 · e12 +8
+
+Directionally correct and expected: enemies that no longer stand idle are
+harder, and every earlier number was measured against a brain that sometimes
+did. This is one more reason the full re-baseline (step 3) must re-measure
+everything — these deltas are part of the new floor, not a regression.
+
+**The brain batch is now CLOSED**: shields/status (BR2), empty-cast net (BR2b),
+door crossing (DOOR2), campaign press (BR3). Per the owner: stopping here —
+ladder repairs, content changes and the re-baseline are next steps, not started.
