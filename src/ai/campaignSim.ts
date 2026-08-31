@@ -18,6 +18,8 @@
  */
 import { runMatch, makeRng } from './simHarness.js';
 import { OptimalBrain } from './aiBrain.js';
+import type { BoardPosition } from '../types/matchState.js';
+import { frontlineOrder } from './simPlacement.js';
 import { buildAbilityMap } from './defaultData.js';
 import { applyCooldownOverrides, applyCampaignAbilities, applyCampaignAbilityTuning } from '../game/abilityOverrides.js';
 import { CAMPAIGNS } from '../campaigns/index.js';
@@ -285,7 +287,16 @@ function simEncounterCellInner(
   // campaign-scoped abilities merged in. (The old L6 cooldown override is gone —
   // E0's L10 second charge rides UnitInstance.extraCharges inside the built
   // state, so the sim exercises it with no ability-map surgery.)
-  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys, options.hpScale);
+  // [PLACE1] Melee forward, ranged back — the opening any player picks, and
+  // the one the slot-order default gets backwards. See simPlacement.ts for why
+  // this is sim-only and why it moved e2 by a full difficulty band.
+  const placement = frontlineOrder(
+    partySlugs,
+    enc.playerPlacement,
+    (enc as { enemyPlacement?: BoardPosition[]; rooms?: { enemyPlacement?: BoardPosition[] }[] })
+      .enemyPlacement ?? enc.rooms?.[0]?.enemyPlacement ?? [],
+  );
+  const probe = buildEncounterState(campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY, undefined, options.boonKeys, options.hpScale, placement);
   const abilityMap = applyCampaignAbilityTuning(
     applyCooldownOverrides(
       applyCampaignAbilities(buildAbilityMap(), probe.campaignAbilities),
@@ -319,7 +330,7 @@ function simEncounterCellInner(
     const stateFactory = (): MatchState => {
       const { state } = buildEncounterState(
         campaign, encounterId, partySlugs, choices, level, difficulty, HUMAN, ENEMY,
-        undefined, options.boonKeys, options.hpScale,
+        undefined, options.boonKeys, options.hpScale, placement,
       );
       return state;
     };

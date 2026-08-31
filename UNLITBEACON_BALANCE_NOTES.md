@@ -276,3 +276,71 @@ band. Two consequences:
 Owner has calibrated e2 to the easy side. Taking the later read as authoritative
 (it is the one made with the shipped feature), but this cell is the first place
 to look if the medium band later feels inconsistent.
+
+---
+
+## [PLACE1-SIM] The sim now places melee forward — and it measures WORSE
+
+Owner's ask, 2026-08-31: *"The sims should at least attempt to put melee units
+in front and ranged units in the back."* Implemented in `src/ai/simPlacement.ts`
+(`frontlineOrder`), applied by `simEncounterCell`, so every downstream
+instrument — buildBattery, buildSearch, choiceReport, objectiveHarness —
+inherits it. It permutes only the tiles the default already used, so the
+party's footprint is unchanged and nothing else about a re-run moves.
+
+### The measurement (owner's comp, medium, 200 games/cell, seeded)
+
+| | e1 | e2 | e3 | e4 | e5 | e6 | e7 | e8 | e9 | e10 | e11 | e12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| slot-order default | 100 | 98 | 92 | 100 | 97 | 68 | 41 | 69 | 55 | 98 | 12 | 94 |
+| melee-forward | 100 | 93 | 86 | 100 | 97 | **100** | **92** | **19** | **34** | 99 | 5 | **45** |
+| delta | +0 | −5 | −6 | +0 | +0 | **+32** | **+51** | **−50** | **−21** | +1 | −7 | **−49** |
+
+**Net across the campaign: −4.5 points.** The heuristic helps enormously on
+two cells and hurts enormously on three. It does not make the sim uniformly
+less pessimistic, which is what everyone (me included) expected it to do.
+
+### What this actually tells us — placement is the dominant variable
+
+e12 is the cleanest case. Between the two runs exactly ONE unit moved: the
+Barbarian and the Warlock swapped a front tile for a back tile. Same party,
+same build, same level, same seed discipline. **94% → 45%.**
+
+No tuning lever measured in this campaign — not HP scale, not a boon, not a
+deep gift — moves a cell by 49 points. Opening placement is now known to be
+the largest single uncontrolled input to campaign difficulty, and until this
+change the sim was sampling exactly one arbitrary point in that space and
+reporting it as *the* number.
+
+Consequences, in order of importance:
+
+1. **Every campaign number ever recorded is one placement's worth of noise
+   wide.** Bands of ±10 were being read off an input worth ±50.
+2. **A single sim run is no longer a difficulty statement.** It is a difficulty
+   statement *conditional on an opening*, and that condition must be reported.
+3. The forward-melee opening is a *trap* on three cells. e8 is a three-room
+   delve (melee eats attrition across all three), e9 is a survival objective
+   (forward = exposed for the whole clock), e12 is kill-the-marshal-and-reach-
+   the-tile (the Warlock's Essence Drain sustains a front tile; the Barbarian
+   does not). These are real design facts about those encounters, surfaced only
+   because placement finally varied.
+
+### ⚠ Not adopted as truth — adopted as a second sample
+
+I have NOT rebaselined the bands onto the melee-forward numbers. Doing so would
+repeat the original mistake in a new costume: replacing one arbitrary opening
+with a different arbitrary opening and calling it the difficulty. The honest
+reading of a cell is now the PAIR, and the eventual fix is to search openings
+(the `buildSearch` coordinate-ascent machinery already does exactly this shape
+of search over builds and can be pointed at placement) and report the range.
+
+Until that exists: report both rows, and treat the spread between them as the
+error bar on that encounter.
+
+### One place the heuristic deliberately does nothing
+
+An encounter with no enemy placement has no direction to be forward in.
+The first implementation invented one ("advance along +x") and it cost e8 fifty
+points against the plain default before the room-wave placement was found and
+used instead. `frontlineOrder` now returns the identity order when it has no
+enemies to face. When the information isn't there, change nothing.
