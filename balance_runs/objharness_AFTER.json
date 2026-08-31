@@ -1,0 +1,647 @@
+{
+ "campaign": "unlitbeacon",
+ "games": 100,
+ "when": "2026-08-31T14:27:05.319Z",
+ "rows": [
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.96,
+   "marginHpPct": 0.38958333333333334,
+   "winTurns": 35.125
+  },
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.9,
+   "marginHpPct": 0.3605797101449275,
+   "winTurns": 31.9
+  },
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.87,
+   "marginHpPct": 0.3429392446633826,
+   "winTurns": 36.9080459770115
+  },
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.37,
+   "marginHpPct": 0.18712241653418124,
+   "winTurns": 45.189189189189186
+  },
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.31,
+   "marginHpPct": 0.2168302945301543,
+   "winTurns": 44.903225806451616
+  },
+  {
+   "encounter": "e1",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.26,
+   "marginHpPct": 0.2032967032967033,
+   "winTurns": 48.15384615384615
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.34,
+   "marginHpPct": 0.21062618595825428,
+   "winTurns": 48.588235294117645
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.15,
+   "marginHpPct": 0.22544529262086513,
+   "winTurns": 40.13333333333333
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.4,
+   "marginHpPct": 0.25112179487179487,
+   "winTurns": 48.6
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.04,
+   "marginHpPct": 0.1303763440860215,
+   "winTurns": 55
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0
+  },
+  {
+   "encounter": "e2",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.1,
+   "marginHpPct": 0.25448717948717947,
+   "winTurns": 53.7
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.54,
+   "marginHpPct": 0.3823178016726404,
+   "winTurns": 30.796296296296298
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.54,
+   "marginHpPct": 0.2687305626236924,
+   "winTurns": 25.074074074074073
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.56,
+   "marginHpPct": 0.40510531135531136,
+   "winTurns": 25.196428571428573
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.14,
+   "marginHpPct": 0.20890937019969277,
+   "winTurns": 41
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.03,
+   "marginHpPct": 0.15521628498727735,
+   "winTurns": 33.666666666666664
+  },
+  {
+   "encounter": "e3",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.06,
+   "marginHpPct": 0.14957264957264957,
+   "winTurns": 42
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.99,
+   "marginHpPct": 0.3840556098620615,
+   "winTurns": 33.35353535353536
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.91,
+   "marginHpPct": 0.23538293767301402,
+   "winTurns": 27.626373626373628
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.85,
+   "marginHpPct": 0.2645550527903469,
+   "winTurns": 33.10588235294118
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.63,
+   "marginHpPct": 0.21292029356545486,
+   "winTurns": 43.714285714285715
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.24,
+   "marginHpPct": 0.10687022900763359,
+   "winTurns": 35.875
+  },
+  {
+   "encounter": "e4",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.03,
+   "marginHpPct": 0.10256410256410256,
+   "winTurns": 47.666666666666664
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.76,
+   "marginHpPct": 0.46473943479388125,
+   "winTurns": 48.69736842105263
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.6,
+   "marginHpPct": 0.30703463203463205,
+   "winTurns": 39.85
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.77,
+   "marginHpPct": 0.37706611570247933,
+   "winTurns": 49.1948051948052
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.41,
+   "marginHpPct": 0.2292442628859786,
+   "winTurns": 58.02439024390244
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.17,
+   "marginHpPct": 0.2582123758594347,
+   "winTurns": 47.294117647058826
+  },
+  {
+   "encounter": "e5",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.12,
+   "marginHpPct": 0.2002840909090909,
+   "winTurns": 63.333333333333336
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 1,
+   "marginHpPct": 0.7343203883495145,
+   "winTurns": 17.16
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 1,
+   "marginHpPct": 0.7238607594936709,
+   "winTurns": 15.37
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 1,
+   "marginHpPct": 0.6786885245901639,
+   "winTurns": 27.36
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.43,
+   "marginHpPct": 0.22567170918943327,
+   "winTurns": 33.51162790697674
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.76,
+   "marginHpPct": 0.23367754830113258,
+   "winTurns": 28.710526315789473
+  },
+  {
+   "encounter": "e6",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.98,
+   "marginHpPct": 0.21149771383963423,
+   "winTurns": 37.734693877551024
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.45,
+   "marginHpPct": 0.5065239551478083,
+   "winTurns": 32.24444444444445
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.25,
+   "marginHpPct": 0.6103529411764705,
+   "winTurns": 26.12
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.12,
+   "marginHpPct": 0.5897435897435898,
+   "winTurns": 36
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.2,
+   "marginHpPct": 0.48142201834862386,
+   "winTurns": 32.65
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.01,
+   "marginHpPct": 0.5352941176470588,
+   "winTurns": 29
+  },
+  {
+   "encounter": "e7",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.01,
+   "marginHpPct": 0.46153846153846156,
+   "winTurns": 38
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.37,
+   "marginHpPct": 0.17684808095767,
+   "winTurns": 96.35135135135135
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.82,
+   "marginHpPct": 0.28113342898134863,
+   "winTurns": 74.84146341463415
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.78,
+   "marginHpPct": 0.35384615384615387,
+   "winTurns": 89.24358974358974
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.38,
+   "marginHpPct": 0.22770897832817338,
+   "winTurns": 82.57894736842105
+  },
+  {
+   "encounter": "e8",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.27,
+   "marginHpPct": 0.2729344729344729,
+   "winTurns": 101.14814814814815
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.93,
+   "marginHpPct": 0.22660121552127163,
+   "winTurns": 61.516129032258064
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.03,
+   "marginHpPct": 0.04395604395604396,
+   "winTurns": 59.666666666666664
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.99,
+   "marginHpPct": 0.37612843409944857,
+   "winTurns": 63.93939393939394
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.54,
+   "marginHpPct": 0.10507246376811594,
+   "winTurns": 69.14814814814815
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.01,
+   "marginHpPct": 0.02197802197802198,
+   "winTurns": 66
+  },
+  {
+   "encounter": "e9",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.89,
+   "marginHpPct": 0.16495684741898714,
+   "winTurns": 74.71910112359551
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.79,
+   "marginHpPct": 0.510759493670886,
+   "winTurns": 54.63291139240506
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.65,
+   "marginHpPct": 0.3336385836385836,
+   "winTurns": 44.15384615384615
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 1,
+   "marginHpPct": 0.7610830324909748,
+   "winTurns": 20
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.61,
+   "marginHpPct": 0.46234972677595626,
+   "winTurns": 55.68852459016394
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0.17,
+   "marginHpPct": 0.2600373482726424,
+   "winTurns": 48.23529411764706
+  },
+  {
+   "encounter": "e10",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 1,
+   "marginHpPct": 0.7657039711191336,
+   "winTurns": 20
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.78,
+   "marginHpPct": 0.4865967365967366,
+   "winTurns": 65.6923076923077
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.23,
+   "marginHpPct": 0.2471985656656208,
+   "winTurns": 54.391304347826086
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 0.87,
+   "marginHpPct": 0.42282055319372275,
+   "winTurns": 70.16091954022988
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.32,
+   "marginHpPct": 0.42652376033057854,
+   "winTurns": 71.375
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0
+  },
+  {
+   "encounter": "e11",
+   "kind": "FIGHT",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.16,
+   "marginHpPct": 0.2696917808219178,
+   "winTurns": 87.4375
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "melee",
+   "winRate": 0.35,
+   "marginHpPct": 0.3868949232585596,
+   "winTurns": 69.68571428571428
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "ranged",
+   "winRate": 0.12,
+   "marginHpPct": 0.17010309278350516,
+   "winTurns": 46.416666666666664
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "medium",
+   "party": "balanced",
+   "winRate": 1,
+   "marginHpPct": 0.5120547945205479,
+   "winTurns": 63.03
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "melee",
+   "winRate": 0.12,
+   "marginHpPct": 0.418732782369146,
+   "winTurns": 70.16666666666667
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "ranged",
+   "winRate": 0
+  },
+  {
+   "encounter": "e12",
+   "kind": "OBJ",
+   "difficulty": "nightmare",
+   "party": "balanced",
+   "winRate": 0.8,
+   "marginHpPct": 0.4170662100456621,
+   "winTurns": 78.0375
+  }
+ ]
+}

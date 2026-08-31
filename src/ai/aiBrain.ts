@@ -239,6 +239,24 @@ export const WEIGHTS = {
   approach: 1.5,
   /** Lean toward approaching low-HP enemies (per point of target HP). */
   approachHpBias: 0.08,
+
+  // ── OBJ1 (2026-08-31): objective play. See the rewritten tile block in
+  // positionScore for the four defects these replace.
+  /** Per-step pull toward the escort's goal — leads the NPC without crowding
+   *  it, since the escort's own doctrine does the walking.
+   *  MEASURED: 1.2/3.5 gives OBJ +1.7pts; the softer 0.6/2.0 variant was
+   *  tried to cure a ranged-party regression on e10 and came out WORSE
+   *  overall (+1.3) and less consistent. Do not re-soften without new data. */
+  escortLead: 1.2,
+  /** Manhattan distance from the escort beyond which the party is failing to
+   *  shield it. Matches supportRadius: past this, help arrives too late. */
+  escortShieldRadius: 6,
+  /** Penalty per step beyond escortShieldRadius. Losing the charge loses the
+   *  encounter outright, so drifting off it is expensive. */
+  escortShield: 3.5,
+  /** Urgency multiplier on objective approach when the loss clock is close.
+   *  1 = no deadline pressure; ramps to this at the deadline. */
+  objectiveUrgencyMax: 3.0,
   /** Bonus for chipping an enemy into an ally's execute (Kill Shot) threshold. */
   killShotSetup: 12,
   /** Value of burning an enemy's shielded status with a cheap attack. */
@@ -1064,6 +1082,31 @@ function scoreEffectsOnTarget(
  * Returns 0 when there is no tile objective (every arena match, and every
  * kill-all encounter), so this is inert outside the case it is for.
  */
+/**
+ * OBJ1: how hard the clock is pressing, as a multiplier on objective approach.
+ *
+ * A race with a `round_reached` LOSS condition is not the same board on round
+ * 1 and round 5, but the old gradient was a flat -1.2/step either way — so the
+ * brain ambled toward a deadline it could see. Ramps linearly from 1 (plenty
+ * of time) to objectiveUrgencyMax at the deadline, and returns 1 when there is
+ * no deadline at all, which keeps every non-timed encounter byte-identical.
+ */
+function objectiveUrgencyMult(state: MatchState): number {
+  const obj = state.objective;
+  if (!obj) return 1;
+  const deadlines = obj.loss
+    .filter((l) => l.kind === 'round_reached')
+    .map((l) => (l as { round: number }).round);
+  if (deadlines.length === 0) return 1;
+  const deadline = Math.min(...deadlines);
+  const left = deadline - (state.roundNumber ?? 1);
+  if (left <= 0) return WEIGHTS.objectiveUrgencyMax;
+  // Pressure begins to bite inside the last 4 rounds.
+  const RAMP = 4;
+  if (left >= RAMP) return 1;
+  return 1 + (WEIGHTS.objectiveUrgencyMax - 1) * ((RAMP - left) / RAMP);
+}
+
 function raceUrgency(state: MatchState, target: UnitInstance): number {
   const obj = state.objective;
   if (!obj || target.ownerPlayerId !== obj.partyId) return 0;
@@ -1501,16 +1544,43 @@ function positionScore(
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
   // CAMPAIGN objective (A3): tile conditions shape positioning.
-  //  - Party side: units the condition covers are pulled to the marked tiles
-  //    (a big on-tile bonus + a distance gradient toward the nearest tile).
-  //  - Enemy side: standing ON a marked tile denies it (tiles are win
-  //    conditions for the party; a body on one blocks the landing).
+  //
+  // ⚠ OBJ1 (2026-08-31) — WHAT WAS TRIED HERE AND REVERTED, so nobody burns
+  // the same day twice. The brain plays objectives worse than a human (owner
+  // found e2, a fight, HARDER than e3, an objective, while the sim scored
+  // them 100% and 70%). Four fixes were implemented and A/B'd on a SEEDED
+  // harness (objectiveHarness.ts, 100 games x 36 cells):
+  //     (1) a win-completing tile paying 200 instead of a flat 25 — because
+  //         25 loses to killBase 55, i.e. winning was worth less than a kill;
+  //     (2) `simultaneous` support, so a tile an ally already holds stops
+  //         attracting a second body (e3 is "hold BOTH bridgeheads");
+  //     (3) clock urgency, sharpening the pull as a round_reached deadline
+  //         approaches;
+  //     (4) runner designation, so `scope: 'any'` pulls only the closest ally
+  //         instead of the whole party.
+  // NET RESULT: OBJ +1.1pts, and violently bimodal — e6/nightmare +67 and
+  // e10/nightmare +49, against e3/medium -55 and e7/medium -40. Not shippable:
+  // it moves cells more than it improves them.
+  //
+  // The diagnosed reason (4) backfired: on a ONE-TILE race like e7 the party
+  // advancing together is not redundancy, it is MUTUAL SUPPORT. Designating a
+  // lone runner sent it in unsupported, where unsupportedDangerMult says it
+  // dies — and a dead runner loses the race outright. Any future attempt must
+  // treat "who goes" as a COORDINATION problem (who goes, who screens, do
+  // they arrive together) rather than a per-unit position score. That is
+  // plan-level work, not a weight tweak.
+  //
+  // The ESCORT block below DID earn its place and stays — see it for why.
+  //  - Party side: units the condition covers are pulled to the marked tiles.
+  //  - Enemy side: standing ON a marked tile denies it.
   const objP = state.objective;
   if (objP) {
     const tileWins = objP.win.filter((w) => w.kind === 'units_at_tiles');
     if (tileWins.length > 0) {
       if (unit.ownerPlayerId === objP.partyId) {
+        // ⚠ TILE-OBJECTIVE SCORING IS DELIBERATELY UNCHANGED — see OBJ1 below.
         for (const w of tileWins) {
           if (w.kind !== 'units_at_tiles') continue;
           const applies = w.scope === 'any' || w.scope === 'all'
@@ -1524,6 +1594,28 @@ function positionScore(
         for (const w of tileWins) {
           if (w.kind !== 'units_at_tiles') continue;
           if (w.tiles.some((t) => t.x === pos.x && t.y === pos.y)) s += 15;
+        }
+      }
+    }
+
+    // ── ESCORT (ally_at_tiles): defect 3. The party does not stand on the
+    // goal itself — it clears the ROAD for an NPC and stays close enough to
+    // shield it. Pull toward the tile the escort must reach, but only enough
+    // to lead it there; the escort's own doctrine does the walking.
+    const escortWins = objP.win.filter((w) => w.kind === 'ally_at_tiles');
+    if (escortWins.length > 0 && unit.ownerPlayerId === objP.partyId) {
+      for (const w of escortWins) {
+        if (w.kind !== 'ally_at_tiles') continue;
+        const escort = state.units.find((u) => u.isAlive && w.unitIds.includes(u.instanceId));
+        if (!escort) continue;
+        // Lead, do not crowd: stand between the escort and its goal.
+        const goalGap = Math.min(...w.tiles.map((t) => manhattanDistance(pos, t)));
+        const escortGap = manhattanDistance(pos, escort.position);
+        s -= goalGap * WEIGHTS.escortLead * objectiveUrgencyMult(state);
+        // Staying in support range of the charge — falling behind means the
+        // escort walks into the next enemy alone, which is how e10 is lost.
+        if (escortGap > WEIGHTS.escortShieldRadius) {
+          s -= (escortGap - WEIGHTS.escortShieldRadius) * WEIGHTS.escortShield;
         }
       }
     }

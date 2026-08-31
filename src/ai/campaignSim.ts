@@ -225,6 +225,59 @@ export function simEncounterCell(
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
   const games = options.games ?? 100;
+  // ═══════════════════════════════════════════════════════════════════════
+  // DETERMINISM (2026-08-31). The engine rolls dodges with a bare
+  // `Math.random()` (abilityExecutor.ts) — the seeded rng reaches PLACEMENT
+  // only — so every balance number this project has produced carried
+  // uncontrolled run-to-run variance. Measured: the same cell, same code,
+  // same seed, ran 93% then 94%; a brain-change A/B showed 31 of 36 FIGHT
+  // cells "changing" when the edit provably could not touch them.
+  //
+  // That is fatal for before/after work, which is the whole point of the
+  // objective harness: at 100 games a cell is +/-10pts at 95%, and the
+  // battery's 40 games is +/-16pts, so real effects hide inside the noise and
+  // phantom ones appear.
+  //
+  // Seed Math.random for the duration of the cell, derived from the cell's own
+  // identity so cells stay independent but each one is reproducible. Restored
+  // in `finally` — leaking a patched Math.random into the rest of the process
+  // would be far worse than the problem being fixed. Same monkeypatch shape
+  // rulebookSpec.ts already uses to pin its roll-dependent checks.
+  const cellSeed = hashSeed(`${campaignSlug}|${encounterId}|${difficulty}|${partyName}|${options.seed ?? 1}`);
+  const realRandom = Math.random;
+  const seeded = makeRng(cellSeed);
+  Math.random = seeded;
+  try {
+    return simEncounterCellInner(campaignSlug, encounterId, difficulty, partyName, partySlugs, options, games);
+  } finally {
+    Math.random = realRandom;
+  }
+}
+
+/** FNV-1a over the cell identity — any stable string->int hash works; this one
+ *  is short, dependency-free and well-spread for short keys. */
+function hashSeed(key: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0) || 1;
+}
+
+type CellOptions = NonNullable<Parameters<typeof simEncounterCell>[5]>;
+
+function simEncounterCellInner(
+  campaignSlug: string,
+  encounterId: string,
+  difficulty: CampaignDifficulty,
+  partyName: string,
+  partySlugs: string[],
+  options: CellOptions,
+  games: number,
+): CampaignCellResult {
+  const campaign = CAMPAIGNS[campaignSlug];
+  const enc = campaign.encounters[encounterId];
   const level = options.level ?? enc.level;
   const rng = makeRng(options.seed ?? 1);
   const choices = options.choicesOverride ?? choicesForLevel(partySlugs, level, options.passives, options.gifts);
