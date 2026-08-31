@@ -12,7 +12,7 @@ we intend to ship — anything changed after the battery invalidates the battery
    changes are already in (shields/status, empty-cast net, door crossing).
    Passivity is the one still open; fixing it after the battery voids the
    battery. Diagnose the hold-back, fix, re-run the exploit suite.
-3. **Specials scaling policy.** Only ffh and assassinate scale at L6. Decide the
+3. ~~DONE 2026-08-31 (CAMPAIGN_SPECIAL_DAMAGE)~~ **Specials scaling policy.** Only ffh and assassinate scale at L6. Decide the
    rule (recommend: every damage special gets a L6 rung, sized like ffh's
    14→18 ≈ +30%) and apply once, so the sims measure the intended kit.
 

@@ -77,6 +77,46 @@ export const FFH_CAMPAIGN_DAMAGE = 18;
  *  at hpScale 1.5 — executes anti-scale with the difficulty dial itself. */
 export const ASSASSINATE_CAMPAIGN_PERCENT = 0.25;
 
+/**
+ * [A3, owner-approved 2026-08-31] EVERY damage special scales above the anchor.
+ *
+ * Before this, exactly two specials scaled (ffh, assassinate) and the other
+ * thirteen fought L6-L10 content at arena numbers — the owner's Flame Jet
+ * complaint ("feels pretty bad compared to Ring of Fire") was this gap, not a
+ * design intent. Guideline is ffh's own precedent, ~+30%, VARIED by rider:
+ *
+ *   - pure damage takes the full rung (whirlwind 16→21, dagger_toss 16→21,
+ *     flame_jet 16→21, piercing 12→16, longshot 15→20, drain 10→13);
+ *   - damage with a strong control rider takes a smaller one — the rider is
+ *     the point and does not shrink as HP pools grow (shockwave 9→11,
+ *     concussive 7→9, pinning 7→9, cold_snap 9→11, expose 16→20);
+ *   - incidental damage barely moves (roar 3→4, ignite 5→6 — their value is
+ *     the leap/weaken and the burn stacks, which scale with nothing).
+ *
+ * ⚠ SYMMETRIC BY CONSTRUCTION. The tuning lives on the ability MAP, so an
+ * enemy carrying a shared slug (e9's vanguard casts roar) gets the same
+ * number. That is the established ffh behaviour, the fiction agrees, and
+ * enemy difficulty has its own dial (hpScale) to trim with.
+ *
+ * ⚠ Status-only specials (heal, ward, purify, second_wind, fear, freeze,
+ * blizzard) are deliberately untouched — whether HEALS should scale is a
+ * separate question flagged for the battery, not smuggled in here.
+ *
+ * ⚠ PROVISIONAL until the battery runs (owner: "it will need to vary and
+ * everything will need to be tested"). classValue/choiceReport re-measure the
+ * intra-class spread; revise per special from evidence, never globally.
+ */
+export const CAMPAIGN_SPECIAL_DAMAGE: Readonly<Record<string, number>> = {
+  whirlwind: 21, shockwave: 11, roar: 4,
+  concussive: 9, shield_bash: 22,
+  dagger_toss: 21, expose: 20,
+  piercing: 16, pinning: 9, longshot: 20,
+  flame_jet: 21, ignite: 6,
+  grasp: 12, drain: 13, cold_snap: 11,
+};
+/** drain heals its caster a fixed amount; keep it ~80% of the stolen value. */
+export const DRAIN_CAMPAIGN_HEAL = 10;
+
 type TunableEffect = {
   type: string; value?: number;
   healthThreshold?: number; healthThresholdPercent?: number;
@@ -108,6 +148,28 @@ export function applyCampaignAbilityTuning<T extends TunableAbility>(
       effects: ffh.effects.map((e) =>
         e.type === 'damage' ? { ...e, value: FFH_CAMPAIGN_DAMAGE } : e),
     } as T);
+  }
+
+  // [A3] The general damage-special rung. Applied before the named exceptions
+  // so ffh's dedicated constant still wins if both ever list it.
+  for (const [slug, to] of Object.entries(CAMPAIGN_SPECIAL_DAMAGE)) {
+    const a = out.get(slug);
+    if (!a) continue;
+    let desc = a.description;
+    const effects = a.effects.map((e) => {
+      if ((e.type !== 'damage' && e.type !== 'lifesteal') || e.value === undefined) return e;
+      if (e.healthThreshold !== undefined || e.healthThresholdPercent !== undefined) return e; // executes scale by window, not value
+      // Rebuild the description from the numbers, never hand-edit it — the
+      // first standalone occurrence of the old value is the damage number.
+      desc = desc.replace(new RegExp(`\\b${e.value}\\b`), String(to));
+      const next: TunableEffect & { healValue?: number } = { ...e, value: to };
+      if (slug === 'drain' && (e as { healValue?: number }).healValue !== undefined) {
+        desc = desc.replace(new RegExp(`\\b${(e as { healValue?: number }).healValue}\\b`), String(DRAIN_CAMPAIGN_HEAL));
+        next.healValue = DRAIN_CAMPAIGN_HEAL;
+      }
+      return next;
+    });
+    out.set(slug, { ...a, description: desc, effects } as T);
   }
 
   const assn = out.get('assassinate');

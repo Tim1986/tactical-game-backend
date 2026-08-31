@@ -1840,3 +1840,35 @@ band (8/7%), which is a real tuning question for the rebalance, but it is a
 QUESTION now rather than an inversion: harder tiers are harder.
 
 ⚠ These are repair values, not final tuning. The battery re-measures everything.
+
+---
+
+## [A3] Specials scaling — every damage special gets a L6 rung. 2026-08-31
+
+Owner-approved: ~+30% guideline, varied, everything to be tested by the battery.
+`CAMPAIGN_SPECIAL_DAMAGE` in abilityOverrides.ts, applied by the same
+`applyCampaignAbilityTuning` every consumer already shares.
+
+| tier of rider | rung | specials |
+|---|---|---|
+| pure damage | full ~+30% | whirlwind 16→21 · dagger_toss 16→21 · flame_jet 16→21 · piercing 12→16 · longshot 15→20 · drain 10→13 (heal 8→10) |
+| strong control rider | ~+22-29% | shockwave 9→11 · concussive 7→9 · pinning 7→9 · cold_snap 9→11 · expose 16→20 · shield_bash 17→22 · grasp 9→12 |
+| incidental damage | minimal | roar 3→4 · ignite 5→6 |
+
+Unchanged: ffh (own constant, 18) · assassinate (window, not value) ·
+all status-only specials (heal/ward/purify/second_wind/fear/freeze/blizzard —
+**whether heals should scale is flagged for the battery, not smuggled in**).
+
+Properties, all pinned by tests: anchor holds (L5 byte-identical to arena);
+descriptions rebuilt from the numbers so the picker cannot lie, and
+`specialTuningNote` now shows the "At level 6: ..." upgrade line for every
+scaled special automatically; a NEW damage special cannot ship without a rung
+(coverage test sweeps the map). SYMMETRIC by construction — an enemy on a
+shared slug (e9's vanguard roar 3→4) gets the same number, the established ffh
+behaviour; enemy difficulty trims with hpScale.
+
+⚠ Flame Jet at 21 now OUTDAMAGES Ring of Fire at 18 single-target — which is
+the correct shape (line vs ring) and directly answers the owner's "Flame Jet
+feels pretty bad compared to Ring of Fire". The battery's choiceReport
+--axis specials re-measures the intra-class spread; revise per special from
+evidence.
