@@ -1014,3 +1014,98 @@ The truncation was a REGRESSION from this session: the status line was clamped
 to one row, and on e8 it carries "Room 1/3" AND the lock state, which does not
 fit 200pt at 11px. Now two rows, with the panel ceiling raised to pay for it —
 the log surrenders a row instead of the board losing space.
+
+---
+
+## Owner report batch, 2026-08-31 (post-gift, E8)
+
+### 1. Inspect panel — FIXED
+
+* **`gift_damage` shown as a raw slug** ("✨ Undying, gift_damage"). It is not a
+  passive at all — it is the flag the engine uses to carry the Deep Gift of
+  Fangs onto a unit — and it leaked into the passive vocabulary. Now filtered
+  out. Stride and Stone needed no equivalent fix: they were never flags, they
+  land directly on `movementRange`/`armorClass`, which is why the owner's
+  AC-gift hero "just shows him with increased AC".
+* **The damage number was the ability's raw value**, so a unit with the Gift and
+  a Veteran rung read 12 and hit for 15. `certainBasicDamageBonus()` is now
+  exported from `abilityExecutor` and used by the panel, so the client never
+  grows a second copy of the damage rules. It counts only modifiers already
+  certain before the attack is declared — Opportunist (needs a target),
+  Vengeful (needs the caster below half) and Channeler (needs an unspent move)
+  are excluded on purpose: a number promised before an attack must be one the
+  attack will deliver.
+* **"Veteran" in the combat log** is `CAMPAIGN_GROWTH`'s basic-damage rung —
+  the level-up damage point. Now included in the panel's number.
+* ⚠ **NOT fixed: the Sorcerer's art is tiny in the panel.** Not reproduced yet.
+  This is `boardArtScale` territory, and the sprite is correct on the board, so
+  it is panel-specific sizing. Needs a screenshot or a repro.
+
+### 2. Deep Gift idea from the owner — +1 RANGE
+
+> *"+1 range would be a very interesting deep gift, reach for melee, extra
+> range for ranged, not sure if that's a good idea or not."*
+
+Recorded for the rework. Worth noting it is the only proposed gift whose value
+is obviously class-dependent by construction — +1 to a melee reach of 1 is a
+100% increase and changes what the unit can do; +1 to a Ranger's 6 is 17% and
+changes almost nothing. That is either the best argument for it (a gift with a
+real per-class shape, which is exactly what the menu lacks) or the reason it
+needs a per-class value. `--per-class` is the instrument for deciding.
+
+### 3. Campaign resume forced re-placement — FIXED (regression from PLACE1)
+
+Leaving a campaign mid-encounter and returning dropped the player on the
+placement screen for units already standing on the board. `refresh()` clears
+`pendingMatchId` only when a match has ENDED, so a run left mid-fight comes back
+holding one; before PLACE1 that was harmless because the button read "To
+Battle!" and `launch()` quietly resumed. The picker replaced the button.
+The placement order picked was discarded by `launch()` anyway — so the screen
+was pure misinformation: *"that placement menu made me expect to have to start
+over."* Now shows **Return to Battle** and nothing else.
+
+### 4. Shields vs multi-hit — ENGINE IS CORRECT, no bug found
+
+> *"the first attack popped the shield, then it seemed like the second one was
+> the only one that rolled."*
+
+Verified with four new tests (`tests/shieldMultiHit.test.ts`):
+* Both daggers roll separately; shield absorbs the first that LANDS; the second
+  deals full damage (100 → 92).
+* A dodged first dagger leaves the shield standing (DGE-5).
+* A shielded multi-hit emits TWO resolvable strikes (absorb + damage), which is
+  exactly what the client turns into two dice — both the online and offline
+  display paths already treat `SHIELD_ABSORBED` as a die-worthy strike.
+
+So the rule the owner remembers establishing is in force and multi-hit does not
+break it. **What I could not verify is what he SAW** — he said "it seemed
+like", and the display should show two dice. Removed a stale comment in the
+client that still claimed the engine consumes the shield before rolling (untrue
+since 2026-08-28). ⚠ If two dice did not appear, that is a live display bug and
+needs the specific observation: one die or two?
+
+### 5. ⚠ E8 ENEMY AI PASSIVITY — open, and it matters for every anchor
+
+> *"I am hanging back, letting them come to me, but only one of them came, the
+> other two are hanging back, this bad AI behavior is making the fight much
+> easier with this method than it should be."*
+
+**This is the most consequential item in the batch.** If enemies do not commit
+against a turtling player, then:
+
+1. Every difficulty anchor taken so far describes a player who advanced. A
+   turtle strategy is strictly easier and is not measured anywhere.
+2. The sims cannot see it — both brains advance, so no cell in any table has
+   ever exercised the passive-enemy state. The whole measurement stack is blind
+   to this, exactly like the play-quality gap was before SKILL1.
+3. It is an exploit in the ordinary sense: a dominant strategy that trivialises
+   content, discovered by accident.
+
+Not diagnosed yet. First check should be whether the brain's advance is gated
+on the player being within some threat/approach radius, leaving units idle when
+nobody comes into range — and note the arena exploit-bot suite already has a
+`kite/ranged` case, so the harness for "player refuses to engage" exists and
+could be pointed at campaign encounters.
+
+⚠ BR1 RIDER: any brain change invalidates balance certification and requires a
+full re-run. Do not fix this mid-calibration without the owner's call.

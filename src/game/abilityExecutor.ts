@@ -435,6 +435,29 @@ function damageBreakdown(ctx: ExecutionContext, target: UnitInstance, base: numb
   return parts;
 }
 
+/**
+ * The flat bonus added to EACH damage effect of `unit`'s basic attack, counting
+ * only the modifiers that are already certain before the attack is declared.
+ *
+ * ⚠ FOR DISPLAY. The inspect panel showed the ability's raw value, so a unit
+ * carrying the Deep Gift of Fangs and a Veteran rung read "12" and then dealt
+ * 15, and the player could not know what an attack was worth before spending it
+ * (owner 2026-08-31: "I need to know how much damage I do before I attack").
+ * Exported so the panel cannot grow a second copy of the damage rules — the
+ * seam this file keeps getting bitten by.
+ *
+ * ⚠ CERTAIN MODIFIERS ONLY. Opportunist (needs a target), Vengeful (needs the
+ * caster below half) and Channeler (needs an unspent move) are all conditional
+ * and are deliberately excluded: a number promised before the attack must be
+ * one the attack will actually deliver.
+ */
+export function certainBasicDamageBonus(unit: UnitInstance, abilitySlug: string): number {
+  const u = unit as UnitInstance & { basicDamageBonus?: number; basicAbilitySlug?: string };
+  const gift = hasPassive(unit, 'gift_damage') ? GIFT_DAMAGE_BONUS : 0;
+  const growth = u.basicDamageBonus && u.basicAbilitySlug === abilitySlug ? u.basicDamageBonus : 0;
+  return gift + growth;
+}
+
 /** Thorns: an adjacent attacker whose hit landed takes 3 damage back. */
 function applyThornsRetaliation(ctx: ExecutionContext, target: UnitInstance): void {
   if (!hasPassive(target, 'thorns')) return;
