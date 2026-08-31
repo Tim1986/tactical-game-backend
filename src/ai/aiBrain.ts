@@ -257,6 +257,10 @@ export const WEIGHTS = {
   /** Urgency multiplier on objective approach when the loss clock is close.
    *  1 = no deadline pressure; ramps to this at the deadline. */
   objectiveUrgencyMax: 3.0,
+  /** Flat cost of NOT being on your door once the crossing is open. The room
+   *  bleeds 1 HP per unit per turn while the party dawdles (DOOR1), so standing
+   *  around is never free and the brain has to feel that. */
+  doorAttritionTax: 4,
   /** Bonus for chipping an enemy into an ally's execute (Kill Shot) threshold. */
   killShotSetup: 12,
   /** Value of burning an enemy's shielded status with a cheap attack. */
@@ -1511,6 +1515,48 @@ function firstStrikeMultFor(state: MatchState): number {
   return 1 + ((m - 1) * (end - r)) / (end - start);
 }
 
+/**
+ * Which exit door THIS unit should be heading for.
+ *
+ * The room ends when every living party member is standing on a door tile
+ * (DOOR1), so the party has to spread across the doors rather than race for the
+ * closest one. Greedy nearest-pair assignment over the real positions: repeatedly
+ * take the (unit, tile) pair with the smallest distance and fix it. Ties break on
+ * instanceId then tile order, so the whole thing is deterministic — two calls in
+ * the same turn must never hand a unit two different destinations.
+ *
+ * Returns undefined when there are more units than doors, which
+ * `buildEncounterState` now refuses to author, so the fallback is dead code kept
+ * only so a hand-built fixture cannot crash the brain.
+ */
+function assignedDoorTile(
+  state: MatchState,
+  ep: NonNullable<MatchState['encounterProgress']>,
+  unit: UnitInstance,
+): BoardPosition | undefined {
+  const party = ep.partyIds
+    .map((id) => state.units.find((u) => u.instanceId === id))
+    .filter((u): u is UnitInstance => !!u && u.isAlive)
+    .sort((a, b) => a.instanceId.localeCompare(b.instanceId));
+  if (party.length > ep.exitDoors.length) return undefined;
+
+  const takenUnits = new Set<string>();
+  const takenTiles = new Set<number>();
+  const result = new Map<string, BoardPosition>();
+  const pairs: { u: UnitInstance; ti: number; d: number }[] = [];
+  party.forEach((u) => ep.exitDoors.forEach((t, ti) => {
+    pairs.push({ u, ti, d: manhattanDistance(u.position, t) });
+  }));
+  pairs.sort((a, b) => a.d - b.d || a.u.instanceId.localeCompare(b.u.instanceId) || a.ti - b.ti);
+  for (const { u, ti } of pairs) {
+    if (takenUnits.has(u.instanceId) || takenTiles.has(ti)) continue;
+    takenUnits.add(u.instanceId);
+    takenTiles.add(ti);
+    result.set(u.instanceId, ep.exitDoors[ti]);
+  }
+  return result.get(unit.instanceId);
+}
+
 function positionScore(
   state: MatchState,
   unit: UnitInstance,
@@ -1546,9 +1592,26 @@ function positionScore(
     const doorActive = ep.doorMode === 'always'
       || !state.units.some((u) => u.isAlive && !partySet.has(u.instanceId));
     if (doorActive) {
-      const onDoor = ep.exitDoors.some((d) => d.x === pos.x && d.y === pos.y);
-      const nearest = Math.min(...ep.exitDoors.map((d) => manhattanDistance(pos, d)));
-      s += onDoor ? 30 : -nearest * 1.5;
+      // ⚠ ONE DOOR TILE EACH (DOOR1, 2026-08-31). The room now ends only when
+      // EVERY living party member stands on a door, so a pull toward "the
+      // nearest door" is no longer a gradient — it is a pile-up. All four units
+      // converge on the same tile, one stands on it, the rest hover adjacent
+      // because they cannot enter an occupied square, and `onDoor` is never
+      // true for the party. e8 fell to 10% on medium after the rule landed,
+      // which was the brain queueing at one door, not the content.
+      //
+      // Each unit is given its OWN tile before the gradient is read. The
+      // assignment is computed from the units' REAL positions, never from the
+      // candidate `pos` being scored — otherwise a unit's target tile would
+      // change as it considered each square and the gradient would point in
+      // several directions at once.
+      const mine = assignedDoorTile(state, ep, unit);
+      const onDoor = mine ? samePos(pos, mine) : ep.exitDoors.some((d) => samePos(pos, d));
+      const gap = mine ? manhattanDistance(pos, mine)
+        : Math.min(...ep.exitDoors.map((d) => manhattanDistance(pos, d)));
+      // The crossing also bleeds 1 HP per turn once the door is open
+      // (applyRoomAttrition), so dawdling has a real price the brain must feel.
+      s += onDoor ? 30 : -gap * 1.5 - WEIGHTS.doorAttritionTax;
     }
   }
 

@@ -1697,3 +1697,82 @@ independent of it and stand.
    (shields vs status blasts, the empty-cast net, and DOOR1 once taught).
 3. Then re-run GIFT1: those numbers were measured under the old brain.
 4. The owner then re-plays e6-e9 with a working Kill Shot and tuned numbers.
+
+---
+
+## [DOOR2] The brain learns the crossing — 2026-08-31
+
+The brain already had a door pull (`onDoor ? 30 : -nearest * 1.5`), written when
+ONE unit stepping on a tile advanced the room. DOOR1 made the room end only when
+EVERY living party member is on a door, and that turned the pull from a gradient
+into a pile-up: all four units head for the SAME nearest tile, one stands on it,
+the rest hover adjacent because they cannot enter an occupied square, and the
+crossing never completes.
+
+`assignedDoorTile()` now gives each unit its own door — greedy nearest-pair over
+the party's REAL positions (never the candidate tile being scored, or a unit's
+destination would change as it evaluated each square), deterministic on
+instanceId and tile order. Plus `doorAttritionTax`, so the brain feels the 1 HP
+per turn the crossing costs while it dawdles.
+
+### A/B, owner's comp, 120 games, DOOR1 content held constant
+
+| e8 | before | after |
+|---|---|---|
+| easy | 61% | 57% |
+| **medium** | **10%** | **18%** |
+| **hard** | **25%** | **34%** |
+| nightmare | 0% | 1% |
+
+Reasons on medium after: 99 losses, 21 wins, **zero stalls**. Before DOOR1
+existed, e8/medium was 20% — so the brain fix recovers essentially all of the
+regression, and the ~2 points that remain are the attrition the crossing is
+supposed to cost. The mechanism works; e8's distance from its band is content,
+and e8 is on the difficulty-inversion list (easy 0.87 · medium 1.04 · hard 0.92).
+
+Easy moved −4, which I am not going to explain away: it is within the noise of a
+120-game cell (±9 at 95%) and the same direction as the attrition cost.
+
+⚠ Only e8 is affected in Unlit Beacon — e10 is an escort and e12 is single-room.
+`moonberry e5/e10`, `sealeddeep e12`, `goblinopolis e4` and `lantern e11` all
+have door rooms and were never measured with DOOR1 at all.
+
+**STOPPING HERE per the owner.** The re-baseline, the gift re-run and the
+content work are not started.
+
+---
+
+## ⚠ CORRECTION — "equal values = a non-choice" was WRONG
+
+I wrote, twice, that a class whose three gift deltas are equal "has no decision
+to make". The owner pushed back: *"if the choices are all meaningful, that's
+good, they can make build or synergy calls based on strategy."*
+
+**He is right and I was wrong.** Equal STRENGTH is the design target, not a
+defect. Three gifts that all measure +5 can be three genuinely different plans —
+armour to survive a burst, damage to shorten the fight, movement to reach an
+objective — that happen to be equally good. That is a menu working.
+
+What I actually have evidence for is narrower, and it is about DOMINANCE:
+
+* a **dominated** option (barbarian movement −0.2, ranger movement −0.1) is
+  dead — nobody should ever take it;
+* a **dominant** option (fighter armour +13.0 against a next-best +5.8) is an
+  auto-pick.
+
+Win-rate delta measures STRENGTH. It cannot see whether two equally strong
+options play differently, so it can never tell a well-balanced menu from an
+interchangeable one — and I presented it as though it could.
+
+### The table re-read correctly
+
+**Warlock (+4.9 / +4.9 / +4.6) is the healthiest row in the table, not the
+worst.** Three substantial, near-equal options is exactly what the other seven
+classes should look like. I had it backwards.
+
+The real findings:
+* **Movement is the problem gift** — dead for barbarian and ranger, weak for
+  wizard (+1.4), cleric and sorcerer (+2.9). It wins nowhere except a Warlock
+  tie. That is one dead option on 6 of 8 classes.
+* **Fighter armour (+13.0) is over-tuned** — roughly double its own next-best.
+* Cleric, sorcerer and warlock are the models to aim the other five at.
