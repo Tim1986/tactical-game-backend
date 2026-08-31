@@ -174,6 +174,27 @@ export interface CampaignCellResult {
   reasons: Record<string, number>;
   /** [A8] Draw share > 10% flags a stall (kiting/mutual-standoff signature). */
   drawFlag: boolean;
+  /**
+   * MARGIN — how comfortably the party won, averaged over WINS only.
+   *
+   * ⚠ WIN RATE SATURATES, AND THAT IS NOT A ROUNDING PROBLEM. The owner ran
+   * one build through unlitbeacon e1 and e2, both scored 100%, and called one
+   * "very easy" and the other "medium-to-hard end of medium, I could have
+   * lost if I played badly" (2026-08-31). At the top of the range a win/loss
+   * counter has no resolution left, and "could I have lost" is a question
+   * about margin, not about outcome. A 100% cell won on 20% party HP is not
+   * the same content as a 100% cell won on 90%.
+   *
+   * Averaged over wins only on purpose: HP-at-loss is always ~0 and would
+   * just smear the signal with the loss rate, which winRate already reports.
+   * Undefined when the party never won.
+   */
+  marginHpPct?: number;
+  /** Mean surviving party members, over wins only. Distinguishes "won at 30%
+   *  HP with everyone alive" from "won at 30% because two units died". */
+  marginSurvivors?: number;
+  /** Mean turns taken, over wins only — a slow win is a close one. */
+  winTurns?: number;
 }
 
 export function simEncounterCell(
@@ -228,6 +249,17 @@ export function simEncounterCell(
   let draws = 0;
   let totalTurns = 0;
   let validationErrors = 0;
+  // Margin accumulators (wins only — see CampaignCellResult.marginHpPct).
+  let winHpRemaining = 0;
+  let winHpMax = 0;
+  let winSurvivors = 0;
+  let winTurnsTotal = 0;
+  // The party's TOTAL max HP for this cell, read off the probe state that was
+  // already built for validation — level growth, boons and difficulty deltas
+  // are all baked in, so the denominator matches what actually fought.
+  const partyMaxHp = probe.state.units
+    .filter((u) => u.ownerPlayerId === HUMAN)
+    .reduce((t, u) => t + u.maxHealth, 0);
   const reasons: Record<string, number> = {};
 
   for (let i = 0; i < games; i++) {
@@ -243,8 +275,14 @@ export function simEncounterCell(
       forceFirstPlayerId: HUMAN, // campaign matches are always human-first
       stateFactory,
     });
-    if (r.winnerSide === 'p1') playerWins++;
-    else if (r.winnerSide === 'draw') draws++;
+    if (r.winnerSide === 'p1') {
+      playerWins++;
+      // Margin is measured on the WIN path only — see marginHpPct.
+      winHpRemaining += r.totalHpRemaining.p1;
+      winHpMax += partyMaxHp;
+      winSurvivors += r.survivingUnits.p1;
+      winTurnsTotal += r.turns;
+    } else if (r.winnerSide === 'draw') draws++;
     totalTurns += r.turns;
     validationErrors += r.validationErrors;
     const key = r.winnerSide === 'draw' ? 'DRAW'
@@ -253,6 +291,7 @@ export function simEncounterCell(
   }
 
   const winRate = playerWins / games;
+  const marginHpPct = playerWins > 0 && winHpMax > 0 ? winHpRemaining / winHpMax : undefined;
   const [lo, hi] = TARGET_BANDS[difficulty];
   return {
     encounter: encounterId, difficulty, party: partyName, level, games,
@@ -261,6 +300,9 @@ export function simEncounterCell(
     validationErrors,
     reasons,
     drawFlag: draws / games > 0.1,
+    marginHpPct,
+    marginSurvivors: playerWins > 0 ? winSurvivors / playerWins : undefined,
+    winTurns: playerWins > 0 ? winTurnsTotal / playerWins : undefined,
   };
 }
 
@@ -317,7 +359,7 @@ if (isMain) {
 
   const pct = (n: number) => (n * 100).toFixed(0).padStart(3) + '%';
   console.log(`Campaign: ${campaign.title} — ${effectiveGames} games/cell${smoke ? ' (SMOKE)' : ''}\n`);
-  console.log('enc  lvl  difficulty  party     winrate  band        avg-turns');
+  console.log("enc  lvl  difficulty  party     winrate  band        avg-turns   margin");
   const outOfBand: string[] = [];
   const allCells: CampaignCellResult[] = [];
   for (const encId of encounterIds) {
@@ -334,6 +376,11 @@ if (isMain) {
         const flag = r.inBand ? '  ' : ' ⚠';
         console.log(
           `${encId.padEnd(4)} L${r.level}   ${diff.padEnd(10)} ${pname.padEnd(9)} ${pct(r.winRate)}    [${pct(lo)},${pct(hi)}]${flag}  ${r.avgTurns.toFixed(0)}`
+          // Margin: how comfortably the wins were won. At 100% win rate this
+          // is the ONLY remaining signal (owner, 2026-08-31).
+          + (r.marginHpPct !== undefined
+              ? `   margin ${pct(r.marginHpPct)} HP · ${r.marginSurvivors!.toFixed(1)}/4 alive`
+              : '')
           + (r.validationErrors > 0 ? `  ⚠ ${r.validationErrors} validation errors` : '')
           + (r.drawFlag ? `  ⚠ draws ${pct(r.draws / r.games)} (stall)` : ''),
         );

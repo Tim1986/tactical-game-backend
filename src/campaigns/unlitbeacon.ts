@@ -157,7 +157,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       maxHealth: 36, armorClass: 11, specialSlug: 'freeze',
       nightmare: { acBonus: 1 },
     },
-    // ── The living interlude: Sorrel's poacher crew (cultist art) ──
+    // ── Sorrel's crew: living bosses, raised labour ──
     glacier_poacher: {
       baseClass: 'sorcerer', artKey: 'cultist', name: 'Glacier Poacher',
       maxHealth: 34, armorClass: 9, specialSlug: 'ignite',
@@ -169,7 +169,12 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       nightmare: { acBonus: 1 },
     },
     poacher_cutter: {
-      baseClass: 'rogue', artKey: 'cultist', name: 'Poacher Cutter',
+      // ⚠ SKELETON art, not cultist — owner 2026-08-31: four enemies sharing one
+      // cultist silhouette made e4 unreadable ("it is really confusing to
+      // play"). skeleton_berserker is the ROGUE-chassis skeleton, so the art
+      // matches the kit, and no other e4 enemy uses it. The fiction below
+      // makes them Sorrel's raised labour rather than living knife-hands.
+      baseClass: 'rogue', artKey: 'skeleton_berserker', name: 'Poacher Cutter',
       maxHealth: 40, armorClass: 8, movementRange: 4,
       abilities: ['twin'],
       nightmare: { acBonus: 1 },
@@ -1086,12 +1091,12 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     },
     road_note: {
       kind: 'story',
-      text: 'The bridgeheads hold, and for one long breath the valley is quiet.\n\n"They\'ll keep coming," Tam says, awake at last and refusing to be put back to bed. "As long as the beacon\'s dark, they\'ll keep coming. So light it again — that\'s the answer, isn\'t it? Except—" Tam\'s face does something complicated. "Except Gran said... no. Never mind what Gran said. The Vigil burns emberwood. The grove\'s halfway up the pass. Go. I\'ll mind the town."\n\nHalfway up the pass, {mainName} smells the answer before seeing it: woodsmoke. The emberwood grove is burning — and not by accident. Poachers move among the trees with torches and sledges, stripping four hundred years of the beacon\'s fuel supply for charcoal money while the town below fights for its life.',
+      text: 'The bridgeheads hold, and for one long breath the valley is quiet.\n\n"They\'ll keep coming," Tam says, awake at last and refusing to be put back to bed. "As long as the beacon\'s dark, they\'ll keep coming. So light it again — that\'s the answer, isn\'t it? Except—" Tam\'s face does something complicated. "Except Gran said... no. Never mind what Gran said. The Vigil burns emberwood. The grove\'s halfway up the pass. Go. I\'ll mind the town."\n\nHalfway up the pass, {mainName} smells the answer before seeing it: woodsmoke. The emberwood grove is burning — and not by accident. Poachers move among the trees with torches and sledges, stripping four hundred years of the beacon\'s fuel supply for charcoal money while the town below fights for its life. And swinging beside them, tireless, are the cutters: dead men in poachers\' leathers, working the saw-lines with the awful patience of things that do not need to rest.',
       next: 'grove_pre',
     },
     grove_pre: {
       kind: 'encounter', encounter: 'e4',
-      preText: 'A woman in a fine fur coat — Sorrel, by the way the others keep looking at her — sees the party and sighs like an accountant interrupted at lunch. "The dead don\'t buy charcoal," she calls across the burning grove. "You want to lecture somebody, lecture them." Her crew fans out among the fire lanes, knives and torches out. They know exactly which ground is about to burn.',
+      preText: 'A woman in a fine fur coat — Sorrel, by the way the others keep looking at her — sees the party and sighs like an accountant interrupted at lunch. "The dead don\'t buy charcoal," she calls across the burning grove. "They do cut it, though — cheaper than a living crew, and they never once asked me for wages." She nods at the shapes shambling out of the smoke in dead men\' leathers. "Whatever your beacon kept asleep woke up hungry and short of hands. I made an arrangement." Her living crew fans out among the fire lanes, knives and torches out. They know exactly which ground is about to burn.',
       next: 'lv4',
     },
     lv4: { kind: 'levelup', level: 4, next: 'icefall_note' },
