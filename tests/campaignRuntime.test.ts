@@ -144,3 +144,44 @@ describe('campaign content sanity (all registered campaigns)', () => {
     expect(renderStoryText('{if a}yes{/if}!', 'x', {})).toBe('!');
   });
 });
+
+describe('[PLACE1] placementOrder — the player picks who stands where', () => {
+  const party = ['fighter', 'ranger', 'cleric', 'wizard'];
+  const choices = party.map(() => ({}));
+  const build = (order?: number[]) =>
+    buildEncounterState(lantern, 'e1', party, choices, 1, 'medium', 'h', 'e',
+      undefined, undefined, undefined, order);
+
+  /** Player units in party order, with the tile each ended up on. */
+  const tilesOf = (order?: number[]) => {
+    const { state } = build(order);
+    return state.units.filter((u) => u.ownerPlayerId === 'h').map((u) => u.position);
+  };
+
+  it('defaults to identity — omitting it is byte-identical to the old behaviour', () => {
+    const tiles = lantern.encounters['e1'].playerPlacement;
+    expect(tilesOf()).toEqual(party.map((_, i) => tiles[i]));
+  });
+
+  it('honours a permutation: reversing it swaps front and back rank', () => {
+    const tiles = lantern.encounters['e1'].playerPlacement;
+    const rev = [3, 2, 1, 0];
+    expect(tilesOf(rev)).toEqual(rev.map((t) => tiles[t]));
+  });
+
+  it('never stacks two units on one tile', () => {
+    const got = tilesOf([2, 0, 3, 1]);
+    expect(new Set(got.map((p) => `${p.x},${p.y}`)).size).toBe(got.length);
+  });
+
+  // A malformed order must fail LOUD at build time. Silently ignoring it would
+  // put two units on one tile and surface as an unrelated engine bug later.
+  it.each([
+    ['a duplicate', [0, 0, 1, 2]],
+    ['wrong length', [0, 1, 2]],
+    ['out of range', [0, 1, 2, 9]],
+    ['negative', [0, 1, 2, -1]],
+  ])('rejects %s', (_label, order) => {
+    expect(() => build(order as number[])).toThrow(/placementOrder/);
+  });
+});

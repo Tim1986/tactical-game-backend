@@ -106,3 +106,70 @@ one real blemish.
 | e10 | 1.15 | 1.30 | 1.60 | 1.78 |
 | e11 | 1.30 | 1.70 | 1.80 | 1.90 |
 | e12 | 1.58 | 1.80 | 1.95 | 2.30 |
+
+## Owner playtest, medium — 2026-08-31 (v1.0.98)
+
+Live calibration by the owner. **These are the human anchors the sim numbers
+get mapped onto** — record every one, they are the scarce data.
+
+| Enc | Owner verdict |
+|---|---|
+| e1 | "Felt very easy — the EASY END OF MEDIUM. Fine for a pre-specials opener, but pushing it." |
+| e2 | Root specials completely dead: no rootable melee enemy. |
+
+### ⚠ FINDING — root/control specials are dead in 5 of 12 encounters
+
+Owner (e2): *"Both of my specials have roots, and neither is useful at all...
+I suspect this campaign is overusing Stalwart... if you have roots and
+opportunist and you can't root anything, all your abilities are completely
+useless in some encounters, which makes them completely unplayable, and that
+is going to severely narrow down the viable build options."*
+
+Measured against the roster. Stalwart (immune to push/pull/**root**/weaken/
+expose) is carried by `shelf_pikeman`, `honor_guard`, `marshal_vail` — and
+`shelf_pikeman` is the single most-used enemy in the campaign (12 appearances,
+next-highest is 9).
+
+⚠ **e1 is EXCLUDED — it is L1 and nobody has a special yet** (owner
+correction 2026-08-31; specials unlock L2 hero/companion-1, L3 for the rest).
+Its all-Stalwart line is fine by design. Count only encounters where the kit
+actually exists:
+
+| | Encounters |
+|---|---|
+| **No rootable MELEE enemy (specials live)** | **e2, e6, e7, e12** — 4 of 11 |
+| of those, arguably fine by design | e12 (finale of hand-picked guards SHOULD be root-immune) |
+| **the real problem set** | **e2, e6, e7** |
+
+e6/e7 are all-caster/ranged rosters (meredrowned ×3; wisps + voices), so a
+root has no melee to lock down even where it lands. e2 is a Stalwart wall.
+
+**e2 is the worst of the three and should be fixed first**: it is the FIRST
+encounter where a special exists at all, so a root build's introduction to its
+own kit is "your special does nothing." That is where a player decides the
+build was a mistake.
+
+**Why this is a build-viability bug, not a flavor problem.** A campaign party
+is LOCKED for the run. A player who takes Pinning Shot + Opportunist — a
+coherent, signposted build — finds their special AND their passive inert in
+five encounters they cannot re-comp around. That is the "wall" the process
+targets, but buildBattery's wall check cannot see it: the build still *wins*
+the fight on basic attacks, it just plays with a dead kit.
+
+**Owner's design rule (ratified 2026-08-31):** avoid encounter design where
+there are NO rootable melee enemies. *"Some is fine, it limits your options,
+but [not] all your abilities completely useless."*
+
+**Proposed acceptance test (add to BALANCE_PROCESS_V2 once agreed):** for each
+control-tag (root, push/pull, weaken, expose), at most ~20% of a campaign's
+encounters may present zero valid targets for it, and never two in a row
+early. This is a CONTENT-LINT check — it is static analysis of the roster, not
+a sim, so it costs nothing to run and belongs beside the smoke pass.
+
+**Levers, cheapest first:** (1) e2 — swap the `shelf_pikeman` for a
+non-Stalwart melee body, or add a third enemy that is rootable; (2) e6/e7 —
+add one rootable melee body to the caster line; (3) leave e1 (no specials
+yet) and e12 (finale, root-immunity is the point) alone.
+
+⚠ Not applied. Content changes stay blocked on the owner (Trilogy rule), and
+any change re-runs the battery.

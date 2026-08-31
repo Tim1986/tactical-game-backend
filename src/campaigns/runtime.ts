@@ -441,6 +441,19 @@ export function buildEncounterState(
    *  editing the campaign file and re-verifying contentHash per probe.
    *  Never set by live play — the mobile runner does not pass it. */
   hpScaleOverride?: number,
+  /** [PLACE1] Which placement tile each party slot takes: `placementOrder[i]`
+   *  is the INDEX into `enc.playerPlacement` for party slot `i`. Undefined =
+   *  identity (slot i -> tile i), which is exactly the historical behaviour,
+   *  so every existing caller and every sim is byte-identical without it.
+   *
+   *  ⚠ WHY THIS EXISTS. The default is not merely arbitrary, it is INVERTED:
+   *  in every Unlit Beacon encounter tiles 0-1 are the BACK rank and 2-3 the
+   *  FRONT, while party order is hero -> companions. A Fighter hero therefore
+   *  starts at the back and whatever was picked fourth (often the caster) is
+   *  shoved to the front (owner repro 2026-08-31). The fix is player agency,
+   *  not a new default — the player picks on the encounter board, seeing the
+   *  enemies and terrain. */
+  placementOrder?: number[],
 ): EncounterBuild {
   const enc = campaign.encounters[encounterId];
   if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
@@ -508,11 +521,26 @@ export function buildEncounterState(
     }
   }
 
+  // A malformed order must fail LOUD here, not silently stack two units on one
+  // tile (which the engine would then treat as an occupied-tile bug far away).
+  if (placementOrder) {
+    const n = partySlugs.length;
+    const ok = placementOrder.length === n
+      && new Set(placementOrder).size === n
+      && placementOrder.every((t) => Number.isInteger(t) && t >= 0 && t < enc.playerPlacement.length);
+    if (!ok) {
+      throw new Error(`Encounter ${encounterId}: placementOrder must be a permutation of ${n} distinct tile indices within 0..${enc.playerPlacement.length - 1}, got [${placementOrder.join(',')}]`);
+    }
+  }
+
   const unitNames: Record<string, string> = {};
   const playerUnits = partySlugs.map((slug, i) => {
     const def = DEFAULT_UNITS[slug];
     if (!def) throw new Error(`Unknown party slug: ${slug}`);
-    const inst = buildCampaignPlayerInstance(def, humanId, enc.playerPlacement[i], level, partyChoices[i]);
+    // placementOrder[i] = which placement tile slot i occupies (identity default).
+    const tileIdx = placementOrder?.[i] ?? i;
+    const tile = enc.playerPlacement[tileIdx] ?? enc.playerPlacement[i];
+    const inst = buildCampaignPlayerInstance(def, humanId, tile, level, partyChoices[i]);
     if (i === 0 && mainName) unitNames[inst.instanceId] = mainName;
     return inst;
   });
