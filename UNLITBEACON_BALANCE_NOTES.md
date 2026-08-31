@@ -453,3 +453,101 @@ campaign. e3 also sits at median 84 against a 65-80 band, so it IS above band;
 the question is only which lever closes the gap without punishing the floor.
 
 ⚠ BLOCKED ON OWNER — content change, trilogy rule. Nothing edited.
+
+---
+
+## e4 anchor — owner, 2026-08-31 (calibration run 3)
+
+> *"E4 is a weird, weird fight. It's an incredible fight, genuinely challenging
+> and interesting... First attempt I played it very poorly, got unlucky with the
+> dice, and failed. But honestly, that was on me... On the replay I played much
+> better and beat it comfortably... I'm gonna say it's okay as is for medium,
+> but it's on the hard end of medium for sure... For E3, I can do kinda whatever
+> order of moves and I'll be fine, I'm gonna overpower it. For E4, most opening
+> moves are bad, but there are a couple of good ones in there that I need to
+> start with. Opening placement helps incredibly too, that gives me agency I
+> desperately need in that fight... bad play is punished much harder than in
+> most... it might be the most fun fight in the campaign."*
+
+**Verdict: SHIP AS IS. Hard end of medium.** Owner's caveat: his comp runs only
+two melee; three-melee comps will find it harder.
+
+### [SKILL1] The instrument this anchor forced — measuring play quality
+
+The owner's core observation is that e4's difficulty lives in the gap between
+good and bad play, and that *"getting data on a fight this complicated is going
+to be hard because it's just really high variance"*. He is right, and it
+explains a contradiction the sims could not previously see: **e4's sim win rate
+is 100% and its placement spread is 22 points — one of the narrowest in the
+campaign — while the owner reports it as the hardest fight to play and the one
+where placement helps most.**
+
+The sim could not see it because the sim has no play-quality variance. It plays
+every game near-optimally, so an encounter whose difficulty is "punishes bad
+play" is invisible to it by construction.
+
+`simEncounterCell` now takes `playerBrain: 'optimal' | 'baseline'`. BaselineBrain
+(walk to nearest, swing) already existed as the arena's naive bot and stands in
+for a player not reading the fight. The gap is the **skill delta**.
+
+### Skill delta, medium, owner's comp, 120 games
+
+| enc | optimal | baseline | delta |
+|---|---|---|---|
+| e6 | 100 | 0 | **+100** |
+| e5 | 98 | 3 | **+94** |
+| e7 | 90 | 0 | **+90** |
+| **e4** | **100** | **11** | **+89** |
+| e2 | 93 | 16 | +78 |
+| e1 | 100 | 42 | +58 |
+| e12 | 43 | 0 | +43 |
+| e9 | 32 | 1 | +31 |
+| e10 | 99 | 76 | +23 |
+| e8 | 20 | 0 | +20 |
+| **e3** | **85** | **74** | **+11** |
+| e11 | 3 | 0 | +3 |
+
+⚠ **The delta is only interpretable where the optimal win rate is high.** e8,
+e9, e11 and e12 are censored by the floor — a bot cannot lose by more than
+everything. Among cells the party can actually win, the ranking is real.
+
+### Two blind confirmations of the owner's reads
+
+1. **e4 = +89, fourth-highest.** *"Bad play is punished much harder than in
+   most."* Measured, independently, before this text was read against the data.
+2. **e3 = +11, the LOWEST of any winnable cell.** *"I can do kinda whatever
+   order of moves and I'll be fine."* The naive bot wins e3 **74%** of the time.
+
+This is the strongest validation any instrument in this project has produced:
+two qualitative reads, one instrument, no tuning, exact agreement.
+
+### Placement matters MOST when play is imperfect
+
+Running the opening sweep under both brains resolves the e4 placement paradox:
+
+| | optimal spread | baseline spread |
+|---|---|---|
+| e3 | 57 pts (median 83) | 40 pts (median **85**) |
+| e4 | 25 pts (median 98) | **58 pts** (median 18) |
+
+e4's opening is worth **more than twice as much to a weak player as to a strong
+one** — the owner's *"placement gives me agency I desperately need in that
+fight"*, measured. The sim's narrow 22-point spread was an artifact of a brain
+that plays well enough not to need the help.
+
+And on e3 the naive bot's median (85%) is *higher than the optimal brain's*
+(83%). Play quality is worth nothing there.
+
+### What this says about the e3 decision (still blocked on owner)
+
+e3's problem is not that its numbers are too low — it is that **skill is worth
++11 points there and +89 in e4**. Raising `hpScaleOverride.medium` on e3 makes
+a fight that ignores play quality into a *longer* fight that ignores play
+quality. The e4 anchor is the proof that this campaign can do better: same
+level range, same party, an encounter where the opening matters, the hazard
+punishes greed, and a two-target Flame Jet (16 unblockable, line, range 4)
+is a real mistake to be played around.
+
+**Recommendation for the rebalance pass: treat skill delta as a first-class
+target alongside win rate.** A medium encounter wanting +11 from good play is
+mis-designed regardless of where its win rate sits.

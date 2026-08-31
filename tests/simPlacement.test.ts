@@ -84,3 +84,16 @@ describe('frontlineOrder', () => {
     }
   });
 });
+
+describe('[SKILL1] the player-brain axis', () => {
+  it('the baseline bot does strictly worse where play quality matters', async () => {
+    const { simEncounterCell } = await import('../src/ai/campaignSim.js');
+    const P = ['barbarian', 'sorcerer', 'warlock', 'rogue'];
+    // e6 measures +100 points of skill delta at 120 games; 12 games is ample
+    // separation without making the suite slow.
+    const opt = simEncounterCell('unlitbeacon', 'e6', 'medium', 'custom', P, { games: 12 });
+    const base = simEncounterCell('unlitbeacon', 'e6', 'medium', 'custom', P,
+      { games: 12, playerBrain: 'baseline' });
+    expect(opt.winRate).toBeGreaterThan(base.winRate);
+  });
+});
