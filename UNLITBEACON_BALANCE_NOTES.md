@@ -344,3 +344,65 @@ The first implementation invented one ("advance along +x") and it cost e8 fifty
 points against the plain default before the room-wave placement was found and
 used instead. `frontlineOrder` now returns the identity order when it has no
 enemies to face. When the information isn't there, change nothing.
+
+---
+
+## [PLACE1-SEARCH] Exhaustive opening sweep — the numbers were never difficulty
+
+`placementSearch.ts`, owner's comp, medium, all 24 openings x 80 games x 12
+encounters. Full data: `balance_runs/placement_search_medium.json`.
+
+| enc | best | worst | spread | median | frontline (rank) | slot-order (rank) |
+|---|---|---|---|---|---|---|
+| e1 | 100 | 99 | 1 | 100 | 100 (#7) | 100 (#12) |
+| e2 | 99 | 70 | 29 | 88 | 94 (#8) | 98 (#3) |
+| e3 | 96 | 36 | **60** | 84 | 84 (#14) | 96 (#1) |
+| e4 | 100 | 78 | 22 | 99 | 100 (#3) | 100 (#8) |
+| e5 | 100 | 75 | 25 | 99 | 96 (#19) | 99 (#13) |
+| e6 | 100 | 70 | 30 | 100 | 100 (#19) | 70 (#24) |
+| e7 | 100 | 10 | **90** | 62 | 91 (#8) | 35 (#18) |
+| e8 | 81 | 11 | **70** | 57 | 20 (#22) | 57 (#12) |
+| e9 | 96 | 15 | **81** | 51 | 29 (#16) | 53 (#12) |
+| e10 | 100 | 76 | 24 | 96 | 100 (#2) | 100 (#1) |
+| e11 | 94 | 4 | **90** | 37 | 4 (#24) | 14 (#19) |
+| e12 | 100 | 20 | **80** | 56 | 50 (#16) | 94 (#2) |
+
+**Mean spread: 50 points. Seven of twelve encounters exceed 60.**
+
+### What this retires
+
+Every certification, every band check, every tuning pass on this campaign was
+performed on ONE opening out of 24, chosen by an accident of party order. The
+target band is 65-80%; the average encounter's placement spread is 50 points
+wide. **The measurement error was two and a half times the width of the band
+being measured.** No conclusion drawn from a single-opening run survives this,
+in either direction — cells that looked too hard and cells that looked too easy
+alike.
+
+The two openings the sims have actually used are not systematically good or
+bad, which is the worst case: slot-order ranked #1 on e3 and #24 on e6;
+frontline ranked #2 on e10 and #24 on e11. Neither is a floor, neither is a
+ceiling, and their disagreement is not a bias that could be corrected — it is
+noise of a size that swamps the signal.
+
+### What replaces the old number
+
+A cell is now reported as **median (best-worst)**. Median is the honest single
+figure: what a player who places without insight tends to get. Best is a
+ceiling that requires both perfect placement AND the brain playing it out as
+well as a human would, which on objective cells it does not.
+
+Medium band, read off the median column: e1 100 · e2 88 · e3 84 · e4 99 ·
+e5 99 · e6 100 · e7 62 · e8 57 · e9 51 · e10 96 · e11 37 · e12 56.
+
+⚠ Nine of twelve sit outside the 65-80 band on the median, six of them ABOVE
+it. Do not act on this yet — see the calibration contract: sim medians are a
+floor on objective cells and the owner's on-device reads are the anchor.
+
+### e11 is not a difficulty problem, it is a placement trap
+
+e11's median is 37% but its best opening is 94% — and BOTH openings the sims
+used rank in the bottom six (#24 and #19). The "structural bimodality"
+diagnosed at [pass 3] and blamed on `loss:main_dead` was, at least in part,
+this: the encounter is winnable and the sim was placing into the trap every
+single time. Re-open the e11 conclusion.

@@ -220,6 +220,11 @@ export function simEncounterCell(
     /** [E2 balancing] Probe a specific enemy-HP multiplier without editing
      *  content — the calibration walk's lever. */
     hpScale?: number;
+    /** [PLACE1-SEARCH] Fight from an EXPLICIT opening instead of the
+     *  melee-forward heuristic. This is what placementSearch.ts sweeps; a cell
+     *  is only a difficulty statement relative to an opening, so the search
+     *  needs to name the opening rather than accept the default one. */
+    placementOrder?: number[];
   } = {},
 ): CampaignCellResult {
   const campaign = CAMPAIGNS[campaignSlug];
@@ -290,7 +295,7 @@ function simEncounterCellInner(
   // [PLACE1] Melee forward, ranged back — the opening any player picks, and
   // the one the slot-order default gets backwards. See simPlacement.ts for why
   // this is sim-only and why it moved e2 by a full difficulty band.
-  const placement = frontlineOrder(
+  const placement = options.placementOrder ?? frontlineOrder(
     partySlugs,
     enc.playerPlacement,
     (enc as { enemyPlacement?: BoardPosition[]; rooms?: { enemyPlacement?: BoardPosition[] }[] })

@@ -1,228 +1,232 @@
 /**
- * placementSearch.ts — find each roster's best OPENING PLACEMENT by playing it,
- * not by scoring it with a heuristic.
+ * placementSearch.ts — how much of an encounter's difficulty is the OPENING?
  *
- *   npx tsx src/ai/placementSearch.ts [--cands 28] [--screen 12] [--confirm 60]
- *                                     [--climb 2] [--out placements.json]
+ * WHY THIS EXISTS. Every campaign number this project has ever recorded was
+ * measured from ONE opening, and nobody knew which one. On 2026-08-31 the sim
+ * learned to place melee forward instead of using slot order, and e12 moved
+ * from 94% to 45% — a 49-point swing from swapping two units between a front
+ * tile and a back tile. No tuning lever in the campaign (HP scale, boons, deep
+ * gifts) moves a cell that far. Opening placement was, and had always been, the
+ * largest uncontrolled input to campaign difficulty.
  *
- * ── Why this exists ────────────────────────────────────────────────────────
- * placement.ts builds formations from a doctrine. Sweeping its weights (the
- * since-deleted placementSweep.ts) found no improvement — but that was
- * measuring the wrong thing: a placement change swings an INDIVIDUAL matchup by
- * up to 35 points (sd ~22) while averaging to near zero across a diverse field.
- * Small weight tweaks move placements one tile and vanish into that average.
+ * Swapping one arbitrary opening for a different arbitrary opening does not fix
+ * that — it just re-rolls the unknown. The fix is to stop sampling one point and
+ * measure the whole space, which for a four-unit party is 24 permutations and
+ * therefore EXHAUSTIVE, not a search at all. There is no heuristic left to be
+ * wrong about.
  *
- * WHAT THIS TOOL FOUND, AND WHY IT WAS NOT ADOPTED (2026-08-09)
- * It beat the heuristic by +8.0 points average, up to +19. Re-tested against
- * opponents placed RANDOMLY, the same placements scored +0.0 — six rosters up,
- * six down. The gains were fitted to the exact tiles the fixed field happened
- * to be standing on, not to better formations, and the winning shapes were
- * tellingly corner-clustered. ALWAYS re-test a winner against a randomised
- * field before adopting it. (Known flaw: the heuristic seed can be unlucky in
- * the low-game screen round and miss the confirm cut, which is why two rosters
- * "lost" to their own baseline. Take max(heuristic, searched) if you use it.)
+ * WHAT IT REPORTS, and why each part earns its place:
  *
- * So: search the placements themselves. For each roster, generate candidate
- * formations, play each against the whole field, and keep the one with the
- * best average — reporting its worst matchup too, because a formation that
- * crushes half the field and dies to the rest is a coin flip, not a plan.
+ *   best / worst / spread   The difficulty RANGE of the encounter. A cell with
+ *                           a 50-point spread is not "72% hard", it is a
+ *                           placement puzzle with a difficulty that depends on
+ *                           solving it.
+ *   median                  The honest single number when one is needed: what
+ *                           a player who places without insight tends to get.
+ *   rank of the default     Where the number we have been quoting actually sat.
+ *                           This is the instrument's whole point — it converts
+ *                           every historical measurement from "the difficulty"
+ *                           into "the Nth-best of 24 openings", retroactively.
  *
- * ── Method ─────────────────────────────────────────────────────────────────
- *  1. SCREEN   every candidate at low game count, keep the top few.
- *  2. CONFIRM  the survivors at high game count.
- *  3. CLIMB    the winner: move one unit to one free tile, re-confirm, repeat
- *              while it improves. (Catches the last tile or two the sampler
- *              missed.)
+ * ⚠ COMMON RANDOM NUMBERS. The per-cell seed deliberately does NOT include the
+ * opening, so all 24 orders start from the same dice stream. They diverge the
+ * moment the units stand somewhere different — but the shared start makes this
+ * a matched-pairs comparison rather than 24 independent samples, which is what
+ * lets a 200-game cell resolve a 5-point difference between two openings.
  *
- * Opponents always stand where the CURRENT heuristic puts them, so every
- * candidate is judged against one stable field. That means the result is
- * "best reply to today's field" — after adopting new placements the field has
- * moved, so a second pass would refine further. One pass captures most of it.
- *
- * The real game saves placement with the team, so neither side adapts per
- * opponent — optimising the field average is exactly the choice a player
- * faces, which is why the average (not the per-matchup best) is the target.
+ * ⚠ THIS MEASURES THE BRAIN'S OPENING, NOT A HUMAN'S. `best` is the ceiling a
+ * perfectly-placing player reaches only if the brain then plays it as well as
+ * they would. On FIGHT cells that is close to true; on OBJECTIVE cells the
+ * brain is still the weak link and the whole range shifts down. Read the range,
+ * not the endpoint.
  */
-import { runMatch } from './simHarness.js';
-import { OptimalBrain } from './aiBrain.js';
-import { buildAbilityMap, DEFAULT_UNITS } from './defaultData.js';
-import { planPlacement, mirrorPlacement } from './placement.js';
-import { FABLE_TEAMS, fableCustomizations } from '../config/fableTeams.js';
-import { BoardPosition } from '../types/matchState.js';
-import { AbilityDefinition, UnitCustomization } from '../types/index.js';
-import fs from 'node:fs';
+import { CAMPAIGNS } from '../campaigns/index.js';
+import { simEncounterCell, REPRESENTATIVE_PARTIES } from './campaignSim.js';
+import { frontlineOrder } from './simPlacement.js';
+import { CampaignDifficulty } from '../campaigns/types.js';
+import type { BoardPosition } from '../types/matchState.js';
+import { writeFileSync } from 'fs';
 
-const argv = process.argv.slice(2);
-const num = (k: string, d: number) => { const i = argv.indexOf('--' + k); return i >= 0 ? Number(argv[i + 1]) : d; };
-const str = (k: string, d: string) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
-
-const N_CAND   = num('cands', 28);
-const N_SCREEN = num('screen', 12);
-const N_CONFIRM= num('confirm', 60);
-const N_CLIMB  = num('climb', 2);
-const N_CLIMB_EVALS = num('climbEvals', 24);
-const N_CLIMB_GAMES = num('climbGames', 20);
-const OUT      = str('out', 'placements.json');
-
-const map = buildAbilityMap();
-const normalized = new Map<string, AbilityDefinition>(map as never);
-
-/** Legal P1 deploy tiles: x 0–2, minus the two removed corners. */
-const ZONE: BoardPosition[] = [];
-for (let x = 0; x <= 2; x++) for (let y = 0; y < 8; y++) {
-  if (x === 0 && (y === 0 || y === 7)) continue;
-  ZONE.push({ x, y });
-}
-
-/** Deterministic RNG so a run is reproducible. */
-function makeRng(seed: number) {
-  let s = seed >>> 0;
-  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0x100000000; };
-}
-
-const key = (p: BoardPosition[]) => p.map((q) => `${q.x},${q.y}`).join('|');
-const isMelee = (slug: string) => {
-  const abs = DEFAULT_UNITS[slug].abilities.map((a) => map.get(a)!).filter(Boolean);
-  const basic = abs.find((a) => !a.isSpecial) ?? abs[0];
-  return basic.range <= 1;
-};
-
-/**
- * Candidate formations. A mix of:
- *  - the current heuristic (so we can only improve on it),
- *  - role-structured draws (melee forward, ranged back) with randomised rows
- *    and spacing — the space a thoughtful player actually considers,
- *  - unconstrained draws, to escape the heuristic's assumptions entirely.
- */
-function candidates(slugs: string[], custs: UnitCustomization[], rng: () => number): BoardPosition[][] {
-  const out: BoardPosition[][] = [];
-  const seen = new Set<string>();
-  const push = (p: BoardPosition[]) => {
-    if (p.length !== slugs.length) return;
-    const k = key(p);
-    if (seen.has(k) || new Set(p.map((q) => `${q.x},${q.y}`)).size !== p.length) return;
-    seen.add(k); out.push(p);
+/** Every permutation of 0..n-1, in a fixed order so a re-run is reproducible. */
+export function permutations(n: number): number[][] {
+  if (n <= 0) return [[]];
+  const out: number[][] = [];
+  const cur: number[] = [];
+  const used = new Array<boolean>(n).fill(false);
+  const walk = (): void => {
+    if (cur.length === n) { out.push([...cur]); return; }
+    for (let i = 0; i < n; i++) {
+      if (used[i]) continue;
+      used[i] = true; cur.push(i);
+      walk();
+      cur.pop(); used[i] = false;
+    }
   };
-
-  push(planPlacement(slugs, normalized, custs));
-
-  const melee = slugs.map(isMelee);
-  const pick = (allowed: BoardPosition[]) => allowed[Math.floor(rng() * allowed.length)];
-
-  // Role-structured: melee drawn from the forward columns, others from the back.
-  for (let t = 0; t < N_CAND * 3 && out.length < N_CAND * 0.7; t++) {
-    const used = new Set<string>();
-    const p: BoardPosition[] = [];
-    let ok = true;
-    for (let i = 0; i < slugs.length; i++) {
-      const cols = melee[i] ? [1, 2] : [0, 1];
-      const allowed = ZONE.filter((q) => cols.includes(q.x) && !used.has(`${q.x},${q.y}`));
-      if (!allowed.length) { ok = false; break; }
-      const tile = pick(allowed);
-      used.add(`${tile.x},${tile.y}`); p.push(tile);
-    }
-    if (ok) push(p);
-  }
-  // Unconstrained: anything goes.
-  for (let t = 0; t < N_CAND * 3 && out.length < N_CAND; t++) {
-    const used = new Set<string>();
-    const p: BoardPosition[] = [];
-    for (let i = 0; i < slugs.length; i++) {
-      const allowed = ZONE.filter((q) => !used.has(`${q.x},${q.y}`));
-      const tile = pick(allowed);
-      used.add(`${tile.x},${tile.y}`); p.push(tile);
-    }
-    push(p);
-  }
+  walk();
   return out;
 }
 
-/** Opponent side of the field: everyone where the heuristic puts them. */
-const FIELD = FABLE_TEAMS.map((t) => {
-  const c = fableCustomizations(t);
-  return { name: t.name, slugs: [...t.slugs], custs: c,
-           placement: mirrorPlacement(planPlacement([...t.slugs], normalized, c)) };
-});
+/** A guard, not a limit we expect to hit: campaign parties are four units, so
+ *  the sweep is 24 cells. 6! = 720 would still finish; 8! = 40320 would not. */
+const MAX_EXHAUSTIVE = 720;
 
-interface Score { avg: number; worst: number; worstVs: string; per: { name: string; wr: number }[] }
-
-function evaluate(slugs: string[], custs: UnitCustomization[], placement: BoardPosition[], games: number): Score {
-  let W = 0, L = 0;
-  const per: { name: string; wr: number }[] = [];
-  for (const foe of FIELD) {
-    let w = 0, l = 0;
-    for (let g = 0; g < games; g++) {
-      const r = runMatch(slugs, foe.slugs, map, new OptimalBrain(), new OptimalBrain(), {
-        p1Customizations: custs, p2Customizations: foe.custs,
-        p1Placement: placement, p2Placement: foe.placement,
-        forceFirstPlayerId: g % 2 === 0 ? 'p1' : 'p2',
-      });
-      if (r.winnerSide === 'p1') { w++; W++; } else if (r.winnerSide === 'p2') { l++; L++; }
-    }
-    per.push({ name: foe.name, wr: w + l ? (w / (w + l)) * 100 : 50 });
-  }
-  const worstEntry = per.reduce((a, b) => (b.wr < a.wr ? b : a), per[0]);
-  return { avg: W + L ? (W / (W + L)) * 100 : 50, worst: worstEntry.wr, worstVs: worstEntry.name, per };
+export interface OpeningResult {
+  order: number[];
+  winRate: number;
+  marginHpPct: number;
+  marginSurvivors: number;
 }
 
-function diagram(p: BoardPosition[]): string[] {
-  const g = Array.from({ length: 8 }, () => ['.', '.', '.']);
-  p.forEach((q, i) => { g[q.y][q.x] = String(i + 1); });
-  return g.map((row, y) => `   row${y}  ${row.join(' ')} |`);
+export interface PlacementSearchResult {
+  encounterId: string;
+  difficulty: CampaignDifficulty;
+  partyName: string;
+  partySlugs: string[];
+  openings: OpeningResult[];          // sorted best-first
+  best: OpeningResult;
+  worst: OpeningResult;
+  median: number;
+  spread: number;
+  /** Where the openings the sims have actually been using land in the sweep.
+   *  rank 1 = best of all openings. */
+  frontline: { order: number[]; winRate: number; rank: number };
+  slotOrder: { order: number[]; winRate: number; rank: number };
 }
 
-const results: Record<string, unknown> = {};
-console.log(`Placement search — ${N_CAND} candidates screened @${N_SCREEN}g, top 4 confirmed @${N_CONFIRM}g, ${N_CLIMB} climb passes.`);
-console.log(`Field: all ${FABLE_TEAMS.length} rosters at heuristic placement.\n`);
+export function searchPlacements(
+  campaignSlug: string,
+  encounterId: string,
+  difficulty: CampaignDifficulty,
+  partyName: string,
+  partySlugs: string[],
+  games: number,
+): PlacementSearchResult {
+  const campaign = CAMPAIGNS[campaignSlug];
+  if (!campaign) throw new Error(`Unknown campaign: ${campaignSlug}`);
+  const enc = campaign.encounters[encounterId];
+  if (!enc) throw new Error(`Unknown encounter: ${encounterId}`);
 
-FABLE_TEAMS.forEach((t, ti) => {
-  const slugs = [...t.slugs];
-  const custs = fableCustomizations(t);
-  const rng = makeRng(1000 + ti * 7919);
-  const cands = candidates(slugs, custs, rng);
-
-  const screened = cands.map((p) => ({ p, s: evaluate(slugs, custs, p, N_SCREEN) }))
-    .sort((a, b) => b.s.avg - a.s.avg);
-  const finalists = screened.slice(0, 4);
-  let best = finalists.map((f) => ({ p: f.p, s: evaluate(slugs, custs, f.p, N_CONFIRM) }))
-    .sort((a, b) => b.s.avg - a.s.avg)[0];
-
-  // Hill-climb: relocate one unit at a time, keep strict improvements. Uses a
-  // CHEAP evaluation under a fixed budget (a full-strength scan of every
-  // relocation would be ~72 evals x 12 opponents per pass — hours per roster),
-  // then re-confirms the winner properly at the end.
-  let climbBudget = N_CLIMB_EVALS;
-  for (let pass = 0; pass < N_CLIMB && climbBudget > 0; pass++) {
-    let improved = false;
-    const order = ZONE.slice().sort(() => rng() - 0.5);
-    for (let i = 0; i < slugs.length && !improved && climbBudget > 0; i++) {
-      for (const tile of order) {
-        if (climbBudget <= 0) break;
-        if (best.p.some((q) => q.x === tile.x && q.y === tile.y)) continue;
-        const trial = best.p.map((q, j) => (j === i ? tile : q));
-        climbBudget--;
-        const s = evaluate(slugs, custs, trial, N_CLIMB_GAMES);
-        if (s.avg > best.s.avg + 1.5) { best = { p: trial, s }; improved = true; break; }
-      }
-    }
-    if (!improved) break;
+  const n = partySlugs.length;
+  const orders = permutations(n);
+  if (orders.length > MAX_EXHAUSTIVE) {
+    throw new Error(`placementSearch: ${n}! = ${orders.length} openings exceeds the ${MAX_EXHAUSTIVE} cap`);
   }
-  // Re-confirm the climbed winner at full strength (climb used cheap games).
-  best = { p: best.p, s: evaluate(slugs, custs, best.p, N_CONFIRM) };
 
-  const heur = evaluate(slugs, custs, planPlacement(slugs, normalized, custs), N_CONFIRM);
-  console.log(`${'='.repeat(64)}\n${t.name}  [${slugs.join(', ')}]`);
-  console.log(`  heuristic : avg ${heur.avg.toFixed(1)}%  worst ${heur.worst.toFixed(0)}% (vs ${heur.worstVs})`);
-  console.log(`  SEARCHED  : avg ${best.s.avg.toFixed(1)}%  worst ${best.s.worst.toFixed(0)}% (vs ${best.s.worstVs})   ${best.s.avg > heur.avg ? `+${(best.s.avg - heur.avg).toFixed(1)}` : 'no gain'}`);
-  console.log(`  tiles: ${best.p.map((q, i) => `${i + 1}:(${q.x},${q.y})`).join(' ')}`);
-  slugs.forEach((s, i) => console.log(`     ${i + 1}. ${s}`));
-  diagram(best.p).forEach((l) => console.log(l));
+  const openings: OpeningResult[] = orders.map((order) => {
+    const r = simEncounterCell(campaignSlug, encounterId, difficulty, partyName, partySlugs, {
+      games, placementOrder: order,
+    });
+    return {
+      order,
+      winRate: r.winRate,
+      marginHpPct: r.marginHpPct ?? 0,
+      marginSurvivors: r.marginSurvivors ?? 0,
+    };
+  });
 
-  results[t.name] = {
-    slugs, heuristic: { placement: planPlacement(slugs, normalized, custs), ...heur },
-    searched: { placement: best.p, ...best.s },
+  // Best-first. Win rate decides; margin breaks ties, because at the top of the
+  // range win rate saturates and margin is the only signal left (the same
+  // reason margin was added to the sims at all).
+  const sorted = [...openings].sort((a, b) => b.winRate - a.winRate || b.marginHpPct - a.marginHpPct);
+  const rankOf = (order: number[]): number =>
+    sorted.findIndex((o) => o.order.join(',') === order.join(',')) + 1;
+  const find = (order: number[]): OpeningResult =>
+    openings.find((o) => o.order.join(',') === order.join(','))!;
+
+  const enemyTiles = (enc as { enemyPlacement?: BoardPosition[]; rooms?: { enemyPlacement?: BoardPosition[] }[] })
+    .enemyPlacement ?? enc.rooms?.[0]?.enemyPlacement ?? [];
+  const fl = frontlineOrder(partySlugs, enc.playerPlacement, enemyTiles);
+  const slot = partySlugs.map((_, i) => i);
+
+  const rates = openings.map((o) => o.winRate).sort((a, b) => a - b);
+  const median = rates.length % 2
+    ? rates[(rates.length - 1) / 2]
+    : (rates[rates.length / 2 - 1] + rates[rates.length / 2]) / 2;
+
+  return {
+    encounterId, difficulty, partyName, partySlugs,
+    openings: sorted,
+    best: sorted[0],
+    worst: sorted[sorted.length - 1],
+    median,
+    spread: sorted[0].winRate - sorted[sorted.length - 1].winRate,
+    frontline: { order: fl, winRate: find(fl).winRate, rank: rankOf(fl) },
+    slotOrder: { order: slot, winRate: find(slot).winRate, rank: rankOf(slot) },
   };
-  fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
-});
+}
 
-console.log(`\nWritten to ${OUT}`);
+/** Tiles, front-to-back, as a human-readable opening: "barbarian>rogue>sorcerer>warlock". */
+export function describeOpening(
+  partySlugs: string[],
+  order: number[],
+  playerPlacement: readonly BoardPosition[],
+  enemyTiles: readonly BoardPosition[],
+): string {
+  const dist = (t: BoardPosition): number => enemyTiles.length
+    ? Math.min(...enemyTiles.map((e) => Math.abs(t.x - e.x) + Math.abs(t.y - e.y)))
+    : -t.x;
+  return partySlugs
+    .map((slug, i) => ({ slug, d: dist(playerPlacement[order[i]]) }))
+    .sort((a, b) => a.d - b.d)
+    .map((u) => u.slug)
+    .join('>');
+}
+
+// ───────────────────────────── CLI ─────────────────────────────
+const isMain = process.argv[1]?.endsWith('placementSearch.ts') || process.argv[1]?.endsWith('placementSearch.js');
+if (isMain) {
+  const args = process.argv.slice(2);
+  const campaignSlug = args[0];
+  if (!campaignSlug || !CAMPAIGNS[campaignSlug]) {
+    console.error('Usage: npx tsx src/ai/placementSearch.ts <campaign> [--encounter eN] [--difficulty d] [--party a,b,c,d] [--games N] [--json path]');
+    console.error(`Known campaigns: ${Object.keys(CAMPAIGNS).join(', ')}`);
+    process.exit(1);
+  }
+  const campaign = CAMPAIGNS[campaignSlug];
+  const getArg = (f: string): string | undefined => {
+    const i = args.indexOf(f);
+    return i !== -1 ? args[i + 1] : undefined;
+  };
+  const games = parseInt(getArg('--games') ?? '80', 10);
+  const difficulty = (getArg('--difficulty') ?? 'medium') as CampaignDifficulty;
+  const encounterIds = getArg('--encounter') ? [getArg('--encounter')!] : Object.keys(campaign.encounters);
+  const customParty = getArg('--party');
+  const [partyName, partySlugs] = customParty
+    ? ['custom', customParty.split(',')]
+    : ['melee', REPRESENTATIVE_PARTIES.melee] as [string, string[]];
+  const jsonPath = getArg('--json');
+
+  console.log(`\nPLACEMENT SEARCH — ${campaignSlug} / ${difficulty} / ${partyName} [${(partySlugs as string[]).join(', ')}]`);
+  console.log(`${permutations((partySlugs as string[]).length).length} openings x ${games} games per encounter\n`);
+  console.log('enc   best  worst  spread  median | frontline (rank)  slot-order (rank) | best opening (front->back)');
+  console.log('─'.repeat(122));
+
+  const all: PlacementSearchResult[] = [];
+  for (const encId of encounterIds) {
+    const enc = campaign.encounters[encId];
+    const r = searchPlacements(campaignSlug, encId, difficulty, partyName as string, partySlugs as string[], games);
+    all.push(r);
+    const enemyTiles = (enc as { enemyPlacement?: BoardPosition[]; rooms?: { enemyPlacement?: BoardPosition[] }[] })
+      .enemyPlacement ?? enc.rooms?.[0]?.enemyPlacement ?? [];
+    const pct = (v: number): string => `${Math.round(v * 100)}%`;
+    const flag = r.spread >= 0.25 ? ' ⚠' : '';
+    console.log(
+      `${encId.padEnd(5)} ${pct(r.best.winRate).padStart(4)}  ${pct(r.worst.winRate).padStart(5)}  ${pct(r.spread).padStart(6)}${flag.padEnd(2)} ${pct(r.median).padStart(6)} |` +
+      ` ${pct(r.frontline.winRate).padStart(4)} (#${String(r.frontline.rank).padStart(2)})     ` +
+      ` ${pct(r.slotOrder.winRate).padStart(4)} (#${String(r.slotOrder.rank).padStart(2)})    |` +
+      ` ${describeOpening(partySlugs as string[], r.best.order, enc.playerPlacement, enemyTiles)}`,
+    );
+  }
+
+  const spreads = all.map((r) => r.spread).sort((a, b) => b - a);
+  console.log('─'.repeat(122));
+  console.log(`\nWidest placement spreads: ${all.slice().sort((a, b) => b.spread - a.spread).slice(0, 3)
+    .map((r) => `${r.encounterId} ${Math.round(r.spread * 100)}pts`).join(' · ')}`);
+  console.log(`Mean spread across ${all.length} encounters: ${Math.round(spreads.reduce((t, v) => t + v, 0) / spreads.length * 100)} points`);
+  console.log(`\n⚠ A cell whose spread exceeds its target band is not a difficulty — it is a placement puzzle.`);
+
+  if (jsonPath) {
+    writeFileSync(jsonPath, JSON.stringify({ campaignSlug, difficulty, partyName, partySlugs, games, results: all }, null, 2));
+    console.log(`\nWrote ${jsonPath}`);
+  }
+}

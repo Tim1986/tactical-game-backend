@@ -1,0 +1,3866 @@
+{
+  "campaignSlug": "unlitbeacon",
+  "difficulty": "medium",
+  "partyName": "custom",
+  "partySlugs": [
+    "barbarian",
+    "sorcerer",
+    "warlock",
+    "rogue"
+  ],
+  "games": 80,
+  "results": [
+    {
+      "encounterId": "e1",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5064655172413793,
+          "marginSurvivors": 3.325
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.49267241379310345,
+          "marginSurvivors": 3.3375
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4867241379310345,
+          "marginSurvivors": 3.3625
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4618965517241379,
+          "marginSurvivors": 2.9875
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4588793103448276,
+          "marginSurvivors": 2.8625
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.44818965517241377,
+          "marginSurvivors": 2.7125
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4242241379310345,
+          "marginSurvivors": 2.825
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4228448275862069,
+          "marginSurvivors": 2.9875
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4202586206896552,
+          "marginSurvivors": 2.625
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4185344827586207,
+          "marginSurvivors": 2.5375
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4182758620689655,
+          "marginSurvivors": 2.725
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.40206896551724136,
+          "marginSurvivors": 2.7375
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4018103448275862,
+          "marginSurvivors": 2.3875
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3971551724137931,
+          "marginSurvivors": 2.575
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3971551724137931,
+          "marginSurvivors": 2.575
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.38310344827586207,
+          "marginSurvivors": 2.575
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.38310344827586207,
+          "marginSurvivors": 2.575
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3818103448275862,
+          "marginSurvivors": 2.4875
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3818103448275862,
+          "marginSurvivors": 2.4875
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.46765604539502403,
+          "marginSurvivors": 2.7974683544303796
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.4022697512003492,
+          "marginSurvivors": 2.6582278481012658
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3849847228284592,
+          "marginSurvivors": 3.1139240506329116
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3849847228284592,
+          "marginSurvivors": 3.1139240506329116
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3585333915320821,
+          "marginSurvivors": 2.5443037974683542
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          1,
+          3,
+          2
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.5064655172413793,
+        "marginSurvivors": 3.325
+      },
+      "worst": {
+        "order": [
+          1,
+          0,
+          3,
+          2
+        ],
+        "winRate": 0.9875,
+        "marginHpPct": 0.3585333915320821,
+        "marginSurvivors": 2.5443037974683542
+      },
+      "median": 1,
+      "spread": 0.012499999999999956,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 1,
+        "rank": 7
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 1,
+        "rank": 12
+      }
+    },
+    {
+      "encounterId": "e2",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.44940639987420394,
+          "marginSurvivors": 3.1392405063291138
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.4427456601369645,
+          "marginSurvivors": 3.3333333333333335
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.4249084249084249,
+          "marginSurvivors": 3.4358974358974357
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.3178994918125353,
+          "marginSurvivors": 2.5844155844155843
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.33989865969271005,
+          "marginSurvivors": 3.026315789473684
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.44761904761904764,
+          "marginSurvivors": 3.04
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.3734989648033126,
+          "marginSurvivors": 2.8533333333333335
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.33002070393374744,
+          "marginSurvivors": 2.32
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.3684165744916192,
+          "marginSurvivors": 2.3972602739726026
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.3278311920360759,
+          "marginSurvivors": 2.410958904109589
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.8875,
+          "marginHpPct": 0.3594611145131659,
+          "marginSurvivors": 2.915492957746479
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.8875,
+          "marginHpPct": 0.354737118362348,
+          "marginSurvivors": 2.408450704225352
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.36441881100266194,
+          "marginSurvivors": 2.6142857142857143
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.3577639751552795,
+          "marginSurvivors": 2.657142857142857
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.2990239574090506,
+          "marginSurvivors": 2.3
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.85,
+          "marginHpPct": 0.40025575447570333,
+          "marginSurvivors": 2.7794117647058822
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.85,
+          "marginHpPct": 0.3413408841797589,
+          "marginSurvivors": 2.676470588235294
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.3216835079262075,
+          "marginSurvivors": 2.791044776119403
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.825,
+          "marginHpPct": 0.2815734989648033,
+          "marginSurvivors": 2.3636363636363638
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.8125,
+          "marginHpPct": 0.33769708552317246,
+          "marginSurvivors": 2.6153846153846154
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.8125,
+          "marginHpPct": 0.30922121356903964,
+          "marginSurvivors": 2.292307692307692
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.775,
+          "marginHpPct": 0.26838308956121015,
+          "marginSurvivors": 2.129032258064516
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.725,
+          "marginHpPct": 0.3442921396444635,
+          "marginSurvivors": 2.7586206896551726
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.7,
+          "marginHpPct": 0.30002218278615794,
+          "marginSurvivors": 2.4285714285714284
+        }
+      ],
+      "best": {
+        "order": [
+          1,
+          2,
+          0,
+          3
+        ],
+        "winRate": 0.9875,
+        "marginHpPct": 0.44940639987420394,
+        "marginSurvivors": 3.1392405063291138
+      },
+      "worst": {
+        "order": [
+          0,
+          3,
+          1,
+          2
+        ],
+        "winRate": 0.7,
+        "marginHpPct": 0.30002218278615794,
+        "marginSurvivors": 2.4285714285714284
+      },
+      "median": 0.88125,
+      "spread": 0.2875000000000001,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 0.9375,
+        "rank": 8
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.975,
+        "rank": 3
+      }
+    },
+    {
+      "encounterId": "e3",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5216584657578447,
+          "marginSurvivors": 3.103896103896104
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5216584657578447,
+          "marginSurvivors": 3.103896103896104
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.4218633540372671,
+          "marginSurvivors": 3.1733333333333333
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.42567855015740663,
+          "marginSurvivors": 3.2054794520547945
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.42567855015740663,
+          "marginSurvivors": 3.2054794520547945
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.42567855015740663,
+          "marginSurvivors": 3.2054794520547945
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.6365572315882875,
+          "marginSurvivors": 3.5
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.6365572315882875,
+          "marginSurvivors": 3.5
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.49653948535936115,
+          "marginSurvivors": 3.4571428571428573
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.8625,
+          "marginHpPct": 0.530830857862994,
+          "marginSurvivors": 3.4347826086956523
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.8625,
+          "marginHpPct": 0.3088486812494374,
+          "marginSurvivors": 2.5217391304347827
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.5566886066561602,
+          "marginSurvivors": 3.298507462686567
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.3862056178733661,
+          "marginSurvivors": 3
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.3773987206823028,
+          "marginSurvivors": 2.746268656716418
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.8,
+          "marginHpPct": 0.5641498447204969,
+          "marginSurvivors": 3.28125
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.8,
+          "marginHpPct": 0.5641498447204969,
+          "marginSurvivors": 3.28125
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.7875,
+          "marginHpPct": 0.3922902494331066,
+          "marginSurvivors": 2.634920634920635
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.775,
+          "marginHpPct": 0.3563414145461831,
+          "marginSurvivors": 2.8225806451612905
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.7375,
+          "marginHpPct": 0.31498052426571216,
+          "marginSurvivors": 2.7796610169491527
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.725,
+          "marginHpPct": 0.5331976868708503,
+          "marginSurvivors": 3.3448275862068964
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.675,
+          "marginHpPct": 0.605475040257649,
+          "marginSurvivors": 3.574074074074074
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.475,
+          "marginHpPct": 0.3115397188623733,
+          "marginSurvivors": 2.1052631578947367
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.475,
+          "marginHpPct": 0.3115397188623733,
+          "marginSurvivors": 2.1052631578947367
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.3625,
+          "marginHpPct": 0.3981580638252302,
+          "marginSurvivors": 2.7586206896551726
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.9625,
+        "marginHpPct": 0.5216584657578447,
+        "marginSurvivors": 3.103896103896104
+      },
+      "worst": {
+        "order": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "winRate": 0.3625,
+        "marginHpPct": 0.3981580638252302,
+        "marginSurvivors": 2.7586206896551726
+      },
+      "median": 0.8375,
+      "spread": 0.6000000000000001,
+      "frontline": {
+        "order": [
+          0,
+          3,
+          2,
+          1
+        ],
+        "winRate": 0.8375,
+        "rank": 14
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.9625,
+        "rank": 1
+      }
+    },
+    {
+      "encounterId": "e4",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5475931677018634,
+          "marginSurvivors": 3.1375
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.49495341614906835,
+          "marginSurvivors": 3
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4934006211180124,
+          "marginSurvivors": 3.2875
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4749223602484472,
+          "marginSurvivors": 3.8875
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.45085403726708073,
+          "marginSurvivors": 3.2625
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4169254658385093,
+          "marginSurvivors": 2.6125
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4108695652173913,
+          "marginSurvivors": 2.95
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.38990683229813666,
+          "marginSurvivors": 3.2
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3763198757763975,
+          "marginSurvivors": 2.9375
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.36226708074534164,
+          "marginSurvivors": 2.7
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3246894409937888,
+          "marginSurvivors": 1.925
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.38713735356553186,
+          "marginSurvivors": 2.518987341772152
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.38713735356553186,
+          "marginSurvivors": 2.518987341772152
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3262048903215662,
+          "marginSurvivors": 2.278481012658228
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.29491312210079407,
+          "marginSurvivors": 2.2151898734177213
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.38580984233158144,
+          "marginSurvivors": 2.6538461538461537
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.37402452619843923,
+          "marginSurvivors": 2.58974358974359
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.347180769541018,
+          "marginSurvivors": 2.25974025974026
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.43478260869565216,
+          "marginSurvivors": 2.75
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.21518470088264138,
+          "marginSurvivors": 1.7236842105263157
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.925,
+          "marginHpPct": 0.209165687426557,
+          "marginSurvivors": 2.391891891891892
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.9,
+          "marginHpPct": 0.2698412698412698,
+          "marginSurvivors": 2.0416666666666665
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.8875,
+          "marginHpPct": 0.2360248447204969,
+          "marginSurvivors": 1.9295774647887325
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.775,
+          "marginHpPct": 0.20526948507313164,
+          "marginSurvivors": 1.7258064516129032
+        }
+      ],
+      "best": {
+        "order": [
+          2,
+          3,
+          0,
+          1
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.5475931677018634,
+        "marginSurvivors": 3.1375
+      },
+      "worst": {
+        "order": [
+          0,
+          1,
+          3,
+          2
+        ],
+        "winRate": 0.775,
+        "marginHpPct": 0.20526948507313164,
+        "marginSurvivors": 1.7258064516129032
+      },
+      "median": 0.9875,
+      "spread": 0.22499999999999998,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 1,
+        "rank": 3
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 1,
+        "rank": 8
+      }
+    },
+    {
+      "encounterId": "e5",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5393055555555556,
+          "marginSurvivors": 3.1875
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.52125,
+          "marginSurvivors": 3.4125
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5195833333333333,
+          "marginSurvivors": 3.2875
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.48270833333333335,
+          "marginSurvivors": 3.175
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4623611111111111,
+          "marginSurvivors": 3.125
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4520138888888889,
+          "marginSurvivors": 2.825
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4502777777777778,
+          "marginSurvivors": 2.5375
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.4411805555555556,
+          "marginSurvivors": 2.75
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.40458333333333335,
+          "marginSurvivors": 2.75
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.3927777777777778,
+          "marginSurvivors": 2.4375
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.5649789029535865,
+          "marginSurvivors": 3.1392405063291138
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.5068917018284107,
+          "marginSurvivors": 3.3164556962025316
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.43818565400843884,
+          "marginSurvivors": 2.632911392405063
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3971167369901547,
+          "marginSurvivors": 2.6202531645569622
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3867088607594937,
+          "marginSurvivors": 2.3544303797468356
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.3853727144866385,
+          "marginSurvivors": 2.5443037974683542
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.45705128205128204,
+          "marginSurvivors": 2.8846153846153846
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5114718614718615,
+          "marginSurvivors": 2.9740259740259742
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.47748917748917746,
+          "marginSurvivors": 2.909090909090909
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.39090909090909093,
+          "marginSurvivors": 2.4155844155844157
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.4284356725146199,
+          "marginSurvivors": 2.710526315789474
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.45940740740740743,
+          "marginSurvivors": 2.8933333333333335
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.3511851851851852,
+          "marginSurvivors": 2.56
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.75,
+          "marginHpPct": 0.30712962962962964,
+          "marginSurvivors": 2.2666666666666666
+        }
+      ],
+      "best": {
+        "order": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.5393055555555556,
+        "marginSurvivors": 3.1875
+      },
+      "worst": {
+        "order": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "winRate": 0.75,
+        "marginHpPct": 0.30712962962962964,
+        "marginSurvivors": 2.2666666666666666
+      },
+      "median": 0.9875,
+      "spread": 0.25,
+      "frontline": {
+        "order": [
+          1,
+          3,
+          0,
+          2
+        ],
+        "winRate": 0.9625,
+        "rank": 19
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.9875,
+        "rank": 13
+      }
+    },
+    {
+      "encounterId": "e6",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.768646408839779,
+          "marginSurvivors": 3.425
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7422651933701657,
+          "marginSurvivors": 3.1125
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7304558011049723,
+          "marginSurvivors": 3.0125
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7297651933701658,
+          "marginSurvivors": 3.0125
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7040055248618785,
+          "marginSurvivors": 3.15
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6816298342541437,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6761049723756906,
+          "marginSurvivors": 3.375
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6629834254143646,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6609116022099447,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6585635359116022,
+          "marginSurvivors": 3.475
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6585635359116022,
+          "marginSurvivors": 3.475
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6408839779005525,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6222375690607734,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6146408839779005,
+          "marginSurvivors": 3.825
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6099447513812155,
+          "marginSurvivors": 3.275
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6072513812154696,
+          "marginSurvivors": 3.1125
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5870165745856354,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5379143646408839,
+          "marginSurvivors": 3.6875
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5070441988950276,
+          "marginSurvivors": 3.2625
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.6496258479613959,
+          "marginSurvivors": 3.240506329113924
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.6192740751101475,
+          "marginSurvivors": 3.8607594936708862
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.6018602699489475,
+          "marginSurvivors": 3
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.39642677764224726,
+          "marginSurvivors": 3.5194805194805197
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.7,
+          "marginHpPct": 0.734214680347277,
+          "marginSurvivors": 3.7142857142857144
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          1,
+          3,
+          2
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.768646408839779,
+        "marginSurvivors": 3.425
+      },
+      "worst": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.7,
+        "marginHpPct": 0.734214680347277,
+        "marginSurvivors": 3.7142857142857144
+      },
+      "median": 1,
+      "spread": 0.30000000000000004,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 1,
+        "rank": 19
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.7,
+        "rank": 24
+      }
+    },
+    {
+      "encounterId": "e7",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7933937823834197,
+          "marginSurvivors": 3.4125
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.7379533678756477,
+          "marginSurvivors": 3.4
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6265544041450777,
+          "marginSurvivors": 3
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.7045959222125026,
+          "marginSurvivors": 3.012987012987013
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.8330915371329879,
+          "marginSurvivors": 3.8666666666666667
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.722279792746114,
+          "marginSurvivors": 3.36
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.925,
+          "marginHpPct": 0.7120851421369556,
+          "marginSurvivors": 3.8783783783783785
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.8256796082049827,
+          "marginSurvivors": 3.8904109589041096
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.8625,
+          "marginHpPct": 0.7619583990388226,
+          "marginSurvivors": 3.971014492753623
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.7875,
+          "marginHpPct": 0.6749732708281931,
+          "marginSurvivors": 3.015873015873016
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.7,
+          "marginHpPct": 0.557920059215396,
+          "marginSurvivors": 2.9107142857142856
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.675,
+          "marginHpPct": 0.43561696411437345,
+          "marginSurvivors": 2.6481481481481484
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.5625,
+          "marginHpPct": 0.47772020725388603,
+          "marginSurvivors": 3
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.55,
+          "marginHpPct": 0.5063589260480452,
+          "marginSurvivors": 2.8636363636363638
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.5125,
+          "marginHpPct": 0.45507392897763177,
+          "marginSurvivors": 2.658536585365854
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.475,
+          "marginHpPct": 0.5194982274338696,
+          "marginSurvivors": 2.9473684210526314
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.45,
+          "marginHpPct": 0.5201496833621186,
+          "marginSurvivors": 2.8333333333333335
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.35,
+          "marginHpPct": 0.5292376017764618,
+          "marginSurvivors": 2.9285714285714284
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.3375,
+          "marginHpPct": 0.49222797927461137,
+          "marginSurvivors": 2.925925925925926
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.3,
+          "marginHpPct": 0.5345423143350605,
+          "marginSurvivors": 2.5
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.225,
+          "marginHpPct": 0.6234887737478411,
+          "marginSurvivors": 3.3333333333333335
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.175,
+          "marginHpPct": 0.48852701702442636,
+          "marginSurvivors": 2.357142857142857
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.1375,
+          "marginHpPct": 0.473386716910033,
+          "marginSurvivors": 2.4545454545454546
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.1,
+          "marginHpPct": 0.5505181347150259,
+          "marginSurvivors": 3
+        }
+      ],
+      "best": {
+        "order": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.7933937823834197,
+        "marginSurvivors": 3.4125
+      },
+      "worst": {
+        "order": [
+          0,
+          2,
+          3,
+          1
+        ],
+        "winRate": 0.1,
+        "marginHpPct": 0.5505181347150259,
+        "marginSurvivors": 3
+      },
+      "median": 0.61875,
+      "spread": 0.9,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 0.9125,
+        "rank": 8
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.35,
+        "rank": 18
+      }
+    },
+    {
+      "encounterId": "e8",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.8125,
+          "marginHpPct": 0.23973037272006345,
+          "marginSurvivors": 2.3846153846153846
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.6625,
+          "marginHpPct": 0.23263956428710367,
+          "marginSurvivors": 1.9245283018867925
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.6625,
+          "marginHpPct": 0.23263956428710367,
+          "marginSurvivors": 1.9245283018867925
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.65,
+          "marginHpPct": 0.20162569389373514,
+          "marginSurvivors": 1.9615384615384615
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.65,
+          "marginHpPct": 0.20162569389373514,
+          "marginSurvivors": 1.9615384615384615
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.65,
+          "marginHpPct": 0.19567803330689928,
+          "marginSurvivors": 1.9807692307692308
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.625,
+          "marginHpPct": 0.2637113402061856,
+          "marginSurvivors": 2.52
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.6125,
+          "marginHpPct": 0.24058489375131495,
+          "marginSurvivors": 1.7959183673469388
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.6125,
+          "marginHpPct": 0.24058489375131495,
+          "marginSurvivors": 1.7959183673469388
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.5875,
+          "marginHpPct": 0.23864882649703884,
+          "marginSurvivors": 1.8936170212765957
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.5875,
+          "marginHpPct": 0.22121079184031586,
+          "marginSurvivors": 2.0638297872340425
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.575,
+          "marginHpPct": 0.24125952487673688,
+          "marginSurvivors": 1.891304347826087
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.575,
+          "marginHpPct": 0.24125952487673688,
+          "marginSurvivors": 1.891304347826087
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.525,
+          "marginHpPct": 0.21207658321060383,
+          "marginSurvivors": 1.9761904761904763
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.5125,
+          "marginHpPct": 0.22051797837566003,
+          "marginSurvivors": 2.097560975609756
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.5125,
+          "marginHpPct": 0.20492833794317325,
+          "marginSurvivors": 2
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.5125,
+          "marginHpPct": 0.20492833794317325,
+          "marginSurvivors": 2
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.5125,
+          "marginHpPct": 0.20492833794317325,
+          "marginSurvivors": 2
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.5,
+          "marginHpPct": 0.19819587628865978,
+          "marginSurvivors": 1.9
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.45,
+          "marginHpPct": 0.23109965635738833,
+          "marginSurvivors": 2.0555555555555554
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.325,
+          "marginHpPct": 0.1514670896114195,
+          "marginSurvivors": 1.6538461538461537
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.2,
+          "marginHpPct": 0.11984536082474227,
+          "marginSurvivors": 1.375
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.2,
+          "marginHpPct": 0.11984536082474227,
+          "marginSurvivors": 1.375
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.1125,
+          "marginHpPct": 0.11282932416953036,
+          "marginSurvivors": 1.4444444444444444
+        }
+      ],
+      "best": {
+        "order": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "winRate": 0.8125,
+        "marginHpPct": 0.23973037272006345,
+        "marginSurvivors": 2.3846153846153846
+      },
+      "worst": {
+        "order": [
+          1,
+          3,
+          2,
+          0
+        ],
+        "winRate": 0.1125,
+        "marginHpPct": 0.11282932416953036,
+        "marginSurvivors": 1.4444444444444444
+      },
+      "median": 0.575,
+      "spread": 0.7,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          3,
+          0
+        ],
+        "winRate": 0.2,
+        "rank": 22
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.575,
+        "rank": 12
+      }
+    },
+    {
+      "encounterId": "e9",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.15077605321507762,
+          "marginSurvivors": 1.2857142857142858
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.1064808362369338,
+          "marginSurvivors": 1.1571428571428573
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.8625,
+          "marginHpPct": 0.10646871686108166,
+          "marginSurvivors": 1.2318840579710144
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.7375,
+          "marginHpPct": 0.10376188507647788,
+          "marginSurvivors": 1.2033898305084745
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.6375,
+          "marginHpPct": 0.1504543280726925,
+          "marginSurvivors": 1.2941176470588236
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.6375,
+          "marginHpPct": 0.1504543280726925,
+          "marginSurvivors": 1.2941176470588236
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.6125,
+          "marginHpPct": 0.08262817322050771,
+          "marginSurvivors": 1.1020408163265305
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.6,
+          "marginHpPct": 0.09898373983739837,
+          "marginSurvivors": 1.2083333333333333
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.6,
+          "marginHpPct": 0.09491869918699188,
+          "marginSurvivors": 1.1875
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.55,
+          "marginHpPct": 0.082039911308204,
+          "marginSurvivors": 1.1590909090909092
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.525,
+          "marginHpPct": 0.11045296167247387,
+          "marginSurvivors": 1.2857142857142858
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.525,
+          "marginHpPct": 0.07746806039488967,
+          "marginSurvivors": 1.0238095238095237
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.4875,
+          "marginHpPct": 0.09530956848030019,
+          "marginSurvivors": 1.1025641025641026
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.3875,
+          "marginHpPct": 0.08733280881195908,
+          "marginSurvivors": 1.2258064516129032
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.3,
+          "marginHpPct": 0.08130081300813008,
+          "marginSurvivors": 1.125
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.2875,
+          "marginHpPct": 0.06595970307529163,
+          "marginSurvivors": 1
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.275,
+          "marginHpPct": 0.09623059866962307,
+          "marginSurvivors": 1.1818181818181819
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.2625,
+          "marginHpPct": 0.0445993031358885,
+          "marginSurvivors": 1
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.2375,
+          "marginHpPct": 0.07214377406931964,
+          "marginSurvivors": 1.0526315789473684
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.2375,
+          "marginHpPct": 0.045699614890885754,
+          "marginSurvivors": 1
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.2125,
+          "marginHpPct": 0.06685796269727404,
+          "marginSurvivors": 1
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.1875,
+          "marginHpPct": 0.07544715447154472,
+          "marginSurvivors": 1.0666666666666667
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.175,
+          "marginHpPct": 0.045993031358885016,
+          "marginSurvivors": 1.2142857142857142
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.15,
+          "marginHpPct": 0.036178861788617886,
+          "marginSurvivors": 1
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          3,
+          1,
+          2
+        ],
+        "winRate": 0.9625,
+        "marginHpPct": 0.15077605321507762,
+        "marginSurvivors": 1.2857142857142858
+      },
+      "worst": {
+        "order": [
+          1,
+          0,
+          3,
+          2
+        ],
+        "winRate": 0.15,
+        "marginHpPct": 0.036178861788617886,
+        "marginSurvivors": 1
+      },
+      "median": 0.50625,
+      "spread": 0.8125,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 0.2875,
+        "rank": 16
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.525,
+        "rank": 12
+      }
+    },
+    {
+      "encounterId": "e10",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.6055,
+          "marginSurvivors": 4.7125
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.5941363636363637,
+          "marginSurvivors": 4.3625
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.48868181818181816,
+          "marginSurvivors": 3.7125
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.48422727272727273,
+          "marginSurvivors": 3.7875
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.5583889528193325,
+          "marginSurvivors": 4.6075949367088604
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.5316915995397008,
+          "marginSurvivors": 3.8734177215189876
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.5316915995397008,
+          "marginSurvivors": 3.8734177215189876
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.9875,
+          "marginHpPct": 0.4866283084004603,
+          "marginSurvivors": 3.5949367088607596
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.5715151515151515,
+          "marginSurvivors": 4.833333333333333
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.975,
+          "marginHpPct": 0.48363636363636364,
+          "marginSurvivors": 3.769230769230769
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.572939787485242,
+          "marginSurvivors": 4.558441558441558
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5530106257378985,
+          "marginSurvivors": 4.376623376623376
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5428571428571428,
+          "marginSurvivors": 4.376623376623376
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5298229043683589,
+          "marginSurvivors": 4.246753246753247
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.5106021251475797,
+          "marginSurvivors": 4.025974025974026
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.9625,
+          "marginHpPct": 0.4309327036599764,
+          "marginSurvivors": 3.4155844155844157
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.5408133971291866,
+          "marginSurvivors": 4.815789473684211
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.95,
+          "marginHpPct": 0.4904306220095694,
+          "marginSurvivors": 4.342105263157895
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.925,
+          "marginHpPct": 0.5751351351351351,
+          "marginSurvivors": 4.4324324324324325
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.925,
+          "marginHpPct": 0.47356265356265353,
+          "marginSurvivors": 3.891891891891892
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.4067012987012987,
+          "marginSurvivors": 3.2
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.46805970149253734,
+          "marginSurvivors": 3.8059701492537314
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.8375,
+          "marginHpPct": 0.4386974219810041,
+          "marginSurvivors": 3.328358208955224
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.7625,
+          "marginHpPct": 0.4893591654247392,
+          "marginSurvivors": 4.163934426229508
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.6055,
+        "marginSurvivors": 4.7125
+      },
+      "worst": {
+        "order": [
+          1,
+          2,
+          0,
+          3
+        ],
+        "winRate": 0.7625,
+        "marginHpPct": 0.4893591654247392,
+        "marginSurvivors": 4.163934426229508
+      },
+      "median": 0.9625,
+      "spread": 0.23750000000000004,
+      "frontline": {
+        "order": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "winRate": 1,
+        "rank": 2
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 1,
+        "rank": 1
+      }
+    },
+    {
+      "encounterId": "e11",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.2635330261136713,
+          "marginSurvivors": 2.52
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.9125,
+          "marginHpPct": 0.3266839214696042,
+          "marginSurvivors": 2.589041095890411
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.825,
+          "marginHpPct": 0.3652422845971233,
+          "marginSurvivors": 2.3181818181818183
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.7875,
+          "marginHpPct": 0.2081047472752542,
+          "marginSurvivors": 2.380952380952381
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.7875,
+          "marginHpPct": 0.19376782971253018,
+          "marginSurvivors": 2.4444444444444446
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.725,
+          "marginHpPct": 0.2023677101541395,
+          "marginSurvivors": 2.0689655172413794
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.575,
+          "marginHpPct": 0.1995592065718293,
+          "marginSurvivors": 2.4565217391304346
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.525,
+          "marginHpPct": 0.25565064735571646,
+          "marginSurvivors": 2.119047619047619
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.45,
+          "marginHpPct": 0.3533026113671275,
+          "marginSurvivors": 2.3333333333333335
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.4,
+          "marginHpPct": 0.15668202764976957,
+          "marginSurvivors": 1.53125
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.4,
+          "marginHpPct": 0.09058179723502305,
+          "marginSurvivors": 1.15625
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.3875,
+          "marginHpPct": 0.17377731529656607,
+          "marginSurvivors": 1.7419354838709677
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.35,
+          "marginHpPct": 0.15552995391705068,
+          "marginSurvivors": 2.25
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.35,
+          "marginHpPct": 0.15552995391705068,
+          "marginSurvivors": 2.25
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.3375,
+          "marginHpPct": 0.27308414405188597,
+          "marginSurvivors": 2.037037037037037
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.275,
+          "marginHpPct": 0.1834939254294093,
+          "marginSurvivors": 2.090909090909091
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.2125,
+          "marginHpPct": 0.2905936568175657,
+          "marginSurvivors": 2.2941176470588234
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.2125,
+          "marginHpPct": 0.15126050420168066,
+          "marginSurvivors": 1.7647058823529411
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.1375,
+          "marginHpPct": 0.1579388353581902,
+          "marginSurvivors": 1.7272727272727273
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.1,
+          "marginHpPct": 0.20679723502304148,
+          "marginSurvivors": 1.875
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.0875,
+          "marginHpPct": 0.15668202764976957,
+          "marginSurvivors": 1.7142857142857142
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.0625,
+          "marginHpPct": 0.14746543778801843,
+          "marginSurvivors": 2
+        },
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 0.05,
+          "marginHpPct": 0.27880184331797236,
+          "marginSurvivors": 2.5
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.0375,
+          "marginHpPct": 0.18433179723502305,
+          "marginSurvivors": 1.6666666666666667
+        }
+      ],
+      "best": {
+        "order": [
+          0,
+          2,
+          3,
+          1
+        ],
+        "winRate": 0.9375,
+        "marginHpPct": 0.2635330261136713,
+        "marginSurvivors": 2.52
+      },
+      "worst": {
+        "order": [
+          3,
+          0,
+          2,
+          1
+        ],
+        "winRate": 0.0375,
+        "marginHpPct": 0.18433179723502305,
+        "marginSurvivors": 1.6666666666666667
+      },
+      "median": 0.36875,
+      "spread": 0.9,
+      "frontline": {
+        "order": [
+          3,
+          0,
+          2,
+          1
+        ],
+        "winRate": 0.0375,
+        "rank": 24
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.1375,
+        "rank": 19
+      }
+    },
+    {
+      "encounterId": "e12",
+      "difficulty": "medium",
+      "partyName": "custom",
+      "partySlugs": [
+        "barbarian",
+        "sorcerer",
+        "warlock",
+        "rogue"
+      ],
+      "openings": [
+        {
+          "order": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "winRate": 1,
+          "marginHpPct": 0.630299539170507,
+          "marginSurvivors": 4
+        },
+        {
+          "order": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.5260215053763441,
+          "marginSurvivors": 3.7733333333333334
+        },
+        {
+          "order": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "winRate": 0.9375,
+          "marginHpPct": 0.5260215053763441,
+          "marginSurvivors": 3.7733333333333334
+        },
+        {
+          "order": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "winRate": 0.875,
+          "marginHpPct": 0.3272547728768927,
+          "marginSurvivors": 3.357142857142857
+        },
+        {
+          "order": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "winRate": 0.825,
+          "marginHpPct": 0.29919005725457337,
+          "marginSurvivors": 2.6818181818181817
+        },
+        {
+          "order": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "winRate": 0.8125,
+          "marginHpPct": 0.2077986529599433,
+          "marginSurvivors": 1.9384615384615385
+        },
+        {
+          "order": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "winRate": 0.8,
+          "marginHpPct": 0.21234158986175114,
+          "marginSurvivors": 1.890625
+        },
+        {
+          "order": [
+            3,
+            2,
+            1,
+            0
+          ],
+          "winRate": 0.775,
+          "marginHpPct": 0.2197116099301323,
+          "marginSurvivors": 2.596774193548387
+        },
+        {
+          "order": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "winRate": 0.75,
+          "marginHpPct": 0.28863287250384023,
+          "marginSurvivors": 2.6
+        },
+        {
+          "order": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "winRate": 0.675,
+          "marginHpPct": 0.19406041986687148,
+          "marginSurvivors": 2
+        },
+        {
+          "order": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "winRate": 0.6,
+          "marginHpPct": 0.2767857142857143,
+          "marginSurvivors": 2.0625
+        },
+        {
+          "order": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "winRate": 0.5625,
+          "marginHpPct": 0.255094726062468,
+          "marginSurvivors": 2.466666666666667
+        },
+        {
+          "order": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "winRate": 0.55,
+          "marginHpPct": 0.2387934645999162,
+          "marginSurvivors": 2.227272727272727
+        },
+        {
+          "order": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "winRate": 0.55,
+          "marginHpPct": 0.2154377880184332,
+          "marginSurvivors": 2.3636363636363638
+        },
+        {
+          "order": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "winRate": 0.525,
+          "marginHpPct": 0.3004169409699364,
+          "marginSurvivors": 2.7857142857142856
+        },
+        {
+          "order": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "winRate": 0.5,
+          "marginHpPct": 0.23168202764976958,
+          "marginSurvivors": 2.45
+        },
+        {
+          "order": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "winRate": 0.475,
+          "marginHpPct": 0.1577734659228717,
+          "marginSurvivors": 1.9473684210526316
+        },
+        {
+          "order": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "winRate": 0.425,
+          "marginHpPct": 0.22878828950935212,
+          "marginSurvivors": 1.9705882352941178
+        },
+        {
+          "order": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "winRate": 0.3875,
+          "marginHpPct": 0.2333878400475695,
+          "marginSurvivors": 2.096774193548387
+        },
+        {
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "winRate": 0.375,
+          "marginHpPct": 0.285099846390169,
+          "marginSurvivors": 2.2
+        },
+        {
+          "order": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "winRate": 0.375,
+          "marginHpPct": 0.23840245775729646,
+          "marginSurvivors": 2.4
+        },
+        {
+          "order": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "winRate": 0.3,
+          "marginHpPct": 0.19969278033794163,
+          "marginSurvivors": 2.4583333333333335
+        },
+        {
+          "order": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "winRate": 0.3,
+          "marginHpPct": 0.16916282642089095,
+          "marginSurvivors": 1.8333333333333333
+        },
+        {
+          "order": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "winRate": 0.2,
+          "marginHpPct": 0.14775345622119815,
+          "marginSurvivors": 1.875
+        }
+      ],
+      "best": {
+        "order": [
+          3,
+          2,
+          0,
+          1
+        ],
+        "winRate": 1,
+        "marginHpPct": 0.630299539170507,
+        "marginSurvivors": 4
+      },
+      "worst": {
+        "order": [
+          1,
+          3,
+          0,
+          2
+        ],
+        "winRate": 0.2,
+        "marginHpPct": 0.14775345622119815,
+        "marginSurvivors": 1.875
+      },
+      "median": 0.55625,
+      "spread": 0.8,
+      "frontline": {
+        "order": [
+          3,
+          0,
+          2,
+          1
+        ],
+        "winRate": 0.5,
+        "rank": 16
+      },
+      "slotOrder": {
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "winRate": 0.9375,
+        "rank": 2
+      }
+    }
+  ]
+}
