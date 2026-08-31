@@ -1,5 +1,11 @@
 # CAMPAIGN_BALANCING.md — the balancing workflow (operator: Opus 5)
 
+> ⚠ **2026-08-31: BALANCE_PROCESS_V2.md now owns the MEASUREMENT regime** —
+> run order, acceptance criteria, the new `buildSearch`/`choiceReport`
+> instruments, and the calibration contract. This file remains authoritative
+> for the tuning tables, per-objective levers, pitfalls, and untouchables it
+> documents. Read V2 first, come here to choose levers.
+
 > **⚠ RE-CERTIFICATION OWED (queued, owner 2026-08-24: "note the need for
 > certifications again but hold off on running it for now").** Two brain
 > changes have landed since the last full battery and BOTH make campaign
