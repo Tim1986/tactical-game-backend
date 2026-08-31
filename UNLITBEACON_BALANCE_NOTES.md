@@ -1917,3 +1917,52 @@ whole roster is rootable (no stalwart) and the owner himself flagged it as the
 push/pull encounter. e12's marshal stays stalwart — a boss should be.
 
 **Everything above is provisional until the battery. Both smokes pass.**
+
+---
+
+## [BATTERY-POST] Re-baseline, 2026-08-31 — full data in balance_runs/*_POST.json
+
+Everything measured at once for the first time: new brain (BR2/BR2b/BR3/DOOR2),
+monotonic ladders, scaled specials, tier levers, Stride +2. Grid = 3 rep
+parties x 150 games; casual/optimal grids = owner comp x 100; placement = 24
+openings x 80.
+
+### What got HEALTHIER (the changes worked)
+
+* **Ladders are monotonic in play, not just in content** — no cell is harder
+  than the tier above it anywhere in the grid.
+* **e9 medium 80% (was a 33% outlier)** — the 1.55 repair landed in band.
+* **Gifts are a real choice now.** Stride +2: movement is best-for-cleric,
+  +9.5 for barbarian, and the shape verdict flipped to YES (escape/hazard/rooms
+  prefer movement, boss/race prefer damage, hold/survive prefer armor).
+* **Placement mean spread 44pts (was 50)** and e4/e5 collapsed to 10/5pts.
+* **e6 easy/medium casual = 100%** — the easy promise holds where it should.
+
+### The cliffs (top tuning items, lever named per the contract)
+
+| cell | reading | lever |
+|---|---|---|
+| **e6 hard** | owner-comp optimal **3%** (medium 100%) — the 4-exit change + press + wisp waves stacked into a wall | back off ONE lever on hard: 5 exits, or wisp wave r2 |
+| **e2 nightmare** | unsolvable (best 23%) | hpScale down |
+| **e3 nightmare** | unsolvable (best 16%) | hpScale down |
+| **e5 nightmare** | unsolvable (best 35%) | hpScale down |
+| **e8 melee WALL** at every tier; e8 nightmare unsolvable | placement/structure, not HP (spreadSweep) |
+| **e11** | median 28 vs best 94, ranged WALL everywhere — still a placement trap | structural: the sweep's best openings say it IS winnable; fix approach geometry |
+| e1 easy-hard | 99/97/79 — too easy three tiers deep | hpScale up |
+| e4 easy-hard | 100/97/85 — unlit/soft torchhand may have overshot | hpScale up a notch |
+
+### ⚠ Two instrument caveats before reading casual's zeros
+
+CasualBrain knows neither the DOOR CROSSING nor the one-runner race rule, so
+its 0% on e8 (rooms) and near-0 on e7 (race) are partly the instrument, not the
+content. Its easy-tier gate is trustworthy on FIGHT and simple-objective cells
+only. Teaching it doors/races is future work; do not tune e7/e8 easy to its
+zeros.
+
+### Sorcerer's gift row went degenerate
+
+damage +3.6 / movement **−4.0** / armor **+0.2** — one live option. The
+movement negative is new (Stride +2 helps everyone except the class that
+channels standing still — Channeler synergy makes moving a cost). A
+class-flavoured menu problem for the next gift pass, alongside fighter armor
+still dominant (+11.1).

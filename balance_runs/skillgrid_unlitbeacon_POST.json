@@ -1,0 +1,336 @@
+[
+  {
+    "enc": "e1",
+    "d": "easy",
+    "casual": 1,
+    "optimal": 1,
+    "marginOpt": 0.5087586206896552
+  },
+  {
+    "enc": "e1",
+    "d": "medium",
+    "casual": 0.99,
+    "optimal": 1,
+    "marginOpt": 0.41820689655172416
+  },
+  {
+    "enc": "e1",
+    "d": "hard",
+    "casual": 0.91,
+    "optimal": 0.99,
+    "marginOpt": 0.32978056426332286
+  },
+  {
+    "enc": "e1",
+    "d": "nightmare",
+    "casual": 0.48,
+    "optimal": 0.73,
+    "marginOpt": 0.24600850259801607
+  },
+  {
+    "enc": "e2",
+    "d": "easy",
+    "casual": 0.26,
+    "optimal": 1,
+    "marginOpt": 0.6021118012422361
+  },
+  {
+    "enc": "e2",
+    "d": "medium",
+    "casual": 0.03,
+    "optimal": 0.89,
+    "marginOpt": 0.3523623421034266
+  },
+  {
+    "enc": "e2",
+    "d": "hard",
+    "casual": 0.02,
+    "optimal": 0.72,
+    "marginOpt": 0.30158730158730157
+  },
+  {
+    "enc": "e2",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.39,
+    "marginOpt": 0.24048415352763178
+  },
+  {
+    "enc": "e3",
+    "d": "easy",
+    "casual": 1,
+    "optimal": 1,
+    "marginOpt": 0.5877639751552795
+  },
+  {
+    "enc": "e3",
+    "d": "medium",
+    "casual": 0.73,
+    "optimal": 0.79,
+    "marginOpt": 0.3747149933170847
+  },
+  {
+    "enc": "e3",
+    "d": "hard",
+    "casual": 0.64,
+    "optimal": 0.62,
+    "marginOpt": 0.2781005810458826
+  },
+  {
+    "enc": "e3",
+    "d": "nightmare",
+    "casual": 0.15,
+    "optimal": 0.25,
+    "marginOpt": 0.25614906832298134
+  },
+  {
+    "enc": "e4",
+    "d": "easy",
+    "casual": 0.93,
+    "optimal": 1,
+    "marginOpt": 0.5811180124223603
+  },
+  {
+    "enc": "e4",
+    "d": "medium",
+    "casual": 0.02,
+    "optimal": 1,
+    "marginOpt": 0.49217391304347824
+  },
+  {
+    "enc": "e4",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 1,
+    "marginOpt": 0.4220496894409938
+  },
+  {
+    "enc": "e4",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.61,
+    "marginOpt": 0.1770695448528663
+  },
+  {
+    "enc": "e5",
+    "d": "easy",
+    "casual": 0.74,
+    "optimal": 1,
+    "marginOpt": 0.6275
+  },
+  {
+    "enc": "e5",
+    "d": "medium",
+    "casual": 0.39,
+    "optimal": 0.97,
+    "marginOpt": 0.4652920962199313
+  },
+  {
+    "enc": "e5",
+    "d": "hard",
+    "casual": 0.02,
+    "optimal": 0.41,
+    "marginOpt": 0.23617886178861788
+  },
+  {
+    "enc": "e5",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.28,
+    "marginOpt": 0.15753968253968254
+  },
+  {
+    "enc": "e6",
+    "d": "easy",
+    "casual": 1,
+    "optimal": 1,
+    "marginOpt": 0.6252486187845304
+  },
+  {
+    "enc": "e6",
+    "d": "medium",
+    "casual": 1,
+    "optimal": 1,
+    "marginOpt": 0.5569060773480663
+  },
+  {
+    "enc": "e6",
+    "d": "hard",
+    "casual": 0.02,
+    "optimal": 0.03,
+    "marginOpt": 0.06445672191528545
+  },
+  {
+    "enc": "e6",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0
+  },
+  {
+    "enc": "e7",
+    "d": "easy",
+    "casual": 0.1,
+    "optimal": 0.94,
+    "marginOpt": 0.7095138352993055
+  },
+  {
+    "enc": "e7",
+    "d": "medium",
+    "casual": 0.03,
+    "optimal": 0.89,
+    "marginOpt": 0.8141701111952029
+  },
+  {
+    "enc": "e7",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 0.74,
+    "marginOpt": 0.683377678196331
+  },
+  {
+    "enc": "e7",
+    "d": "nightmare",
+    "casual": 0.01,
+    "optimal": 0.06,
+    "marginOpt": 0.48704663212435234
+  },
+  {
+    "enc": "e8",
+    "d": "easy",
+    "casual": 0,
+    "optimal": 0.75,
+    "marginOpt": 0.3212307692307692
+  },
+  {
+    "enc": "e8",
+    "d": "medium",
+    "casual": 0,
+    "optimal": 0.13,
+    "marginOpt": 0.13333333333333333
+  },
+  {
+    "enc": "e8",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 0.01,
+    "marginOpt": 0.046153846153846156
+  },
+  {
+    "enc": "e8",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0
+  },
+  {
+    "enc": "e9",
+    "d": "easy",
+    "casual": 0.41,
+    "optimal": 0.87,
+    "marginOpt": 0.12660417364133467
+  },
+  {
+    "enc": "e9",
+    "d": "medium",
+    "casual": 0.04,
+    "optimal": 0.26,
+    "marginOpt": 0.06441374159820762
+  },
+  {
+    "enc": "e9",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 0.01,
+    "marginOpt": 0.11650485436893204
+  },
+  {
+    "enc": "e9",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.05,
+    "marginOpt": 0.0912621359223301
+  },
+  {
+    "enc": "e10",
+    "d": "easy",
+    "casual": 0.68,
+    "optimal": 0.74,
+    "marginOpt": 0.4584235803747999
+  },
+  {
+    "enc": "e10",
+    "d": "medium",
+    "casual": 0.41,
+    "optimal": 0.6,
+    "marginOpt": 0.4116724738675958
+  },
+  {
+    "enc": "e10",
+    "d": "hard",
+    "casual": 0.2,
+    "optimal": 0.43,
+    "marginOpt": 0.37387569888987926
+  },
+  {
+    "enc": "e10",
+    "d": "nightmare",
+    "casual": 0.16,
+    "optimal": 0.45,
+    "marginOpt": 0.38010065814943866
+  },
+  {
+    "enc": "e11",
+    "d": "easy",
+    "casual": 0,
+    "optimal": 0.33,
+    "marginOpt": 0.2813852813852814
+  },
+  {
+    "enc": "e11",
+    "d": "medium",
+    "casual": 0,
+    "optimal": 0.19,
+    "marginOpt": 0.262915352898375
+  },
+  {
+    "enc": "e11",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 0.09,
+    "marginOpt": 0.24321556579621095
+  },
+  {
+    "enc": "e11",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.02,
+    "marginOpt": 0.21658986175115208
+  },
+  {
+    "enc": "e12",
+    "d": "easy",
+    "casual": 0,
+    "optimal": 0.55,
+    "marginOpt": 0.19815668202764977
+  },
+  {
+    "enc": "e12",
+    "d": "medium",
+    "casual": 0,
+    "optimal": 0.11,
+    "marginOpt": 0.17679095098449937
+  },
+  {
+    "enc": "e12",
+    "d": "hard",
+    "casual": 0,
+    "optimal": 0.01,
+    "marginOpt": 0.3317972350230415
+  },
+  {
+    "enc": "e12",
+    "d": "nightmare",
+    "casual": 0,
+    "optimal": 0.01,
+    "marginOpt": 0.3317972350230415
+  }
+]

@@ -1,0 +1,157 @@
+=== SMOKE ===
+SMOKE: PASS — content plays clean. Full battery unlocked for this content.
+=== FULL GRID unlitbeacon, 150 games ===
+       └ L:Your party has fallen×140  W:The target is destroyed×8  W:You reached the goal×2
+e12  L10   medium     balanced  100%    [ 65%, 80%] ⚠  3   margin  92% HP · 4.0/4 alive
+       └ W:You reached the goal×150
+     mean  54%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): ranged
+e12  L10   hard       melee      37%    [ 45%, 65%] ⚠  65   margin  39% HP · 3.1/4 alive
+       └ L:Your party has fallen×94  W:The target is destroyed×51  W:You reached the goal×5
+e12  L10   hard       ranged      4%    [ 45%, 65%] ⚠  50   margin  24% HP · 2.0/4 alive
+       └ L:Your party has fallen×144  W:You reached the goal×5  W:The target is destroyed×1
+e12  L10   hard       balanced   92%    [ 45%, 65%] ⚠  50   margin  46% HP · 2.9/4 alive
+       └ W:You reached the goal×94  W:The target is destroyed×44  L:Your party has fallen×12
+     mean  44%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): ranged
+e12  L10   nightmare  melee      49%    [ 15%, 45%] ⚠  72   margin  32% HP · 2.7/4 alive
+       └ L:Your party has fallen×76  W:The target is destroyed×45  W:You reached the goal×29
+e12  L10   nightmare  ranged      5%    [ 15%, 45%] ⚠  51   margin  26% HP · 2.3/4 alive
+       └ L:Your party has fallen×143  W:You reached the goal×6  W:The target is destroyed×1
+e12  L10   nightmare  balanced   71%    [ 15%, 45%] ⚠  57   margin  49% HP · 3.0/4 alive
+       └ W:You reached the goal×87  L:Your party has fallen×43  W:The target is destroyed×20
+     mean  42%  [ 15%, 45%] ✓
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e1/easy: mean  99% out of band
+    e1/medium: mean  97% out of band
+    e1/hard: mean  79% out of band
+    e2/medium: mean  48% out of band, WALL for: ranged
+    e2/hard: mean  34% out of band
+    e2/nightmare: mean  10% out of band, unsolvable (best  23%)
+    e3/hard: mean  39% out of band
+    e3/nightmare: mean  13% out of band, unsolvable (best  16%)
+    e4/easy: mean 100% out of band
+    e4/medium: mean  97% out of band
+    e4/hard: mean  85% out of band
+    e5/medium: mean  67%, WALL for: ranged
+    e5/hard: mean  66% out of band
+    e5/nightmare: mean  23%, unsolvable (best  35%)
+    e6/easy: mean  99% out of band
+    e6/medium: mean  99% out of band
+    e6/hard: mean  36% out of band
+    e6/nightmare: mean  21%, unsolvable (best  23%)
+    e7/easy: mean  72% out of band, WALL for: balanced
+    e7/medium: mean  57% out of band, WALL for: balanced
+    e8/easy: mean  64% out of band, WALL for: melee
+    e8/medium: mean  38% out of band, WALL for: melee
+    e8/hard: mean  12% out of band, WALL for: melee
+    e8/nightmare: mean   2% out of band, unsolvable (best   5%)
+    e9/easy: mean  99% out of band
+    e9/medium: mean  80% out of band
+    e9/hard: mean  32% out of band, WALL for: ranged
+    e10/easy: mean  95% out of band
+    e10/medium: mean  88% out of band
+    e10/hard: mean  77% out of band
+    e10/nightmare: mean  57% out of band
+    e11/easy: mean  76% out of band, WALL for: ranged
+    e11/medium: mean  58% out of band, WALL for: ranged
+    e11/hard: mean  45%, WALL for: ranged
+    e12/easy: mean  75% out of band, WALL for: ranged
+    e12/medium: mean  54% out of band, WALL for: ranged
+    e12/hard: mean  44% out of band, WALL for: ranged
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.
+JSON written: balance_runs/battery_unlitbeacon_POST.json
+=== CASUAL GRID unlitbeacon (easy-tier shape gate), 100 games ===
+e1 easy: casual 100% optimal 100%
+e1 medium: casual 99% optimal 100%
+e1 hard: casual 91% optimal 99%
+e1 nightmare: casual 48% optimal 73%
+e2 easy: casual 26% optimal 100%
+e2 medium: casual 3% optimal 89%
+e2 hard: casual 2% optimal 72%
+e2 nightmare: casual 0% optimal 39%
+e3 easy: casual 100% optimal 100%
+e3 medium: casual 73% optimal 79%
+e3 hard: casual 64% optimal 62%
+e3 nightmare: casual 15% optimal 25%
+e4 easy: casual 93% optimal 100%
+e4 medium: casual 2% optimal 100%
+e4 hard: casual 0% optimal 100%
+e4 nightmare: casual 0% optimal 61%
+e5 easy: casual 74% optimal 100%
+e5 medium: casual 39% optimal 97%
+e5 hard: casual 2% optimal 41%
+e5 nightmare: casual 0% optimal 28%
+e6 easy: casual 100% optimal 100%
+e6 medium: casual 100% optimal 100%
+e6 hard: casual 2% optimal 3%
+e6 nightmare: casual 0% optimal 0%
+e7 easy: casual 10% optimal 94%
+e7 medium: casual 3% optimal 89%
+e7 hard: casual 0% optimal 74%
+e7 nightmare: casual 1% optimal 6%
+e8 easy: casual 0% optimal 75%
+e8 medium: casual 0% optimal 13%
+e8 hard: casual 0% optimal 1%
+e8 nightmare: casual 0% optimal 0%
+e9 easy: casual 41% optimal 87%
+e9 medium: casual 4% optimal 26%
+e9 hard: casual 0% optimal 1%
+e9 nightmare: casual 0% optimal 5%
+e10 easy: casual 68% optimal 74%
+e10 medium: casual 41% optimal 60%
+e10 hard: casual 20% optimal 43%
+e10 nightmare: casual 16% optimal 45%
+e11 easy: casual 0% optimal 33%
+e11 medium: casual 0% optimal 19%
+e11 hard: casual 0% optimal 9%
+e11 nightmare: casual 0% optimal 2%
+e12 easy: casual 0% optimal 55%
+e12 medium: casual 0% optimal 11%
+e12 hard: casual 0% optimal 1%
+e12 nightmare: casual 0% optimal 1%
+=== PLACEMENT SEARCH unlitbeacon medium, 80 games ===
+enc   best  worst  spread  median | frontline (rank)  slot-order (rank) | best opening (front->back)
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+e1    100%    99%      1%     100% | 100% (# 8)      100% (#15)    | barbarian>sorcerer>warlock>rogue
+e2     99%    71%     28% ⚠    92% |  90% (#14)       99% (# 2)    | sorcerer>rogue>warlock>barbarian
+e3     98%    49%     49% ⚠    80% |  76% (#19)       93% (# 2)    | barbarian>sorcerer>warlock>rogue
+e4    100%    90%     10%      99% | 100% (# 4)      100% (# 8)    | sorcerer>rogue>barbarian>warlock
+e5    100%    95%      5%      99% |  96% (#19)       98% (#14)    | sorcerer>warlock>barbarian>rogue
+e6    100%   100%      0%     100% | 100% (#21)      100% (#16)    | warlock>rogue>barbarian>sorcerer
+e7    100%     6%     94% ⚠    73% |  93% (# 4)       35% (#21)    | barbarian>sorcerer>warlock>rogue
+e8     70%     6%     64% ⚠    44% |  15% (#23)       53% (# 6)    | rogue>barbarian>sorcerer>warlock
+e9     79%    18%     61% ⚠    53% |  29% (#23)       35% (#18)    | sorcerer>warlock>barbarian>rogue
+e10   100%    61%     39% ⚠    86% |  63% (#23)       90% (#10)    | barbarian>sorcerer>warlock>rogue
+e11    94%     5%     89% ⚠    28% |  19% (#16)        6% (#23)    | warlock>sorcerer>rogue>barbarian
+e12    94%     6%     88% ⚠    41% |  14% (#23)       81% (# 4)    | sorcerer>warlock>rogue>barbarian
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Widest placement spreads: e7 94pts · e11 89pts · e12 88pts
+Mean spread across 12 encounters: 44 points
+
+⚠ A cell whose spread exceeds its target band is not a difficulty — it is a placement puzzle.
+
+Wrote balance_runs/placement_medium_POST.json
+=== GIFT HARNESS per-class, 60 games ===
+── IS IT A REAL CHOICE? ──
+  ✓ YES — different ENCOUNTER SHAPES prefer different gifts (boss:damage, escape:movement, escort:armor, hazard:movement, hold:armor, kill-all:armor, race:damage, rooms:movement, siege:damage, survive:armor).
+    A permanent pick made against a mixed campaign is therefore a real strategic bet.
+
+JSON written: balance_runs/gifts_POST.json
+
+══ PER-CLASS GIFT VALUE (one gifted unit, three giftless) ══
+class        damage   movement armor     best
+barbarian    +1.6     +9.5     +10.7     armor
+cleric       +2.2     +5.9     +2.8      movement
+fighter      +3.8     +2.7     +11.1     armor
+ranger       +5.9     +1.6     +3.5      damage
+rogue        +5.5     +1.1     +6.0      armor
+sorcerer     +3.6     -4.0     +0.2      damage
+warlock      +4.7     +3.1     +3.4      damage
+wizard       +2.1     +1.9     +3.6      armor
+
+⚠ A gift no class ever wants, or one every class wants, is a non-choice.
+  Read the SPREAD within each row: a class whose three numbers are equal
+  has no decision to make at its Deep Gift.
+=== BATTERY COMPLETE ===

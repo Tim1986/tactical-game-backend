@@ -1,0 +1,1565 @@
+{
+  "level": 8,
+  "games": 60,
+  "rows": [
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e3",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.3,
+      "deltas": {
+        "damage": 0.16666666666666669,
+        "movement": -0.21666666666666667,
+        "armor": 0.3166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.5166666666666667,
+      "deltas": {
+        "damage": 0.21666666666666656,
+        "movement": 0.4833333333333333,
+        "armor": 0.3833333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e5",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.5666666666666667,
+      "deltas": {
+        "damage": 0.033333333333333326,
+        "movement": -0.43333333333333335,
+        "armor": -0.09999999999999998
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.26666666666666666,
+      "deltas": {
+        "damage": 0.1166666666666667,
+        "movement": -0.1,
+        "armor": 0.18333333333333335
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.4166666666666667,
+      "deltas": {
+        "damage": 0.11666666666666664,
+        "movement": 0.3166666666666666,
+        "armor": 0.016666666666666663
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.6333333333333333,
+      "deltas": {
+        "damage": 0,
+        "movement": 0.3666666666666667,
+        "armor": 0.08333333333333337
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.4,
+      "deltas": {
+        "damage": 0.1166666666666667,
+        "movement": 0.31666666666666665,
+        "armor": 0.09999999999999998
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.5833333333333334,
+      "deltas": {
+        "damage": 0.3999999999999999,
+        "movement": 0.3999999999999999,
+        "armor": 0.35
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.31666666666666665,
+      "deltas": {
+        "damage": 0.21666666666666667,
+        "movement": 0.15000000000000002,
+        "armor": 0.5333333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e8",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.7166666666666667,
+      "deltas": {
+        "damage": 0.06666666666666665,
+        "movement": 0.15000000000000002,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.65,
+      "deltas": {
+        "damage": 0.23333333333333328,
+        "movement": 0.31666666666666665,
+        "armor": 0.1333333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.6833333333333333,
+      "deltas": {
+        "damage": 0.06666666666666665,
+        "movement": 0.25,
+        "armor": 0.2666666666666666
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.35,
+      "deltas": {
+        "damage": 0.1166666666666667,
+        "movement": 0.10000000000000003,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e9",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.48333333333333334,
+      "deltas": {
+        "damage": 0.4333333333333333,
+        "movement": 0.2833333333333334,
+        "armor": 0.1833333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e9",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.65,
+      "deltas": {
+        "damage": 0.18333333333333335,
+        "movement": -0.2,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.5333333333333333,
+      "deltas": {
+        "damage": 0.06666666666666665,
+        "movement": -0.08333333333333331,
+        "armor": 0.2333333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.5166666666666667,
+      "deltas": {
+        "damage": -0.03333333333333338,
+        "movement": -0.33333333333333337,
+        "armor": 0.1499999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.1166666666666667,
+        "movement": 0.21666666666666667,
+        "armor": 0.2
+      }
+    },
+    {
+      "cell": {
+        "campaign": "lantern",
+        "encounter": "e10",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.48333333333333334,
+      "deltas": {
+        "damage": 0.03333333333333338,
+        "movement": -0.33333333333333337,
+        "armor": 0.08333333333333331
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e2",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.7333333333333333,
+      "deltas": {
+        "damage": 0.08333333333333337,
+        "movement": 0.16666666666666674,
+        "armor": 0.10000000000000009
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e2",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.7,
+      "deltas": {
+        "damage": 0.08333333333333337,
+        "movement": 0.050000000000000044,
+        "armor": 0
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.5,
+      "deltas": {
+        "damage": 0.21666666666666667,
+        "movement": 0.4666666666666667,
+        "armor": 0.3666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.7666666666666667,
+      "deltas": {
+        "damage": 0.21666666666666656,
+        "movement": 0.09999999999999998,
+        "armor": 0.18333333333333324
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e4",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.4,
+      "deltas": {
+        "damage": 0.4,
+        "movement": 0.6,
+        "armor": 0.18333333333333335
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e4",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.33333333333333337,
+        "movement": 0.65,
+        "armor": 0.3666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.4166666666666667,
+      "deltas": {
+        "damage": 0.2,
+        "movement": 0.55,
+        "armor": 0.24999999999999994
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.26666666666666666,
+      "deltas": {
+        "damage": 0.16666666666666669,
+        "movement": 0.5333333333333334,
+        "armor": 0.23333333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e5",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.65,
+      "deltas": {
+        "damage": 0.19999999999999996,
+        "movement": 0.35,
+        "armor": 0.21666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e5",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.1499999999999999,
+        "movement": 0.18333333333333324,
+        "armor": 0.11666666666666659
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.45,
+      "deltas": {
+        "damage": 0.14999999999999997,
+        "movement": 0.5333333333333332,
+        "armor": 0.36666666666666664
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.5833333333333334,
+      "deltas": {
+        "damage": 0.31666666666666665,
+        "movement": 0.29999999999999993,
+        "armor": 0.23333333333333328
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.5,
+      "deltas": {
+        "damage": 0.35,
+        "movement": 0.33333333333333337,
+        "armor": 0.19999999999999996
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e6",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.6666666666666666,
+      "deltas": {
+        "damage": 0.2833333333333333,
+        "movement": 0.21666666666666667,
+        "armor": 0.18333333333333335
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.38333333333333336,
+      "deltas": {
+        "damage": 0.033333333333333326,
+        "movement": 0.2,
+        "armor": 0.38333333333333336
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.5666666666666667,
+      "deltas": {
+        "damage": 0.31666666666666665,
+        "movement": 0.21666666666666667,
+        "armor": 0.20000000000000007
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.7333333333333333,
+      "deltas": {
+        "damage": 0.13333333333333341,
+        "movement": 0.03333333333333344,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.7,
+      "deltas": {
+        "damage": -0.06666666666666665,
+        "movement": -0.04999999999999993,
+        "armor": 0.20000000000000007
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.65,
+      "deltas": {
+        "damage": 0.08333333333333326,
+        "movement": -0.033333333333333326,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.18333333333333335,
+        "movement": 0.18333333333333335,
+        "armor": 0.41666666666666663
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.4666666666666667,
+      "deltas": {
+        "damage": 0.31666666666666665,
+        "movement": 0.21666666666666667,
+        "armor": 0.23333333333333328
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.4,
+      "deltas": {
+        "damage": 0.15000000000000002,
+        "movement": 0.09999999999999998,
+        "armor": 0.21666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e9",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.31666666666666665,
+      "deltas": {
+        "damage": 0.5666666666666667,
+        "movement": 0.6833333333333333,
+        "armor": 0.033333333333333326
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.3,
+      "deltas": {
+        "damage": 0.2,
+        "movement": 0.23333333333333334,
+        "armor": 0.45
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e11",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.4166666666666667,
+      "deltas": {
+        "damage": -0.033333333333333326,
+        "movement": -0.33333333333333337,
+        "armor": -0.13333333333333336
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e11",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.36666666666666664,
+      "deltas": {
+        "damage": 0.08333333333333337,
+        "movement": -0.14999999999999997,
+        "armor": -0.016666666666666663
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e11",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.31666666666666665,
+      "deltas": {
+        "damage": -0.033333333333333326,
+        "movement": -0.25,
+        "armor": -0.04999999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e11",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.4166666666666667,
+      "deltas": {
+        "damage": 0.23333333333333334,
+        "movement": -0.2,
+        "armor": 0.04999999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "goblinopolis",
+        "encounter": "e12",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.25,
+      "deltas": {
+        "damage": -0.2,
+        "movement": -0.23333333333333334,
+        "armor": 0.11666666666666664
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e2",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.16666666666666663,
+        "movement": 0.19999999999999996,
+        "armor": 0.04999999999999993
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e3",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.033333333333333326,
+        "movement": 0.06666666666666665,
+        "armor": 0.1499999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e3",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.48333333333333334,
+      "deltas": {
+        "damage": -0.033333333333333326,
+        "movement": 0.4166666666666667,
+        "armor": 0.2
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.5333333333333333,
+      "deltas": {
+        "damage": 0.2333333333333334,
+        "movement": 0.3833333333333333,
+        "armor": 0.3666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.3333333333333333,
+      "deltas": {
+        "damage": -0.08333333333333331,
+        "movement": 0.55,
+        "armor": 0.3
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.7,
+      "deltas": {
+        "damage": 0.2333333333333334,
+        "movement": 0.16666666666666674,
+        "armor": 0.21666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e4",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.4666666666666667,
+      "deltas": {
+        "damage": 0.18333333333333335,
+        "movement": 0.5166666666666666,
+        "armor": 0.2833333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e4",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.7,
+      "deltas": {
+        "damage": 0.20000000000000007,
+        "movement": 0.2833333333333333,
+        "armor": 0.2666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.3333333333333333,
+      "deltas": {
+        "damage": 0.06666666666666671,
+        "movement": -0.04999999999999999,
+        "armor": 0.3166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.55,
+      "deltas": {
+        "damage": 0.3833333333333333,
+        "movement": 0.33333333333333326,
+        "armor": 0.33333333333333326
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e5",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.31666666666666665,
+        "movement": 0.7166666666666667,
+        "armor": 0.43333333333333335
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e5",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.43333333333333335,
+      "deltas": {
+        "damage": 0.3666666666666667,
+        "movement": 0.41666666666666663,
+        "armor": 0.2666666666666666
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.18333333333333324,
+        "movement": 0.09999999999999998,
+        "armor": 0.1333333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.6666666666666666,
+      "deltas": {
+        "damage": 0.13333333333333341,
+        "movement": -0.19999999999999996,
+        "armor": 0.2333333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e6",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.5333333333333333,
+      "deltas": {
+        "damage": 0.08333333333333337,
+        "movement": -0.35,
+        "armor": 0.15000000000000002
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e6",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.3,
+      "deltas": {
+        "damage": 0.45,
+        "movement": 0.3,
+        "armor": 0.48333333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.16666666666666663,
+        "movement": 0.1499999999999999,
+        "armor": 0.08333333333333326
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.6666666666666666,
+      "deltas": {
+        "damage": -0.016666666666666607,
+        "movement": -0.19999999999999996,
+        "armor": 0.10000000000000009
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.5,
+      "deltas": {
+        "damage": 0.1333333333333333,
+        "movement": -0.4166666666666667,
+        "armor": 0.15000000000000002
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.43333333333333335,
+      "deltas": {
+        "damage": 0.18333333333333335,
+        "movement": 0.25,
+        "armor": 0.29999999999999993
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.6,
+      "deltas": {
+        "damage": 0.25,
+        "movement": 0.1166666666666667,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.55,
+      "deltas": {
+        "damage": 0.2666666666666666,
+        "movement": -0.01666666666666672,
+        "armor": 0.29999999999999993
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.3333333333333333,
+      "deltas": {
+        "damage": 0.13333333333333336,
+        "movement": -0.033333333333333326,
+        "armor": 0.45
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.3333333333333333,
+      "deltas": {
+        "damage": 0.4166666666666667,
+        "movement": 0.033333333333333326,
+        "armor": 0.4166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e8",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.41666666666666663,
+        "movement": 0.21666666666666667,
+        "armor": 0.5
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.6166666666666667,
+      "deltas": {
+        "damage": 0.29999999999999993,
+        "movement": 0.25,
+        "armor": 0.11666666666666659
+      }
+    },
+    {
+      "cell": {
+        "campaign": "moonberry",
+        "encounter": "e12",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.45,
+      "deltas": {
+        "damage": -0.016666666666666663,
+        "movement": 0.39999999999999997,
+        "armor": 0.24999999999999994
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e2",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.6166666666666667,
+      "deltas": {
+        "damage": 0.18333333333333335,
+        "movement": 0.3666666666666666,
+        "armor": 0.29999999999999993
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e4",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.75,
+      "deltas": {
+        "damage": 0.23333333333333328,
+        "movement": 0.15000000000000002,
+        "armor": 0.1333333333333333
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.7666666666666667,
+      "deltas": {
+        "damage": 0.11666666666666659,
+        "movement": 0.23333333333333328,
+        "armor": 0
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.7166666666666667,
+      "deltas": {
+        "damage": 0.23333333333333328,
+        "movement": 0.18333333333333335,
+        "armor": 0.06666666666666665
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.4166666666666667,
+      "deltas": {
+        "damage": 0.3166666666666666,
+        "movement": 0.3333333333333333,
+        "armor": 0.36666666666666664
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e6",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.5666666666666667,
+      "deltas": {
+        "damage": 0.30000000000000004,
+        "movement": 0.41666666666666663,
+        "armor": 0.20000000000000007
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.55,
+      "deltas": {
+        "damage": 0.06666666666666665,
+        "movement": 0.41666666666666663,
+        "armor": -0.1166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.25,
+      "deltas": {
+        "damage": -0.06666666666666668,
+        "movement": 0.21666666666666667,
+        "armor": -0.1
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.5166666666666667,
+      "deltas": {
+        "damage": 0,
+        "movement": 0.2666666666666666,
+        "armor": -0.20000000000000007
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e8",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.7166666666666667,
+      "deltas": {
+        "damage": 0.23333333333333328,
+        "movement": -0.5,
+        "armor": 0.1166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.3333333333333333,
+      "deltas": {
+        "damage": 0.25000000000000006,
+        "movement": 0.46666666666666673,
+        "armor": 0.25000000000000006
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.6166666666666667,
+      "deltas": {
+        "damage": 0.23333333333333328,
+        "movement": 0.3666666666666666,
+        "armor": 0.25
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e9",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.25,
+      "deltas": {
+        "damage": 0.6,
+        "movement": 0.06666666666666665,
+        "armor": 0.16666666666666669
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.4,
+      "deltas": {
+        "damage": 0.15000000000000002,
+        "movement": -0.2166666666666667,
+        "armor": -0.06666666666666671
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e11",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.25,
+      "deltas": {
+        "damage": 0.2,
+        "movement": -0.1,
+        "armor": 0.21666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "sealeddeep",
+        "encounter": "e11",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.26666666666666666,
+      "deltas": {
+        "damage": -0.1,
+        "movement": -0.16666666666666666,
+        "armor": 0.2833333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e3",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.7666666666666667,
+      "deltas": {
+        "damage": 0.21666666666666656,
+        "movement": 0.1333333333333333,
+        "armor": 0.1499999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.16666666666666663,
+        "movement": 0.18333333333333324,
+        "armor": 0.16666666666666663
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e3",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.6166666666666667,
+      "deltas": {
+        "damage": 0.1333333333333333,
+        "movement": -0.09999999999999998,
+        "armor": 0.09999999999999998
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.1333333333333333,
+        "movement": 0.08333333333333326,
+        "armor": 0.18333333333333324
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e5",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.016666666666666607,
+        "movement": -0.033333333333333326,
+        "armor": 0.1499999999999999
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e6",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.8,
+      "deltas": {
+        "damage": 0.016666666666666607,
+        "movement": -0.2833333333333333,
+        "armor": 0.016666666666666607
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.7,
+      "deltas": {
+        "damage": -0.08333333333333326,
+        "movement": 0.30000000000000004,
+        "armor": 0
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.6166666666666667,
+      "deltas": {
+        "damage": 0.19999999999999996,
+        "movement": 0.18333333333333335,
+        "armor": 0.06666666666666665
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.5333333333333333,
+      "deltas": {
+        "damage": -0.06666666666666665,
+        "movement": 0.4666666666666667,
+        "armor": -0.3
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.2833333333333333,
+      "deltas": {
+        "damage": 0.16666666666666669,
+        "movement": 0.7166666666666667,
+        "armor": -0.016666666666666663
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "ranged",
+      "baseline": 0.35,
+      "deltas": {
+        "damage": 0.050000000000000044,
+        "movement": 0.2833333333333333,
+        "armor": 0.1166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e7",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.26666666666666666,
+      "deltas": {
+        "damage": 0.016666666666666663,
+        "movement": 0.7333333333333334,
+        "armor": 0
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e9",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.36666666666666664,
+      "deltas": {
+        "damage": 0,
+        "movement": 0.10000000000000003,
+        "armor": 0.35000000000000003
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e9",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.36666666666666664,
+      "deltas": {
+        "damage": 0.01666666666666672,
+        "movement": 0.050000000000000044,
+        "armor": 0.4000000000000001
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "melee",
+      "baseline": 0.5666666666666667,
+      "deltas": {
+        "damage": 0.21666666666666667,
+        "movement": 0.35,
+        "armor": 0.3666666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e10",
+        "difficulty": "hard"
+      },
+      "party": "ranged",
+      "baseline": 0.36666666666666664,
+      "deltas": {
+        "damage": 0.25000000000000006,
+        "movement": -0.3333333333333333,
+        "armor": 0.2833333333333334
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e10",
+        "difficulty": "nightmare"
+      },
+      "party": "melee",
+      "baseline": 0.26666666666666666,
+      "deltas": {
+        "damage": 0.2,
+        "movement": 0.5,
+        "armor": 0.4166666666666667
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e12",
+        "difficulty": "hard"
+      },
+      "party": "balanced",
+      "baseline": 0.5833333333333334,
+      "deltas": {
+        "damage": 0.04999999999999993,
+        "movement": -0.55,
+        "armor": -0.033333333333333326
+      }
+    },
+    {
+      "cell": {
+        "campaign": "unlitbeacon",
+        "encounter": "e12",
+        "difficulty": "nightmare"
+      },
+      "party": "balanced",
+      "baseline": 0.6,
+      "deltas": {
+        "damage": 0,
+        "movement": -0.6,
+        "armor": -0.06666666666666665
+      }
+    }
+  ],
+  "winners": {
+    "balanced": "armor",
+    "melee": "movement",
+    "ranged": "damage"
+  },
+  "overallMeans": [
+    {
+      "g": "damage",
+      "m": 0.15984848484848474
+    },
+    {
+      "g": "movement",
+      "m": 0.15075757575757584
+    },
+    {
+      "g": "armor",
+      "m": 0.188939393939394
+    }
+  ]
+}
