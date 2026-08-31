@@ -1603,3 +1603,48 @@ grants Oilskins is a real choice against this back half at all.
 ⚠ Diagnosis order for the rebalance: **fix the 4.10 first, then re-read this.**
 "Can't kill it" is at least partly the mis-tiered HP, and the counterplay
 question deserves to be judged against a correctly-tiered encounter.
+
+### Owner's ruling on Leaping Slam — CONDITIONAL ON KILLABILITY
+
+> *"I think I'm okay with it for nightmare as long as it's killable. Players can
+> try to freeze it, they can try to spread out so they don't all lose shields,
+> there are options if it's killable."*
+
+**The principle, stated:** an ability with no direct counterplay is acceptable
+when its CARRIER can be removed. Killability is itself the counterplay, and it
+is the thing that makes the indirect answers — freeze it, spread out to save the
+shields — worth attempting. Take killability away and every one of those options
+becomes a delay rather than a plan.
+
+That turns a taste question into an arithmetic one. Measured, owner's comp at
+L8 (basic attacks only, 20% miss vs AC 10, party damage 44.8/round):
+
+| tier | Vanguard HP | rounds of the WHOLE party focusing it | clock | verdict |
+|---|---|---|---|---|
+| easy | 75 | 1.7 | 6 | killable |
+| **medium** | **213** | **4.8** | **7** | ⚠ see below |
+| hard | 88 | 2.0 | 8 | killable |
+| nightmare | 119 | **2.7** | 8 | **killable — the owner's condition is MET** |
+
+**Nightmare passes.** 2.7 focused rounds against an 8-round clock, and the
+Pikeman is another 2.6 — about 5.3 rounds to clear the board of 8. Tight, which
+is what nightmare should be, and it leaves room for the freeze/spread lines the
+owner names.
+
+**Medium fails, and fails absolutely.** 213 + 204 HP is **9.4 rounds** of
+whole-party damage against a **7-round clock**. The board cannot be cleared on
+medium — not with poor play, not with perfect play. The Vanguard is literally
+unkillable there, which is precisely why the encounter read as having no
+counterplay: it did not, because the condition that supplies the counterplay was
+absent.
+
+### The conclusion this forces
+
+**Leaping Slam is not the problem, and it does not need changing.** It is
+already acceptable at every tier where its carrier can die, which is every tier
+except the one broken by the 4.10 hpScale inversion. Fixing e9's medium to sit
+between easy (1.45) and hard (1.70) restores killability and, with it, the
+counterplay the owner is asking for — with no ability edit at all.
+
+⚠ This is the second finding in a row where a mis-tiered number masqueraded as a
+design flaw. Check the ladder before redesigning the mechanic.
