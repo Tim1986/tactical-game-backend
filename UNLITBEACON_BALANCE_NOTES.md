@@ -551,3 +551,94 @@ is a real mistake to be played around.
 **Recommendation for the rebalance pass: treat skill delta as a first-class
 target alongside win rate.** A medium encounter wanting +11 from good play is
 mis-designed regardless of where its win rate sits.
+
+---
+
+## [SKILL2] The difficulty tiers don't change the difficulty — they change the padding
+
+Owner's design intent, 2026-08-31: *"You can breeze through on easy if you want
+to just experience the different fights, but the challenge needs to be
+satisfying and hard."* High skill variance is stated as a GOAL, not a defect.
+
+That makes the tiers specifiable as a SHAPE rather than a number:
+
+* **easy** — a player who is not reading the fight still gets through.
+  Low skill delta, high baseline win rate.
+* **medium** — bad play loses, competent play wins.
+* **nightmare** — only good play wins. Large skill delta, low baseline.
+
+Measured, owner's comp, 100 games (baseline = naive walk-and-swing bot):
+
+| enc | easy base / opt / Δ | medium base / opt / Δ | nightmare base / opt / Δ |
+|---|---|---|---|
+| e1 | 86 / 100 / +14 | 40 / 100 / +60 | 2 / 81 / +79 |
+| e2 | 57 / 100 / +43 | 15 / 94 / +79 | 0 / 43 / +43 |
+| e3 | 98 / 100 / **+2** | 74 / 85 / +11 | 11 / 19 / +8 |
+| e4 | 29 / 100 / +71 | 11 / 100 / +89 | 0 / 61 / +61 |
+| e5 | 5 / 100 / +95 | 4 / 97 / +93 | 0 / 69 / +69 |
+| e6 | 20 / 99 / +79 | 0 / 100 / +100 | 0 / 83 / +83 |
+| e7 | 0 / 97 / +97 | 0 / 91 / +91 | 0 / 8 / +8 |
+| e8 | 0 / 65 / +65 | 0 / 20 / +20 | 0 / 2 / +2 |
+| e9 | 62 / 93 / +31 | 1 / 32 / +31 | 0 / 7 / +7 |
+| e10 | 90 / 100 / +10 | 78 / 100 / +22 | 29 / 66 / +37 |
+| e11 | 0 / 23 / +23 | 0 / 3 / +3 | 0 / 0 / 0 |
+| e12 | 0 / 83 / +83 | 0 / 48 / +48 | 0 / 14 / +14 |
+
+### The finding: easy and medium demand the SAME skill
+
+Compare the delta columns, not the win rates. e5 is +95 on easy and +93 on
+medium. e4 is +71 and +89. e6 is +79 and +100. **The tiers barely move the
+skill requirement at all** — they move how much HP your mistakes cost.
+
+That is a direct consequence of the only lever in use. `hpScaleOverride` scales
+enemy health, which changes how long you survive a mistake; it does not change
+whether the fight *requires* you to avoid the mistake. So "easy" is not an
+easier fight to play. It is the same tactical puzzle with a longer grace period
+— and on e5, e7, e8, e11 and e12 not even that: the naive bot wins 0-5% on EASY.
+
+**9 of 12 encounters fail the stated easy promise.**
+
+### Why this matters more than any single encounter's numbers
+
+This is the transferable lesson, and it is the answer to *"is balancing these
+scenarios even feasible?"*. The difficulty has been hard to tune because the
+work has been:
+
+* tuning ONE lever (enemy HP)
+* against ONE metric (win rate) that saturates at the top and is confounded by
+  skill and by placement
+* on a single opening out of 24
+* with no measurement of the property the design actually cares about
+
+Every one of those four is now fixed or measurable. The remaining gap is that
+**enemy HP is the wrong lever for the easy tier.** Levers that change skill
+DEMAND rather than mistake cost, for the rebalance to consider:
+
+1. **Enemy special access per tier.** The Torchhand's Flame Jet (16 unblockable,
+   line, range 4) is the single most punishing thing in e4. Withholding it on
+   easy removes the trap; keeping it on nightmare keeps the fight. This is the
+   most direct skill-demand dial the content already has.
+2. **Enemy count**, not enemy HP. Fewer bodies means fewer simultaneous threats
+   to sequence, which is what tactical load actually is.
+3. **Hazard density.** e4's hazards punish greedy positioning specifically.
+4. **Enemy AI aggression** — a tier that advances into you demands less
+   positioning than one that holds a line.
+
+### ⚠ Caveat on the instrument, stated plainly
+
+BaselineBrain is WORSE than a real casual human. It walks to the nearest enemy
+and swings: no specials, no retreat, no target priority. "Baseline wins 0%" is
+a loose lower bound, not a prediction about a person. What is trustworthy is the
+COMPARISON — between tiers, between encounters, and between openings — because
+the same bot plays all of them.
+
+Before the rebalance acts on absolute easy-tier numbers, the honest move is to
+calibrate a middle brain that uses abilities but does not plan ahead, and anchor
+it against one of the owner's own deliberately-sloppy runs.
+
+### e11, again
+
+e11 reads 23% optimal on EASY and 0% baseline. The placement sweep already
+showed its best medium opening is 94% against a 37% median. An encounter that a
+perfect brain loses three times out of four on the easiest tier is not tuned, it
+is trapped. Re-open with the placement data in hand.
