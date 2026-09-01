@@ -98,102 +98,78 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
 
 /**
  * Daily rotation, in order — the featured puzzle cycles by UTC-day index.
- * Interleaved focus / pull / reach so consecutive days feel different.
+ *
+ * 49 entries, ALL DISTINCT. ⚠ Every id appears EXACTLY ONCE: the rotation is
+ * what "before it repeats" means, so a puzzle used a second time as a spacer
+ * halves the real cycle. (It did: 2026-08-31 the array held 68 entries and 49
+ * unique ids, so 18 puzzles came back around day 30 instead of day 49.)
+ *
+ * Ordered by a constraint solve, not by hand — the spacings below are all
+ * CYCLIC (day 49 wraps to day 1), which hand-ordering kept getting wrong:
+ *   · no two 3-turn puzzles adjacent   (22 of 49 are 3-turn)
+ *   · same ANSWER >= 5 days apart      (grasp x6, freeze x6, arrow x4 ...)
+ *   · pickers >= 4 apart               (8 pickers)
+ *   · fate-queue puzzles >= 3 apart    (#41 #42 #53 #56 #61 — the disclosure
+ *     banner is itself a tell)
+ *   · deliberate near-clones >= 10 apart (16/31, 45/59, 46/60, 48/54, 53/61,
+ *     57/62)
+ * To insert a puzzle, re-run the solve rather than splicing it in by eye.
+ *
+ * CLOSED answers (do not author more): freeze · grasp · purify.
+ * Piercing is still ALWAYS a decoy and must be an ANSWER somewhere before the
+ * picker returns to the ranger. Every picker keeps the #24 rule: the DEFAULT
+ * loadout is the most tempting DECOY, never the answer.
  */
 export const PUZZLE_ROTATION: PuzzleDefinition[] = [
-  // Interleaved on THREE dimensions (Fable reorder 2026-08-21): family,
-  // ANSWER (same answer >= 5 days apart), and axis (pickers spread, 3-turns
-  // spread). The previous order appended new entries as a clump — days 12-15
-  // ran picker/3-turn/picker with #39 repeating #35's exact answer 3 days
-  // later. Keep all three spacings when inserting; do not append.
-  //
-  // Answer tally, 28 entries: grasp 6 · freeze 6 · arrow-the-blocker 4 ·
-  // pinning-the-healer 2 · purify 2 · bolt-the-blocker 2 · longshot-blocker 1 ·
-  // longshot-healer 1 · longshot-far 1 · cold_snap 1 · ignore-free-kill 1 ·
-  // sword 1.
-  // CLOSED answers (do not author more): freeze · grasp · purify.
-  // PICKERS: #1 #16 #24 #30 #32 #34 #39 #40 — 8 of 31 after the camouflage
-  // sweep (2026-08-31) retrofitted #16 (cleric), #30 (warlock) and #32
-  // (wizard). Hosts are now ranger x4, cleric, warlock, wizard — the ranger
-  // bow picker is no longer the only shape a picker takes. Piercing is still
-  // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
-  // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
-  // the most tempting DECOY, never the answer.
-  // 3-TURN: #33 #34 #36 #45-#63 — 22 of 50. ⚠ TARGET REACHED (owner ruling
-  // 2026-08-21: minimum 50 before the rotation repeats). ⚠ #54 is a deliberate spaced
-  // near-clone of #48 (same skeleton, different chassis), as #31 is of #16.
-  // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
-  // itself a tell, so they are SPACED (a blocked-path puzzle sits between
-  // them). #41 spends a scripted MISS, #42 protects a scripted HIT — never
-  // schedule two of the same facet together.
-  PUZZLE_007, // pull                 → grasp
-  PUZZLE_015, // tempo/heal           → freeze
-  PUZZLE_019, // blocked path         → arrow (the blocker)
-  PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)
-  PUZZLE_031, // free-the-rooted      → purify (near-clone of #16, spaced from it)
-  PUZZLE_017, // overkill/knockback   → sword (the weaker attack)
-  PUZZLE_009, // pull                 → grasp
-  PUZZLE_023, // tempo/self-heal      → freeze
-  PUZZLE_040, // blocked path +PICKER → longshot the blocker (1 of 3)
-  PUZZLE_018, // friendly fire        → arrow (the weaker shot)
-  PUZZLE_032, // passive synergy +PICKER → cold_snap (default Ring of Frost is showier)
-  PUZZLE_012, // pull                 → grasp
-  PUZZLE_025, // tempo/heal           → freeze
-  PUZZLE_036, // 3-TURN eliminate_all → longshot the FAR one (assign the reach)
-  PUZZLE_022, // blocked path         → arrow (the REACHABLE door)
-  PUZZLE_024, // camouflage +PICKER   → grasp (default is a decoy)
-  PUZZLE_027, // tempo/self-heal      → freeze
-  PUZZLE_035, // tempo/heal           → pinning the healer OUT OF RANGE
   PUZZLE_021, // blocked path         → bolt (the blocker)
-  PUZZLE_013, // pull                 → grasp
-  PUZZLE_028, // tempo/heal           → freeze
-  PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (longshot among decoys)
-  PUZZLE_026, // blocked path         → arrow (the blocker)
-  PUZZLE_016, // free-the-finisher +PICKER → purify (default Heal is the big number)
-  PUZZLE_020, // tempo/self-heal      → freeze
-  PUZZLE_030, // pull        +PICKER  → grasp (default Drain out-damages it)
-  PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
-  PUZZLE_029, // friendly fire        → bolt (the weaker shot)
-  PUZZLE_045, // 3-TURN eliminate_all → LEAVE the burning one alone (restraint)
-  PUZZLE_022, // blocked path         → arrow (spacer: keep the two 'free kill' puzzles apart)
-  PUZZLE_046, // 3-TURN eliminate_all → walk PAST the free kill (the cost is ground)
-  PUZZLE_028, // tempo/heal           → freeze (spacer)
-  PUZZLE_047, // 3-TURN status EXPIRY → hold the shot until Weakened wears off
-  PUZZLE_021, // blocked path         → bolt (spacer)
-  PUZZLE_048, // 3-TURN ORDER TRAP    → kill the HEALER first, not the free kill
-  PUZZLE_012, // pull                 → grasp (spacer)
-  PUZZLE_049, // 3-TURN SAVE YOUR OWN → shoot the Cur; the archer alone is not enough
-  PUZZLE_027, // tempo/self-heal      → freeze (spacer)
-  PUZZLE_050, // 3-TURN ALLOCATION    → the axe is for the FAR one; swing and walk
-  PUZZLE_018, // friendly fire        → arrow (spacer)
   PUZZLE_051, // 3-TURN enemy PASSIVE → shoot SMALLER; the big shot arms Vengeful
-  PUZZLE_035, // tempo/heal           → pinning (spacer)
-  PUZZLE_052, // 3-TURN DISPLACEMENT  → fear one enemy onto the line, then pierce both
-  PUZZLE_013, // pull                 → grasp (spacer)
-  PUZZLE_053, // 3-TURN FATE QUEUE    → swing to SPEND the miss; the slam cannot pay
-  PUZZLE_023, // tempo/self-heal      → freeze (spacer)
-  PUZZLE_054, // 3-TURN ORDER TRAP    → the healer first (near-clone of #48, spaced)
-  PUZZLE_026, // blocked path         → arrow (spacer)
-  PUZZLE_055, // 3-TURN BURN AS VALUE → ignite (5) beats bolt (10) because it keeps giving
-  PUZZLE_031, // free-the-rooted      → purify (spacer)
-  PUZZLE_056, // 3-TURN FATE/MULTIHIT → twin eats BOTH misses (trap #20 revived)
-  PUZZLE_029, // friendly fire        → bolt (spacer)
-  PUZZLE_057, // 3-TURN BLOCKED LINE  → step aside; the obstruction is YOURS
-  PUZZLE_007, // pull                 → grasp (spacer)
-  PUZZLE_058, // 3-TURN PASSIVE ON    → pin first; Opportunist wants a status
-  PUZZLE_009, // pull                 → grasp (spacer)
-  PUZZLE_059, // 3-TURN restraint     → leave the burning one (clone of #45, spaced)
-  PUZZLE_025, // tempo/heal           → freeze (spacer)
-  PUZZLE_060, // 3-TURN ground        → walk past the free kill (clone of #46, spaced)
-  PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (spacer)
-  PUZZLE_061, // 3-TURN FATE QUEUE    → swing to spend the miss (clone of #53, spaced)
-  PUZZLE_030, // pull        +PICKER  → grasp (spacer)
+  PUZZLE_016, // free-the-finisher +PICKER → purify (default Heal is the big number)
   PUZZLE_062, // 3-TURN BLOCKED LINE  → step aside (clone of #57, spaced)
-  PUZZLE_016, // free-the-finisher +PICKER → purify (spacer)
+  PUZZLE_035, // tempo/heal           → pinning the healer OUT OF RANGE
   PUZZLE_063, // 3-TURN DISPLACEMENT  → fear into the RING, then burn both
-  PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
-  PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
+  PUZZLE_030, // pull        +PICKER  → grasp (default Drain out-damages it)
+  PUZZLE_054, // 3-TURN ORDER TRAP    → the healer first (near-clone of #48, spaced)
+  PUZZLE_015, // tempo/heal           → freeze
+  PUZZLE_047, // 3-TURN status EXPIRY → hold the shot until Weakened wears off
   PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
+  PUZZLE_046, // 3-TURN eliminate_all → walk PAST the free kill (the cost is ground)
+  PUZZLE_017, // overkill/knockback   → sword (the weaker attack)
+  PUZZLE_045, // 3-TURN eliminate_all → LEAVE the burning one alone (restraint)
+  PUZZLE_028, // tempo/heal           → freeze
+  PUZZLE_061, // 3-TURN FATE QUEUE    → swing to spend the miss (clone of #53, spaced)
+  PUZZLE_013, // pull                 → grasp
+  PUZZLE_036, // 3-TURN eliminate_all → longshot the FAR one (assign the reach)
+  PUZZLE_029, // friendly fire        → bolt (the weaker shot)
+  PUZZLE_020, // tempo/self-heal      → freeze
+  PUZZLE_049, // 3-TURN SAVE YOUR OWN → shoot the Cur; the archer alone is not enough
+  PUZZLE_026, // blocked path         → arrow (the blocker)
+  PUZZLE_048, // 3-TURN ORDER TRAP    → kill the HEALER first, not the free kill
+  PUZZLE_009, // pull                 → grasp
+  PUZZLE_056, // 3-TURN FATE/MULTIHIT → twin eats BOTH misses (trap #20 revived)
+  PUZZLE_040, // blocked path +PICKER → longshot the blocker (1 of 3)
+  PUZZLE_027, // tempo/self-heal      → freeze
+  PUZZLE_058, // 3-TURN PASSIVE ON    → pin first; Opportunist wants a status
+  PUZZLE_019, // blocked path         → arrow (the blocker)
+  PUZZLE_050, // 3-TURN ALLOCATION    → the axe is for the FAR one; swing and walk
+  PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
+  PUZZLE_033, // 3-TURN eliminate_all → longshot (the HEALER first)
+  PUZZLE_024, // camouflage +PICKER   → grasp (default is a decoy)
+  PUZZLE_059, // 3-TURN restraint     → leave the burning one (clone of #45, spaced)
+  PUZZLE_023, // tempo/self-heal      → freeze
+  PUZZLE_055, // 3-TURN BURN AS VALUE → ignite (5) beats bolt (10) because it keeps giving
+  PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
+  PUZZLE_018, // friendly fire        → arrow (the weaker shot)
+  PUZZLE_053, // 3-TURN FATE QUEUE    → swing to SPEND the miss; the slam cannot pay
+  PUZZLE_012, // pull                 → grasp
+  PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (longshot among decoys)
+  PUZZLE_031, // free-the-rooted      → purify (near-clone of #16, spaced from it)
+  PUZZLE_057, // 3-TURN BLOCKED LINE  → step aside; the obstruction is YOURS
+  PUZZLE_025, // tempo/heal           → freeze
+  PUZZLE_032, // passive synergy +PICKER → cold_snap (default Ring of Frost is showier)
+  PUZZLE_060, // 3-TURN ground        → walk past the free kill (clone of #46, spaced)
+  PUZZLE_007, // pull                 → grasp
+  PUZZLE_052, // 3-TURN DISPLACEMENT  → fear one enemy onto the line, then pierce both
+  PUZZLE_022, // blocked path         → arrow (the REACHABLE door)
 ];
 
 /**
