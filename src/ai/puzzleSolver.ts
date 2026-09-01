@@ -270,6 +270,45 @@ function scoredPlans(def: PuzzleDefinition, ids: Record<string, string>, state: 
     const wins = step.outcome === 'won';
     const cand: ScoredPlan = { step, key, wins, score: wins ? 1e9 : goalScore(def, ids, step.playerState) };
     const prev = best.get(key);
+    // Rank WINNING variants above higher-scoring losing ones. A human playing
+    // greedily who blasts and then has movement left will also step out of the
+    // way; scoring alone would hand the slot to the variant that stands still.
+    // (Audit 2026-09-01 — same dedup bug that blinded the depth search.)
+    if (!prev || (cand.wins && !prev.wins) || (cand.wins === prev.wins && cand.score > prev.score)) best.set(key, cand);
+  }
+  return [...best.values()];
+}
+
+/**
+ * Plans for the DEPTH search, keyed finer than `scoredPlans`.
+ *
+ * `scoredPlans` deduplicates by idea and keeps the highest-SCORING variant,
+ * which is right for the greedy gate (greedy takes the best-looking play) and
+ * wrong for the depth search. "Longshot then retreat to A" and "longshot then
+ * retreat to B" are one idea and can have opposite outcomes; when the winning
+ * variant scored lower on goal progress — which is the definition of a setup
+ * move — dedup threw it away and the depth search found NO winning line at all.
+ * It then returned Infinity, printed as `-1`, and the gate only rejects
+ * `depth === 0`, so three puzzles (#50 #57 #62 — every one of them a puzzle
+ * whose answer is where a unit ENDS) shipped having never been measured for
+ * indirection. Audit 2026-09-01.
+ *
+ * Keying on the trailing move keeps both variants. Deviation cost is still
+ * charged against the idea-level best score, so "reposition after the same
+ * blow" never counts as an extra aha.
+ */
+function depthPlans(def: PuzzleDefinition, ids: Record<string, string>, state: MatchState): ScoredPlan[] {
+  const best = new Map<string, ScoredPlan>();
+  for (const plan of enumeratePlayerTurns(state)) {
+    const step = applyPlayerTurn(def, ids, state, plan);
+    if (!step) continue;
+    if (step.outcome === 'lost') continue;
+    const mv = plan.filter((a) => a.type === 'MOVE' || a.type === 'CHARGE').slice(-1)[0];
+    const tail = mv && (mv.type === 'MOVE' || mv.type === 'CHARGE') ? `|${mv.destination.x},${mv.destination.y}` : '';
+    const key = planIdeaKey(plan) + tail;
+    const wins = step.outcome === 'won';
+    const cand: ScoredPlan = { step, key, wins, score: wins ? 1e9 : goalScore(def, ids, step.playerState) };
+    const prev = best.get(key);
     if (!prev || cand.score > prev.score) best.set(key, cand);
   }
   return [...best.values()];
@@ -314,7 +353,7 @@ function minWinDepth(
 ): number {
   if (spent >= best.v) return Infinity;      // cannot improve — prune
   if (turnsLeft <= 0) return Infinity;
-  const scored = scoredPlans(def, ids, state);
+  const scored = depthPlans(def, ids, state);
   if (scored.length === 0) return Infinity;
   const max = Math.max(...scored.map((p) => (p.wins ? 1e9 : p.score)));
   for (const p of scored) {
@@ -433,23 +472,33 @@ export function solvePuzzle(
   const depth = solvable ? minWinDepth(def, ids, initial, def.maxPlayerTurns, 0, { v: Infinity }) : Infinity;
 
   // 4. Random lines (uniform over legal candidates each turn).
-  let randomWins = 0;
-  for (let trial = 0; trial < randomTrials; trial++) {
-    let cur = initial;
-    for (let t = 0; t < def.maxPlayerTurns; t++) {
-      const plans = enumeratePlayerTurns(cur);
-      // Retry until a legal plan is drawn (bounded).
-      let step: StepResult | null = null;
-      for (let attempts = 0; attempts < 50 && !step; attempts++) {
-        step = applyPlayerTurn(def, ids, cur, plans[Math.floor(Math.random() * plans.length)]);
+  const runRandom = (trials: number): number => {
+    let wins = 0;
+    for (let trial = 0; trial < trials; trial++) {
+      let cur = initial;
+      for (let t = 0; t < def.maxPlayerTurns; t++) {
+        const plans = enumeratePlayerTurns(cur);
+        // Retry until a legal plan is drawn (bounded).
+        let step: StepResult | null = null;
+        for (let attempts = 0; attempts < 50 && !step; attempts++) {
+          step = applyPlayerTurn(def, ids, cur, plans[Math.floor(Math.random() * plans.length)]);
+        }
+        if (!step) break;
+        if (step.outcome === 'won') { wins++; break; }
+        if (step.outcome === 'lost') break;
+        cur = step.state;
       }
-      if (!step) break;
-      if (step.outcome === 'won') { randomWins++; break; }
-      if (step.outcome === 'lost') break;
-      cur = step.state;
     }
-  }
-  const randomWinRate = randomWins / randomTrials;
+    return wins / trials;
+  };
+  // ADAPTIVE RE-MEASURE. At 200 trials the noise band around the 5% bar is
+  // about +/-1.5pp, so a puzzle sitting near the bar flips verdict between
+  // identical runs — #58 measured 6.5% FAIL and 4.8% PASS on the same code,
+  // and #20/#32 both landed on exactly 5.0% (audit 2026-09-01). Anything in
+  // the grey band is re-measured with ten times the trials, which costs
+  // nothing on the puzzles that are not near the bar.
+  let randomWinRate = runRandom(randomTrials);
+  if (randomWinRate >= 0.035 && randomWinRate <= 0.07) randomWinRate = runRandom(randomTrials * 10);
 
   const failures: string[] = [];
   const warnings: string[] = [];
@@ -467,6 +516,10 @@ export function solvePuzzle(
   // v2 gates
   if (gGreedy) failures.push('ARITHMETIC: goal-greedy wins — a player who just reads the goal and plays direct solves it');
   if (solvable && depth === 0) failures.push('no indirection: every winning line is pure goal-greedy (depth 0)');
+  // -1 is the Infinity sentinel: the depth search found no winning line even
+  // though one exists. That is a SOLVER failure, not a pass — it used to slip
+  // through because the gate only tested `=== 0` (audit 2026-09-01).
+  if (solvable && depth < 0) failures.push('depth UNMEASURED (search found no winning line though one exists) — fix the solver, do not ship the puzzle');
   if (randomWinRate >= 0.05) failures.push(`degenerate: random lines win ${(randomWinRate * 100).toFixed(1)}% (bar: < 5%)`);
 
   return {
@@ -527,7 +580,7 @@ if (isMain) {
       for (const d of r.winningFirstMoveDescriptions.slice(0, 4)) console.log(`        · ${d}`);
       console.log(`    brain-greedy wins:   ${r.greedyWins ? '✗' : 'no ✓'}`);
       console.log(`    GOAL-greedy wins:    ${r.goalGreedyWins ? '✗ ARITHMETIC' : 'no ✓'}   (v2 gate — the human proxy)`);
-      console.log(`    min win depth:       ${r.minWinDepth}${r.minWinDepth === 0 ? ' ✗ (no indirection)' : r.minWinDepth > 0 ? ' ✓' : ''}`);
+      console.log(`    min win depth:       ${r.minWinDepth}${r.minWinDepth === 0 ? ' ✗ (no indirection)' : r.minWinDepth > 0 ? ' ✓' : ' ✗ (UNMEASURED)'}`);
       console.log(`    near-miss remaining: ${r.nearMissRemaining}${r.nearMissRemaining >= 0 && r.nearMissRemaining <= 4 ? ' ✓ (close-call hook)' : ''}`);
       console.log(`    random win rate:     ${(r.randomWinRate * 100).toFixed(1)}%`);
     }

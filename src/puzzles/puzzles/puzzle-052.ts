@@ -34,7 +34,16 @@ import type { PuzzleDefinition } from '../types.js';
  * turn buys exactly one thing: position. Its three tiles are measured away from
  * the CASTER, so where he stands decides where the Cur lands.
  *
- * ⚠ 23 = 11 + 12 and 12 = one Piercing, both exact.
+ * ⚠ 23 = 11 + 12 and 12 = one Piercing, both exact — AND THE EXACTNESS IS
+ * STRUCTURAL, not sloppiness. The audit of 2026-09-01 flagged this as the
+ * hardest entry in the rotation (depth 2, near-miss 1, vocabulary 3) and tried
+ * to give it slack; there is none to give. Drop the Warden to 22 and two plain
+ * arrows kill it, so the line shot never has to catch both and the idea
+ * evaporates. Raise the Cur above 12 and Piercing cannot finish it; drop it to
+ * 11 and a plain arrow can, so the push stops needing the line at all. The
+ * puzzle only exists in the one-point window where BOTH numbers are exact.
+ * Leave it hard. It is not degenerate — random lines win 0.0% — and the greedy
+ * player finishes one point short, which is the best failure hook in the file.
  *
  * Vocabulary 3 (a line that hits everything on it; a push of exactly two; a
  * once-per-battle shot) — at the top of the budget, and the reason this is a

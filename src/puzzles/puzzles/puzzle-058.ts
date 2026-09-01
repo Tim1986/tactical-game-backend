@@ -22,11 +22,21 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * ⚠ THE BULWARK MUST START UNSTATUSED, which is why it is NOT rooted like most
  * enemies in this file — a rooted target would hand the +5 over for free and
- * there would be no puzzle. It holds still because the Axeman is standing next
- * to it, which is reason enough for a melee enemy.
+ * there would be no puzzle. It holds still because the pin lands on turn one,
+ * before it ever acts.
  *
- * ⚠ THE AXEMAN IS OFF THE FIRING ROW (trap #26): a body on a true line blocks
- * single-target sight, and orthogonal adjacency is what lets him reach at all.
+ * ⚠ THE AXEMAN STARTS TWO TILES OUT, at (4,1), and this is a DIFFICULTY lever,
+ * not flavour. Adjacent at (5,3) he could attack from where he stood, so a
+ * player pressing buttons at random pinned-then-swung often enough to win 4.8%
+ * of the time (audit 2026-09-01, n=2000 — the thinnest margin in the file, and
+ * it measured 6.5% FAIL on one 200-trial run and PASS on another). Making him
+ * walk first drops it to 0.4%: the same single idea, but flailing no longer
+ * finds it. Reach for this lever before touching a puzzle's arithmetic.
+ *
+ * ⚠ HIS APPROACH TILES ARE (5,3) AND (5,5), both off the firing row (trap #26):
+ * a body on a true line blocks single-target sight, so a player who walks him
+ * to (4,4) blocks his own archer — the #57 mistake, available here as a trap
+ * rather than as the answer.
  *
  * ⚠ 36 = 7 + 13 + 16, and the greedy line reaches 35. One point.
  *
@@ -48,7 +58,7 @@ export const PUZZLE_058: PuzzleDefinition = {
       passiveSlug: 'opportunist', position: { x: 0, y: 4 },
       statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
     },
-    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 5, y: 3 }, cooldowns: { shockwave: 99 } },
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 4, y: 1 }, cooldowns: { shockwave: 99 } },
     // 36 = 7 + 13 + 16. Unstatused at the start, on purpose.
     { id: 'bulwark', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 5, y: 4 }, currentHealth: 36, cooldowns: { whirlwind: 99 } },
   ],

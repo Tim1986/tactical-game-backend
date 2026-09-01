@@ -1,6 +1,24 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
+ * ⚠ CUT FROM THE ROTATION 2026-09-01 — still registered so old links resolve.
+ *
+ * It measures min win depth 0: a winning line exists that never deviates from
+ * the most goal-advancing play, so the puzzle's whole insight is free. Two
+ * engine facts kill this skeleton and neither is tunable from inside a puzzle:
+ *   1. A unit may ACT and THEN MOVE in the same turn, so "blast, then step out
+ *      of the line" costs nothing at all — there is no trade to notice.
+ *   2. `goalScore` measures range in Chebyshev, where a one-tile DIAGONAL step
+ *      off the row leaves the distance unchanged. The "identical damage, one
+ *      tile nearer" tie-break this design rests on does not exist.
+ * It passed review because the depth search was returning its Infinity
+ * sentinel (printed as -1) and the gate only rejected `=== 0`.
+ *
+ * Do not re-author "step your own blocker aside" until the sidestep costs
+ * something the goal function can see.
+ */
+
+/**
  * Puzzle #57 — "Out of the Way" (THREE TURNS: the blocked line, from the other
  * side — the thing in the way is YOURS).
  *
