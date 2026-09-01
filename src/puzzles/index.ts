@@ -57,6 +57,7 @@ import { PUZZLE_046 } from './puzzles/puzzle-046.js';
 import { PUZZLE_047 } from './puzzles/puzzle-047.js';
 import { PUZZLE_048 } from './puzzles/puzzle-048.js';
 import { PUZZLE_049 } from './puzzles/puzzle-049.js';
+import { PUZZLE_050 } from './puzzles/puzzle-050.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -79,7 +80,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
-  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049,
+  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049, [PUZZLE_050.id]: PUZZLE_050,
 };
 
 /**
@@ -105,7 +106,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
   // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
   // the most tempting DECOY, never the answer.
-  // 3-TURN: #33 #34 #36 #45 #46 #47 #48 #49 — 8 of 36.
+  // 3-TURN: #33 #34 #36 #45 #46 #47 #48 #49 #50 — 9 of 37.
   // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
   // itself a tell, so they are SPACED (a blocked-path puzzle sits between
   // them). #41 spends a scripted MISS, #42 protects a scripted HIT — never
@@ -147,6 +148,8 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_048, // 3-TURN ORDER TRAP    → kill the HEALER first, not the free kill
   PUZZLE_012, // pull                 → grasp (spacer)
   PUZZLE_049, // 3-TURN SAVE YOUR OWN → shoot the Cur; the archer alone is not enough
+  PUZZLE_027, // tempo/self-heal      → freeze (spacer)
+  PUZZLE_050, // 3-TURN ALLOCATION    → the axe is for the FAR one; swing and walk
   PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
   PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
   PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
