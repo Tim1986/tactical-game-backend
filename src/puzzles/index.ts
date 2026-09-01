@@ -93,10 +93,13 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // longshot-healer 1 · longshot-far 1 · cold_snap 1 · ignore-free-kill 1 ·
   // sword 1.
   // CLOSED answers (do not author more): freeze · grasp · purify.
-  // PICKERS: #1 #24 #34 #39 #40 — ⚠ 4 of 5 are the SAME ranger bow picker and
-  // piercing is ALWAYS the decoy (a meta-tell). No more ranger bow pickers;
-  // next pickers host on fighter/barbarian/rogue/warlock, and piercing must be
-  // an ANSWER somewhere before the picker returns to the ranger.
+  // PICKERS: #1 #16 #24 #30 #32 #34 #39 #40 — 8 of 31 after the camouflage
+  // sweep (2026-08-31) retrofitted #16 (cleric), #30 (warlock) and #32
+  // (wizard). Hosts are now ranger x4, cleric, warlock, wizard — the ranger
+  // bow picker is no longer the only shape a picker takes. Piercing is still
+  // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
+  // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
+  // the most tempting DECOY, never the answer.
   // 3-TURN: #33 #34 #36 — 3 of 29.
   // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
   // itself a tell, so they are SPACED (a blocked-path puzzle sits between
@@ -112,7 +115,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_023, // tempo/self-heal      → freeze
   PUZZLE_040, // blocked path +PICKER → longshot the blocker (1 of 3)
   PUZZLE_018, // friendly fire        → arrow (the weaker shot)
-  PUZZLE_032, // passive synergy      → cold_snap (Opportunist)
+  PUZZLE_032, // passive synergy +PICKER → cold_snap (default Ring of Frost is showier)
   PUZZLE_012, // pull                 → grasp
   PUZZLE_025, // tempo/heal           → freeze
   PUZZLE_036, // 3-TURN eliminate_all → longshot the FAR one (assign the reach)
@@ -125,9 +128,9 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_028, // tempo/heal           → freeze
   PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (longshot among decoys)
   PUZZLE_026, // blocked path         → arrow (the blocker)
-  PUZZLE_016, // free-the-finisher    → purify (the original)
+  PUZZLE_016, // free-the-finisher +PICKER → purify (default Heal is the big number)
   PUZZLE_020, // tempo/self-heal      → freeze
-  PUZZLE_030, // pull                 → grasp
+  PUZZLE_030, // pull        +PICKER  → grasp (default Drain out-damages it)
   PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
   PUZZLE_029, // friendly fire        → bolt (the weaker shot)
   PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss

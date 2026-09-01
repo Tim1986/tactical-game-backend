@@ -35,7 +35,16 @@ export const PUZZLE_016: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1',   side: 'player', slug: 'cleric',    specialSlug: 'purify', position: { x: 5, y: 4 } },
+    {
+      id: 'p1', side: 'player', slug: 'cleric', specialSlug: 'heal',
+      // [CAMO SWEEP 2026-08-31] A Cleric holding Purify beside a ROOTED ally is
+      // the answer written on the tin. The default is now the tempting number —
+      // Heal's 27, the biggest thing the Cleric can do — and both decoys are
+      // live: Heal patches a unit that is not hurt, Ward shields a unit nothing
+      // is attacking. Only Purify frees the swing.
+      specialChoices: ['heal', 'ward', 'purify'],
+      position: { x: 5, y: 4 },
+    },
     {
       id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave',
       position: { x: 4, y: 6 },

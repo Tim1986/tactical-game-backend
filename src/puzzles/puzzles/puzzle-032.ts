@@ -38,7 +38,17 @@ export const PUZZLE_032: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 0, y: 4 } },
+    {
+      id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'blizzard',
+      // [CAMO SWEEP 2026-08-31] First picker hosted on a WIZARD — the five
+      // existing ones are four Rangers and a Warlock, and a Ranger bow picker
+      // had become a meta-tell in its own right. Default is Ring of Frost, the
+      // showy board-wide freeze; Freeze is the honest-looking single-target
+      // disable; only Cold Snap does damage AND freezes, which is what the
+      // Opportunist line needs.
+      specialChoices: ['blizzard', 'freeze', 'cold_snap'],
+      position: { x: 0, y: 4 },
+    },
     // The passive is the puzzle. Ranger Opportunist is +5, not +4 (PAS-6).
     { id: 'p2', side: 'player', slug: 'ranger', specialSlug: 'longshot', passiveSlug: 'opportunist', position: { x: 1, y: 2 } },
     { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 7, y: 4 }, currentHealth: 29 },

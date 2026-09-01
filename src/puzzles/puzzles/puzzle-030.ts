@@ -25,7 +25,17 @@ export const PUZZLE_030: PuzzleDefinition = {
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'warlock', specialSlug: 'grasp', position: { x: 2, y: 3 } },
+    {
+      id: 'p1', side: 'player', slug: 'warlock', specialSlug: 'drain',
+      // [CAMO SWEEP 2026-08-31] The loadout used to announce the answer: a
+      // Warlock holding Grasp IS "this is the pull puzzle", which the two-poles
+      // doc names as the tell every post-#1 puzzle reintroduced. Now the player
+      // picks, the DEFAULT is the biggest number (Essence Drain's 10) so the
+      // pick costs something, and both decoys are live: Drain out-damages Grasp
+      // and still cannot close the gap, Fear moves the target the WRONG WAY.
+      specialChoices: ['drain', 'fear', 'grasp'],
+      position: { x: 2, y: 3 },
+    },
     { id: 'p2', side: 'player', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 2, y: 5 } },
     { id: 'targ', side: 'enemy', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 6, y: 4 }, currentHealth: 21 },
   ],
