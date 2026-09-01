@@ -61,7 +61,6 @@ export const PUZZLE_045: PuzzleDefinition = {
       id: 'ember', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
       position: { x: 4, y: 2 }, currentHealth: 7,
       statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1 }],
-      revealAbilities: true,
     },
   ],
   initiativeOrder: ['p1', 'p2', 'ember', 'bulwark'],
