@@ -62,6 +62,9 @@ import { PUZZLE_051 } from './puzzles/puzzle-051.js';
 import { PUZZLE_052 } from './puzzles/puzzle-052.js';
 import { PUZZLE_053 } from './puzzles/puzzle-053.js';
 import { PUZZLE_054 } from './puzzles/puzzle-054.js';
+import { PUZZLE_055 } from './puzzles/puzzle-055.js';
+import { PUZZLE_056 } from './puzzles/puzzle-056.js';
+import { PUZZLE_057 } from './puzzles/puzzle-057.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -84,7 +87,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
-  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049, [PUZZLE_050.id]: PUZZLE_050, [PUZZLE_051.id]: PUZZLE_051, [PUZZLE_052.id]: PUZZLE_052, [PUZZLE_053.id]: PUZZLE_053, [PUZZLE_054.id]: PUZZLE_054,
+  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049, [PUZZLE_050.id]: PUZZLE_050, [PUZZLE_051.id]: PUZZLE_051, [PUZZLE_052.id]: PUZZLE_052, [PUZZLE_053.id]: PUZZLE_053, [PUZZLE_054.id]: PUZZLE_054, [PUZZLE_055.id]: PUZZLE_055, [PUZZLE_056.id]: PUZZLE_056, [PUZZLE_057.id]: PUZZLE_057,
 };
 
 /**
@@ -110,7 +113,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
   // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
   // the most tempting DECOY, never the answer.
-  // 3-TURN: #33 #34 #36 #45-#54 — 13 of 41. ⚠ #54 is a deliberate spaced
+  // 3-TURN: #33 #34 #36 #45-#57 — 16 of 44. ⚠ #54 is a deliberate spaced
   // near-clone of #48 (same skeleton, different chassis), as #31 is of #16.
   // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
   // itself a tell, so they are SPACED (a blocked-path puzzle sits between
@@ -163,6 +166,12 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_053, // 3-TURN FATE QUEUE    → swing to SPEND the miss; the slam cannot pay
   PUZZLE_023, // tempo/self-heal      → freeze (spacer)
   PUZZLE_054, // 3-TURN ORDER TRAP    → the healer first (near-clone of #48, spaced)
+  PUZZLE_026, // blocked path         → arrow (spacer)
+  PUZZLE_055, // 3-TURN BURN AS VALUE → ignite (5) beats bolt (10) because it keeps giving
+  PUZZLE_031, // free-the-rooted      → purify (spacer)
+  PUZZLE_056, // 3-TURN FATE/MULTIHIT → twin eats BOTH misses (trap #20 revived)
+  PUZZLE_029, // friendly fire        → bolt (spacer)
+  PUZZLE_057, // 3-TURN BLOCKED LINE  → step aside; the obstruction is YOURS
   PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
   PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
   PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
