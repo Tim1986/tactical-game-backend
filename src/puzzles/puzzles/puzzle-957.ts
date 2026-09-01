@@ -19,10 +19,10 @@ import type { PuzzleDefinition } from '../types.js';
  */
 
 /**
- * Puzzle #57 — "Out of the Way" (THREE TURNS: the blocked line, from the other
+ * Puzzle #957 — "Out of the Way" (THREE TURNS: the blocked line, from the other
  * side — the thing in the way is YOURS).
  *
- * Every blocked-path puzzle so far (#19, #21, #22, #26) asks the player to
+ * Every blocked-path puzzle so far (#41, #37, #31, #19) asks the player to
  * remove an enemy from a doorway. This one asks the player to notice that the
  * obstruction is their own wizard, standing directly between the archer and the
  * target: a living unit on a true line blocks single-target line of sight
@@ -54,9 +54,9 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * Vocabulary 2 (a body blocks a line; a shot you only get once). Tier-0 fate.
  */
-export const PUZZLE_057: PuzzleDefinition = {
-  id: 'puzzle-057',
-  title: 'Puzzle #57 — Out of the Way',
+export const PUZZLE_957: PuzzleDefinition = {
+  id: 'puzzle-957',
+  title: 'Puzzle #957 — Out of the Way',
   goalText: 'Defeat the Bulwark within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',

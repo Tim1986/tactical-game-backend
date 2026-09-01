@@ -1,94 +1,74 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #41 — "One Goes Wide" (v2 texture: THE FATE QUEUE — the first puzzle
- * in the rotation where a MISS is the thing you play around).
+ * Puzzle #41 — "The Doorway" (v2 texture: BLOCKED PATH / spend the shot that
+ * opens the road, not the one that scores).
  *
- * Owner question, 2026-08-31: "seems like a lot of puzzles are assuming all
- * hits land. Have we done any where some hits are gonna miss, and you need to
- * work around that?" Answer at the time: no. Every puzzle from #15 on ships
- * `rollScript: []` (deterministic hit); only the deregistered arithmetic
- * batch-#1 pair ever scripted a miss, and there the miss was a subtraction to
- * perform, not a thing to play around.
+ * Rulebook source: MOV-3, unused until now — "You can NEVER move through an
+ * enemy unit's tile. Enemies block movement completely — there is no way around
+ * except an open path." Paired with MOV-1, where a diagonal costs two steps, so
+ * going around is genuinely more expensive than it looks.
  *
- * THE DEVICE. `rollScript` is a FIFO QUEUE consumed by the whole board — one
- * entry per blockable roll, in the order the rolls happen (types.ts). A
- * scripted miss is therefore not attached to an attack, it is attached to a
- * POSITION IN TIME, and the player chooses who walks into it. The miss is a
- * resource, and it has to be spent on a blow that does not matter.
+ * The enemy Sorcerer is pinned against the east edge with its Acolyte standing
+ * directly in front of it. Your Rogue has the damage to end this on its own —
+ * 16 against the Sorcerer's 14 — and cannot get to it. Every tile adjacent to
+ * the Sorcerer is either the Acolyte's, or five steps away around the body when
+ * the Rogue has four. The Ranger's Arrow, meanwhile, has a clean shot at the
+ * Sorcerer for 11: the biggest number it can put on the goal target, and three
+ * short of what the job needs.
  *
- * THE TRAP. The Sentinel is on 10 and the Wizard's Ice Blast is 10 — the kill
- * is on the board from turn one. The Barbarian can reach the Sentinel too:
- * three steps to (4,5) puts Ground Slam's ring over it for 9. That is the
- * greedy play and it is the losing one, because Ground Slam is UNBLOCKABLE —
- * it rolls no die, so it does not spend the wide roll. The Sentinel drops to 1,
- * the Wizard's blast goes wide on the fate, and it survives on one health.
+ * So the Ranger must shoot the ACOLYTE instead — a shot that does nothing at all
+ * to the goal target, and opens the doorway the Rogue walks through.
  *
- * THE ANSWER. Walk AWAY from the Sentinel and hit the Husk: a plain swing at a
- * 52-health bystander accomplishes nothing except rolling the die that was
- * always going to miss. The Ice Blast then lands for exactly 10.
+ * v2 shape: goal-greedy takes the 11 into the Sorcerer, the Rogue arrives at a
+ * sealed door with nothing to hit, and the Sorcerer lives on 3. That near-miss
+ * is the retry hook — the player can see how close it was and not yet see why.
  *
- * Cost channel (trap #15): invisible to a solver scoring damage dealt to the
- * goal. The correct first move deals ZERO to the target — the proven shape —
- * while the greedy alternative deals a visible NINE. This is the fourth proven
- * cost channel (own unit dies #18 · target leaves reach #17 · tempo #15/#20 ·
- * path stays shut #19) and the first that spends a DIE.
+ * Why the cost is invisible to damage, per trap #15: the price of the greedy
+ * shot is not that it deals less — it deals MORE — it is that the road stays
+ * shut. Traps whose punishment is "your damage gets nullified" are seen through
+ * by goal-greedy, which scores damage actually dealt; this one is paid entirely
+ * in geometry.
  *
- * ⚠ WHY GROUND SLAM AND NOT WHIRLWIND. Both reach the Husk, but Whirlwind is
- * BLOCKABLE: it would roll, eat the miss, and hand the player four extra
- * winning first moves (measured — the solver went from 1 distinct idea to 5,
- * against a bar of 2). The unblockable special is what makes the greedy line
- * genuinely unable to pay the fate.
+ * Narrow by construction:
+ *  - The Acolyte sits on the ONLY adjacent tile the Rogue can reach. The other
+ *    two, (7,3) and (7,5), are five steps around the body against four movement,
+ *    and a diagonal does not shorten it (MOV-1). Kill the Acolyte and the same
+ *    tile is three steps of open rank.
+ *  - The Ranger is placed OFF the rank at (4,2) so it is never on a straight
+ *    line with the Acolyte and the Sorcerer together. Standing behind the
+ *    Acolyte would have made the Arrow illegal by line of sight (ABL-3) and left
+ *    shooting the Acolyte as the only legal action — depth 0, correctly rejected
+ *    (trap #2).
+ *  - The Acolyte is on 10 against the Arrow's 11: one shot exactly opens it.
+ *    Pinning Shot's 7 does not, so there is no second way to spend the turn.
  *
- * ⚠ FAIRNESS. The script is disclosed in full on the intro and the in-match
- * banner, per types.ts: "Never hide the script — fairness depends on it." A
- * puzzle whose trick is a miss the player could not have known about is a
- * cheat, not a puzzle.
+ * Slack, not arithmetic: the Rogue's 16 against 14 health. The puzzle cannot be
+ * solved by counting, because counting says the Ranger's shot is worth more.
  *
- * Both player turns resolve before either enemy slot, so no enemy roll can jump
- * the queue and eat the miss the player is planning around. That ordering is
- * load-bearing.
- *
- * Solver (2026-08-31): 1 distinct idea · goal-greedy FAILS · depth 1 ·
- * near-miss 1 (the Sentinel survives on one health — the close-call hook) ·
- * random 1.0%. PASS.
- *
- * Vocabulary 2 (a scripted miss; unblockable does not roll). Tier-1 fate —
- * the first in the rotation. 2v2, per trap #9.
+ * Vocabulary 1 (enemies block movement). Tier-0 fate. 2v2.
  */
 export const PUZZLE_041: PuzzleDefinition = {
   id: 'puzzle-041',
-  title: 'Puzzle #41 — One Goes Wide',
-  goalText: 'Defeat the Frost Sentinel within 2 turns',
+  title: 'Puzzle #41 — The Doorway',
+  goalText: 'Defeat the enemy Sorcerer within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
-  // ONE entry. The first blockable roll of the fight misses; everything after
-  // is a deterministic hit (an exhausted script hits — types.ts).
-  rollScript: ['miss'],
-  fateText: 'Fate is sealed: the FIRST blow struck in this fight goes wide, whoever throws it. Every strike after it lands.',
+  rollScript: [],
+  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    // The finisher. 10 damage against 10 health, in range from where it stands
-    // — the kill is available on turn one and taking it loses the puzzle.
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 5, y: 2 } },
-    // ⚠ Ground Slam, NOT Whirlwind. Both hit the Husk, but Whirlwind is
-    // BLOCKABLE — it would roll, eat the miss, and hand the player four extra
-    // winning first moves (solver: 5 distinct ideas, bar is 2). Ground Slam is
-    // unblockable, so it rolls no die and cannot pay the fate. The only thing
-    // on this board that can spend the wide roll is a plain swing.
-    // The lightning rod. Move 3 from (0,6) cannot reach the Sentinel at (5,6) — the swing tile is
-    // (4,6), four steps away,
-    // so its only swing is at the Husk — which is exactly what the puzzle wants.
-    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 2, y: 4 } },
-    { id: 'targ', side: 'enemy', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 5, y: 6 }, currentHealth: 10 },
-    // The bystander: adjacent to the Barbarian, far from the Sentinel, and
-    // healthy enough that killing it is never on the table.
-    { id: 'husk', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 1, y: 6 }, currentHealth: 52 },
+    // Off the rank on purpose: no straight line through the Acolyte to the
+    // Sorcerer, so both shots stay legal and greedy has a real option to take.
+    { id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'pinning', position: { x: 4, y: 2 } },
+    // Four movement. Every route to the Sorcerer is five steps while the
+    // Acolyte stands; three the moment it falls.
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 3, y: 4 } },
+    { id: 'targ', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 7, y: 4 }, currentHealth: 14 },
+    // 10 health: the Arrow's 11 opens the door, Pinning Shot's 7 does not.
+    { id: 'blok', side: 'enemy', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 6, y: 4 }, currentHealth: 10 },
   ],
-  // ⚠ THE BARBARIAN ACTS FIRST, AND THAT IS THE PUZZLE. Its turn looks worthless
-  // — it cannot reach the Sentinel and the Husk is at full health — so the
-  // instinct is to spend it walking toward the real fight. Walking rolls no
-  // die, the miss survives the turn, and the Wizard's one kill goes wide.
-  // Both player turns also come first: no enemy roll may jump the queue.
-  initiativeOrder: ['p2', 'p1', 'targ', 'husk'],
+  // Both player units act before either enemy, so the door never moves on its
+  // own — the Acolyte is a wall, not a participant.
+  initiativeOrder: ['p1', 'p2', 'targ', 'blok'],
 };

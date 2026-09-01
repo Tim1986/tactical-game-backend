@@ -1,73 +1,68 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #48 — "Wrong One First" (THREE TURNS: the ORDER TRAP — kill them in
- * the appealing order and the survivor patches itself up).
+ * Puzzle #48 — "Spend It Early" (THREE TURNS: the FATE QUEUE revived — trap #21
+ * said this facet needed a third turn, and it does).
  *
- * The doc has listed order traps as a three-turn unlock since axis 2 was
- * measured, on the reasoning that two kills eat the whole two-turn budget and
- * leave no room to be wrong. With three turns there is room, and being wrong is
- * the puzzle.
+ * Trap #21 cut a two-turn version of this idea: with a MISS at the head of the
+ * queue, letting it be spent is the DEFAULT, so the answer was inaction and
+ * inaction cannot out-score anything. The note said it might live at three
+ * turns, "where inaction on turn one can be made to cost something visible."
+ * That is exactly what this is.
  *
- * The Cur is on 13 — one swing, a whole enemy, free. The Warden is on 23 of 52,
- * deep in the red, and carries First Aid: give it a turn while it is hurt and it
- * puts 27 back, which is more than anything left on the board can take off.
+ * `rollScript` is a queue consumed by the whole board, one entry per blockable
+ * roll (types.ts). One wide roll sits at the head of it. The Bulwark is on 23,
+ * which is the Wizard's 10 and the Axeman's 13 — every point of it, and both of
+ * those are blockable, so whichever lands FIRST goes wide unless something has
+ * already paid the fate.
  *
- * So the Warden has to die inside a single lap, before its slot ever arrives:
- * the Barbarian's 13 and the Wizard's 10 are exactly 23, and they are exactly
- * the first two turns. The Cur waits, because the last turn is enough for it.
+ * The Axeman has two attacks and only one of them rolls. His swing is blockable
+ * and worth 13; Ground Slam is UNBLOCKABLE and worth 9. Slam and you deal a
+ * real, visible nine that the fate cannot touch — and then the Wizard's blast is
+ * the first roll of the fight and goes wide, and 9 + 13 is 22 against 23.
  *
- * Take the free kill first and the arithmetic never recovers. The Wizard's 10
- * leaves the Warden on 13, its slot arrives, First Aid takes it to 40, and the
- * final swing is 27 short.
+ * Swing first instead. It misses, it accomplishes nothing, and it is the whole
+ * answer: the queue is clean, the blast lands, the second swing lands, 23.
  *
- * Cost channel (trap #15 / #22 / #24): the bait is an entire enemy — worth
- * `kills * 10000` to the scorer, which is why the goal must be `eliminate_all`
- * for the trap to bite at all — and the correct opening scores a tenth of that.
- * Goal-greedy takes the kill every time and finishes 27 behind.
+ * Cost channel (trap #15 / #22 / #24): the trap deals NINE REAL POINTS to the
+ * goal on turn one while the correct move deals zero. Goal-greedy takes the nine
+ * every time and finishes one point short — the tightest near-miss in the file.
  *
- * ⚠ TRAP #1, USED ON PURPOSE. Every other puzzle in this file treats a wounded
- * enemy that carries a self-heal as a hazard to design around; #46a died to it
- * outright. Here it IS the mechanism, and the numbers are chosen so the heal is
- * unanswerable rather than merely annoying: 27 restored against 13 remaining.
- * A heal you can grind through is not a deadline.
+ * ⚠ THE UNBLOCKABLE OPTION IS THE TRAP, not an oversight. Every fate puzzle so
+ * far has had to keep unblockable abilities OFF the board because they act
+ * without paying the queue (traps #19, #20). Here that property is the bait: an
+ * attack that cannot pay is exactly the wrong thing to open with.
  *
- * ⚠ 23 = 13 + 10 EXACTLY, and both of those turns must land before the Warden's
- * slot. Any slack and the free kill becomes affordable.
+ * ⚠ THE WIZARD IS OFF THE AXEMAN'S ROW. On it, he would block the blast's line
+ * of sight (ABL-8) — and he must also stay two tiles clear, because Ground Slam
+ * hits every neighbour including allies.
  *
- * ⚠ THE CUR IS ROOTED so the geometry cannot drift; it is a deadline, not an
- * opponent. Its 13 matches the Barbarian's swing exactly, so the last turn is
- * spoken for and cannot be borrowed.
+ * ⚠ 23 = 10 + 13 EXACTLY. The greedy line reaches 22, so the puzzle is decided
+ * by a single point, which is what makes the fate feel like arithmetic rather
+ * than luck.
  *
- * Vocabulary 2 (a wounded enemy heals itself; kills can be taken in either
- * order). Tier-0 fate.
+ * Vocabulary 2 (a scripted miss; unblockable attacks do not roll). Tier-1 fate.
  */
 export const PUZZLE_048: PuzzleDefinition = {
   id: 'puzzle-048',
-  title: 'Puzzle #48 — Wrong One First',
-  goalText: 'Defeat BOTH enemies within 3 turns',
-  goal: 'eliminate_all',
+  title: 'Puzzle #48 — Spend It Early',
+  goalText: 'Defeat the Bulwark within 3 turns',
+  goal: 'eliminate_target',
+  targetUnitId: 'bulwark',
   maxPlayerTurns: 3,
-  rollScript: [],
-  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
+  rollScript: ['miss'],
+  fateText: 'Fate is sealed: the FIRST blow struck in this fight goes wide, whoever throws it. Every strike after it lands.',
   units: [
+    { id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 4, y: 4 } },
+    // Off the row and two tiles clear of Ground Slam's ring.
+    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 2 } },
+    // 23 = 10 + 13, both blockable, so the fate has to be paid by something else.
     {
-      id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'shockwave',
-      position: { x: 4, y: 4 },
-      // Spent: an AoE that clips both enemies would rewrite the arithmetic, and
-      // a special that cannot matter still generates cosmetic winning ideas
-      // (learned on #46).
-      cooldowns: { shockwave: 99 },
-    },
-    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 4 } },
-    // 23 = 13 + 10, and it must die before its own slot or First Aid ends it.
-    { id: 'warden', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 5, y: 4 }, currentHealth: 23 },
-    // 13 = one swing. The free kill, and the trap.
-    {
-      id: 'cur', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind',
-      position: { x: 4, y: 6 }, currentHealth: 13,
+      id: 'bulwark', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind',
+      position: { x: 5, y: 4 }, currentHealth: 23,
       statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { whirlwind: 99 },
     },
   ],
-  initiativeOrder: ['p1', 'p2', 'warden', 'cur'],
+  initiativeOrder: ['p1', 'p2', 'bulwark'],
 };

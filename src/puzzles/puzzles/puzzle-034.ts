@@ -1,71 +1,82 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #34 — "Let It Burn" (ANSWER: ignore the free kill entirely).
+ * Puzzle #34 — "Waste the Arrow" (THREE TURNS: the SHIELD channel — a new one).
  *
- * The first puzzle to use PRE-APPLIED BURNING, which the doc has called "great
- * material" since the v2 rework without a single puzzle spending it.
+ * A shield negates the first damaging hit that lands — the whole hit, damage and
+ * any effect it carries, even an unblockable one — and then breaks (DGE-5). So
+ * against a shielded enemy the biggest thing you own is the WORST thing to lead
+ * with: it is spent in full on a hit that deals nothing.
  *
- * STA-2: burning deals 7 at the START of the burning unit's turn, before it
- * acts — "a unit can die to its own burn before it gets to act." The enemy
- * Acolyte is on 6 and burning. It is already dead; it just does not know yet.
+ * The Wardbearer is on 15 and shielded. Fifteen is exactly one Longshot, and the
+ * Longshot only exists once. The plain arrow deals eleven and could never finish
+ * her — which is precisely what makes it the right thing to throw away.
  *
- * Both enemies have to die and you have three turns, which is exactly enough to
- * put 42 into the Warden's 35 — but only if you spend all three on the Warden.
- * The Acolyte is the trap: a one-shot kill sitting in the open, worth 10000 to
- * any scoring function and irresistible to a human reading the board. Take it
- * and you have burned a third of your budget on a unit the fire was going to
- * finish on its own, and the Warden lives on 8.
+ * Arrow into the ward (nothing), the Axeman puts the Cur down, Longshot into the
+ * Wardbearer for fifteen. Both enemies dead on the last turn.
  *
- * The winning first move is Longshot into the Warden — the enemy you CANNOT
- * kill this turn, while a free kill stands next to it.
+ * Cost channel (trap #15 / #22 / #24) — but the cost is NOT a smaller number
+ * this time, it is a wasted TURN. Turn one deals literally zero damage, which is
+ * the least attractive play on the board and the only winning one.
  *
- * Why this is a fair trap rather than a gotcha: everything needed is on screen.
- * The Acolyte's health, its burning icon, and the rule that burning ticks at the
- * start of its turn are all visible before you move, and the initiative strip
- * shows its slot arriving before your third turn.
+ * ⚠ THE TRAP IS A FREE KILL AT MAXIMUM RANGE. The Cur sits eight tiles out —
+ * Longshot's exact reach, and two tiles past the plain arrow's — so goal-greedy
+ * opens by Longshotting the Cur, which is a real kill for real damage and scores
+ * higher than anything else on the board (trap #24: under `eliminate_all` a kill
+ * is worth a hundred points of damage). It also spends the only thing that can
+ * ever get through the ward. The Axeman's thirteen is then eaten by the shield
+ * and the last arrow lands for eleven: the Wardbearer ends the puzzle on FOUR.
  *
- * Both search-cost rules from #33 apply: the Ranger is ROOTED (range 8, no
- * reason to move) to keep the 3-turn search tractable, and neither enemy carries
- * a freeze or a root, so nothing can delete the third turn.
+ * ⚠ THE ORDER OF THE TWO WASTED HITS MATTERS AND IS THE WHOLE PUZZLE. Feed the
+ * ward the Longshot instead of the arrow and the arithmetic inverts — 13 into
+ * the Cur, 11 left for a 15-health target. Only the cheap hit is affordable as
+ * a sacrifice.
  *
- * Slack: 15 + 16 + 11 = 42 against 40, and the Acolyte's 6 against a 7-point
- * tick. Note the third shot is an ARROW, not a second Longshot — specials are
- * once per match, which is #33's lesson and is now part of the budget.
+ * ⚠ 15 = one Longshot, 13 = one Axe, both exact. There is no slack anywhere and
+ * that is deliberate: the shield already gives the player a free unit of tempo
+ * to spend, so the numbers underneath it have to be tight or the sacrifice
+ * stops costing anything.
  *
- * Vocabulary 1 (burning ticks at the start of its victim's turn). Tier-0 fate.
- * 2v2, three turns.
+ * ⚠ THE ARCHER IS ROOTED so the row cannot be re-solved by walking, and both
+ * enemies are ROOTED so the geometry the two ranges depend on cannot drift.
+ *
+ * Vocabulary 2 (a shield eats one whole hit; a shot you only get once).
+ * Tier-0 fate.
  */
 export const PUZZLE_034: PuzzleDefinition = {
   id: 'puzzle-034',
-  title: 'Puzzle #34 — Let It Burn',
-  goalText: 'Defeat the enemy Fighter and the enemy Sorcerer within 3 turns',
+  title: 'Puzzle #34 — Waste the Arrow',
+  goalText: 'Defeat BOTH enemies within 3 turns',
   goal: 'eliminate_all',
   maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    // ROOTED as a search-cost device (see #33): range 8, never wants to move.
-    // CAMOUFLAGE (Fable retrofit, 2026-08-21): the Ranger picks its bow. Only
-    // Longshot's 15 completes the 42-point budget against 40; Piercing's 12
-    // leaves the Warden on exactly 1 (the near-miss made into a decoy), and
-    // Pinning's 7 is never close. Default is PIERCING — the tempting decoy —
-    // because a picker whose default is the answer is decoration (the #24 rule).
+    // Rooted at the end of the row. Arrow 11 (reach 6), Longshot 15 (reach 8).
     {
-      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'piercing',
-      specialChoices: ['pinning', 'piercing', 'longshot'],
-      position: { x: 1, y: 2 },
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 5, stacks: 1 }],
+      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'longshot',
+      position: { x: 0, y: 4 },
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
     },
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 3, y: 4 } },
-    // The real job: 35 health, and it takes all three turns.
-    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 5, y: 4 }, currentHealth: 40 },
-    // Already dead. 6 health against a 7-point tick at the start of its own slot.
+    // The Axeman: 13, and the Cur is the only thing he can reach.
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 3, y: 0 }, cooldowns: { whirlwind: 99 } },
+    // 15 = one Longshot, once the ward is gone. Five tiles out: both shots reach.
     {
-      id: 'acol', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
-      position: { x: 6, y: 2 }, currentHealth: 6,
-      statusEffects: [{ slug: 'burning', turnsRemaining: 3, stacks: 1 }],
+      id: 'wardbearer', side: 'enemy', slug: 'warlock', specialSlug: 'drain',
+      position: { x: 5, y: 4 }, currentHealth: 15, introRelevant: true,
+      statusEffects: [
+        { slug: 'shielded', turnsRemaining: 99, stacks: 1 },
+        { slug: 'rooted', turnsRemaining: 9, stacks: 1 },
+      ],
+      cooldowns: { drain: 99 },
+    },
+    // 13 = one Axe. Eight tiles from the archer: Longshot reaches, the arrow does not.
+    {
+      id: 'cur', side: 'enemy', slug: 'wizard', specialSlug: 'freeze',
+      position: { x: 5, y: 1 }, currentHealth: 13,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { freeze: 99 },
     },
   ],
-  initiativeOrder: ['p1', 'p2', 'acol', 'ward'],
+  initiativeOrder: ['p1', 'p2', 'wardbearer', 'cur'],
 };

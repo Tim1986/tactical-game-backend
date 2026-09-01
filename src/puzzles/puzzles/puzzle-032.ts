@@ -1,57 +1,46 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #32 — "Cold Comfort" (ANSWER: COLD SNAP — the first PASSIVE puzzle).
+ * Puzzle #32 — "Pay the Fate" (THREE TURNS, Tier-1).
  *
- * No puzzle in the rotation has ever set a passive on a player unit. This one
- * turns on PAS-6: Opportunist deals +4 against a target suffering ANY status,
- * and a Ranger deals +5 instead.
+ * ⚠ DELIBERATE SPACED NEAR-CLONE of #48 (re-dressing licence, recorded with
+ * #25). Same bones — one wide roll at the head of the queue, and an unblockable
+ * attack that cannot pay it — on a different chassis: a Fighter's sword and
+ * Concussive Blow instead of an Axeman's swing and Ground Slam.
  *
- * The enemy Warlock is on 27. Ice Blast for 10 and Longshot for 15 comes to 25
- * and leaves it standing on 2 — the whole puzzle is those two points. Cold Snap
- * is the WEAKER opener at 9, and it freezes: the Warlock is then a target
- * "suffering a status", the Ranger's Opportunist wakes up, and Longshot lands
- * for 20 instead of 15.
+ * The Bulwark is on 21: the Wizard's 10 and the Fighter's 11, both blockable,
+ * so whichever lands first goes wide unless the fate is already spent.
  *
- * Read the Ranger's card on the intro screen — the passive is printed there, and
- * it is the only thing on the board that explains why the smaller spell is the
- * right one.
+ * Concussive Blow is 7 and UNBLOCKABLE — real, visible damage that rolls no die
+ * and pays nothing. Open with it and the blast goes wide instead: 7 + 11 is 18
+ * against 21.
  *
- * NOT a Freeze answer despite the frozen status, and the board is built to make
- * that unambiguous: both enemies act AFTER both your units, so skipping the
- * Warlock's slot is worth exactly nothing here. The status is a key, not a
- * disable — which is the lesson, and it is new to the rotation.
+ * Swing first. It misses, it accomplishes nothing, and the queue is clean.
  *
- * Slack: 9 + 20 against 27. Vocabulary 2 (Opportunist; a frozen unit counts as
- * suffering a status). Tier-0 fate. 2v1.
+ * ⚠ THE BULWARK'S OWN ATTACK MUST BE UNBLOCKABLE or its slot eats a roll for
+ * free and the arithmetic collapses — the #38 lesson, from the enemy's side.
  *
- * Retune 2026-08-24: Wizard to (0,4) [was (2,4)], Warlock to (7,4) [was (6,4)],
- * HP 27 -> 29 (cold_snap 9 + opportunist Longshot 20, exact). Random 13.5% -> 4.5%.
+ * Vocabulary 2. Tier-1 fate.
  */
 export const PUZZLE_032: PuzzleDefinition = {
   id: 'puzzle-032',
-  title: 'Puzzle #32 — Cold Comfort',
-  goalText: 'Defeat the enemy Warlock within 2 turns',
+  title: 'Puzzle #32 — Pay the Fate',
+  goalText: 'Defeat the Bulwark within 3 turns',
   goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
-  rollScript: [],
-  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
+  targetUnitId: 'bulwark',
+  maxPlayerTurns: 3,
+  rollScript: ['miss'],
+  fateText: 'Fate is sealed: the FIRST blow struck in this fight goes wide, whoever throws it. Every strike after it lands.',
   units: [
+    { id: 'p1', side: 'player', slug: 'fighter', specialSlug: 'concussive', position: { x: 4, y: 4 } },
+    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 2 }, cooldowns: { freeze: 99 } },
+    // 21 = 10 + 11, both blockable.
     {
-      id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'blizzard',
-      // [CAMO SWEEP 2026-08-31] First picker hosted on a WIZARD — the five
-      // existing ones are four Rangers and a Warlock, and a Ranger bow picker
-      // had become a meta-tell in its own right. Default is Ring of Frost, the
-      // showy board-wide freeze; Freeze is the honest-looking single-target
-      // disable; only Cold Snap does damage AND freezes, which is what the
-      // Opportunist line needs.
-      specialChoices: ['blizzard', 'freeze', 'cold_snap'],
-      position: { x: 0, y: 4 },
+      id: 'bulwark', side: 'enemy', slug: 'warlock', specialSlug: 'drain',
+      position: { x: 5, y: 4 }, currentHealth: 21,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { drain: 99 },
     },
-    // The passive is the puzzle. Ranger Opportunist is +5, not +4 (PAS-6).
-    { id: 'p2', side: 'player', slug: 'ranger', specialSlug: 'longshot', passiveSlug: 'opportunist', position: { x: 1, y: 2 } },
-    { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 7, y: 4 }, currentHealth: 29 },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ'],
+  initiativeOrder: ['p1', 'p2', 'bulwark'],
 };

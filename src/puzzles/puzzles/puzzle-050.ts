@@ -1,68 +1,72 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #50 — "The Right Axe" (THREE TURNS: cooldown economy as ALLOCATION —
- * the special is not a bigger attack, it is the only key to one of the doors).
+ * Puzzle #50 — "Slow Fire" (THREE TURNS: a smaller hit that keeps giving).
  *
- * Whirlwind is 16 and once per battle. The Cur is on 23 — which is a swing and
- * an Ice Blast, 13 + 10, exactly. The Warden is on 16 — which is Whirlwind, and
- * nothing else on this board reaches 16 in one turn.
+ * Ignite deals 5 and sets its target burning; burning ticks 7 at the start of
+ * the victim's own turn (STA-2). Ice Bolt deals 10 and is over. Turn one is a
+ * choice between ten now and twelve spread across the fight — and goal-greedy
+ * scores what a move DEALS, so it takes the ten and never sees the seven.
  *
- * So the puzzle is not "when do I use my special", it is "which enemy is it
- * FOR". Spend it on the Cur, where it is merely the biggest number available,
- * and the Warden survives on 3 with the last swing already spent.
+ * The Bulwark is on 35. Ignite first: 5, then 7 when its slot comes round, then
+ * the Axeman's 13, then a bolt for 10. Exactly 35.
  *
- * Cost channel (trap #15 / #22 / #24): the trap is Whirlwind's 16 against the
- * ordinary swing's 13, on the same target, on turn one — strictly more damage,
- * strictly visible, and goal-greedy takes it every time. Under `eliminate_all`
- * every point of damage scores, so the bait needs no kill to be tempting.
+ * Bolt first and the fire never gets lit early enough to tick: 10 + 13 + 10 is
+ * 33, and the Bulwark ends the puzzle standing on 2.
  *
- * ⚠ THE WARDEN IS SIX TILES AWAY AND BOTH ENEMIES ARE ROOTED. Three things
- * were measured wrong before that: free to move, the Cur strolled into the
- * middle so ONE Whirlwind caught both (twenty winning first moves); rooted but
- * close, the axe could be spent on the Warden on turn one just as well as turn
- * three (six); and only at six tiles — one further than a Barbarian's move plus
- * reach — does the order stop being interchangeable. The advance has to be paid
- * for out of turn one, alongside the swing.
+ * Cost channel (trap #15 / #22 / #24): the trap is the LARGER IMMEDIATE NUMBER
+ * on the goal, which is the purest form of the bait this file has — no kill, no
+ * geometry, just ten against five on the same target. The five wins because the
+ * enemy's own turn pays the difference.
  *
- * ⚠ 23 = 13 + 10 and 16 = Whirlwind, both exact (trap #23's corollary — slack
- * multiplies winning ideas). The Wizard is deliberately out of range of the
- * Warden, so its 10 cannot be redirected to paper over a wasted special.
+ * ⚠ THE BULWARK GETS EXACTLY ONE SLOT before the last player turn, so the burn
+ * ticks exactly once. Igniting on turn three instead deals 5 and nothing else —
+ * the fire needs a turn of the victim's to burn through.
  *
- * ⚠ THE CUR DIES ON TURN TWO in the intended line, which is what keeps the
- * three-turn search cheap (trap #23).
+ * ⚠ 35 = 5 + 7 + 13 + 10, and the greedy line reaches 33. Two points, and no
+ * slack anywhere (trap #23's corollary).
  *
- * Vocabulary 2 (a once-per-battle special; two enemies with different locks).
+ * ⚠ THE AXEMAN IS OFF THE FIRING ROW (trap #26): on it he would block the
+ * Sorcerer's line of sight, and orthogonal adjacency is what lets him reach the
+ * Bulwark at all.
+ *
+ * ⚠ THE SORCERER IS ROOTED so "shuffle and cast" cannot fan the answer into a
+ * dozen move-variants, and a decoy gives her somewhere wrong to aim (the
+ * random-rate fix from #4).
+ *
+ * Vocabulary 2 (burning ticks on the victim's slot; a special used once).
  * Tier-0 fate.
  */
 export const PUZZLE_050: PuzzleDefinition = {
   id: 'puzzle-050',
-  title: 'Puzzle #50 — The Right Axe',
-  goalText: 'Defeat BOTH enemies within 3 turns',
-  goal: 'eliminate_all',
+  title: 'Puzzle #50 — Slow Fire',
+  goalText: 'Defeat the Bulwark within 3 turns',
+  goal: 'eliminate_target',
+  targetUnitId: 'bulwark',
   maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 3, y: 1 } },
-    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 5, y: 2 } },
-    // 23 = 13 + 10. The swing and the blast, and nothing needs the axe.
-    // ⚠ ROOTED, like the Warden. Free to move, the Cur walks toward the
-    // Barbarian and parks itself where ONE Whirlwind catches both enemies at
-    // once — the solver found twenty winning first moves that way, all of them
-    // "stroll into the middle and wait". Two rooted enemies three tiles apart
-    // can never share a blast.
     {
-      id: 'cur', side: 'enemy', slug: 'barbarian', specialSlug: 'shockwave',
-      position: { x: 4, y: 1 }, currentHealth: 23,
+      id: 'p1', side: 'player', slug: 'sorcerer', specialSlug: 'ignite',
+      position: { x: 2, y: 4 },
       statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
     },
-    // 16 = Whirlwind, and only Whirlwind. Rooted so the geometry cannot drift.
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 5, y: 3 }, cooldowns: { shockwave: 99 } },
+    // 35 = 5 (ignite) + 7 (its own burn) + 13 (axe) + 10 (bolt).
     {
-      id: 'warden', side: 'enemy', slug: 'ranger', specialSlug: 'longshot',
-      position: { x: 3, y: 7 }, currentHealth: 16,
+      id: 'bulwark', side: 'enemy', slug: 'ranger', specialSlug: 'longshot',
+      position: { x: 5, y: 4 }, currentHealth: 35,
       statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { longshot: 99 },
+    },
+    // Somewhere wrong to aim: scores nothing under eliminate_target.
+    {
+      id: 'decoy', side: 'enemy', slug: 'ranger', specialSlug: 'longshot',
+      position: { x: 1, y: 1 }, currentHealth: 38,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { longshot: 99 },
     },
   ],
-  initiativeOrder: ['p1', 'p2', 'cur', 'warden'],
+  initiativeOrder: ['p1', 'p2', 'bulwark', 'decoy'],
 };

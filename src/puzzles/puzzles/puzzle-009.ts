@@ -1,29 +1,53 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #9 — "No Escape" (PULL COMBO).
+ * Puzzle #9 — "The Long Road" (THREE TURNS).
  *
- * The target Ranger (15 HP) is out of the Fighter's reach. Shadow Grasp drags it
- * in (4 dmg + pull + root), then the Fighter steps up and finishes it off. The
- * wounded Sorcerer is the AI's free kill, so the greedy line fails.
+ * ⚠ DELIBERATE SPACED NEAR-CLONE of #20 (re-dressing licence, recorded with
+ * #25). Same bones — a free kill that costs the ground you needed — on a
+ * different chassis: a sword and a bolt instead of an axe and a blast.
  *
- * Tier-0 fate. Vocabulary 2 (pull + focus). Solver: 1 winning idea, greedy
- * fails, random 0.7%.
+ * The Bulwark is rooted six tiles away, which is exactly two full moves with
+ * nothing spare. The Ember is on 7 and burning, two steps off that road; the
+ * fire kills it on its own slot whether the Fighter walks over or not.
+ *
+ * A turn holds one move. Step aside to take the free kill and the second move
+ * ends three tiles short of the swing.
+ *
+ * Cost channel (trap #15 / #22 / #24): the bait is a whole enemy, worth
+ * `kills * 10000` under `eliminate_all`, against a correct opening of a Fighter
+ * walking across an empty board.
+ *
+ * ⚠ 21 = 11 + 10 exactly, and the Fighter's special is spent so an uncastable
+ * ability cannot generate cosmetic winning ideas (the #20 lesson).
+ *
+ * Vocabulary 2. Tier-0 fate.
  */
 export const PUZZLE_009: PuzzleDefinition = {
   id: 'puzzle-009',
-  title: 'Puzzle #9 — No Escape',
-  goalText: 'Defeat the enemy Ranger within 2 turns',
-  goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
-  rollScript: ['hit', 'hit'],
+  title: 'Puzzle #9 — The Long Road',
+  goalText: 'Defeat BOTH enemies within 3 turns',
+  goal: 'eliminate_all',
+  maxPlayerTurns: 3,
+  rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1',   side: 'player', slug: 'warlock', specialSlug: 'grasp',       position: { x: 3, y: 3 } },
-    { id: 'p2',   side: 'player', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 2, y: 3 } },
-    { id: 'targ', side: 'enemy',  slug: 'ranger',  specialSlug: 'longshot',    position: { x: 7, y: 3 }, currentHealth: 15 },
-    { id: 'bait', side: 'enemy',  slug: 'sorcerer', specialSlug: 'ignite',     position: { x: 3, y: 6 }, currentHealth: 9 },
+    { id: 'p1', side: 'player', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 0, y: 4 }, cooldowns: { shield_bash: 99 } },
+    { id: 'p2', side: 'player', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 4, y: 6 }, cooldowns: { ignite: 99 } },
+    // 21 = 11 + 10. Rooted six tiles away: two full moves, nothing spare.
+    {
+      id: 'bulwark', side: 'enemy', slug: 'warlock', specialSlug: 'drain',
+      position: { x: 7, y: 4 }, currentHealth: 21,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { drain: 99 },
+    },
+    // Two steps off the road, and already dead.
+    {
+      id: 'ember', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
+      position: { x: 0, y: 6 }, currentHealth: 7,
+      statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1 }],
+      cooldowns: { ignite: 99 },
+    },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ', 'bait'],
+  initiativeOrder: ['p1', 'p2', 'ember', 'bulwark'],
 };

@@ -491,14 +491,17 @@ export function solvePuzzle(
     }
     return wins / trials;
   };
-  // ADAPTIVE RE-MEASURE. At 200 trials the noise band around the 5% bar is
-  // about +/-1.5pp, so a puzzle sitting near the bar flips verdict between
-  // identical runs — #58 measured 6.5% FAIL and 4.8% PASS on the same code,
-  // and #20/#32 both landed on exactly 5.0% (audit 2026-09-01). Anything in
-  // the grey band is re-measured with ten times the trials, which costs
-  // nothing on the puzzles that are not near the bar.
+  // ADAPTIVE RE-MEASURE. At 200 trials the noise around the 5% bar is far wider
+  // than it looks: the same unchanged puzzle measured 6.5% FAIL and 4.8% PASS,
+  // two others landed on exactly 5.0%, and one whose true rate is 3.9% came
+  // back 8.5% (audit 2026-09-01). Verdicts were being decided by the sampler.
+  // No UPPER bound on the re-measure band. The first cut of this had one (7%)
+  // and a puzzle whose true rate is 3.9% measured 8.5% on one 200-trial run --
+  // straight past the ceiling and into a FAIL verdict. Anything at or above the
+  // band floor gets confirmed at ten times the trials before it is judged;
+  // genuinely degenerate puzzles are rare, so the extra work almost never runs.
   let randomWinRate = runRandom(randomTrials);
-  if (randomWinRate >= 0.035 && randomWinRate <= 0.07) randomWinRate = runRandom(randomTrials * 10);
+  if (randomWinRate >= 0.025) randomWinRate = runRandom(randomTrials * 10);
 
   const failures: string[] = [];
   const warnings: string[] = [];

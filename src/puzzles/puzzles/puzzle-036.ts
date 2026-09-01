@@ -1,64 +1,66 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #36 — "The Right Tool" (NEW LESSON: assign the reach, don't spend it).
+ * Puzzle #36 — "Pin It First" (THREE TURNS: a passive YOU have to switch on).
  *
- * A third distinct `eliminate_all` order trap, and different from both existing
- * ones: #33 is "kill the healer before it heals", #34 is "ignore the one already
- * dying". This one is "do not spend your only long arm on the target your knife
- * could reach".
+ * Opportunist gives a Ranger +5 against a target that carries ANY status effect
+ * (PAS-6). The Bulwark carries none, so her arrow is a plain 11 — and Pinning
+ * Shot, which deals only 7, is what turns the passive on for everything that
+ * follows.
  *
- * Both must die. The Skirmisher stands beside your Rogue on 12 — a free kill for
- * the Ranger, worth 10000 to any scoring function and the first thing a player
- * reaches for. Take it and the Rogue has nothing left to walk to: the Warden is
- * six tiles away, past what four movement and a one-tile reach can cover, and
- * the Ranger alone cannot finish it after spending Longshot on a body the Rogue
- * was standing next to.
+ * Seven now buys five later: pin on turn one, let the Axeman put 13 in, and the
+ * last arrow lands for 16 against a rooted target. 7 + 13 + 16 = 36.
  *
- * Shoot the enemy you cannot reach; let the knife take the one it is already
- * touching.
+ * Shoot the bigger arrow first and the passive never wakes up. 11 + 13 + 11 is
+ * 35, and the Bulwark ends the puzzle standing on 1.
  *
- * The trap is fair because everything is legible before the first move: both
- * healths, the Rogue's adjacency to the Skirmisher, and the plain fact that the
- * Warden is out of its reach.
+ * Cost channel (trap #15 / #22 / #24): the trap is the LARGER IMMEDIATE NUMBER
+ * on the goal — eleven against seven — and goal-greedy takes it every time. The
+ * seven wins because it changes what every later shot is worth. #50 makes the
+ * same trade through a burn on the enemy's clock; this one makes it through a
+ * passive on the player's own sheet.
  *
- * Slack: Longshot 15 + Arrow 11 = 26 against the Warden's 24, and the Rogue's 16
- * against the Skirmisher's 12. Cooldowns are in the budget (#33's lesson): the
- * third shot is an Arrow, because Longshot is once per match.
+ * ⚠ THE BULWARK MUST START UNSTATUSED, which is why it is NOT rooted like most
+ * enemies in this file — a rooted target would hand the +5 over for free and
+ * there would be no puzzle. It holds still because the pin lands on turn one,
+ * before it ever acts.
  *
- * Ranger ROOTED as a search-cost device only (#33's rule) — range 8, no reason
- * to move. Neither enemy carries a freeze or a root, so nothing can eat the
- * third turn (#33's other rule).
+ * ⚠ THE AXEMAN STARTS TWO TILES OUT, at (4,1), and this is a DIFFICULTY lever,
+ * not flavour. Adjacent at (5,3) he could attack from where he stood, so a
+ * player pressing buttons at random pinned-then-swung often enough to win 4.8%
+ * of the time (audit 2026-09-01, n=2000 — the thinnest margin in the file, and
+ * it measured 6.5% FAIL on one 200-trial run and PASS on another). Making him
+ * walk first drops it to 0.4%: the same single idea, but flailing no longer
+ * finds it. Reach for this lever before touching a puzzle's arithmetic.
  *
- * Vocabulary 1 (enemies out of reach cannot be attacked). Tier-0 fate. 2v2,
- * three turns.
+ * ⚠ HIS APPROACH TILES ARE (5,3) AND (5,5), both off the firing row (trap #26):
+ * a body on a true line blocks single-target sight, so a player who walks him
+ * to (4,4) blocks his own archer — the puzzle-957 mistake, available here as a trap
+ * rather than as the answer.
  *
- * Retune 2026-08-24: Fighter HP 24 -> 26 (= Longshot 15 + Arrow 11 exact, the
- * concussive stun caps the Ranger at two shots) and the Rogue starts at (0,6)
- * [was (3,6)] so the free kill takes an aimed walk, not a reflex. Random
- * 10% -> ~1% (<5% bar). The skirmisher must stay one-shot-able (<=16 HP) or it
- * simply outruns the party.
+ * ⚠ 36 = 7 + 13 + 16, and the greedy line reaches 35. One point.
+ *
+ * Vocabulary 2 (Opportunist wants a status; a shot that trades damage for it).
+ * Tier-0 fate.
  */
 export const PUZZLE_036: PuzzleDefinition = {
   id: 'puzzle-036',
-  title: 'Puzzle #36 — The Right Tool',
-  goalText: 'Defeat the enemy Fighter and the enemy Rogue within 3 turns',
-  goal: 'eliminate_all',
+  title: 'Puzzle #36 — Pin It First',
+  goalText: 'Defeat the Bulwark within 3 turns',
+  goal: 'eliminate_target',
+  targetUnitId: 'bulwark',
   maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
     {
-      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'longshot',
-      position: { x: 1, y: 4 },
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 5, stacks: 1 }],
+      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'pinning',
+      passiveSlug: 'opportunist', position: { x: 0, y: 4 },
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
     },
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 0, y: 6 } },
-    // Out of the Rogue's reach: six tiles against four movement and a one-tile
-    // swing. Only the Ranger can touch it, and only if it still has Longshot.
-    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 6, y: 3 }, currentHealth: 26 },
-    // The free kill — four tiles from your knife; walk to it.
-    { id: 'skir', side: 'enemy', slug: 'rogue', specialSlug: 'expose', position: { x: 4, y: 6 }, currentHealth: 12 },
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 4, y: 1 }, cooldowns: { shockwave: 99 } },
+    // 36 = 7 + 13 + 16. Unstatused at the start, on purpose.
+    { id: 'bulwark', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 5, y: 4 }, currentHealth: 36, cooldowns: { whirlwind: 99 } },
   ],
-  initiativeOrder: ['p1', 'p2', 'ward', 'skir'],
+  initiativeOrder: ['p1', 'p2', 'bulwark'],
 };

@@ -1,7 +1,7 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #56 — "Twin Fates" (THREE TURNS: the MULTI-HIT fate facet, revived —
+ * Puzzle #38 — "Twin Fates" (THREE TURNS: the MULTI-HIT fate facet, revived —
  * trap #20 was arithmetically walled at two turns and is not any more).
  *
  * Trap #20 cut this idea with an exact proof: a fate puzzle needs a blockable
@@ -38,13 +38,13 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * ⚠ THE AXEMAN'S SWING MUST BE BLOCKABLE or it cannot eat a miss in the greedy
  * line and the arithmetic collapses. Ground Slam is on cooldown for the same
- * reason it was in #46: an uncastable ability still generates winning ideas.
+ * reason it was in #20: an uncastable ability still generates winning ideas.
  *
  * Vocabulary 2 (a scripted miss; a two-hit attack rolls twice). Tier-1 fate.
  */
-export const PUZZLE_056: PuzzleDefinition = {
-  id: 'puzzle-056',
-  title: 'Puzzle #56 — Twin Fates',
+export const PUZZLE_038: PuzzleDefinition = {
+  id: 'puzzle-038',
+  title: 'Puzzle #38 — Twin Fates',
   goalText: 'Defeat the Bulwark within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
@@ -68,7 +68,7 @@ export const PUZZLE_056: PuzzleDefinition = {
       cooldowns: { drain: 99 },
     },
     // ⚠ A DECOY WITH AN UNBLOCKABLE BASIC. It exists to give both player units
-    // somewhere wrong to aim — the random-rate fix from #51 — but in a FATE
+    // somewhere wrong to aim — the random-rate fix from #4 — but in a FATE
     // puzzle a decoy must also be unable to spend the queue, or it changes the
     // arithmetic every time it swings. Eldritch Blast rolls nothing.
     {

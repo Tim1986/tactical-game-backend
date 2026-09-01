@@ -1,0 +1,27 @@
+import type { PuzzleDefinition } from '../types.js';
+
+/**
+ * Puzzle #905 — "Concentrate Fire" (focus-fire).
+ *
+ * Target: enemy Barbarian (21 HP). Twin Wizards (Ice Blast 11 each = 22) must
+ * both hit it; the wounded Sorcerer (9 HP) is bait.
+ *
+ * Tier-0 fate. Vocabulary 1. Solver: 2 ideas, greedy fails, random 0.8%.
+ */
+export const PUZZLE_905: PuzzleDefinition = {
+  id: 'puzzle-905',
+  title: 'Puzzle #905 — Concentrate Fire',
+  goalText: 'Defeat the enemy Barbarian within 2 turns',
+  goal: 'eliminate_target',
+  targetUnitId: 'targ',
+  maxPlayerTurns: 2,
+  rollScript: ['hit', 'hit'],
+  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
+  units: [
+    { id: 'p1',   side: 'player', slug: 'wizard',    specialSlug: 'cold_snap', position: { x: 1, y: 4 } },
+    { id: 'p2',   side: 'player', slug: 'wizard',    specialSlug: 'freeze',    position: { x: 1, y: 5 } },
+    { id: 'targ', side: 'enemy',  slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 6, y: 4 }, currentHealth: 21 },
+    { id: 'bait', side: 'enemy',  slug: 'sorcerer',  specialSlug: 'ignite',    position: { x: 3, y: 2 }, currentHealth: 9 },
+  ],
+  initiativeOrder: ['p1', 'p2', 'targ', 'bait'],
+};

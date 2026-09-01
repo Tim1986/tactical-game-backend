@@ -1,66 +1,71 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #40 — "Which Bow" (PICKER-FIRST on the blocked-path lesson).
+ * Puzzle #40 — "Let It Burn" (ANSWER: ignore the free kill entirely).
  *
- * The Ranger commits to one bow before anything moves, and the Wisp holding the
- * doorway is on 13. Longshot's 15 opens it. Piercing Shot's 12 falls one short —
- * the near-miss engineered into a decoy — and Pinning Shot's 7 is not close. The
- * Arrow the Ranger carries anyway is 11, also short. Exactly one choice makes
- * the puzzle solvable, and it cannot be walked back.
+ * The first puzzle to use PRE-APPLIED BURNING, which the doc has called "great
+ * material" since the v2 rework without a single puzzle spending it.
  *
- * Piercing Shot is the DEFAULT: the flashiest option, one point from working,
- * and therefore the one a player talks themselves into. A picker whose
- * pre-selected special is the answer is decoration (#24's rule).
+ * STA-2: burning deals 7 at the START of the burning unit's turn, before it
+ * acts — "a unit can die to its own burn before it gets to act." The enemy
+ * Acolyte is on 6 and burning. It is already dead; it just does not know yet.
  *
- * The trap survives the correct pick. With Longshot in hand it is also the
- * biggest number available on the goal target — 15 into the Wizard, one short
- * of 16 — so the greedy player spends it there and leaves the Barbarian outside
- * a shut door.
+ * Both enemies have to die and you have three turns, which is exactly enough to
+ * put 42 into the Warden's 35 — but only if you spend all three on the Warden.
+ * The Acolyte is the trap: a one-shot kill sitting in the open, worth 10000 to
+ * any scoring function and irresistible to a human reading the board. Take it
+ * and you have burned a third of your budget on a unit the fire was going to
+ * finish on its own, and the Warden lives on 8.
  *
- * ⚠ REBUILT 2026-08-22 for the RING Whirlwind, which broke this twice over.
- *  1. GEOMETRY. Whirlwind used to hit only the 4 cardinal tiles, so (6,4) — the
- *     Wisp's square — was the sole place the Barbarian could stand. As an
- *     8-tile ring it also reaches from the DIAGONALS (6,3) and (6,5), both
- *     three steps from the old (4,4) start, so the door stopped mattering. The
- *     Barbarian now starts at (3,4): (6,4) is exactly three steps, the two
- *     diagonals are four.
- *  2. ARITHMETIC. Whirlwind fell 20 -> 16, so the Wizard's 18 became unkillable
- *     and every combo went unsolvable. It is now 16.
+ * The winning first move is Longshot into the Warden — the enemy you CANNOT
+ * kill this turn, while a free kill stands next to it.
  *
- * ⚠ THE TARGET'S HP IS PINNED, NOT CHOSEN. It must be ABOVE Longshot's 15 (or
- * the greedy shot at the Wizard just wins) and AT MOST Whirlwind's 16 (or
- * nothing kills it). 16 is the only value that satisfies both, so this puzzle
- * has ZERO slack by construction and MUST be re-solved if either number moves.
- * That is the exact-sum fragility that killed #5 and #10 — accepted here only
- * because the alternative is deleting a working picker.
+ * Why this is a fair trap rather than a gotcha: everything needed is on screen.
+ * The Acolyte's health, its burning icon, and the rule that burning ticks at the
+ * start of its turn are all visible before you move, and the initiative strip
+ * shows its slot arriving before your third turn.
  *
- * Why there is no two-turn fallback: the Wizard has 3 movement and the Arrow
- * reaches 6, so a wounded Wizard simply walks out of range. The kill has to
- * land on turn 1, which is what forces the whole sequence.
+ * Both search-cost rules from #23 apply: the Ranger is ROOTED (range 8, no
+ * reason to move) to keep the 3-turn search tractable, and neither enemy carries
+ * a freeze or a root, so nothing can delete the third turn.
  *
- * Vocabulary 1. Tier-0 fate. 2v2.
+ * Slack: 15 + 16 + 11 = 42 against 40, and the Acolyte's 6 against a 7-point
+ * tick. Note the third shot is an ARROW, not a second Longshot — specials are
+ * once per match, which is #23's lesson and is now part of the budget.
+ *
+ * Vocabulary 1 (burning ticks at the start of its victim's turn). Tier-0 fate.
+ * 2v2, three turns.
  */
 export const PUZZLE_040: PuzzleDefinition = {
   id: 'puzzle-040',
-  title: 'Puzzle #40 — Which Bow',
-  goalText: 'Defeat the enemy Wizard within 2 turns',
-  goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
+  title: 'Puzzle #40 — Let It Burn',
+  goalText: 'Defeat the enemy Fighter and the enemy Sorcerer within 3 turns',
+  goal: 'eliminate_all',
+  maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
+    // ROOTED as a search-cost device (see #23): range 8, never wants to move.
+    // CAMOUFLAGE (Fable retrofit, 2026-08-21): the Ranger picks its bow. Only
+    // Longshot's 15 completes the 42-point budget against 40; Piercing's 12
+    // leaves the Warden on exactly 1 (the near-miss made into a decoy), and
+    // Pinning's 7 is never close. Default is PIERCING — the tempting decoy —
+    // because a picker whose default is the answer is decoration (the #7 rule).
     {
       id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'piercing',
       specialChoices: ['pinning', 'piercing', 'longshot'],
-      position: { x: 4, y: 1 },
+      position: { x: 1, y: 2 },
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 5, stacks: 1 }],
     },
-    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 3, y: 4 } },
-    { id: 'targ', side: 'enemy', slug: 'wizard', specialSlug: 'blizzard', position: { x: 7, y: 4 }, currentHealth: 16 },
-    // 13: only Longshot's 15 opens the door. Piercing's 12 is one short,
-    // the Arrow's 11 two, Pinning Shot's 7 nowhere near.
-    { id: 'blok', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 6, y: 4 }, currentHealth: 13 },
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 3, y: 4 } },
+    // The real job: 35 health, and it takes all three turns.
+    { id: 'ward', side: 'enemy', slug: 'fighter', specialSlug: 'concussive', position: { x: 5, y: 4 }, currentHealth: 40 },
+    // Already dead. 6 health against a 7-point tick at the start of its own slot.
+    {
+      id: 'acol', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
+      position: { x: 6, y: 2 }, currentHealth: 6,
+      statusEffects: [{ slug: 'burning', turnsRemaining: 3, stacks: 1 }],
+    },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ', 'blok'],
+  initiativeOrder: ['p1', 'p2', 'acol', 'ward'],
 };

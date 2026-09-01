@@ -1,56 +1,66 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #17 — "The Softer Blow" (v2 texture: OVERKILL / the strong attack ruins the finish).
+ * Puzzle #17 — "Which Bow" (PICKER-FIRST on the blocked-path lesson).
  *
- * Your Rogue is ROOTED right beside the enemy Ranger with Kill Shot ready — and
- * Kill Shot only works at 22 health or below. The Ranger is on 30, so the
- * Fighter has to soften it first. Shield Bash is the obvious opener: 16
- * unblockable, the biggest number on the board, and it drops the Ranger to 14 —
- * comfortably under the threshold. It also knocks the Ranger two tiles away, and
- * a rooted Rogue cannot follow. The winning move is the WEAKER one: the plain
- * sword for 11, which leaves the Ranger on 19 and standing exactly where it was.
+ * The Ranger commits to one bow before anything moves, and the Wisp holding the
+ * doorway is on 13. Longshot's 15 opens it. Piercing Shot's 12 falls one short —
+ * the near-miss engineered into a decoy — and Pinning Shot's 7 is not close. The
+ * Arrow the Ranger carries anyway is 11, also short. Exactly one choice makes
+ * the puzzle solvable, and it cannot be walked back.
  *
- * v2 shape: the goal-greedy player takes the highest-damage action available and
- * loses. The winning first move deals LESS damage to the goal target than the
- * available alternative — the same shape as "deals zero damage", one step milder.
+ * Piercing Shot is the DEFAULT: the flashiest option, one point from working,
+ * and therefore the one a player talks themselves into. A picker whose
+ * pre-selected special is the answer is decoration (#7's rule).
  *
- * Narrow by construction. The Fighter's only approach tiles are (4,3) and (4,5),
- * so every Shield Bash pushes the Ranger along the north-south axis, two tiles
- * clear of the Rogue. The one tile that would make the bash safe — (3,4),
- * opposite the Rogue, where the push would jam against the Rogue's body and
- * cancel (ABL-14) — is occupied by the enemy Warden. That body is the whole
- * reason the trap cannot be sidestepped.
+ * The trap survives the correct pick. With Longshot in hand it is also the
+ * biggest number available on the goal target — 15 into the Wizard, one short
+ * of 16 — so the greedy player spends it there and leaves the Barbarian outside
+ * a shut door.
  *
- * The Rogue is ROOTED, not merely distant: a 2-tile push can never outrun a
- * mobile melee unit, because the tile the target is pushed THROUGH is adjacent
- * to both its old and new positions. Immobility is the only way knockback
- * becomes a real liability.
+ * ⚠ REBUILT 2026-08-22 for the RING Whirlwind, which broke this twice over.
+ *  1. GEOMETRY. Whirlwind used to hit only the 4 cardinal tiles, so (6,4) — the
+ *     Wisp's square — was the sole place the Barbarian could stand. As an
+ *     8-tile ring it also reaches from the DIAGONALS (6,3) and (6,5), both
+ *     three steps from the old (4,4) start, so the door stopped mattering. The
+ *     Barbarian now starts at (3,4): (6,4) is exactly three steps, the two
+ *     diagonals are four.
+ *  2. ARITHMETIC. Whirlwind fell 20 -> 16, so the Wizard's 18 became unkillable
+ *     and every combo went unsolvable. It is now 16.
  *
- * Slack, not arithmetic: sword leaves the Ranger on 19 against a threshold of
- * 22, so the puzzle cannot be solved by counting to an exact number.
+ * ⚠ THE TARGET'S HP IS PINNED, NOT CHOSEN. It must be ABOVE Longshot's 15 (or
+ * the greedy shot at the Wizard just wins) and AT MOST Whirlwind's 16 (or
+ * nothing kills it). 16 is the only value that satisfies both, so this puzzle
+ * has ZERO slack by construction and MUST be re-solved if either number moves.
+ * That is the exact-sum fragility that killed puzzle-905 and puzzle-910 — accepted here only
+ * because the alternative is deleting a working picker.
  *
- * Vocabulary 3 (Kill Shot has a health threshold; Shield Bash knocks back;
- * rooted cannot move). Tier-0 fate. 2v2.
+ * Why there is no two-turn fallback: the Wizard has 3 movement and the Arrow
+ * reaches 6, so a wounded Wizard simply walks out of range. The kill has to
+ * land on turn 1, which is what forces the whole sequence.
+ *
+ * Vocabulary 1. Tier-0 fate. 2v2.
  */
 export const PUZZLE_017: PuzzleDefinition = {
   id: 'puzzle-017',
-  title: 'Puzzle #17 — The Softer Blow',
-  goalText: 'Defeat the enemy Ranger within 2 turns',
+  title: 'Puzzle #17 — Which Bow',
+  goalText: 'Defeat the enemy Wizard within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 4, y: 2 } },
     {
-      id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'assassinate',
-      position: { x: 5, y: 4 },
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 3, stacks: 1 }],
+      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'piercing',
+      specialChoices: ['pinning', 'piercing', 'longshot'],
+      position: { x: 4, y: 1 },
     },
-    { id: 'targ', side: 'enemy', slug: 'ranger', specialSlug: 'pinning', position: { x: 4, y: 4 }, currentHealth: 30 },
-    { id: 'blok', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 3, y: 4 } },
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 3, y: 4 } },
+    { id: 'targ', side: 'enemy', slug: 'wizard', specialSlug: 'blizzard', position: { x: 7, y: 4 }, currentHealth: 16 },
+    // 13: only Longshot's 15 opens the door. Piercing's 12 is one short,
+    // the Arrow's 11 two, Pinning Shot's 7 nowhere near.
+    { id: 'blok', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 6, y: 4 }, currentHealth: 13 },
   ],
   initiativeOrder: ['p1', 'p2', 'targ', 'blok'],
 };

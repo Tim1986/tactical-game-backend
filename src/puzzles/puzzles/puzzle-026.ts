@@ -1,55 +1,94 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #26 — "The Narrow Shelf" (BLOCKED PATH, slow finisher).
+ * Puzzle #26 — "One Goes Wide" (v2 texture: THE FATE QUEUE — the first puzzle
+ * in the rotation where a MISS is the thing you play around).
  *
- * The same MOV-3 lock as #19/#21/#22, tightened by giving the job to a
- * Barbarian: three movement instead of the Rogue's four, so the box does not
- * need to be as deep. The enemy Cleric is wedged against the east edge with a
- * Wisp on the only square the Barbarian can reach; every other square that
- * would let Whirlwind touch it is four steps away against three.
+ * Owner question, 2026-08-31: "seems like a lot of puzzles are assuming all
+ * hits land. Have we done any where some hits are gonna miss, and you need to
+ * work around that?" Answer at the time: no. Every puzzle from #16 on ships
+ * `rollScript: []` (deterministic hit); only the deregistered arithmetic
+ * batch-puzzle-901 pair ever scripted a miss, and there the miss was a subtraction to
+ * perform, not a thing to play around.
  *
- * ⚠ REBUILT 2026-08-22 for the RING Whirlwind. Whirlwind used to hit only the
- * 4 cardinal tiles, so the Barbarian at (4,2) had to stand on (6,2) — the
- * Wisp's square — and the block was airtight. As an 8-tile ring it can also
- * strike from the DIAGONALS (6,1) and (6,3), both three steps from (4,2), so
- * the Wisp stopped mattering and the puzzle collapsed to goal-greedy. The
- * Barbarian therefore starts at (3,2): from there (6,2) is exactly three steps
- * and (6,1)/(6,3) are four, so the Wisp's square is once again the ONLY tile
- * that puts the Cleric inside the ring.
+ * THE DEVICE. `rollScript` is a FIFO QUEUE consumed by the whole board — one
+ * entry per blockable roll, in the order the rolls happen (types.ts). A
+ * scripted miss is therefore not attached to an attack, it is attached to a
+ * POSITION IN TIME, and the player chooses who walks into it. The miss is a
+ * resource, and it has to be spent on a blow that does not matter.
  *
- * The Arrow is the whole puzzle. It must be spent on the WISP (11 against 10 —
- * Pinning Shot's 7 will not do it), which opens the shelf for a 16-damage
- * Whirlwind. Spend it on the Cleric instead and the Barbarian has nowhere to
- * stand.
+ * THE TRAP. The Sentinel is on 10 and the Wizard's Ice Blast is 10 — the kill
+ * is on the board from turn one. The Barbarian can reach the Sentinel too:
+ * three steps to (4,5) puts Ground Slam's ring over it for 9. That is the
+ * greedy play and it is the losing one, because Ground Slam is UNBLOCKABLE —
+ * it rolls no die, so it does not spend the wide roll. The Sentinel drops to 1,
+ * the Wizard's blast goes wide on the fate, and it survives on one health.
  *
- * Why chip damage cannot substitute: the Cleric sits at 14 of 50, under the
- * brain's 40% heal threshold, so it restores 27 the moment it gets a turn.
- * Both player units act before it (initiative below), so the kill has to land
- * as one burst on turn 1 or not at all.
+ * THE ANSWER. Walk AWAY from the Sentinel and hit the Husk: a plain swing at a
+ * 52-health bystander accomplishes nothing except rolling the die that was
+ * always going to miss. The Ice Blast then lands for exactly 10.
  *
- * Note the Barbarian's Whirlwind is safe to use here only because nothing of
- * yours ends up adjacent to it (ABL-10: every area ability hits allies too) —
- * and "adjacent" now means all 8 tiles. The Ranger at (4,5) is three away from
- * the Barbarian's landing square, so it stays clear.
+ * Cost channel (trap #15): invisible to a solver scoring damage dealt to the
+ * goal. The correct first move deals ZERO to the target — the proven shape —
+ * while the greedy alternative deals a visible NINE. This is the fourth proven
+ * cost channel (own unit dies #5 · target leaves reach #33 · tempo #16/#47 ·
+ * path stays shut #41) and the first that spends a DIE.
  *
- * Slack: 16 against 14, not an exact sum. Vocabulary 1. Tier-0 fate. 2v2.
+ * ⚠ WHY GROUND SLAM AND NOT WHIRLWIND. Both reach the Husk, but Whirlwind is
+ * BLOCKABLE: it would roll, eat the miss, and hand the player four extra
+ * winning first moves (measured — the solver went from 1 distinct idea to 5,
+ * against a bar of 2). The unblockable special is what makes the greedy line
+ * genuinely unable to pay the fate.
+ *
+ * ⚠ FAIRNESS. The script is disclosed in full on the intro and the in-match
+ * banner, per types.ts: "Never hide the script — fairness depends on it." A
+ * puzzle whose trick is a miss the player could not have known about is a
+ * cheat, not a puzzle.
+ *
+ * Both player turns resolve before either enemy slot, so no enemy roll can jump
+ * the queue and eat the miss the player is planning around. That ordering is
+ * load-bearing.
+ *
+ * Solver (2026-08-31): 1 distinct idea · goal-greedy FAILS · depth 1 ·
+ * near-miss 1 (the Sentinel survives on one health — the close-call hook) ·
+ * random 1.0%. PASS.
+ *
+ * Vocabulary 2 (a scripted miss; unblockable does not roll). Tier-1 fate —
+ * the first in the rotation. 2v2, per trap #9.
  */
 export const PUZZLE_026: PuzzleDefinition = {
   id: 'puzzle-026',
-  title: 'Puzzle #26 — The Narrow Shelf',
-  goalText: 'Defeat the enemy Cleric within 2 turns',
+  title: 'Puzzle #26 — One Goes Wide',
+  goalText: 'Defeat the Frost Sentinel within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
-  rollScript: [],
-  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
+  // ONE entry. The first blockable roll of the fight misses; everything after
+  // is a deterministic hit (an exhausted script hits — types.ts).
+  rollScript: ['miss'],
+  fateText: 'Fate is sealed: the FIRST blow struck in this fight goes wide, whoever throws it. Every strike after it lands.',
   units: [
-    { id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'pinning', position: { x: 4, y: 5 } },
-    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 3, y: 2 } },
-    { id: 'targ', side: 'enemy', slug: 'cleric', specialSlug: 'heal', position: { x: 7, y: 2 }, currentHealth: 14 },
-    // 10 health: the Arrow's 11 opens the shelf, Pinning Shot's 7 does not.
-    { id: 'blok', side: 'enemy', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 6, y: 2 }, currentHealth: 10 },
+    // The finisher. 10 damage against 10 health, in range from where it stands
+    // — the kill is available on turn one and taking it loses the puzzle.
+    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 5, y: 2 } },
+    // ⚠ Ground Slam, NOT Whirlwind. Both hit the Husk, but Whirlwind is
+    // BLOCKABLE — it would roll, eat the miss, and hand the player four extra
+    // winning first moves (solver: 5 distinct ideas, bar is 2). Ground Slam is
+    // unblockable, so it rolls no die and cannot pay the fate. The only thing
+    // on this board that can spend the wide roll is a plain swing.
+    // The lightning rod. Move 3 from (0,6) cannot reach the Sentinel at (5,6) — the swing tile is
+    // (4,6), four steps away,
+    // so its only swing is at the Husk — which is exactly what the puzzle wants.
+    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 2, y: 4 } },
+    { id: 'targ', side: 'enemy', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 5, y: 6 }, currentHealth: 10 },
+    // The bystander: adjacent to the Barbarian, far from the Sentinel, and
+    // healthy enough that killing it is never on the table.
+    { id: 'husk', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 1, y: 6 }, currentHealth: 52 },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ', 'blok'],
+  // ⚠ THE BARBARIAN ACTS FIRST, AND THAT IS THE PUZZLE. Its turn looks worthless
+  // — it cannot reach the Sentinel and the Husk is at full health — so the
+  // instinct is to spend it walking toward the real fight. Walking rolls no
+  // die, the miss survives the turn, and the Wizard's one kill goes wide.
+  // Both player turns also come first: no enemy roll may jump the queue.
+  initiativeOrder: ['p2', 'p1', 'targ', 'husk'],
 };

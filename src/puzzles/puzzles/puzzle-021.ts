@@ -1,41 +1,56 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #21 — "Shut the Gate" (BLOCKED PATH, #19's channel on a new axis).
+ * Puzzle #21 — "Break the Bindings" (v2 texture: FREE THE FINISHER).
  *
- * MOV-3: enemies block movement completely. The enemy Ranger is backed into the
- * south edge with a Wisp holding the one square in front of it. Your Rogue has
- * 16 and needs 14, and cannot get there: the two remaining squares beside the
- * Ranger are five steps around the Wisp against four movement. The Sorcerer's
- * Flame Blast can reach the Ranger for 10 — four short — or kill the Wisp, which
- * scores nothing and opens the road.
+ * Your Barbarian is the only unit whose axe reaches 12 — and it is ROOTED two
+ * tiles short of the Sorcerer, so it cannot close. Your Cleric is standing
+ * right next to the target with a mace in its hand, and swinging it is the
+ * obvious play: 11 damage, one hp short, and the Barbarian still cannot move.
+ * Purify is the answer — spend the Cleric's turn dealing no damage at all.
  *
- * Runs north-south where #19 ran east-west, and swaps who holds the door: there
- * the opener was a Ranger's basic Arrow, here a Sorcerer's Flame Blast, with the
- * Wisp tuned to 9 so exactly one shot opens it (Ignite's 5 does not).
+ * v2 shape: the winning first move deals ZERO damage to the goal target while
+ * a legal 11-damage attack is available and in range, so a goal-aware greedy
+ * player swings and finishes one HP short. That last point is the retry hook —
+ * the failing line ends with the Sorcerer on 1.
  *
- * Ignite is the Sorcerer's special ON PURPOSE. Flame Jet would put 16 on the
- * Ranger and simply win, which is the whole reason the loadout is not free
- * choice here — see trap #14 on enumerating a trapped action's alternatives.
+ * Narrow by construction (the lesson from the rejected #21 displacement draft):
+ * exactly one action wins — Purify on the Barbarian. There is no direction to
+ * get right and no second target worth cleansing, so flailing does not land it.
  *
- * Slack: 16 against 14. Vocabulary 1. Tier-0 fate. 2v2.
+ * The Barbarian's special is Ground Slam (range 0) on purpose: Leaping Slam
+ * explicitly leaps "even if rooted" (ABL-12), which hands a rooted unit a
+ * 2-tile escape hatch and breaks the whole premise. The solver caught exactly
+ * that on the first draft.
+ *
+ * Vocabulary 2 (rooted stops movement; Purify removes it). Tier-0 fate. 2v1.
  */
 export const PUZZLE_021: PuzzleDefinition = {
   id: 'puzzle-021',
-  title: 'Puzzle #21 — Shut the Gate',
-  goalText: 'Defeat the enemy Ranger within 2 turns',
+  title: 'Puzzle #21 — Break the Bindings',
+  goalText: 'Defeat the enemy Sorcerer within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    // Off the column, so line of sight to the Ranger is never blocked by the Wisp.
-    { id: 'p1', side: 'player', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 6, y: 4 } },
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 4, y: 3 } },
-    { id: 'targ', side: 'enemy', slug: 'ranger', specialSlug: 'longshot', position: { x: 4, y: 7 }, currentHealth: 14 },
-    // 9 health: Flame Blast's 10 opens the gate, Ignite's 5 does not.
-    { id: 'blok', side: 'enemy', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 4, y: 6 }, currentHealth: 9 },
+    {
+      id: 'p1', side: 'player', slug: 'cleric', specialSlug: 'heal',
+      // [CAMO SWEEP 2026-08-31] A Cleric holding Purify beside a ROOTED ally is
+      // the answer written on the tin. The default is now the tempting number —
+      // Heal's 27, the biggest thing the Cleric can do — and both decoys are
+      // live: Heal patches a unit that is not hurt, Ward shields a unit nothing
+      // is attacking. Only Purify frees the swing.
+      specialChoices: ['heal', 'ward', 'purify'],
+      position: { x: 5, y: 4 },
+    },
+    {
+      id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'shockwave',
+      position: { x: 4, y: 6 },
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 3, stacks: 1 }],
+    },
+    { id: 'targ', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 6, y: 4 }, currentHealth: 12 },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ', 'blok'],
+  initiativeOrder: ['p1', 'p2', 'targ'],
 };

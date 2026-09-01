@@ -1,7 +1,7 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #52 — "Line Them Up" (THREE TURNS: displacement as SETUP — move an
+ * Puzzle #44 — "Line Them Up" (THREE TURNS: displacement as SETUP — move an
  * enemy so that one shot can take both).
  *
  * Piercing Shot is a LINE: it runs six tiles from the archer and hits everything
@@ -28,7 +28,7 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * ⚠ THE CUR IS ROOTED, which is what makes the bash necessary rather than
  * optional — a mobile enemy walks into the line on its own and the setup
- * evaporates (trap #25's first failure mode, measured on #50).
+ * evaporates (trap #25's first failure mode, measured on #13).
  *
  * ⚠ THE PUSH MUST NOT ALSO KILL. Fear deals no damage at all, so the Warlock's
  * turn buys exactly one thing: position. Its three tiles are measured away from
@@ -51,9 +51,9 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * Tier-0 fate.
  */
-export const PUZZLE_052: PuzzleDefinition = {
-  id: 'puzzle-052',
-  title: 'Puzzle #52 — Line Them Up',
+export const PUZZLE_044: PuzzleDefinition = {
+  id: 'puzzle-044',
+  title: 'Puzzle #44 — Line Them Up',
   goalText: 'Defeat BOTH enemies within 3 turns',
   goal: 'eliminate_all',
   maxPlayerTurns: 3,

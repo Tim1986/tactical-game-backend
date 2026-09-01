@@ -1,86 +1,72 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #47 — "Wait for the Weakness" (THREE TURNS: a status EXPIRES, and the
- * whole puzzle is refusing to act while it lasts).
+ * Puzzle #47 — "Second Wind" (v2 texture: TEMPO / the target patches itself up
+ * between your two turns).
  *
- * The third thing three turns unlocks, after #45's spare turn and #46's ground:
- * time itself. A one-turn status is invisible at two turns — it is simply true
- * for the whole puzzle. At three, initiative wraps, and a debuff on YOUR unit
- * is a window that closes.
+ * Rulebook source: TRN-6, "a frozen unit's initiative slot is skipped entirely
+ * — it neither moves nor acts." The enemy Fighter is on 12 and carries First
+ * Aid, a self-heal for 18. Read the initiative strip: it acts BETWEEN your two
+ * units. Whatever the Wizard does, the Fighter's slot comes next, and on 12
+ * health it will patch itself back above anything the Rogue can finish.
  *
- * The Marksman is WEAKENED, one turn left. Weakened takes 4 off every damaging
- * effect (STA-3), and it wears off at the end of her own turn — so her Longshot
- * is 11 now and 15 later, and she gets exactly two turns: this one and the last.
+ * The Wizard's Ice Blast for 10 is the biggest number on the board and it is a
+ * trap: whatever it takes off, First Aid's 18 puts back and more, and the
+ * Rogue's 16 is then not enough. The winning move deals no damage at all — Freeze
+ * skips the Fighter's slot outright, so the heal never happens and the Rogue's
+ * 16 is enough against 12.
  *
- * The Sentinel is on 25, rooted at the far wall, seven tiles away. That is
- * outside her bow's six and inside Longshot's eight, so the big shot is the only
- * thing she owns that can touch it — once, because Longshot is once per battle.
- * The Wizard's Ice Blast takes 10. 15 + 10 = 25, exactly, and only if the shot
- * is taken AFTER the weakness passes.
+ * Cost channel (trap #15): the price of the greedy shot is not that it deals
+ * less, it deals more — it is that it hands the Fighter a turn. Tempo is paid by
+ * the ENEMY's action, which is invisible to a solver scoring damage dealt on the
+ * player's own move.
  *
- * Fire now and you deal a real, visible 11. Then the Wizard's 10 leaves four
- * health standing, the bow cannot span the gap, and there is nothing else.
+ * Why this is not a re-run of #16. That puzzle freezes a SUPPORT unit to stop it
+ * healing someone else; here the target heals ITSELF, so the thing you must
+ * disable and the thing you must kill are the same unit — and the player has to
+ * work out that spending the turn dealing zero to it is what kills it. Trap #1's
+ * warning cuts the other way for once: a wounded unit prioritising its own heal
+ * is exactly the behaviour this puzzle needs.
  *
- * Cost channel (trap #15 / #22 / #24): the trap is DAMAGE TO THE GOAL, which is
- * what `eliminate_target` requires of a bait — greedy scores 11 and takes it
- * every time. The correct first move is a rooted archer doing nothing at all.
+ * No rooting, no geometry. Three of the last four candidates died to TRN-4 (a
+ * unit may move AND use an ability in the same turn), which lets almost any
+ * positional trap be sidestepped for free unless someone is rooted — #33 and
+ * #5 both had to root a unit for that reason. A tempo puzzle needs none of it:
+ * there is no tile to step to that stops the Fighter taking its turn.
  *
- * ⚠ THE MARKSMAN IS ROOTED, and it is what makes the puzzle exist. Free to move,
- * she simply walks three tiles and the bow reaches — no window, no decision.
- * Rooted, the only variable is WHEN she shoots.
+ * Slack, not arithmetic: the Rogue's 16 against 12 health, so it cannot be
+ * solved by counting.
  *
- * ⚠ THE SENTINEL IS ROOTED TOO. Unrooted it advances on its own slot, wanders
- * into bow range, and the greedy line finishes with the ordinary arrow.
+ * On near-miss: the solver reports 12 here, where the geometry puzzles report
+ * 2–3. That is the TEMPO CHANNEL's signature, not a flaw — #16, the other tempo
+ * puzzle, reports 11 on the same measure and is a keeper. A failing line ends
+ * AFTER the enemy has healed, so the "closest miss" is measured against a
+ * restored health bar; a geometry puzzle's failing line ends on whatever damage
+ * actually landed. Read near-miss within a channel, never across channels.
+ * (Measured across the full 10-puzzle rotation, 2026-08-21.)
  *
- * ⚠ AND IT IS NOT A FIGHTER (trap #1): at 25 of 38 a wounded enemy carrying
- * First Aid heals past anything on this board. A Ranger has no heal.
- *
- * ⚠ THE EMBER IS HERE FOR SEARCH COST, NOT FOR THE PLAYER (trap #23). Its burn
- * kills it on its own slot, which prunes the tree — this solves in seconds
- * where a three-turn board with everything alive to the end took 39 minutes.
- * Under `eliminate_target` a free kill is not bait (trap #24), so it tempts
- * nobody; it is scaffolding.
- *
- * Vocabulary 2 (weakened expires at the end of your turn; a shot you only get
- * once). Tier-0 fate.
+ * Vocabulary 2 (First Aid heals the user; a frozen unit's turn is skipped).
+ * Tier-0 fate. 2v1, per trap #9.
  */
 export const PUZZLE_047: PuzzleDefinition = {
   id: 'puzzle-047',
-  title: 'Puzzle #47 — Wait for the Weakness',
-  goalText: 'Defeat the Sentinel within 3 turns',
+  title: 'Puzzle #47 — Second Wind',
+  goalText: 'Defeat the enemy Fighter within 2 turns',
   goal: 'eliminate_target',
-  targetUnitId: 'sentinel',
-  maxPlayerTurns: 3,
+  targetUnitId: 'targ',
+  maxPlayerTurns: 2,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    {
-      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'longshot',
-      position: { x: 0, y: 4 },
-      statusEffects: [
-        { slug: 'weakened', turnsRemaining: 1, stacks: 1 },
-        { slug: 'rooted', turnsRemaining: 9, stacks: 1 },
-      ],
-    },
-    // ⚠ OUT OF RANGE WHERE IT STANDS, and off the Marksman's firing row. Standing
-    // ready at range 4 made the Wizard's turn a gimme — a coin-flipping player
-    // won 6% of the time (bar: 5%) because two of the three units' turns
-    // succeeded by accident. Seven tiles away it has to close first, so the
-    // middle turn costs a decision too.
-    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 6 } },
-    // 25 = 15 + 10, and 15 only exists after the weakness passes.
-    {
-      id: 'sentinel', side: 'enemy', slug: 'ranger', specialSlug: 'longshot',
-      position: { x: 7, y: 4 }, currentHealth: 25,
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
-    },
-    // Scaffolding: dies to its own fire on its own slot, and prunes the search.
-    {
-      id: 'ember', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
-      position: { x: 0, y: 6 }, currentHealth: 7,
-      statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1 }],
-    },
+    // Freeze is the only disable on the board: the Wizard's other options were
+    // deliberately not given to it, so there is exactly one way to skip the slot.
+    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 4 } },
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 5, y: 7 } },
+    // 12 of 52 — deep enough into the red that it will reach for First Aid the
+    // moment it is given a turn.
+    { id: 'targ', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 5, y: 4 }, currentHealth: 12 },
   ],
-  initiativeOrder: ['p1', 'p2', 'ember', 'sentinel'],
+  // The Fighter acts BETWEEN your two units. That is the whole puzzle, and it is
+  // visible on the initiative strip before a single move is made.
+  initiativeOrder: ['p1', 'targ', 'p2'],
 };

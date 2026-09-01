@@ -1,53 +1,38 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #31 — "Cut Him Loose" (ANSWER: PURIFY).
+ * Puzzle #31 — "Both Hands" (BLOCKED PATH with TWO doors — only one is real).
  *
- * ⚠ Fable review 2026-08-21: this is a NEAR-CLONE of #16 "Break the Bindings"
- * — same texture (rooted finisher), same answer (Purify your own unit), same
- * roster shape, same one-short retry hook. It was authored as "the first purify
- * answer" because the rotation tally carried "(016 tbd)" instead of #16's
- * actual answer. Kept in rotation (near-clones are acceptable filler on the
- * road to 50, and the two sit 15 days apart), but PURIFY IS NOW A CLOSED
- * ANSWER, and the lesson is procedural: verify the tally is COMPLETE before
- * claiming any answer is new.
+ * The escalation of #41/#37: the enemy Warlock is walled by two bodies, and the
+ * shot only opens one of them. Killing the wrong one leaves the Rogue exactly as
+ * stranded as killing neither — the Brute's square is four steps from the Rogue,
+ * the Acolyte's is six, and the Rogue has four.
  *
- * Your Rogue is ROOTED two tiles from the enemy Sorcerer: MOV-4 leaves it able
- * to use abilities but unable to close, and Expose Weakness only reaches one
- * tile, so it is a 16-damage unit that cannot spend a point of it. The Cleric
- * can walk up and swing its Mace for 11 — the only damage on offer, and three
- * short of the 14 the Sorcerer is sitting on.
+ * So the puzzle adds a DISCRIMINATION on top of the blocked-path idea: not "spend
+ * the shot on a door instead of the target", but "work out which of two doors is
+ * the one you can actually walk through". Distance, not damage, decides it — and
+ * the Acolyte is the softer, more tempting target of the two.
  *
- * Purify removes Rooted (its text lists Frozen, Rooted and Burning) from an ally
- * within 3 tiles. It deals nothing to the Sorcerer, which is exactly why
- * goal-greedy will not consider it: the Cleric's Mace scores 11 and Purify
- * scores 0. Spend the turn on your own unit and the Rogue does the rest.
- *
- * The Cleric is placed so it CAN reach the Sorcerer and swing — deliberately.
- * If its only legal action were Purify the puzzle would score depth 0 and be
- * rejected (trap #2's lesson generalised): there has to be a tempting wrong
- * move for the right one to mean anything.
- *
- * Slack: 16 against 14. Vocabulary 2 (rooted cannot move; Purify clears it).
- * Tier-0 fate. 2v1.
+ * Slack: 16 against 13. Vocabulary 1. Tier-0 fate. 2v3.
  */
 export const PUZZLE_031: PuzzleDefinition = {
   id: 'puzzle-031',
-  title: 'Puzzle #31 — Cut Him Loose',
-  goalText: 'Defeat the enemy Sorcerer within 2 turns',
+  title: 'Puzzle #31 — Both Hands',
+  goalText: 'Defeat the enemy Warlock within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'cleric', specialSlug: 'purify', position: { x: 4, y: 2 } },
-    {
-      id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose',
-      position: { x: 3, y: 4 },
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 3, stacks: 1 }],
-    },
-    { id: 'targ', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite', position: { x: 5, y: 4 }, currentHealth: 14 },
+    { id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'pinning', position: { x: 2, y: 1 } },
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 2, y: 4 } },
+    { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 6, y: 4 }, currentHealth: 13 },
+    // The reachable door: kill this and the Rogue walks (5,4) in three steps.
+    { id: 'brut', side: 'enemy', slug: 'fighter', specialSlug: 'shield_bash', position: { x: 5, y: 4 }, currentHealth: 10 },
+    // The tempting door: softer, but its square is six steps away — opening it
+    // strands the Rogue exactly as thoroughly as opening nothing.
+    { id: 'acol', side: 'enemy', slug: 'wizard', specialSlug: 'cold_snap', position: { x: 6, y: 6 }, currentHealth: 8 },
   ],
-  initiativeOrder: ['p1', 'p2', 'targ'],
+  initiativeOrder: ['p1', 'p2', 'targ', 'brut', 'acol'],
 };

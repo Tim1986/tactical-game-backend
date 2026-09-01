@@ -1,67 +1,52 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #45 — "Let It Burn" (THREE TURNS, and the first `eliminate_all` where
- * the winning move is to leave an enemy alone).
+ * Puzzle #45 — "Out of Reach" (ANSWER: PINNING SHOT — root the healer where it
+ * stands).
  *
- * Trap #10 said eliminate_all was undesignable at two turns: two kills consume
- * the whole budget, so there is no turn left for the setup move that depth ≥ 1
- * requires. Three turns is what makes it designable — and this puzzle spends
- * the extra turn on nothing at all, which is the point.
+ * Freeze, Shadow Grasp and Purify are all closed as answers (Fable, 2026-08-21),
+ * and no 2-turn puzzle may root a PLAYER unit any more. This roots an ENEMY,
+ * which no puzzle has ever done as its winning move.
  *
- * The Ember is on 7 and BURNING. Burning ticks 7 at the start of its own turn
- * (STA-2), and its slot arrives before your third. It is already dead; it just
- * does not know yet. Killing it costs you a turn to buy something the fire was
- * going to give you for free.
+ * The enemy Mender is three tiles from its charge and Heal only reaches two. It
+ * does not need to be silenced — it needs to be unable to take one step. Pinning
+ * Shot roots it where it stands (STA-3: a rooted unit cannot move but may still
+ * act) and the step never happens.
  *
- * The Bulwark is on 36, and 36 is exactly three player turns: 13 + 10 + 13.
- * There is no slack anywhere. Spend a turn on the Ember and the Bulwark
- * finishes the puzzle standing on 13.
+ * That distinction is the whole puzzle and it is new to the rotation. #16 and
+ * #22 answer the same threat by skipping the healer's slot outright; here the
+ * healer keeps its turn and is welcome to it, because from where it is standing
+ * there is nothing it can do with it.
  *
- * Cost channel (trap #15 / trap #22): this is the cleanest turn-one trap the
- * rotation has. `goalScore` for eliminate_all is `kills * 10000 + dmg * 100`,
- * so a KILL is worth a hundred points of damage — goal-greedy will always take
- * the free one, and the free one is the mistake. The trap deals real, visible,
- * scoring progress (a whole enemy!) and loses by a full 13.
+ * The greedy line is the Arrow into the Warlock for 11 — the biggest number on
+ * the goal target, and the reason it loses: the Mender walks up, returns 27, and
+ * the Rogue's 16 is nowhere near enough. Pinning Shot puts 7 into the MENDER and
+ * nothing at all into the Warlock, which is why goal-greedy will not look at it.
  *
- * ⚠ THE ARITHMETIC IS EXACT AND LOAD-BEARING. 13 + 10 + 13 = 36 with nothing
- * spare. Any slack and a turn spent on the Ember becomes affordable; any less
- * and the puzzle is unsolvable. Re-derive before touching a number.
+ * The Mender is at FULL health (trap #1: a wounded Cleric prioritises its own
+ * skin and would never have walked over), and off the Ranger's line to the
+ * Warlock (trap #2: on it, the Arrow would be illegal and the puzzle would score
+ * depth 0).
  *
- * ⚠ ONE STACK, ONE TURN. Two stacks would kill the Ember before its slot and
- * remove the temptation; a longer burn would let it tick twice and hand the
- * player free damage on the Bulwark it did not earn.
- *
- * ⚠ THE EMBER MUST BE REACHABLE by both player units, or the trap is not a
- * temptation, it is scenery. Barbarian moves 3 to swing at it; the Wizard has
- * it inside Ice Blast's 5.
- *
- * Three turns also means the Barbarian acts TWICE (initiative wraps), which is
- * where the second 13 comes from — cooldown economy and the wrap are the two
- * things this format unlocks, and this puzzle uses the wrap.
- *
- * Vocabulary 2 (burning kills on its victim's own slot; a kill you did not have
- * to buy). Tier-0 fate.
+ * Slack: 16 against 14. Vocabulary 2 (rooted stops movement, not actions; Heal
+ * reaches 2 tiles). Tier-0 fate. 2v2.
  */
 export const PUZZLE_045: PuzzleDefinition = {
   id: 'puzzle-045',
-  title: 'Puzzle #45 — Let It Burn',
-  goalText: 'Defeat BOTH enemies within 3 turns',
-  goal: 'eliminate_all',
-  maxPlayerTurns: 3,
+  title: 'Puzzle #45 — Out of Reach',
+  goalText: 'Defeat the enemy Warlock within 2 turns',
+  goal: 'eliminate_target',
+  targetUnitId: 'targ',
+  maxPlayerTurns: 2,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    { id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'shockwave', position: { x: 4, y: 4 } },
-    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 4 } },
-    // 36 = 13 + 10 + 13, exactly three player turns and not one point more.
-    { id: 'bulwark', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 5, y: 4 }, currentHealth: 36 },
-    // Already dead: 7 health, 7 of burning, and its slot comes before your third turn.
-    {
-      id: 'ember', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
-      position: { x: 4, y: 2 }, currentHealth: 7,
-      statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1 }],
-    },
+    { id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'pinning', position: { x: 1, y: 2 } },
+    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 4, y: 6 } },
+    { id: 'targ', side: 'enemy', slug: 'warlock', specialSlug: 'drain', position: { x: 5, y: 4 }, currentHealth: 14 },
+    // Three tiles from its charge, and Heal reaches two. One step is all it
+    // needs — and one step is exactly what Pinning Shot takes away.
+    { id: 'mend', side: 'enemy', slug: 'cleric', specialSlug: 'heal', position: { x: 5, y: 7 } },
   ],
-  initiativeOrder: ['p1', 'p2', 'ember', 'bulwark'],
+  initiativeOrder: ['p1', 'mend', 'p2', 'targ'],
 };

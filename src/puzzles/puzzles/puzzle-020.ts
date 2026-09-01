@@ -1,72 +1,89 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #20 — "Second Wind" (v2 texture: TEMPO / the target patches itself up
- * between your two turns).
+ * Puzzle #20 — "Cold Feet" (THREE TURNS: a free kill that costs you the ground
+ * you needed).
  *
- * Rulebook source: TRN-6, "a frozen unit's initiative slot is skipped entirely
- * — it neither moves nor acts." The enemy Fighter is on 12 and carries First
- * Aid, a self-heal for 18. Read the initiative strip: it acts BETWEEN your two
- * units. Whatever the Wizard does, the Fighter's slot comes next, and on 12
- * health it will patch itself back above anything the Rogue can finish.
+ * Built to trap #23's rule — a scheduled death early keeps the three-turn
+ * search cheap — and to trap #22's law: the turn-one trap here is an entire
+ * enemy, handed over for free.
  *
- * The Wizard's Ice Blast for 10 is the biggest number on the board and it is a
- * trap: whatever it takes off, First Aid's 18 puts back and more, and the
- * Rogue's 16 is then not enough. The winning move deals no damage at all — Freeze
- * skips the Fighter's slot outright, so the heal never happens and the Rogue's
- * 16 is enough against 12.
+ * The Ember is on 7 and burning. Its slot arrives before your last turn and the
+ * fire takes exactly 7, so it dies whether you touch it or not. Killing it is
+ * worth 10000 to a scorer that counts kills, and it is worth nothing at all.
  *
- * Cost channel (trap #15): the price of the greedy shot is not that it deals
- * less, it deals more — it is that it hands the Fighter a turn. Tempo is paid by
- * the ENEMY's action, which is invisible to a solver scoring damage dealt on the
- * player's own move.
+ * What it actually costs is DISTANCE. The Bulwark is rooted at the far wall,
+ * six steps from the Barbarian — EXACTLY two full moves, with nothing spare.
+ * The Ember stands two steps off that road; to swing at it he must step aside,
+ * and a turn holds one move. Spend turn one that way and the second move is
+ * three tiles short of the swing.
  *
- * Why this is not a re-run of #15. That puzzle freezes a SUPPORT unit to stop it
- * healing someone else; here the target heals ITSELF, so the thing you must
- * disable and the thing you must kill are the same unit — and the player has to
- * work out that spending the turn dealing zero to it is what kills it. Trap #1's
- * warning cuts the other way for once: a wounded unit prioritising its own heal
- * is exactly the behaviour this puzzle needs.
+ * The line is to ignore the free kill entirely: walk the full three tiles on
+ * turn one, let the Wizard chip 10, let the fire do its work, and arrive on
+ * turn three with 13 for a 23-health Bulwark. 10 + 13, exactly.
  *
- * No rooting, no geometry. Three of the last four candidates died to TRN-4 (a
- * unit may move AND use an ability in the same turn), which lets almost any
- * positional trap be sidestepped for free unless someone is rooted — #17 and
- * #18 both had to root a unit for that reason. A tempo puzzle needs none of it:
- * there is no tile to step to that stops the Fighter taking its turn.
+ * Cost channel (trap #15 / #22): the trap deals real, scoring, VISIBLE progress
+ * — a whole enemy removed — while the correct move is a Barbarian walking
+ * across an empty board doing nothing at all. Goal-greedy takes the kill every
+ * time; a human is tempted by it for the same reason.
  *
- * Slack, not arithmetic: the Rogue's 16 against 12 health, so it cannot be
- * solved by counting.
+ * ⚠ THE GOAL MUST BE `eliminate_all`, NOT `eliminate_target`. Under
+ * eliminate_target the scorer counts damage to the GOAL only, so killing the
+ * Ember scores zero, greedy ignores the bait and simply advances — which is
+ * also the answer, and the puzzle measures depth 0 with four winning ideas.
+ * Under eliminate_all a kill is worth 10000 and the bait finally bites. Same
+ * board, same numbers; the goal TYPE is what makes the trap a trap.
  *
- * On near-miss: the solver reports 12 here, where the geometry puzzles report
- * 2–3. That is the TEMPO CHANNEL's signature, not a flaw — #15, the other tempo
- * puzzle, reports 11 on the same measure and is a keeper. A failing line ends
- * AFTER the enemy has healed, so the "closest miss" is measured against a
- * restored health bar; a geometry puzzle's failing line ends on whatever damage
- * actually landed. Read near-miss within a channel, never across channels.
- * (Measured across the full 10-puzzle rotation, 2026-08-21.)
+ * ⚠ THE EMBER IS TWO STEPS AWAY, NOT ADJACENT. Adjacent, the Barbarian could
+ * swing and THEN move (TRN-4 allows both in a turn, in either order) and the
+ * kill would be free. At two steps he must move-then-act, and a turn holds only
+ * one move — so the detour is the whole turn. This is the trap that has killed
+ * more candidates in this file than any other, used deliberately for once.
  *
- * Vocabulary 2 (First Aid heals the user; a frozen unit's turn is skipped).
- * Tier-0 fate. 2v1, per trap #9.
+ * ⚠ THE BULWARK IS ROOTED. Unrooted it advances on its own slot, closes the gap
+ * the puzzle is made of, and the greedy line reaches it after all. It carries a
+ * bow so a rooted enemy still has something to do.
+ *
+ * ⚠ 23 = 10 + 13 EXACTLY (trap #23's corollary: slack is what multiplies
+ * winning ideas). And ONE burn stack with ONE turn left: two stacks would kill
+ * the Ember before its slot and remove the temptation.
+ *
+ * Vocabulary 2 (burning kills on its victim's own slot; a turn holds one move).
+ * Tier-0 fate.
  */
 export const PUZZLE_020: PuzzleDefinition = {
   id: 'puzzle-020',
-  title: 'Puzzle #20 — Second Wind',
-  goalText: 'Defeat the enemy Fighter within 2 turns',
-  goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
+  title: 'Puzzle #20 — Cold Feet',
+  goalText: 'Defeat BOTH enemies within 3 turns',
+  goal: 'eliminate_all',
+  maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    // Freeze is the only disable on the board: the Wizard's other options were
-    // deliberately not given to it, so there is exactly one way to skip the slot.
-    { id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 4 } },
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'expose', position: { x: 5, y: 7 } },
-    // 12 of 52 — deep enough into the red that it will reach for First Aid the
-    // moment it is given a turn.
-    { id: 'targ', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 5, y: 4 }, currentHealth: 12 },
+    // Two moves from the Bulwark, and one step in FRONT of the free kill.
+    {
+      id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'shockwave',
+      position: { x: 0, y: 4 },
+      // ⚠ SPENT. Ground Slam hits nobody from anywhere on this board, but it is
+      // still a LEGAL cast, and the solver counted "slam then walk" and "walk
+      // then slam" as two more winning ideas on top of the walk itself — four
+      // against a bar of two. A special that cannot matter should not be
+      // castable; on cooldown it stops generating cosmetic variations.
+      cooldowns: { shockwave: 99 },
+    },
+    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 4, y: 6 } },
+    // 23 = 10 + 13. Rooted, so the gap cannot close itself.
+    {
+      id: 'bulwark', side: 'enemy', slug: 'ranger', specialSlug: 'longshot',
+      position: { x: 7, y: 4 }, currentHealth: 23,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+    },
+    // Already dead: 7 health, 7 of fire, and its slot comes before your last turn.
+    {
+      id: 'ember', side: 'enemy', slug: 'sorcerer', specialSlug: 'ignite',
+      position: { x: 0, y: 6 }, currentHealth: 7,
+      statusEffects: [{ slug: 'burning', turnsRemaining: 1, stacks: 1 }],
+    },
   ],
-  // The Fighter acts BETWEEN your two units. That is the whole puzzle, and it is
-  // visible on the initiative strip before a single move is made.
-  initiativeOrder: ['p1', 'targ', 'p2'],
+  initiativeOrder: ['p1', 'p2', 'ember', 'bulwark'],
 };

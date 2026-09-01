@@ -1,0 +1,21 @@
+-- Star reset for the 1-50 renumber (2026-09-01).
+--
+-- WHY. `puzzle_solves` is keyed by (user_id, puzzle_id) and puzzle_id is the
+-- engine's content id, not a foreign key. The rotation was renumbered so that
+-- day N is puzzle N: every id from 'puzzle-001' to 'puzzle-050' now names a
+-- DIFFERENT puzzle than it did yesterday, and the twelve off-rotation puzzles
+-- moved to a 900 block. Left alone, every existing row would attribute a score
+-- to a puzzle the player never saw — 'puzzle-007' was "Reel It In" and is now
+-- "Pull Him Off the Ledge".
+--
+-- Rewriting the ids instead was considered and rejected. The scores would then
+-- be honest about WHICH puzzle, but the star rule is "best ever, first attempt
+-- is five", and half the pre-renumber slate has since been retuned (#58's
+-- Axeman, #64's, the #57/#62 cuts). A carried score would be a score nobody
+-- earned under the current numbers. Same reasoning as the AsyncStorage
+-- STORAGE_KEY bump on the client, and the same reasoning migration 0024 used.
+--
+-- WHAT SURVIVES. `puzzle_daily_solves` is untouched. Streaks are a property of
+-- the DAY, not of the puzzle (see 0024's header), so a renumber cannot corrupt
+-- them and nobody loses a streak over this.
+DELETE FROM puzzle_solves;

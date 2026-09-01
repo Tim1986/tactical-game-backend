@@ -1,67 +1,80 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #18 — "Through and Through" (v2 texture: FRIENDLY FIRE / the line
- * attack does not stop where you aimed it).
+ * Puzzle #18 — "Into the Ring" (THREE TURNS: displacement into an AREA rather
+ * than onto a line).
  *
- * Rulebook source: ABL-9 and ABL-10, which no puzzle had used. A line ability
- * "fires a ray... and hits EVERY unit along it — friend and foe... The tile you
- * tap only chooses the direction: the ray does not stop at it, nor at the first
- * unit it hits." Every area and line ability hits your own teammates.
+ * A cousin of #44 rather than a clone: there the Warlock's Fear pushed an enemy
+ * onto a straight firing line, here it pushes one into the ring of a blast. Ring
+ * of Fire hits every tile around a chosen centre and SPARES the centre itself
+ * (ABL-11), so the two enemies have to end up on the same circle — not the same
+ * row.
  *
- * The board is one straight rank: your rooted Ranger, a gap, the enemy Wizard,
- * and your Rogue standing just behind it. Piercing Shot is the bigger number
- * (12 against the Arrow's 11) and it is aimed straight down that rank — so it
- * hits the Wizard AND carries on into your own Rogue, who is sitting on 11 and
- * dies to it. The Ranger then has both turns to itself and finishes two points
- * short. The winning move is the plain Arrow: single-target, so it stops at the
- * Wizard, and the Rogue lives to throw the dagger that ends it.
+ * The Bulwark is on 24 and the Cur on 14, three tiles apart and both rooted, so
+ * no single ring reaches both. Fear drives a target three tiles directly away
+ * from the caster; standing where he does, "away" is into the ring that already
+ * covers the Bulwark.
  *
- * v2 shape: goal-greedy takes the highest-damage action and loses. The winning
- * first move deals LESS damage to the goal target than the alternative — #17's
- * shape, reached through a completely different rule.
+ * So the fire waits for turn three: bolt on turn one, Fear on turn two, and one
+ * Ring of Fire takes 14 off each — enough for the Cur exactly, and enough for
+ * the Bulwark on top of the bolt.
  *
- * Narrow by construction, per trap #14 (enumerate every tile the trapped action
- * can be fired from). A mobile Ranger could simply step off the rank and fire a
- * ray that misses the Rogue, which would hand goal-greedy a safe angle and the
- * win. The Ranger is therefore ROOTED: MOV-4 leaves it able to use abilities
- * but unable to reposition, so the only ray that reaches the Wizard is the one
- * that also reaches the Rogue. That is the whole trap.
+ * Cast it early and it catches the Bulwark alone for 14, the once-per-battle
+ * blast is gone, and the Cur is still standing when the puzzle ends.
  *
- * Why the Rogue is BEHIND the target and not in front of it: on the near side it
- * would block line of sight (ABL-3) and make the Arrow illegal, leaving Piercing
- * as the only damaging option — the puzzle would score depth 0 and the gate
- * would correctly reject it (trap #2). Behind the target, the Arrow's path is
- * clear and the ray still runs through it.
+ * Cost channel (trap #15 / #22 / #24): 14 now against 10 now, on the goal, under
+ * `eliminate_all` where every point scores. Greedy takes the bigger number and
+ * loses the only tool that can finish the second enemy.
  *
- * Slack, not arithmetic: 11 + 16 = 27 against 25 health, so it cannot be solved
- * by counting to an exact number. The greedy line ends on 2 health — the
- * near-miss that makes it worth a retry.
+ * ⚠ FEAR DEALS NO DAMAGE (trap #27), which is what keeps the Warlock's turn a
+ * pure setup — Shield Bash would simply kill a 14-health target and dissolve
+ * the puzzle.
  *
- * Vocabulary 2 (a line attack hits everyone in its path; rooted cannot move).
- * Tier-0 fate. 2v1, per trap #9.
+ * ⚠ BOTH ENEMIES ROOTED AND FURTHER APART THAN ONE RING (trap #25): pinned so
+ * neither wanders into the blast on its own, and separated so the two orderings
+ * are not interchangeable.
+ *
+ * ⚠ 24 = 10 + 14 and 14 = one Ring of Fire, both exact.
+ *
+ * ⚠ THE TWO ENEMIES END TWO TILES APART, not adjacent, so the ring's centre is
+ * the empty tile BETWEEN them. An earlier draft left them adjacent after the
+ * push, where every candidate centre also had to dodge the spared middle, and
+ * the puzzle measured NOT SOLVABLE. With a gap of two there is exactly one
+ * centre that covers both, and it is empty by construction.
+ *
+ * Vocabulary 3 (a ring that spares its centre; a push of exactly three; a
+ * once-per-battle blast). Tier-0 fate.
  */
 export const PUZZLE_018: PuzzleDefinition = {
   id: 'puzzle-018',
-  title: 'Puzzle #18 — Through and Through',
-  goalText: 'Defeat the enemy Wizard within 2 turns',
-  goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
+  title: 'Puzzle #18 — Into the Ring',
+  goalText: 'Defeat BOTH enemies within 3 turns',
+  goal: 'eliminate_all',
+  maxPlayerTurns: 3,
   rollScript: [],
   fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
     {
-      id: 'p1', side: 'player', slug: 'ranger', specialSlug: 'piercing',
-      position: { x: 0, y: 4 },
-      statusEffects: [{ slug: 'rooted', turnsRemaining: 3, stacks: 1 }],
+      id: 'p1', side: 'player', slug: 'sorcerer', specialSlug: 'ffh',
+      position: { x: 2, y: 5 },
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
     },
-    // 11 health: survives nothing on this rank except being left alone. Piercing
-    // Shot's 12 is exactly what kills it.
-    { id: 'p2', side: 'player', slug: 'rogue', specialSlug: 'dagger_toss', position: { x: 6, y: 4 }, currentHealth: 11 },
-    { id: 'targ', side: 'enemy', slug: 'wizard', specialSlug: 'freeze', position: { x: 4, y: 4 }, currentHealth: 25 },
+    // North of the Cur: three tiles "away from the caster" is south, into the ring.
+    { id: 'p2', side: 'player', slug: 'warlock', specialSlug: 'fear', position: { x: 5, y: 0 } },
+    // 24 = 10 + 14.
+    {
+      id: 'bulwark', side: 'enemy', slug: 'warlock', specialSlug: 'drain',
+      position: { x: 5, y: 6 }, currentHealth: 24,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { drain: 99 },
+    },
+    // 14 = one Ring of Fire, once it is standing in it.
+    {
+      id: 'cur', side: 'enemy', slug: 'warlock', specialSlug: 'drain',
+      position: { x: 5, y: 1 }, currentHealth: 14,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+      cooldowns: { drain: 99 },
+    },
   ],
-  // Both player units act before the enemy, so the Wizard never interferes with
-  // the line — it is a target and an obstacle, not a participant.
-  initiativeOrder: ['p1', 'p2', 'targ'],
+  initiativeOrder: ['p1', 'p2', 'bulwark', 'cur'],
 };

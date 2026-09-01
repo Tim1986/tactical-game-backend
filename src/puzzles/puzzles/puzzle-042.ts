@@ -1,91 +1,73 @@
 import type { PuzzleDefinition } from '../types.js';
 
 /**
- * Puzzle #42 — "Hold Your Fire" (FATE QUEUE, second facet: the HIT is the
- * resource, and a FREE ENEMY TURN spends it).
+ * Puzzle #42 — "Wrong One First" (THREE TURNS: the ORDER TRAP — kill them in
+ * the appealing order and the survivor patches itself up).
  *
- * #41 hands the player a wide roll to throw away. This inverts it: exactly ONE
- * blow lands all fight, it is the first one thrown, and the queue does not care
- * whose it is — including the enemy's.
+ * The doc has listed order traps as a three-turn unlock since axis 2 was
+ * measured, on the reasoning that two kills eat the whole two-turn budget and
+ * leave no room to be wrong. With three turns there is room, and being wrong is
+ * the puzzle.
  *
- * The Wizard shoots first and Ice Blast is the biggest number on the board: 10
- * into a 13-health Reaver, and it LANDS. That is the trap. Take the free ten,
- * the Reaver sits on 3, and every remaining blow in the fight goes wide.
+ * The Cur is on 13 — one swing, a whole enemy, free. The Warden is on 23 of 52,
+ * deep in the red, and carries First Aid: give it a turn while it is hurt and it
+ * puts 27 back, which is more than anything left on the board can take off.
  *
- * Passing is not the answer either, and this is the part that makes the puzzle:
- * the Reaver acts BETWEEN the player's two units. Give it a turn and it swings,
- * that swing is the first blow of the fight, and it eats the one landing roll.
- * So the Wizard must spend its turn taking the Reaver's TURN away — Freeze
- * deals no damage, rolls no die, and skips the slot (TRN-6). The Barbarian's 13
- * is then the first blow struck, against exactly 13.
+ * So the Warden has to die inside a single lap, before its slot ever arrives:
+ * the Barbarian's 13 and the Wizard's 10 are exactly 23, and they are exactly
+ * the first two turns. The Cur waits, because the last turn is enough for it.
  *
- * ⚠ FREEZE HERE DENIES A DIE, NOT A TURN. That is the new idea. #15/#20/#23 all
- * freeze to stop a heal or a kill; this one freezes to stop the enemy CONSUMING
- * A FATE the player needs. Same button, different currency.
+ * Take the free kill first and the arithmetic never recovers. The Wizard's 10
+ * leaves the Warden on 13, its slot arrives, First Aid takes it to 40, and the
+ * final swing is 27 short.
  *
- * Cost channel (trap #15): the correct move deals ZERO while a visible TEN is
- * on the table — and the ten is not even wasted, it genuinely lands. Goal-greedy
- * banks real damage and loses anyway, which is a cleaner trap than #41's (where
- * greedy's shot was simply thrown away).
+ * Cost channel (trap #15 / #22 / #24): the bait is an entire enemy — worth
+ * `kills * 10000` to the scorer, which is why the goal must be `eliminate_all`
+ * for the trap to bite at all — and the correct opening scores a tenth of that.
+ * Goal-greedy takes the kill every time and finishes 27 behind.
  *
- * ⚠ THE REAVER IS A BARBARIAN, NOT A SHIELD FIGHTER. Every option it has must
- * ROLL: with Shield Bash (unblockable) it could take its free turn without
- * touching the queue, and passing became a second answer — measured, the solver
- * reported "pass" as a winning first move. Both of a Barbarian's attacks are
- * blockable, so giving it a turn always costs a die.
+ * ⚠ TRAP #1, USED ON PURPOSE. Every other puzzle in this file treats a wounded
+ * enemy that carries a self-heal as a hazard to design around; #46a died to it
+ * outright. Here it IS the mechanism, and the numbers are chosen so the heal is
+ * unanswerable rather than merely annoying: 27 restored against 13 remaining.
+ * A heal you can grind through is not a deadline.
  *
- * ⚠ THE PLAYER BARBARIAN CARRIES WHIRLWIND, NOT GROUND SLAM, for the mirror of
- * that reason: Ground Slam is unblockable, so greedy could shoot for 10 and slam
- * the last 3 off without ever paying the fate.
+ * ⚠ 23 = 13 + 10 EXACTLY, and both of those turns must land before the Warden's
+ * slot. Any slack and the free kill becomes affordable.
  *
- * ⚠ THE WIZARD IS ROOTED so the "walk somewhere and shoot from there" family
- * cannot fan out into dozens of winning ideas (TRN-4 — the trap that killed
- * three earlier candidates).
+ * ⚠ THE CUR IS ROOTED so the geometry cannot drift; it is a deadline, not an
+ * opponent. Its 13 matches the Barbarian's swing exactly, so the last turn is
+ * spoken for and cannot be borrowed.
  *
- * ⚠ EXHAUSTED SCRIPT = HIT (types.ts), so the trailing misses are not
- * decoration: the script must cover every roll the board can produce.
- *
- * Solver (2026-08-31): 1 distinct idea · goal-greedy FAILS · depth 1 ·
- * near-miss 3 · random 1.0%. PASS.
- *
- * Vocabulary 2 (a scripted hit; a frozen unit rolls no die). Tier-1 fate. 2v2.
+ * Vocabulary 2 (a wounded enemy heals itself; kills can be taken in either
+ * order). Tier-0 fate.
  */
 export const PUZZLE_042: PuzzleDefinition = {
   id: 'puzzle-042',
-  title: 'Puzzle #42 — Hold Your Fire',
-  goalText: 'Defeat the Frost Sentinel within 2 turns',
-  goal: 'eliminate_target',
-  targetUnitId: 'targ',
-  maxPlayerTurns: 2,
-  rollScript: ['hit', 'miss', 'miss'],
-  fateText: 'Fate is sealed: the FIRST blow struck in this fight lands, whoever throws it. Every blow after it goes wide.',
+  title: 'Puzzle #42 — Wrong One First',
+  goalText: 'Defeat BOTH enemies within 3 turns',
+  goal: 'eliminate_all',
+  maxPlayerTurns: 3,
+  rollScript: [],
+  fateText: 'The dice sleep. Every strike lands — no dodges, no misses.',
   units: [
-    // Rooted: it may shoot or it may Freeze, and nothing else. The shot is the
-    // trap; Freeze rolls no die and is therefore free.
     {
-      id: 'p1', side: 'player', slug: 'wizard', specialSlug: 'freeze',
-      position: { x: 5, y: 2 }, statusEffects: [{ slug: 'rooted', turnsRemaining: 3, stacks: 1 }],
+      id: 'p1', side: 'player', slug: 'barbarian', specialSlug: 'shockwave',
+      position: { x: 4, y: 4 },
+      // Spent: an AoE that clips both enemies would rewrite the arithmetic, and
+      // a special that cannot matter still generates cosmetic winning ideas
+      // (learned on #20).
+      cooldowns: { shockwave: 99 },
     },
-    // ⚠ Whirlwind, NOT Ground Slam. Ground Slam is unblockable, so it rolls no
-    // die — the greedy line could shoot for 10 and then slam the last 3 off
-    // without ever touching the fate, and the puzzle dissolves (measured: the
-    // solver called missile a winning first move). Every way this Barbarian can
-    // hurt the Sentinel must go through the queue.
-    // 13 damage against 13 health — but only if it is the first die of the fight.
-    { id: 'p2', side: 'player', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 2, y: 6 } },
-    // ⚠ A REAVER, NOT A SENTINEL-WITH-A-SHIELD. Every option this unit has must
-    // ROLL: with Shield Bash (unblockable) it could take its free turn without
-    // touching the queue, and passing the Wizard's turn became a second answer.
-    // Both of a Barbarian's attacks are blockable, so giving it a turn always
-    // costs a die — which is the whole reason Freeze is the only line.
-    { id: 'targ', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind', position: { x: 5, y: 6 }, currentHealth: 13 },
-    // In the Wizard's range and nobody else's: it exists to give the rooted
-    // Wizard somewhere WRONG to point both of its abilities. Without it the
-    // Wizard had three plans and one of them was the answer, so a coin-flipping
-    // player won 7% of the time (bar: 5%). A decoy is cheaper than a rule.
-    // Move 3 + reach 1 leaves the Barbarian a step short of it, so it can never
-    // become a second way to spend a die.
-    { id: 'husk', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 3, y: 2 }, currentHealth: 52 },
+    { id: 'p2', side: 'player', slug: 'wizard', specialSlug: 'freeze', position: { x: 2, y: 4 } },
+    // 23 = 13 + 10, and it must die before its own slot or First Aid ends it.
+    { id: 'warden', side: 'enemy', slug: 'fighter', specialSlug: 'second_wind', position: { x: 5, y: 4 }, currentHealth: 23 },
+    // 13 = one swing. The free kill, and the trap.
+    {
+      id: 'cur', side: 'enemy', slug: 'barbarian', specialSlug: 'whirlwind',
+      position: { x: 4, y: 6 }, currentHealth: 13,
+      statusEffects: [{ slug: 'rooted', turnsRemaining: 9, stacks: 1 }],
+    },
   ],
-  initiativeOrder: ['p1', 'targ', 'p2', 'husk'],
+  initiativeOrder: ['p1', 'p2', 'warden', 'cur'],
 };

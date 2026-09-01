@@ -19,10 +19,10 @@ import type { PuzzleDefinition } from '../types.js';
  */
 
 /**
- * Puzzle #62 — "Mind the Line" (THREE TURNS).
+ * Puzzle #962 — "Mind the Line" (THREE TURNS).
  *
- * ⚠ DELIBERATE SPACED NEAR-CLONE of #57 (re-dressing licence, recorded with
- * #54). Same bones — the thing blocking your archer is your own unit, and both
+ * ⚠ DELIBERATE SPACED NEAR-CLONE of puzzle-957 (re-dressing licence, recorded with
+ * #25). Same bones — the thing blocking your archer is your own unit, and both
  * of its options deal identical damage so the tie breaks on distance — on a
  * different chassis: a Sorcerer's bolt instead of a Wizard's blast.
  *
@@ -37,9 +37,9 @@ import type { PuzzleDefinition } from '../types.js';
  *
  * Vocabulary 2. Tier-0 fate.
  */
-export const PUZZLE_062: PuzzleDefinition = {
-  id: 'puzzle-062',
-  title: 'Puzzle #62 — Mind the Line',
+export const PUZZLE_962: PuzzleDefinition = {
+  id: 'puzzle-962',
+  title: 'Puzzle #962 — Mind the Line',
   goalText: 'Defeat the Bulwark within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
