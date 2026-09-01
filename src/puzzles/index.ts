@@ -51,6 +51,7 @@ import { PUZZLE_036 } from './puzzles/puzzle-036.js';
 import { PUZZLE_039 } from './puzzles/puzzle-039.js';
 import { PUZZLE_040 } from './puzzles/puzzle-040.js';
 import { PUZZLE_041 } from './puzzles/puzzle-041.js';
+import { PUZZLE_042 } from './puzzles/puzzle-042.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -73,7 +74,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
-  [PUZZLE_041.id]: PUZZLE_041,
+  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042,
 };
 
 /**
@@ -97,9 +98,10 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // next pickers host on fighter/barbarian/rogue/warlock, and piercing must be
   // an ANSWER somewhere before the picker returns to the ranger.
   // 3-TURN: #33 #34 #36 — 3 of 29.
-  // FATE: #41 is the ONLY non-Tier-0 puzzle in the rotation (scripted miss).
-  // A second one must not sit adjacent to it — the disclosure banner is the
-  // tell, and back-to-back fate puzzles would teach the answer.
+  // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
+  // itself a tell, so they are SPACED (a blocked-path puzzle sits between
+  // them). #41 spends a scripted MISS, #42 protects a scripted HIT — never
+  // schedule two of the same facet together.
   PUZZLE_007, // pull                 → grasp
   PUZZLE_015, // tempo/heal           → freeze
   PUZZLE_019, // blocked path         → arrow (the blocker)
@@ -128,7 +130,9 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_030, // pull                 → grasp
   PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
   PUZZLE_029, // friendly fire        → bolt (the weaker shot)
-  PUZZLE_041, // FATE QUEUE (new)     → strike the bystander to spend the miss
+  PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
+  PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
+  PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
 ];
 
 /**
