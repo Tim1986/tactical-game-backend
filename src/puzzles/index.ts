@@ -65,6 +65,12 @@ import { PUZZLE_054 } from './puzzles/puzzle-054.js';
 import { PUZZLE_055 } from './puzzles/puzzle-055.js';
 import { PUZZLE_056 } from './puzzles/puzzle-056.js';
 import { PUZZLE_057 } from './puzzles/puzzle-057.js';
+import { PUZZLE_058 } from './puzzles/puzzle-058.js';
+import { PUZZLE_059 } from './puzzles/puzzle-059.js';
+import { PUZZLE_060 } from './puzzles/puzzle-060.js';
+import { PUZZLE_061 } from './puzzles/puzzle-061.js';
+import { PUZZLE_062 } from './puzzles/puzzle-062.js';
+import { PUZZLE_063 } from './puzzles/puzzle-063.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -87,7 +93,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
-  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049, [PUZZLE_050.id]: PUZZLE_050, [PUZZLE_051.id]: PUZZLE_051, [PUZZLE_052.id]: PUZZLE_052, [PUZZLE_053.id]: PUZZLE_053, [PUZZLE_054.id]: PUZZLE_054, [PUZZLE_055.id]: PUZZLE_055, [PUZZLE_056.id]: PUZZLE_056, [PUZZLE_057.id]: PUZZLE_057,
+  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045, [PUZZLE_046.id]: PUZZLE_046, [PUZZLE_047.id]: PUZZLE_047, [PUZZLE_048.id]: PUZZLE_048, [PUZZLE_049.id]: PUZZLE_049, [PUZZLE_050.id]: PUZZLE_050, [PUZZLE_051.id]: PUZZLE_051, [PUZZLE_052.id]: PUZZLE_052, [PUZZLE_053.id]: PUZZLE_053, [PUZZLE_054.id]: PUZZLE_054, [PUZZLE_055.id]: PUZZLE_055, [PUZZLE_056.id]: PUZZLE_056, [PUZZLE_057.id]: PUZZLE_057, [PUZZLE_058.id]: PUZZLE_058, [PUZZLE_059.id]: PUZZLE_059, [PUZZLE_060.id]: PUZZLE_060, [PUZZLE_061.id]: PUZZLE_061, [PUZZLE_062.id]: PUZZLE_062, [PUZZLE_063.id]: PUZZLE_063,
 };
 
 /**
@@ -113,7 +119,8 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
   // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
   // the most tempting DECOY, never the answer.
-  // 3-TURN: #33 #34 #36 #45-#57 — 16 of 44. ⚠ #54 is a deliberate spaced
+  // 3-TURN: #33 #34 #36 #45-#63 — 22 of 50. ⚠ TARGET REACHED (owner ruling
+  // 2026-08-21: minimum 50 before the rotation repeats). ⚠ #54 is a deliberate spaced
   // near-clone of #48 (same skeleton, different chassis), as #31 is of #16.
   // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
   // itself a tell, so they are SPACED (a blocked-path puzzle sits between
@@ -172,6 +179,18 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_056, // 3-TURN FATE/MULTIHIT → twin eats BOTH misses (trap #20 revived)
   PUZZLE_029, // friendly fire        → bolt (spacer)
   PUZZLE_057, // 3-TURN BLOCKED LINE  → step aside; the obstruction is YOURS
+  PUZZLE_007, // pull                 → grasp (spacer)
+  PUZZLE_058, // 3-TURN PASSIVE ON    → pin first; Opportunist wants a status
+  PUZZLE_009, // pull                 → grasp (spacer)
+  PUZZLE_059, // 3-TURN restraint     → leave the burning one (clone of #45, spaced)
+  PUZZLE_025, // tempo/heal           → freeze (spacer)
+  PUZZLE_060, // 3-TURN ground        → walk past the free kill (clone of #46, spaced)
+  PUZZLE_034, // 3-TURN +PICKER       → ignore the free kill (spacer)
+  PUZZLE_061, // 3-TURN FATE QUEUE    → swing to spend the miss (clone of #53, spaced)
+  PUZZLE_030, // pull        +PICKER  → grasp (spacer)
+  PUZZLE_062, // 3-TURN BLOCKED LINE  → step aside (clone of #57, spaced)
+  PUZZLE_016, // free-the-finisher +PICKER → purify (spacer)
+  PUZZLE_063, // 3-TURN DISPLACEMENT  → fear into the RING, then burn both
   PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
   PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
   PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
