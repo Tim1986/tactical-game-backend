@@ -50,6 +50,7 @@ import { PUZZLE_035 } from './puzzles/puzzle-035.js';
 import { PUZZLE_036 } from './puzzles/puzzle-036.js';
 import { PUZZLE_039 } from './puzzles/puzzle-039.js';
 import { PUZZLE_040 } from './puzzles/puzzle-040.js';
+import { PUZZLE_041 } from './puzzles/puzzle-041.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -72,6 +73,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
+  [PUZZLE_041.id]: PUZZLE_041,
 };
 
 /**
@@ -94,7 +96,10 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // piercing is ALWAYS the decoy (a meta-tell). No more ranger bow pickers;
   // next pickers host on fighter/barbarian/rogue/warlock, and piercing must be
   // an ANSWER somewhere before the picker returns to the ranger.
-  // 3-TURN: #33 #34 #36 — 3 of 28.
+  // 3-TURN: #33 #34 #36 — 3 of 29.
+  // FATE: #41 is the ONLY non-Tier-0 puzzle in the rotation (scripted miss).
+  // A second one must not sit adjacent to it — the disclosure banner is the
+  // tell, and back-to-back fate puzzles would teach the answer.
   PUZZLE_007, // pull                 → grasp
   PUZZLE_015, // tempo/heal           → freeze
   PUZZLE_019, // blocked path         → arrow (the blocker)
@@ -123,6 +128,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_030, // pull                 → grasp
   PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
   PUZZLE_029, // friendly fire        → bolt (the weaker shot)
+  PUZZLE_041, // FATE QUEUE (new)     → strike the bystander to spend the miss
 ];
 
 /**
