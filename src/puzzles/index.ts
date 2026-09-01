@@ -52,6 +52,7 @@ import { PUZZLE_039 } from './puzzles/puzzle-039.js';
 import { PUZZLE_040 } from './puzzles/puzzle-040.js';
 import { PUZZLE_041 } from './puzzles/puzzle-041.js';
 import { PUZZLE_042 } from './puzzles/puzzle-042.js';
+import { PUZZLE_045 } from './puzzles/puzzle-045.js';
 import { PUZZLE_022 } from './puzzles/puzzle-022.js';
 import { PUZZLE_021 } from './puzzles/puzzle-021.js';
 
@@ -74,7 +75,7 @@ export const PUZZLES: Record<string, PuzzleDefinition> = {
   [PUZZLE_033.id]: PUZZLE_033, [PUZZLE_034.id]: PUZZLE_034,
   [PUZZLE_035.id]: PUZZLE_035, [PUZZLE_036.id]: PUZZLE_036,
   [PUZZLE_039.id]: PUZZLE_039, [PUZZLE_040.id]: PUZZLE_040,
-  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042,
+  [PUZZLE_041.id]: PUZZLE_041, [PUZZLE_042.id]: PUZZLE_042, [PUZZLE_045.id]: PUZZLE_045,
 };
 
 /**
@@ -100,7 +101,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   // ALWAYS a decoy and must be an ANSWER somewhere before the picker returns
   // to the ranger. Every retrofit keeps the #24 rule: the DEFAULT loadout is
   // the most tempting DECOY, never the answer.
-  // 3-TURN: #33 #34 #36 — 3 of 29.
+  // 3-TURN: #33 #34 #36 #45 — 4 of 32.
   // FATE: #41 #42 — the only non-Tier-0 puzzles. The disclosure banner is
   // itself a tell, so they are SPACED (a blocked-path puzzle sits between
   // them). #41 spends a scripted MISS, #42 protects a scripted HIT — never
@@ -133,6 +134,7 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
   PUZZLE_030, // pull        +PICKER  → grasp (default Drain out-damages it)
   PUZZLE_039, // tempo/heal +PICKER   → pinning the healer (1 of 3)
   PUZZLE_029, // friendly fire        → bolt (the weaker shot)
+  PUZZLE_045, // 3-TURN eliminate_all → LEAVE the burning one alone (restraint)
   PUZZLE_041, // FATE QUEUE           → strike the bystander to spend the miss
   PUZZLE_026, // blocked path         → arrow (spacer: no two fate puzzles adjacent)
   PUZZLE_042, // FATE QUEUE           → freeze to deny the enemy a DIE
