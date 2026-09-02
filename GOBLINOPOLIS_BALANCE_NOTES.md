@@ -194,3 +194,16 @@ e7 40/77/33 → scale 0.72 (survive floor) · e8 68/70/87 ✓ · e9 93/100/50 ·
 e10 82/57/85 ✓ (the protect bites: "your charge has fallen" x26 for ranged) ·
 e11 88/98/58 · e12 30/57/40 → no pinner at easy/medium + clock 10/9/8/7
 (recheck 90/55/40).
+
+## 9. D1 battery (designed content, 150×25) + TUNE-D1 — 2026-09-02
+`balance_runs/gob_D1_merged.json`: 21/48 flagged. TOO EASY: e2 hard, e6
+easy/medium, e7 easy/medium, e8 easy, e9 easy–hard, e11 all four, e12
+easy/medium. TOO HARD (wave/clock cliffs, not scale): e3 nightmare 8%, e6
+nightmare 4% (53% walled), e7 hard 24 / nightmare 8, e8 hard 4 / nightmare 0
+(71–80% walled), e10 hard 16 (43% walled). bossViability e9: p75 92 at hard ✓,
+nightmare selective. Applied in ONE edit: tuner ladders monotonic; e3
+nightmare sits on hard (the AC bonus is the tier); e6 nightmare clock 7; e7's
+r4 bruiser wave is nightmare-only, scale flat; e8 clock 7 at hard+ (was 8),
+scale flat; e10 hard clock 7; e11 gains a hard+ r3 wave from above and the
+tuner's ladder; e12 nightmare bimodal accepted (fast heroes win); e4 room 1
+loses the Clerk of Stamps (the expose was the melee residual). Confirm C1 running.
