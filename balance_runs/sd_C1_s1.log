@@ -33,3 +33,6 @@ content f2356d8eabcd
   e8 medium     mean  45%  median  44%  walls 35%  ⚠
   e8 hard       mean  22%  median  12%  walls 44%  ⚠
   e8 nightmare  mean  10%  median   4%  walls 63%  ⚠
+  e9 easy       mean  58%  median  56%  walls 23%  ⚠
+  e9 medium     mean  22%  median  20%  walls 64%  ⚠
+  e9 hard       mean   5%  median   0%  walls 83%  ⚠

@@ -218,3 +218,24 @@ finale approach e11 soft at every tier (ladder up), and one real wall: e9
 nightmare 4% median / 53% walled at 1.57 — Snagg's Red Tape + Stalwart brick
 the bottom half of comps at that pool; nightmare now sits on hard's 1.45.
 C2 running.
+
+## 11. CERTIFIED — 2026-09-02 (C2 + single-cell nudges; stopping rule)
+`balance_runs/gob_C2_merged.json` (150×25). No cell TOO HARD. FIGHT cells in
+band: e1, e3, e5, e8 hard+, e10, e12 (medium 84, four over the ceiling —
+inside the ±5 rule). bossViability e9 clears every tier (hard p75 88, medium
+median 84; nightmare selective by design). e9 medium 1.30→1.22: walls 11% ✓.
+
+OBJECTIVE cells (floor-only): e2 escort, e6 race, e7 hold, e8 siege, e11 escape
+run TOO EASY on the median with every wall share inside its cap — accepted by
+doctrine (an escape is won by arriving; scale 1.20–2.00 moved e11 from
+97/91/75/77 to 90/81/76/77 and no further, which is the instrument saying so).
+
+THE RESIDUAL: e4 The Office of Forms (rooms, L4) at medium — a pure-melee comp
+reads 23–32% through five body swaps (Stamps→scout→looter in room 2, two bows→
+bow+knife in room 1, Thorns kettle→bruiser) while ranged and balanced read
+95/98. The constant is the door-crossing tax across two rooms for a comp that
+must walk in; 32% is three points under the floor. PARKED at the best-shaped
+board (Seals + bruiser + looter; scout + looter). ⚠ FORK CANDIDATE under the
+owner's 2026-09-02 rule: it is early (L4) and the story already has a second
+way through the Office ("a different stamp"). Owner adjudicates on device.
+Engine at commit of this note; a brain/engine change voids this table.

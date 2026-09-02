@@ -391,13 +391,22 @@ export const goblinopolisCampaign: CampaignDefinition = {
       rooms: [
         {
           terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
-          enemies: ['bluecap_scout', 'bluecap_scout'],
+          // Room 1: one bow, one knife (two bows out-traded a ranged comp AND pinned
+          // melee into the door tax; melee 25 / ranged 28 / balanced 98 at medium).
+          enemies: ['bluecap_scout', 'wet_boot_looter'],
           enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }],
           exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
         {
           terrain: { theme: 'interior', blocked: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 2, y: 4 }] },
-          enemies: ['clerk_of_seals', 'kettlehelm_orc', 'clerk_of_stamps'],
+          // C2: medium 25% walled — the Clerk of Stamps' unblockable Expose is the
+          // melee wall in a room with a Thorns kettle and a warded Seals. He files
+          // in e9 and e11; here a scout takes his desk.
+          // …and not a scout either: a bow in room 2 walled RANGED instead (12%).
+          // A looter — knives, no bow, no Expose — is the body both comps can fight.
+          // Room 2: the bruiser, not the kettle. Thorns behind a door tax and a
+          // warded cleric was the melee wall (23% through four body swaps).
+          enemies: ['clerk_of_seals', 'mudboot_bruiser', 'wet_boot_looter'],
           enemyPlacement: [{ x: 6, y: 3 }, { x: 5, y: 4 }, { x: 6, y: 5 }],
           entryTiles: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
         },
@@ -617,7 +626,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       ],
       // TUNE-D1: boss walkover at easy-hard (bossViability p75 92 at hard). Nightmare is selective by design.
       // TUNE-C1 (2026-09-02): second pass from the confirm battery; GOBLINOPOLIS_BALANCE_NOTES §10. Nightmare 1.57 read 4% median with 53% walled — Red Tape + Stalwart at that pool bricks the bottom half; sits on hard.
-      hpScaleOverride: { easy: 1.04, medium: 1.30, hard: 1.43, nightmare: 1.45 },
+      hpScaleOverride: { easy: 1.04, medium: 1.22, hard: 1.43, nightmare: 1.45 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
