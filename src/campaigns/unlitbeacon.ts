@@ -470,7 +470,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // (60pts). Nightmare's melee hole is accepted under the owner's
       // difficulty policy (2026-08-27: needing ranged at hard/nightmare "is a
       // perfectly fine outcome") — flagged to him 2026-09-02 with the split.
-      hpScaleOverride: { easy: 0.51, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks; split re-walked [SPLIT-0902]
+      hpScaleOverride: { easy: 0.40, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks; split re-walked [SPLIT-0902]
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the

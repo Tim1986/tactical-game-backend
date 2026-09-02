@@ -96,8 +96,12 @@ describe('CasualBrain behaviour', () => {
   it('does NOT abandon a fight for an objective with no deadline', () => {
     // The mirror defect: marching at e3's bridgeheads regardless dropped it
     // from 99% to 60% on easy. No clock means kill first, stroll on after.
+    // [SPLIT-0902] Bar recalibrated 0.8 -> 0.55: e3 now opens with a FORCED
+    // split deployment, which costs the casual brain ~15-20 points on its own
+    // (measured 70-88% at easy 0.40 across seeds). The defect this guards
+    // scored ~35% under the split, so 0.55 still separates them cleanly.
     const c = simEncounterCell('unlitbeacon', 'e3', 'easy', 'custom', PARTY,
       { games: 16, playerBrain: 'casual' });
-    expect(c.winRate).toBeGreaterThan(0.8);
+    expect(c.winRate).toBeGreaterThan(0.55);
   });
 });
