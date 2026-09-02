@@ -57,7 +57,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_957: PuzzleDefinition = {
   id: 'puzzle-957',
   title: 'Puzzle #957 — Out of the Way',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Warlock within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,

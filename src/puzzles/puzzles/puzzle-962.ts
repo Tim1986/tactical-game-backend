@@ -40,7 +40,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_962: PuzzleDefinition = {
   id: 'puzzle-962',
   title: 'Puzzle #962 — Mind the Line',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Warlock within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,
