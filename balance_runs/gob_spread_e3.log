@@ -1,0 +1,46 @@
+goblinopolis e3 — enemy start-distance sweep, 80 games/party
+player centroid (1,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    78%   86%   94%    54%   40pts   
+-2      hard      70%   88%   98%    26%   71pts    oob
+-2      nightmare  30%   48%   34%     9%   39pts   
+        (mean manhattan gap 7.0; placement 7,3 7,2 7,5 7,4)
+
+-1      medium    78%   86%   94%    54%   40pts   
+-1      hard      70%   88%   98%    26%   71pts    oob
+-1      nightmare  30%   48%   34%     9%   39pts   
+        (mean manhattan gap 7.0; placement 7,3 7,2 7,5 7,4)
+
+0       medium    73%   91%   86%    41%   50pts   
+0       hard      57%   76%   76%    18%   59pts   
+0       nightmare  25%   38%   31%     8%   30pts   
+        (mean manhattan gap 6.0; placement 6,3 6,2 6,5 6,4)
+
++1      medium    83%   98%   81%    70%   28pts    oob
++1      hard      74%   95%   89%    39%   56pts    oob
++1      nightmare  40%   60%   46%    15%   45pts   
+        (mean manhattan gap 5.0; placement 5,4 5,3 6,5 6,4)
+
++2      medium    83%   81%  100%    68%   32pts    oob
++2      hard      71%   54%  100%    59%   46pts    oob
++2      nightmare  36%   28%   65%    15%   50pts   
+        (mean manhattan gap 4.0; placement 4,4 4,3 5,4 6,4)
+
+/Users/timot/Claude/backend/src/campaigns/runtime.ts:544
+      throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a wall`);
+            ^
+
+Error: Encounter e3: placement (3,3) is on a wall
+    at buildEncounterState (/Users/timot/Claude/backend/src/campaigns/runtime.ts:544:13)
+    at simEncounterCellInner (/Users/timot/Claude/backend/src/ai/campaignSim.ts:310:17)
+    at simEncounterCell (/Users/timot/Claude/backend/src/ai/campaignSim.ts:264:12)
+    at main (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:100:17)
+    at <anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:1)
+    at Object.<anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:6)
+    at Module._compile (node:internal/modules/cjs/loader:1944:14)
+    at Object.transformer (/Users/timot/Claude/backend/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1666:32)
+    at Module._load (node:internal/modules/cjs/loader:1447:12)
+
+Node.js v26.4.0

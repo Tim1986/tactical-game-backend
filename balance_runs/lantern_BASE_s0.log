@@ -1,0 +1,50 @@
+The Lantern of Elmsworth — shard 1/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
+content da302af7819c
+
+  e1 easy       mean  93%  median  96%  walls 3%  
+  e1 medium     mean  84%  median  92%  walls 3%  ⚠
+  e1 hard       mean  56%  median  60%  walls 5%  
+  e1 nightmare  mean  39%  median  36%  walls 15%  
+  e2 easy       mean  90%  median 100%  walls 0%  
+  e2 medium     mean  77%  median  84%  walls 0%  
+  e2 hard       mean  66%  median  68%  walls 1%  
+  e2 nightmare  mean  51%  median  56%  walls 7%  
+  e3 easy       mean  86%  median  96%  walls 4%  ⚠
+  e3 medium     mean  53%  median  52%  walls 21%  ⚠
+  e3 hard       mean   1%  median   0%  walls 99%  ⚠
+  e3 nightmare  mean   0%  median   0%  walls 97%  ⚠
+  e4 easy       mean  97%  median 100%  walls 0%  ⚠
+  e4 medium     mean  93%  median 100%  walls 0%  ⚠
+  e4 hard       mean  89%  median  92%  walls 0%  ⚠
+  e4 nightmare  mean  64%  median  68%  walls 0%  ⚠
+  e5 easy       mean  77%  median  80%  walls 8%  
+  e5 medium     mean  40%  median  36%  walls 33%  ⚠
+  e5 hard       mean   8%  median   4%  walls 65%  ⚠
+  e5 nightmare  mean   4%  median   0%  walls 72%  ⚠
+  e6 easy       mean  99%  median 100%  walls 0%  ⚠
+  e6 medium     mean  96%  median 100%  walls 0%  ⚠
+  e6 hard       mean  87%  median  92%  walls 0%  ⚠
+  e6 nightmare  mean  68%  median  76%  walls 3%  ⚠
+  e7 easy       mean  79%  median  84%  walls 5%  
+  e7 medium     mean  67%  median  72%  walls 13%  
+  e7 hard       mean  51%  median  52%  walls 17%  
+  e7 nightmare  mean  52%  median  52%  walls 15%  ⚠
+  e8 easy       mean  95%  median 100%  walls 1%  ⚠
+  e8 medium     mean  87%  median  96%  walls 3%  ⚠
+  e8 hard       mean  57%  median  60%  walls 8%  
+  e8 nightmare  mean  42%  median  36%  walls 7%  
+  e9 easy       mean  99%  median 100%  walls 0%  ⚠
+  e9 medium     mean  97%  median 100%  walls 0%  ⚠
+  e9 hard       mean  83%  median  88%  walls 0%  ⚠
+  e9 nightmare  mean  70%  median  72%  walls 1%  ⚠
+  e10 easy       mean  97%  median 100%  walls 0%  ⚠
+  e10 medium     mean  85%  median  92%  walls 0%  ⚠
+  e10 hard       mean  61%  median  64%  walls 1%  
+  e10 nightmare  mean  40%  median  36%  walls 11%  
+  e11 easy       mean  99%  median 100%  walls 0%  ⚠
+  e11 medium     mean  90%  median 100%  walls 0%  ⚠
+  e11 hard       mean  84%  median  92%  walls 1%  ⚠
+  e11 nightmare  mean  54%  median  64%  walls 7%  ⚠
+  e12 easy       mean 100%  median 100%  walls 0%  ⚠
+  e12 medium     mean  97%  median 100%  walls 0%  ⚠
+  e12 hard       mean  92%  median  96%  walls 0%  ⚠

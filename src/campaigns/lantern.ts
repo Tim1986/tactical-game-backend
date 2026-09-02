@@ -107,15 +107,94 @@ export const lanternCampaign: CampaignDefinition = {
     },
   },
 
+  // A6 — Lantern's own abilities (added 2026-09-01, redesign pass). Until now
+  // this campaign had NONE: three of its ten enemies were bare class chassis,
+  // and CAMPAIGNS.md flagged it as "the exposure" — two status-applying
+  // monsters in twelve encounters, so root/purify counterplay had nothing to
+  // bite on. Every ability here cashes a story hook the board never paid:
+  // goblins who catch you in the squeeze, a pack that LEAPS, a dark that
+  // makes your blades worth less, a king whose crown is the weapon.
+  abilities: {
+    // Sized by the kit probe (2026-09-01). As "6 + rooted 1" and then "8 +
+    // weakened 2" the brain never cast it — on a ROGUE chassis a special
+    // competes with Twin Strike's 16, and a rider does not close a 10-point
+    // gap. At 14 + weakened 2 it is a real once-per-battle blow (a goblin's
+    // low cut that leaves you swinging weaker), and the third status family
+    // in the campaign (rooted / weakened / burning) — purify and ward finally
+    // have something to answer here.
+    hamstring: {
+      id: 'hamstring', slug: 'hamstring', name: 'Hamstring',
+      description: 'A low cut: 14 damage to an adjacent enemy, and they are weakened for 2 turns.',
+      targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: false,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 14 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+    },
+    pounce: {
+      id: 'pounce', slug: 'pounce', name: 'Pounce',
+      description: 'The runner leaps up to 3 tiles and bites everything around where it lands for 7 damage.',
+      targetingType: 'aoe', range: 3, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: false,
+      excludeAllies: true, areaShape: 'ring', isMultiHit: false,
+      effects: [
+        { type: 'move_self' },
+        { type: 'damage', formula: 'flat', value: 7 },
+      ],
+    },
+    snuff: {
+      id: 'snuff', slug: 'snuff', name: 'Snuff',
+      description: 'The dark closes in: 3 unblockable damage to every enemy around a tile within 4 steps, and they are weakened for 2 turns.',
+      targetingType: 'aoe', range: 4, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 3 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+    },
+    crown_blaze: {
+      id: 'crown_blaze', slug: 'crown_blaze', name: 'Crown Blaze',
+      description: 'The lantern-crown flares: 9 unblockable damage to every adjacent enemy, and they burn for 2 turns.',
+      targetingType: 'aoe', range: 0, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 9 },
+        { type: 'apply_status', statusSlug: 'burning', stacks: 1, durationTurns: 2 },
+      ],
+    },
+    mine: {
+      id: 'mine', slug: 'mine', name: 'MINE!',
+      description: 'The King grabs: 4 unblockable damage, drags the target 3 tiles toward the throne, and roots them for 1 turn.',
+      targetingType: 'single', range: 3, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 4 },
+        { type: 'pull', direction: 'toward_caster', distance: 3 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+      ],
+    },
+  },
+
   enemies: {
     goblin_scrapper: {
       baseClass: 'rogue', name: 'Goblin Scrapper',
       maxHealth: 36, armorClass: 9,
+      // specialSlug (not `abilities`) on purpose: the specialSlug path honours
+      // e1's noSpecials, a custom kit would not — the tutorial stays basic-only.
+      specialSlug: 'hamstring',
       nightmare: { acBonus: 1 },
     },
     goblin_slinger: {
       baseClass: 'ranger', name: 'Goblin Slinger',
       maxHealth: 36, armorClass: 10,
+      // Pinning, not the default Longshot: a slinger that ROOTS is the goblins'
+      // "catch you in the squeeze" style at range — the second status source.
+      specialSlug: 'pinning',
       nightmare: { acBonus: 1 },
     },
     wolfpelt_runner: {
@@ -123,7 +202,37 @@ export const lanternCampaign: CampaignDefinition = {
       // Humanoid (rogue chassis, goblin art) — real wolves can't be animated.
       baseClass: 'rogue', name: 'Wolfpelt Runner',
       maxHealth: 33, armorClass: 8, movementRange: 4,
+      specialSlug: 'pounce',
       nightmare: {},
+    },
+    // e6's quarry. A thief that starts SHIELDED: the ridge race is built from
+    // distance and guards (the brain cannot flee), and the ward is what stops
+    // a ranged alpha strike from ending the race before it starts.
+    ember_carrier: {
+      baseClass: 'rogue', name: 'Ember Carrier',
+      maxHealth: 36, armorClass: 9, movementRange: 5,
+      specialSlug: 'dagger_toss',
+      // Ward REMOVED after R2 (2026-09-01): warded + corners + guards + a
+      // 7-round clock read ranged 18% / balanced 2% ("the deadline passed")
+      // and nightmare 1%. Three levers on one race was one too many; the
+      // ward is the one whose cost the party cannot see coming.
+      nightmare: { acBonus: 1 },
+    },
+    // e10's hunter: a dedicated definition so only IT hunts the cook
+    // (aiHints attach to the key — never hint the shared chaff).
+    ladle_snatcher: {
+      baseClass: 'rogue', name: 'Ladle Snatcher',
+      maxHealth: 34, armorClass: 9, movementRange: 5,
+      specialSlug: 'hamstring',
+      aiHints: { priorityTarget: 'ally' },
+      nightmare: { acBonus: 1 },
+    },
+    // e11 room 2: the throne approach is lit by the stolen fire, and it burns.
+    ember_warden: {
+      baseClass: 'sorcerer', name: 'Ember Warden',
+      maxHealth: 38, armorClass: 10,
+      specialSlug: 'flame_jet',
+      nightmare: { hpBonus: 4 },
     },
     // NEW — the light thieves. Fast, fragile, and always running AWAY with
     // something: the campaign's recurring "you cannot just stand and fight"
@@ -154,7 +263,10 @@ export const lanternCampaign: CampaignDefinition = {
     dark_croaker: {
       baseClass: 'warlock', name: 'Dark Croaker',
       maxHealth: 40, armorClass: 9,
-      specialSlug: 'grasp',
+      // Two specials: the pull (out of the circle) and the DARK itself — Snuff
+      // weakens the whole party, which is what "you cannot see" means on a
+      // board. Before this the dark did nothing and e9 was a kill-all.
+      abilities: ['eldritch', 'grasp', 'snuff'],
       nightmare: { hpBonus: 6 },
     },
     // NEW — the Undervault's door-keeper. Immovable, but NOT a road-gate: he
@@ -170,7 +282,11 @@ export const lanternCampaign: CampaignDefinition = {
     moss_shaman: {
       baseClass: 'cleric', name: 'Moss Shaman',
       maxHealth: 34, armorClass: 10,
-      specialSlug: 'heal',
+      // WARD, not heal (2026-09-01). CAMPAIGN_BEATS §2 #3 bans boss+mender on
+      // MEASURED grounds — the pair does not scale (baseline 90% at medium
+      // again). A shaman who shields the King ONCE makes the alpha strike fail
+      // instead of undoing damage forever: a decision, not a script.
+      specialSlug: 'ward',
       nightmare: {},
     },
     king_grubnash: {
@@ -179,8 +295,13 @@ export const lanternCampaign: CampaignDefinition = {
       // one alpha strike.
       baseClass: 'barbarian', name: 'King Grubnash',
       maxHealth: 110, armorClass: 10,
+      // A boss with a KIT (2026-09-01): the crown is the weapon, and MINE! drags
+      // a hero onto the throne steps. Before this: a basic attack and 110 HP.
+      abilities: ['strike', 'crown_blaze', 'mine'],
       passiveFlags: ['immovable', 'undying'],
-      nightmare: { hpBonus: 8 },
+      // Nightmare: a wounded King hits harder. Counterplay: burst him through
+      // the half-health window rather than chipping.
+      nightmare: { hpBonus: 8, passiveFlags: ['vengeful'] },
     },
   },
 
@@ -199,7 +320,11 @@ export const lanternCampaign: CampaignDefinition = {
       level: 1,
       terrain: { theme: 'forest' },
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_scrapper'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 1, y: 4 }],
+      // Rear scrapper (1,4) -> (0,6) [2026-09-01]: at (1,4) the pincer denied a
+      // ranged party its first volley — hard read melee 87 / ranged 15, a
+      // 72-point spread at LEVEL ONE. From the corner it still arrives, one
+      // round later, and the ambush beat is kept.
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 0, y: 6 }],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
       noSpecials: true,
       // Easy sits above band by design — tutorial exemption (near-certain first win).
@@ -228,7 +353,11 @@ export const lanternCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }],
       },
       enemies: ['goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
-      enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 3 }],
+      // One step closer [2026-09-01, spreadSweep]: at x=6 the millstones were
+      // cover for the SLINGER's farm, not the party's approach — medium read
+      // melee 33 / ranged 93. Offset +1 collapses the spread to 10/3/11 points
+      // across medium/hard/nightmare (balance_runs/lantern_spread_e2.log).
+      enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 0, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
       hpScaleOverride: { easy: 1.20, medium: 1.44, hard: 1.55, nightmare: 1.68 },
     },
@@ -251,15 +380,19 @@ export const lanternCampaign: CampaignDefinition = {
       allies: {
         cart: {
           name: 'The Ember-Cart', baseClass: 'fighter',
-          maxHealth: 96, armorClass: 10, movementRange: 0,
+          // 96 -> 130 [2026-09-01]: allies do not scale with hpScale, so a burst
+          // a melee party body-blocks killed the cart under a ranged party every
+          // time (12% at medium, "Your charge has fallen" x52/60; nightmare 0%
+          // with 97% of builds walled). The clock is the tier lever now.
+          maxHealth: 130, armorClass: 11, movementRange: 0,
           abilities: [],
           behavior: { mode: 'hold' },
           placement: { x: 2, y: 4 },
         },
       },
       objective: {
-        text: 'Keep the ember-cart burning — hold them off for 6 rounds',
-        win: [{ kind: 'round_reached', round: 6 }],
+        text: 'Keep the ember-cart burning — hold them off until the wagon-team is hitched',
+        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'cart' }],
       },
       enemies: ['ember_thief', 'ember_thief', 'goblin_scrapper', 'goblin_slinger'],
@@ -281,7 +414,10 @@ export const lanternCampaign: CampaignDefinition = {
       // tankier thieves live longer but do not burn the cart faster — so the
       // scale goes up AND the top tiers get more bodies (the scoped wave
       // above), which is the lever this encounter actually trades in.
-      hpScaleOverride: { easy: 1.30, medium: 1.70, hard: 2.00, nightmare: 2.40 },
+      // Halved [2026-09-01]: campaignTune wanted 1.35/1.46/1.04/1.20 — when
+      // HALVING the scale still leaves ranged at 22%/8%, scale was never the
+      // lever. Provisional monotonic ladder; re-walk after the confirm battery.
+      hpScaleOverride: { easy: 1.30, medium: 1.50, hard: 1.65, nightmare: 1.80 },
     },
 
     // e4 — The Burning Orchard (hazard). NEW. The thieves fire the orchard to
@@ -301,6 +437,9 @@ export const lanternCampaign: CampaignDefinition = {
         ],
       },
       enemies: ['torch_hurler', 'torch_hurler', 'goblin_scrapper', 'ember_thief'],
+      // Easy meets ONE hurler: the fire still crosses your path, but only one
+      // goblin is making more of it.
+      enemiesByDifficulty: { easy: ['torch_hurler', 'goblin_scrapper', 'goblin_scrapper', 'ember_thief'] },
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 5, y: 6 }, { x: 6, y: 1 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
@@ -324,8 +463,8 @@ export const lanternCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 1 }, { x: 2, y: 2 }],
       },
       objective: {
-        text: 'Hold out until the pack breaks off (7 rounds)',
-        win: [{ kind: 'round_reached', round: 7 }],
+        text: 'Hold out until the pack breaks off',
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 4 }, { x: 5, y: 6 }],
@@ -344,7 +483,10 @@ export const lanternCampaign: CampaignDefinition = {
           enemies: ['wolfpelt_runner', 'wolfpelt_runner'],
           placement: [{ x: 7, y: 5 }, { x: 0, y: 6 }],
           trigger: { on: 'round', round: 4 },
-          difficulties: ['hard', 'nightmare'],
+          // Nightmare only after R3 (2026-09-01): with pounce on every runner,
+          // eight bodies read 6% with the best party at 15%. Hard is six
+          // runners at 1.45; nightmare is eight at 1.30 — the bodies ARE the tier.
+          difficulties: ['nightmare'],
         },
       ],
       playerPlacement: [{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
@@ -355,7 +497,12 @@ export const lanternCampaign: CampaignDefinition = {
       // easy/medium/hard (95/85/92% mean). Round count is the COARSE lever
       // (~25 points per step) and scale the fine one — but a survive objective
       // barely feels scale at all, so the top tiers also get a third wave.
-      hpScaleOverride: { easy: 1.50, medium: 1.90, hard: 2.20, nightmare: 2.60 },
+      // Down from 1.50/1.90/2.20/2.60 [2026-09-01]: baseline medium read
+      // 25/47/63 — party wipes, melee walled — on a survive whose bodies now
+      // POUNCE. The leap is the threat; the tiers are the clock and the wave.
+      // R2: nightmare 1% / best party 3% at 1.60 + clock 8 — eight pouncing
+      // runners is already the nightmare. Scale to 1.45 (= hard), clock 7.
+      hpScaleOverride: { easy: 1.10, medium: 1.30, hard: 1.45, nightmare: 1.45 },
     },
 
     // e6 — The Ridge Chase (race). NEW. The lantern's glow is MOVING: cut the
@@ -379,14 +526,21 @@ export const lanternCampaign: CampaignDefinition = {
       // buys focus-fire discipline rather than footspeed — and it is a
       // genuinely different problem from e7's "get everyone out".
       objective: {
-        text: 'Bring down both lantern-carriers before they crest the ridge (7 rounds)',
-        win: [{ kind: 'units_dead', enemyKeys: ['ember_thief'] }],
-        loss: [{ kind: 'round_reached', round: 7 }],
+        // The brain has no flee behaviour, so a race against runners is a race
+        // against DISTANCE [2026-09-01]: carriers in the far corners, warded,
+        // behind two guards on the middle lane, and a clock that tightens by
+        // tier. Baseline read 98-100% with the carriers dead in 19-30 turns —
+        // "The target is destroyed" — a kill-all wearing a stopwatch.
+        text: 'Bring down both lantern-carriers before they crest the ridge',
+        win: [{ kind: 'units_dead', enemyKeys: ['ember_carrier'] }],
+        // R3: without the ward and at clock 7 the race read 85/100/92 — the
+        // clock is the whole race now. Medium 6 (nightmare at 6 read 27%).
+        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }],
       },
-      enemies: ['ember_thief', 'ember_thief', 'goblin_slinger', 'wolfpelt_runner'],
+      enemies: ['ember_carrier', 'ember_carrier', 'goblin_scrapper', 'wolfpelt_runner'],
       // Carriers out on the far flanks with a head start; the guards plant
       // themselves in the middle lane so the party cannot simply walk at them.
-      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 3 }],
+      enemyPlacement: [{ x: 7, y: 1 }, { x: 7, y: 6 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'cut_them_off', name: 'Cut Them Off', description: 'Reach the ridge by round 6.', check: { kind: 'win_by_round', round: 6 } },
@@ -409,6 +563,11 @@ export const lanternCampaign: CampaignDefinition = {
       terrain: {
         theme: 'cave',
         blocked: [
+          // (5,5) was opened after R2 (melee 22% draws against the one-tile
+          // gap) and CLOSED again after R3: a two-tile throat let the pack pour
+          // through onto the balanced comp — 13%, "party has fallen" x51.
+          // The cork stays; the melee stall is the lesser cost, and the draw
+          // cap ends it.
           { x: 5, y: 0 }, { x: 5, y: 1 }, { x: 5, y: 2 },
           { x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 },
         ],
@@ -418,6 +577,11 @@ export const lanternCampaign: CampaignDefinition = {
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
+          // B4 lever: the far side narrows at the top tiers.
+          tilesByDifficulty: {
+            hard: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+            nightmare: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+          },
         }],
       },
       enemies: ['orc_bruiser', 'goblin_scrapper', 'goblin_scrapper', 'goblin_slinger'],
@@ -427,8 +591,12 @@ export const lanternCampaign: CampaignDefinition = {
       // all-must-escape win bite.
       waves: [
         {
-          enemies: ['goblin_scrapper', 'goblin_scrapper', 'wolfpelt_runner'],
-          placement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 2, y: 4 }],
+          // Ambush to the FLANKS, two bodies [2026-09-01]: three spawns on
+          // (3,3)/(3,4)/(2,4) landed on the back rank of a party that wants to
+          // stand back — ranged read 7% at medium with stalemate DRAWs. The
+          // stragglers still get caught; the archer is no longer the bait.
+          enemies: ['goblin_scrapper', 'wolfpelt_runner'],
+          placement: [{ x: 2, y: 1 }, { x: 2, y: 6 }],
           trigger: { on: 'door', tile: { x: 5, y: 4 } },
         },
       ],
@@ -456,11 +624,32 @@ export const lanternCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Hold both ends of the bridge for 6 rounds',
-        win: [{ kind: 'round_reached', round: 6 }],
+        // Redesigned [2026-09-01]. As a survive this was a 94-100% walkover and
+        // the second of two consecutive clock-holds (palette rule). The briefing
+        // always said "hold BOTH ends" — now the board does: a hero on each
+        // bridgehead AT THE SAME TIME. The warden stands ON the far end
+        // (immovable — kill him or he keeps it), the runner takes the near one,
+        // and the waves arrive while you are split. Nightmare adds the mid-span
+        // mark: three bodies on three tiles under fire.
+        text: 'Take both ends of the bridge at once, before the way down closes',
+        win: [{
+          kind: 'units_at_tiles', scope: 'any', simultaneous: true,
+          // R2 (warden ON the far mark): ranged 100 / melee 32. R3 (warden
+          // BESIDE it with two friends): ranged 2 / melee 58. Both were fights
+          // over one tile. The marks are now the SPAN's own bridgeheads, two
+          // steps from the party's start, and the guards stand BEHIND them —
+          // taking a mark costs standing in reach of a bash, not killing a
+          // 62-HP wall first.
+          tiles: [{ x: 1, y: 4 }, { x: 6, y: 4 }],
+          tilesByDifficulty: { nightmare: [{ x: 1, y: 4 }, { x: 6, y: 4 }, { x: 4, y: 3 }] },
+        }],
+        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, hard: 7, nightmare: 7 } }],
       },
       enemies: ['coalgate_warden', 'goblin_scrapper', 'goblin_slinger', 'wolfpelt_runner'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 4 }, { x: 1, y: 4 }],
+      // R2: warden ON (7,4) turned the hold into "kill a 62-HP AC-12 wall in
+      // 7 rounds" — ranged 100%, melee 32%. He now stands BESIDE the mark and
+      // bashes whoever takes it; the runner likewise off the near one.
+      enemyPlacement: [{ x: 7, y: 4 }, { x: 7, y: 3 }, { x: 7, y: 5 }, { x: 0, y: 4 }],
       waves: [
         {
           enemies: ['wolfpelt_runner', 'goblin_scrapper'],
@@ -478,13 +667,13 @@ export const lanternCampaign: CampaignDefinition = {
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       goals: [
-        { slug: 'both_ends_held', name: 'Both Ends Held', description: 'Hold the span with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
+        { slug: 'both_ends_held', name: 'Both Ends Held', description: 'Take the span with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
       // ⚠ hard/nightmare eased hard (1.30/1.55 -> 1.00/1.10): the first battery
       // read 16%/6% with 39%/50% of builds WALLED. The round-4 scoped wave is
       // already this encounter's difficulty dial — piling a high HP scale on
       // top of two extra bodies double-charges the same tier.
-      hpScaleOverride: { easy: 0.95, medium: 1.07, hard: 1.07, nightmare: 1.1 },
+      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.10, nightmare: 1.15 },
     },
 
     // e9 — The Dark Between (survive). NEW, and the campaign's THESIS FIGHT:
@@ -502,10 +691,14 @@ export const lanternCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Keep the circle until the dark thins (7 rounds)',
-        win: [{ kind: 'round_reached', round: 7 }],
+        // Two croakers from the start [2026-09-01], each carrying Snuff: the
+        // dark now WEAKENS the party and pulls it apart. Baseline read 97% with
+        // "Every enemy has fallen" ending half the games — the thesis fight was
+        // a kill-all with the lights on. Tiers are the clock.
+        text: 'Keep the circle until the dark thins',
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
       },
-      enemies: ['dark_croaker', 'goblin_scrapper', 'wolfpelt_runner', 'goblin_slinger'],
+      enemies: ['dark_croaker', 'dark_croaker', 'wolfpelt_runner', 'goblin_slinger'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 2 }, { x: 6, y: 5 }, { x: 1, y: 5 }],
       waves: [
         {
@@ -517,7 +710,9 @@ export const lanternCampaign: CampaignDefinition = {
           enemies: ['dark_croaker', 'goblin_scrapper'],
           placement: [{ x: 7, y: 5 }, { x: 0, y: 2 }],
           trigger: { on: 'round', round: 5 },
-          difficulties: ['hard', 'nightmare'],
+          // Medium added after R2 (94%, kill-all in half the games): the third
+          // croaker IS the dark deepening. Easy keeps two.
+          difficulties: ['medium', 'hard', 'nightmare'],
         },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
@@ -527,7 +722,7 @@ export const lanternCampaign: CampaignDefinition = {
       // ⚠ Same double-charge as e8, and worse: 10%/4% with half the builds
       // walled. The round-5 scoped wave (a second croaker + a scrapper) is the
       // top-tier pressure; the scale must come DOWN to pay for it.
-      hpScaleOverride: { easy: 0.95, medium: 1.06, hard: 1.06, nightmare: 1.06 },
+      hpScaleOverride: { easy: 0.95, medium: 1.00, hard: 1.05, nightmare: 1.10 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -571,8 +766,16 @@ export const lanternCampaign: CampaignDefinition = {
       // party can walk back to it — that is the mechanic that makes escorts
       // impossible to balance rather than merely hard. Pull effects belong in
       // encounters where the victim can be rescued.
-      enemies: ['goblin_scrapper', 'goblin_slinger', 'ember_thief', 'goblin_scrapper'],
-      enemyPlacement: [{ x: 4, y: 3 }, { x: 6, y: 6 }, { x: 4, y: 4 }, { x: 6, y: 2 }],
+      // Up-board and hunted [2026-09-01]: with scrappers at x=4 the fight was
+      // in the party's lap and ended as a kill-all in 40% of games — an escort
+      // in costume. The snatcher is the only thing that HUNTS Nib.
+      enemies: ['ladle_snatcher', 'goblin_slinger', 'ember_thief', 'goblin_scrapper'],
+      // Hard and nightmare send TWO snatchers after the cook.
+      enemiesByDifficulty: {
+        hard: ['ladle_snatcher', 'ladle_snatcher', 'goblin_slinger', 'ember_thief'],
+        nightmare: ['ladle_snatcher', 'ladle_snatcher', 'goblin_slinger', 'ember_thief'],
+      },
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 7, y: 6 }, { x: 6, y: 4 }, { x: 7, y: 2 }],
       waves: [
         {
           enemies: ['wolfpelt_runner', 'goblin_scrapper'],
@@ -607,6 +810,11 @@ export const lanternCampaign: CampaignDefinition = {
             theme: 'cave',
             blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 2 }],
           },
+          // ember_warden here, not in room 2 (R2: paired with the croaker's
+          // snuff + grasp he walled ranged at 25%). Room 1 has no puller.
+          // ember_warden tried here (R3) and in room 2 (R2): flame_jet's
+          // unblockable line walls a ranged party wherever he stands (8% / 25%).
+          // He is out of e11; the definition stays for e12's court.
           enemies: ['coalgate_warden', 'goblin_scrapper'],
           enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 4 }],
           exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
@@ -643,7 +851,10 @@ export const lanternCampaign: CampaignDefinition = {
         text: 'Bring down King Grubnash',
         win: [{ kind: 'units_dead', enemyKeys: ['king_grubnash'] }],
       },
-      enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_scrapper'],
+      // [2026-09-01] The King has a kit (crown_blaze, MINE!), the shaman wards
+      // him once instead of mending forever (CAMPAIGN_BEATS §2 #3), and a
+      // slinger pins whoever he drags in. Baseline: 90% at medium.
+      enemies: ['king_grubnash', 'moss_shaman', 'goblin_scrapper', 'goblin_slinger'],
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 4, y: 2 }],
       playerPlacement: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 0, y: 5 }],
       goals: [

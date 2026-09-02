@@ -1,0 +1,14 @@
+The Lantern of Elmsworth — enemy kit usage @ medium, 12 games x 3 parties per encounter
+
+e1   L1   avg 26 turns  hamstring=0.00/game   ⚠ NEVER CAST: hamstring
+e2   L2   avg 37 turns  hamstring=0.00/game  pinning=1.00/game   ⚠ NEVER CAST: hamstring
+e3   L3   avg 39 turns  dagger_toss=0.53/game  hamstring=0.00/game  pinning=1.00/game   ⚠ NEVER CAST: hamstring
+e4   L4   avg 31 turns  ignite=2.00/game  hamstring=0.00/game  dagger_toss=0.89/game   ⚠ NEVER CAST: hamstring
+e5   L5   avg 43 turns  pounce=1.89/game
+e6   L5   avg 37 turns  dagger_toss=1.75/game  hamstring=0.00/game  pounce=0.06/game   ⚠ NEVER CAST: hamstring
+e7   L6   avg 86 turns  hamstring=0.00/game  pinning=0.33/game  pounce=0.06/game   ⚠ NEVER CAST: hamstring
+e8   L7   avg 29 turns  shield_bash=1.00/game  hamstring=0.00/game  pinning=0.33/game  pounce=0.44/game   ⚠ NEVER CAST: hamstring
+e9   L8   avg 42 turns  grasp=0.89/game  snuff=0.39/game  pounce=0.67/game  pinning=0.33/game  hamstring=0.00/game   ⚠ NEVER CAST: hamstring
+e10  L9   avg 46 turns  hamstring=0.00/game  pinning=1.00/game  dagger_toss=0.00/game  pounce=0.25/game   ⚠ NEVER CAST: hamstring, dagger_toss
+e11  L10  avg 62 turns  shield_bash=1.00/game  hamstring=0.00/game  grasp=0.69/game  snuff=0.39/game  flame_jet=1.00/game   ⚠ NEVER CAST: hamstring
+e12  L10  avg 53 turns  crown_blaze=0.83/game  mine=0.33/game  ward=1.00/game  hamstring=0.00/game  pinning=0.33/game   ⚠ NEVER CAST: hamstring

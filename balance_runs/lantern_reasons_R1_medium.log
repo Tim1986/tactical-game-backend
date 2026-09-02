@@ -1,0 +1,3 @@
+✗ REFUSING full run: no smoke pass on the current "lantern" content.
+  Run first:  npx tsx src/ai/campaignSim.ts lantern --smoke
+  (2 games/cell, ~a minute — catches authoring/validation errors before a long run.)

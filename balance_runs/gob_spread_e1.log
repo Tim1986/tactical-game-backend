@@ -1,0 +1,34 @@
+goblinopolis e1 — enemy start-distance sweep, 80 games/party
+player centroid (2,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    66%   55%   96%    46%   50pts   
+-2      hard      47%   38%   69%    35%   34pts   
+-2      nightmare  37%   20%   59%    33%   39pts   
+        (mean manhattan gap 5.7; placement 7,3 7,4 7,5)
+
+-1      medium    66%   55%   96%    46%   50pts   
+-1      hard      47%   38%   69%    35%   34pts   
+-1      nightmare  37%   20%   59%    33%   39pts   
+        (mean manhattan gap 5.7; placement 7,3 7,4 7,5)
+
+0       medium    71%   94%   23%    96%   74pts   floor:r
+0       hard      66%   89%   19%    91%   73pts    oob
+0       nightmare  49%   73%   13%    61%   60pts    oob
+        (mean manhattan gap 4.7; placement 6,3 6,4 6,5)
+
++1      medium    63%   80%   30%    79%   50pts   floor:r oob
++1      hard      51%   69%   25%    59%   44pts   
++1      nightmare  24%   25%    6%    41%   35pts    oob
+        (mean manhattan gap 4.0; placement 5,4 6,4 6,5)
+
++2      medium    68%   91%   35%    79%   56pts   floor:r
++2      hard      58%   88%   28%    59%   60pts   
++2      nightmare  32%   44%   11%    41%   33pts   
+        (mean manhattan gap 3.3; placement 4,4 5,4 6,5)
+
++3      medium    66%  100%   34%    64%   66pts   floor:r
++3      hard      61%   95%   28%    61%   68pts   
++3      nightmare  42%   83%   15%    29%   68pts   
+        (mean manhattan gap 1.7; placement 3,5 3,4 3,3)
+

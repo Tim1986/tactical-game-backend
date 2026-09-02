@@ -1,0 +1,97 @@
+Campaign: The Lantern of Elmsworth — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e1   L1   hard       melee      93%    [ 45%, 65%] ⚠  32   margin  29% HP · 2.6/4 alive
+       └ W:kill-all×37  L:kill-all×3
+e1   L1   hard       ranged     53%    [ 45%, 65%]    29   margin  19% HP · 1.9/4 alive
+e1   L1   hard       balanced   63%    [ 45%, 65%]    35   margin  22% HP · 2.4/4 alive
+     mean  69%  [ 45%, 65%] ⚠
+
+e2   L2   hard       melee      55%    [ 45%, 65%]    46   margin  24% HP · 2.1/4 alive
+e2   L2   hard       ranged     63%    [ 45%, 65%]    35   margin  28% HP · 2.0/4 alive
+e2   L2   hard       balanced   68%    [ 45%, 65%] ⚠  40   margin  26% HP · 2.0/4 alive
+       └ W:kill-all×27  L:kill-all×13
+     mean  62%  [ 45%, 65%] ✓
+
+e3   L3   hard       melee       8%    [ 45%, 65%] ⚠  46   margin  26% HP · 2.7/4 alive
+       └ L:Your party has fallen×34  W:You survived 7 rounds×3  L:Your charge has fallen×3
+e3   L3   hard       ranged      8%    [ 45%, 65%] ⚠  45   margin  26% HP · 2.3/4 alive
+       └ L:Your charge has fallen×35  W:You survived 7 rounds×3  L:Your party has fallen×2
+e3   L3   hard       balanced   18%    [ 45%, 65%] ⚠  53   margin  20% HP · 2.3/4 alive
+       └ L:Your party has fallen×18  L:Your charge has fallen×15  W:You survived 7 rounds×7
+     mean  11%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): melee,ranged
+
+e4   L4   hard       melee      48%    [ 45%, 65%]    38   margin  26% HP · 2.2/4 alive
+e4   L4   hard       ranged     98%    [ 45%, 65%] ⚠  26   margin  26% HP · 3.1/4 alive
+       └ W:Every enemy has fallen×39  L:Your party has fallen×1
+e4   L4   hard       balanced   50%    [ 45%, 65%]    40   margin  22% HP · 2.0/4 alive
+     mean  65%  [ 45%, 65%] ✓
+
+e5   L5   hard       melee      45%    [ 45%, 65%]    44   margin  14% HP · 1.3/4 alive
+e5   L5   hard       ranged     18%    [ 45%, 65%] ⚠  38   margin   8% HP · 1.1/4 alive
+       └ L:Your party has fallen×33  W:You survived 7 rounds×7
+e5   L5   hard       balanced   60%    [ 45%, 65%]    46   margin  15% HP · 1.4/4 alive
+     mean  41%  [ 45%, 65%] ⚠
+
+e6   L5   hard       melee      60%    [ 45%, 65%]    32   margin  39% HP · 2.6/4 alive
+e6   L5   hard       ranged    100%    [ 45%, 65%] ⚠  24   margin  38% HP · 2.4/4 alive
+       └ W:The target is destroyed×40
+e6   L5   hard       balanced   83%    [ 45%, 65%] ⚠  32   margin  34% HP · 2.7/4 alive
+       └ W:The target is destroyed×33  L:The deadline passed×5  L:Your party has fallen×2
+     mean  81%  [ 45%, 65%] ⚠
+
+e7   L6   hard       melee      15%    [ 45%, 65%] ⚠  43   margin  22% HP · 1.3/4 alive
+       └ L:Your party has fallen×33  W:The whole party escaped×6  DRAW×1
+e7   L6   hard       ranged     88%    [ 45%, 65%] ⚠  35   margin  25% HP · 1.5/4 alive
+       └ W:The whole party escaped×35  L:Your party has fallen×5
+e7   L6   hard       balanced   10%    [ 45%, 65%] ⚠  55   margin  18% HP · 1.3/4 alive
+       └ L:Your party has fallen×36  W:The whole party escaped×4
+     mean  38%  [ 45%, 65%] ⚠
+
+e8   L7   hard       melee     100%    [ 45%, 65%] ⚠  3   margin  96% HP · 4.0/4 alive
+       └ W:Every mark is held×40
+e8   L7   hard       ranged     78%    [ 45%, 65%] ⚠  24   margin  44% HP · 3.4/4 alive
+       └ W:Every mark is held×31  L:Your party has fallen×9
+e8   L7   hard       balanced   75%    [ 45%, 65%] ⚠  25   margin  68% HP · 3.6/4 alive
+       └ W:Every mark is held×30  L:Your party has fallen×9  L:The deadline passed×1
+     mean  84%  [ 45%, 65%] ⚠
+
+e9   L8   hard       melee      40%    [ 45%, 65%] ⚠  51   margin  11% HP · 1.3/4 alive
+       └ L:Your party has fallen×24  W:You survived 8 rounds×16
+e9   L8   hard       ranged     43%    [ 45%, 65%] ⚠  46   margin   9% HP · 1.3/4 alive
+       └ L:Your party has fallen×23  W:You survived 8 rounds×17
+e9   L8   hard       balanced   68%    [ 45%, 65%] ⚠  52   margin  15% HP · 1.6/4 alive
+       └ W:You survived 8 rounds×27  L:Your party has fallen×13
+     mean  50%  [ 45%, 65%] ✓
+
+e10  L9   hard       melee      53%    [ 45%, 65%]    54   margin  59% HP · 4.2/4 alive
+e10  L9   hard       ranged     50%    [ 45%, 65%]    50   margin  39% HP · 2.9/4 alive
+e10  L9   hard       balanced   70%    [ 45%, 65%] ⚠  48   margin  64% HP · 4.6/4 alive
+       └ W:The escort made it through×26  L:Your charge has fallen×7  L:Your party has fallen×5
+     mean  57%  [ 45%, 65%] ✓
+
+e11  L10   hard       melee      70%    [ 45%, 65%] ⚠  70   margin  24% HP · 2.1/4 alive
+       └ W:Every enemy has fallen×28  L:Your party has fallen×12
+e11  L10   hard       ranged     18%    [ 45%, 65%] ⚠  55   margin  17% HP · 1.7/4 alive
+       └ L:Your party has fallen×33  W:Every enemy has fallen×7
+e11  L10   hard       balanced   63%    [ 45%, 65%]    71   margin  21% HP · 2.1/4 alive
+     mean  50%  [ 45%, 65%] ✓
+
+e12  L10   hard       melee      73%    [ 45%, 65%] ⚠  65   margin  31% HP · 3.0/4 alive
+       └ W:The target is destroyed×29  L:Your party has fallen×11
+e12  L10   hard       ranged    100%    [ 45%, 65%] ⚠  45   margin  50% HP · 3.0/4 alive
+       └ W:The target is destroyed×40
+e12  L10   hard       balanced   88%    [ 45%, 65%] ⚠  58   margin  40% HP · 3.1/4 alive
+       └ W:The target is destroyed×35  L:Your party has fallen×5
+     mean  87%  [ 45%, 65%] ⚠
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e1/hard: mean  69% out of band
+    e3/hard: mean  11% out of band, WALL for: melee,ranged
+    e5/hard: mean  41% out of band
+    e6/hard: mean  81% out of band
+    e7/hard: mean  38% out of band
+    e8/hard: mean  84% out of band
+    e12/hard: mean  87% out of band
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

@@ -106,6 +106,42 @@ export const goblinopolisCampaign: CampaignDefinition = {
     },
   },
 
+  // A6 — Goblinopolis's own abilities (2026-09-01 redesign). The campaign
+  // shipped with none; its villain was "warlock + grasp" and the brief's own
+  // line for him — "drags you back into the queue you were trying to leave"
+  // — is an ability, so now it is one.
+  abilities: {
+    // The Ironbell Wardens' signature: they do not kill you, they CONFISCATE
+    // you. Two turns rooted on a switchback stair (e11) or a flooding street
+    // is the campaign's whole threat in one verb. Counterplay: purify, or
+    // never end a turn in a warden's reach. Sized above Sword's 11 so the
+    // brain prefers it (kit-probe rule: a special must out-score the basic).
+    impound: {
+      id: 'impound', slug: 'impound', name: 'Impound',
+      description: 'Seized under Annex Four: 14 damage to an adjacent enemy, and they are rooted for 2 turns.',
+      targetingType: 'single', range: 1, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: false,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 14 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 2 },
+      ],
+    },
+    red_tape: {
+      id: 'red_tape', slug: 'red_tape', name: 'Red Tape',
+      description: 'A flurry of forms lands on a tile within 4 steps: 2 unblockable damage to every enemy around it, and they are weakened for 2 turns.',
+      // Targeted (R2: self-centred at r2 it was cast 0.33/game and a ranged
+      // party kited an immovable Snagg for 100% twice running).
+      targetingType: 'aoe', range: 4, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 2 },
+        { type: 'apply_status', statusSlug: 'weakened', stacks: 1, durationTurns: 2 },
+      ],
+    },
+  },
+
   enemies: {
     bluecap_scout: {
       baseClass: 'ranger', name: 'Bluecap Scout',
@@ -115,6 +151,9 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // The city's couriers. Fast, and always carrying something away from you.
     bellrunner: {
       baseClass: 'rogue', name: 'Bellrunner',
+      // Vengeful: a courier who has been caught once runs harder. Counterplay:
+      // finish what you start on him — a half-dead runner is the dangerous one.
+      passiveFlags: ['vengeful'],
       maxHealth: 52, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
     },
@@ -130,11 +169,15 @@ export const goblinopolisCampaign: CampaignDefinition = {
     },
     kettlehelm_orc: {
       baseClass: 'fighter', name: 'Kettlehelm Orc',
+      // Thorns: it is a KETTLE. Hitting it hurts. Counterplay: shoot it, or
+      // strike from the diagonal (thorns is orthogonal-only).
+      passiveFlags: ['thorns'], thornsDamage: 4,
       maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
       nightmare: { hpBonus: 6, passiveFlags: ['immovable'] },
     },
     mudboot_bruiser: {
       baseClass: 'barbarian', name: 'Mudboot Bruiser',
+      passiveFlags: ['vengeful'],
       maxHealth: 46, armorClass: 9, specialSlug: 'shockwave',
       nightmare: { hpBonus: 5 },
     },
@@ -145,6 +188,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
     },
     ironbell_warden: {
       baseClass: 'fighter', name: 'Ironbell Warden',
+      abilities: ['sword', 'impound'],
       maxHealth: 62, armorClass: 12,
       passiveFlags: ['immovable'],
       nightmare: { hpBonus: 6 },
@@ -154,14 +198,22 @@ export const goblinopolisCampaign: CampaignDefinition = {
     // you back into the queue you were trying to leave.
     undersecretary_snagg: {
       baseClass: 'warlock', name: 'Undersecretary Snagg',
+      // Grasp pulls you back into the queue; Red Tape is the queue. Baseline:
+      // a ranged party kited him for a free 100% at medium.
+      abilities: ['eldritch', 'grasp', 'red_tape'],
       maxHealth: 92, armorClass: 11, specialSlug: 'grasp',
-      passiveFlags: ['immovable'],
+      // Stalwart: a desk does not move, and it does not get rooted. Immovable
+      // stays (he is furniture). Counterplay is the clerks, not the pull.
+      passiveFlags: ['immovable', 'stalwart'],
       nightmare: { hpBonus: 8, passiveFlags: ['warded'] },
     },
     // Snagg's department. Two flavours so the Records Hall is not a mirror
     // match: one stamps, one files.
     clerk_of_seals: {
       baseClass: 'cleric', name: 'Clerk of Seals',
+      // Warded: the seal is on HERSELF too. The order trap at e9: she wards
+      // Snagg once; bait it with a small hit, then commit the big one.
+      passiveFlags: ['warded'],
       maxHealth: 44, armorClass: 10, specialSlug: 'ward',
       nightmare: { hpBonus: 4 },
     },
@@ -175,6 +227,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
       baseClass: 'rogue', name: 'Wet-Boot Looter',
       maxHealth: 34, armorClass: 8, movementRange: 4,
       nightmare: { acBonus: 1 },
+    },
+    // e10's looters: the same people in a worse hour, and these ones want
+    // the BELL. Dedicated definition so the hunt hint reaches e10 only.
+    flood_looter: {
+      baseClass: 'rogue', name: 'Wet-Boot Looter',
+      maxHealth: 34, armorClass: 8, movementRange: 4,
+      aiHints: { priorityTarget: 'ally' },
     },
     // Inspectors: the barge's authority, and genuinely just doing their jobs.
     customs_inspector: {
@@ -201,8 +260,19 @@ export const goblinopolisCampaign: CampaignDefinition = {
     e1: {
       level: 1,
       terrain: { theme: 'town' },
-      enemies: ['bluecap_scout', 'bluecap_scout', 'wet_boot_looter'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }],
+      // Rebuilt to its brief [2026-09-01] — "dockside metal-thieves come over
+      // one wall, in two beats". Shipped as two ARCHERS and a looter, which at
+      // L1 (no specials) out-traded a ranged party at every scale the tuner
+      // tried and every distance the sweep tried: ranged 25 / 5 / 0 at
+      // medium / hard / nightmare. Thieves are knives, and they come in two
+      // beats: two over the wall now, two more on round 2.
+      enemies: ['wet_boot_looter', 'wet_boot_looter', 'bluecap_scout'],
+      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }, { x: 7, y: 4 }],
+      // Second beat is ONE thief on round 3 (R2: two on round 2 made five
+      // Twin-Strike bodies at L1 — 8 / 2 / 8 across the comps).
+      waves: [
+        { enemies: ['wet_boot_looter'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 3 } },
+      ],
       playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       noSpecials: true,
       goals: [
@@ -211,7 +281,9 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // ⚠ TUTORIAL EXEMPTION at easy AND medium (CAMPAIGNS.md §Balancing).
       // Retuned 2026-08-24 with the rest of the catalog's e1s: 1.46 -> 74%
       // mean, 1.32 -> 84%/88% median, 1% walls.
-      hpScaleOverride: { easy: 1.05, medium: 1.28, hard: 1.38, nightmare: 1.51 },
+      // Provisional after the rebuild (five bodies now, not three); the tuner
+      // re-walks this on the new content.
+      hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.10, nightmare: 1.20 },
     },
 
     // e2 — The First Mile (escort). The campaign's thesis in one fight: the
@@ -232,7 +304,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       allies: {
         wagon: {
           name: 'The Bell-Wagon', baseClass: 'fighter',
-          maxHealth: 96, armorClass: 10, movementRange: 2,
+          // 96 -> 120 [2026-09-01]: the wagon does not scale with hpScale.
+          maxHealth: 120, armorClass: 10, movementRange: 2,
           abilities: [],
           behavior: { mode: 'route', waypoints: [{ x: 4, y: 4 }, { x: 7, y: 4 }] },
           placement: { x: 1, y: 4 },
@@ -247,7 +320,11 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // movement 2, so it arrived in three turns with three enemies still
       // walking toward it. An escort with nothing intercepting it is a walk.
       enemies: ['bluecap_scout', 'wet_boot_looter', 'bellrunner'],
-      enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 5 }, { x: 6, y: 4 }],
+      // Off the road [2026-09-01]: at (5,3)/(5,5)/(6,4) the line stood ON the
+      // wagon's route, so the escort walked into a wall a ranged party could
+      // not screen — ranged read 15% at medium, "party has fallen" x40. The
+      // opportunists now come at the road from the eaves, as the story says.
+      enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 6 }, { x: 7, y: 2 }],
       waves: [
         { enemies: ['wet_boot_looter', 'bluecap_scout'], placement: [{ x: 4, y: 1 }, { x: 4, y: 6 }], trigger: { on: 'round', round: 2 } },
         { enemies: ['bellrunner'], placement: [{ x: 4, y: 4 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
@@ -281,7 +358,11 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 3 }],
       },
       enemies: ['kettlehelm_orc', 'bluecap_pathfinder', 'bluecap_scout', 'sparkcap_slinger'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
+      // One step closer [2026-09-01, spreadSweep +1]: at x=6 the balanced comp
+      // was walled (41 / 18 / 8 across tiers) while melee and ranged coasted;
+      // at x=5 the spread closes 50 -> 28 with the mean up 10 — so the scale
+      // goes back up to pay for it.
+      enemyPlacement: [{ x: 5, y: 3 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'exact_change', name: 'Exact Change', description: 'Clear the gate without losing anyone.', check: { kind: 'no_party_deaths' } },
@@ -294,7 +375,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       //   medium    0.75 -> 84% · 0.85 -> 74%, 1% walls ✓ · 1.00 -> 43%, 31% walls
       //   hard      0.95 -> 56%, 4% walls ✓ · 1.05 -> 42%, 13% walls ✓
       //   nightmare 1.05 -> 21%, 23% walls ✓ · 1.10 -> 14%, 38% walls (too far)
-      hpScaleOverride: { easy: 0.75, medium: 0.85, hard: 0.95, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
     },
 
     // e4 — The Office of Forms (rooms). REUSED from the shipped e4's two-room
@@ -357,11 +438,22 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 6 }, { x: 3, y: 7 }],
       },
       objective: {
-        text: 'Clear the barge before it casts off (7 rounds)',
+        text: 'Clear the barge before it casts off',
         win: [{ kind: 'all_enemies_dead' }],
-        loss: [{ kind: 'round_reached', round: 7 }],
+        // Clock by tier [2026-09-01]: two pinning inspectors root a melee party
+        // and the flat 7-round clock did the rest (melee 37% at medium, "the
+        // deadline passed"). Easy gets a round; nightmare loses one.
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
       enemies: ['customs_inspector', 'customs_inspector', 'bellrunner', 'kettlehelm_orc'],
+      // Tier by BODIES [2026-09-01]: two pinning inspectors root a melee party
+      // into the clock (melee 37% at medium, "the deadline passed" x37). Easy
+      // and medium meet one inspector and a scout; hard and nightmare meet
+      // the full customs desk. The B4 lever, first use in this campaign.
+      enemiesByDifficulty: {
+        easy: ['customs_inspector', 'bluecap_scout', 'bellrunner', 'kettlehelm_orc'],
+        medium: ['customs_inspector', 'bluecap_scout', 'bellrunner', 'kettlehelm_orc'],
+      },
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 3 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
@@ -382,11 +474,21 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
-        text: 'Hold both weigh-plates until the reading takes (6 rounds)',
-        win: [{ kind: 'round_reached', round: 6 }],
+        // THE TWO-PLATES HOLD its brief specified ("leave either, the reading
+        // voids") — shipped as a plain survive with the plates in the banner
+        // text only. Now: a hero on each plate AT THE SAME TIME before the
+        // clock, with the waves landing while the party is split. Design
+        // 2026-09-01; the shape validated on Lantern e8's underbridge.
+        text: 'Stand on both weigh-plates at once before the reading is voided',
+        win: [{
+          kind: 'units_at_tiles', scope: 'any', simultaneous: true,
+          tiles: [{ x: 1, y: 4 }, { x: 6, y: 4 }],
+        }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
+      // Guards BEHIND the east plate, not on it (Lantern e8's lesson).
+      enemyPlacement: [{ x: 7, y: 4 }, { x: 7, y: 3 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
@@ -406,7 +508,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       ],
       playerPlacement: [{ x: 4, y: 3 }, { x: 4, y: 4 }, { x: 3, y: 3 }, { x: 3, y: 4 }],
       goals: [
-        { slug: 'true_weight', name: 'True Weight', description: 'Hold the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
+        { slug: 'true_weight', name: 'True Weight', description: 'Take the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
       hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
     },
@@ -424,10 +526,11 @@ export const goblinopolisCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Hold the impound yard until dawn (7 rounds)',
-        win: [{ kind: 'round_reached', round: 7 }],
+        text: 'Hold the impound yard until dawn',
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
       },
       enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder'],
+      enemiesByDifficulty: { easy: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout'] },
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 4 }, { x: 7, y: 5 }],
       waves: [
         {
@@ -451,7 +554,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'held_the_yard', name: 'Held the Yard', description: 'Survive with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
+      // Survive cells are scale-inert; the clock above is the tier lever.
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.00, nightmare: 1.05 },
     },
 
     // e9 — The Audit (boss). MID-CAMPAIGN, deliberately: Snagg is the
@@ -489,33 +593,50 @@ export const goblinopolisCampaign: CampaignDefinition = {
         theme: 'town',
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 3, y: 0 }, { x: 4, y: 7 }],
       },
-      objective: {
-        text: 'Keep the bell above the water (7 rounds)',
-        win: [{ kind: 'round_reached', round: 7 }],
+      // PROTECT, not survive [2026-09-01]. As a survive this was a 90% walkover
+      // that ended as a kill-all in half its games — e8 again with looters, and
+      // no water. Now the bell-wagon sits in the rising street and the looters
+      // want IT: the party survives easily; the bell does not unless it is
+      // screened. Distinct from e2 (route) and e8 (the party survives).
+      allies: {
+        wagon: {
+          name: 'The Bell-Wagon', baseClass: 'fighter',
+          // 140 -> 200 after R2 (ranged 25%, "your charge has fallen" x45):
+          // the A5 rule — a defenceless VIP wants boss-tier HP for its tier.
+          maxHealth: 200, armorClass: 11, movementRange: 0,
+          abilities: [],
+          behavior: { mode: 'hold' },
+          placement: { x: 4, y: 4 },
+        },
       },
-      enemies: ['wet_boot_looter', 'wet_boot_looter', 'bellrunner', 'mudboot_bruiser'],
+      objective: {
+        text: 'Keep the bell above the water until the street drains',
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
+        loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
+      },
+      enemies: ['flood_looter', 'flood_looter', 'bellrunner', 'mudboot_bruiser'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 2 }, { x: 6, y: 5 }, { x: 1, y: 5 }],
       waves: [
         {
-          enemies: ['wet_boot_looter', 'wet_boot_looter'],
+          enemies: ['flood_looter', 'flood_looter'],
           placement: [{ x: 0, y: 4 }, { x: 7, y: 3 }],
           trigger: { on: 'round', round: 3 },
         },
         {
-          enemies: ['bellrunner', 'wet_boot_looter'],
+          enemies: ['bellrunner', 'flood_looter'],
           placement: [{ x: 7, y: 5 }, { x: 0, y: 2 }],
           trigger: { on: 'round', round: 5 },
           difficulties: ['hard', 'nightmare'],
         },
         // A survive objective barely feels scale (see unlitbeacon e9's notes),
         // so 100/100/92% at easy/medium/hard is fixed with BODIES.
-        { enemies: ['wet_boot_looter'], placement: [{ x: 3, y: 6 }], trigger: { on: 'round', round: 2 } },
+        // The round-2 single looter at (3,6) — adjacent to the wagon — is gone.
       ],
-      playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
+      playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 5 }, { x: 4, y: 5 }],
       goals: [
         { slug: 'above_the_water', name: 'Above the Water', description: 'Nobody lost to the flood.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.00, nightmare: 1.05 },
     },
 
     // e11 — The Stair of Stamps (escape). Up the tower's switchback with the
@@ -541,13 +662,16 @@ export const goblinopolisCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 5, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
       waves: [
         {
-          enemies: ['bellrunner', 'wet_boot_looter', 'mudboot_bruiser'],
-          placement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 4 }],
+          // Flanks, two bodies [2026-09-01]: three spawns on the party's own
+          // start tiles put a bruiser on the back rank of every ranged comp
+          // (32% at medium). The stair is still watched from below.
+          enemies: ['bellrunner', 'wet_boot_looter'],
+          placement: [{ x: 1, y: 1 }, { x: 1, y: 6 }],
           trigger: { on: 'round', round: 2 },
         },
         // An escape is won by ARRIVING, so scale is a weak lever — the stair
         // read 100/92/86/84% on it. A second pursuit is the honest dial.
-        { enemies: ['kettlehelm_orc', 'bluecap_pathfinder'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 4 } },
+        { enemies: ['kettlehelm_orc', 'mudboot_bruiser'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 4 } },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
@@ -567,16 +691,25 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }, { x: 6, y: 3 }],
       },
       objective: {
-        text: 'Ring the flood-bell before the crest arrives (8 rounds)',
+        text: 'Ring the flood-bell before the crest arrives',
         win: [{ kind: 'units_at_tiles', scope: 'main', tiles: [{ x: 7, y: 4 }] }],
-        loss: [{ kind: 'round_reached', round: 8 }],
+        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, nightmare: 7 } }],
       },
       enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder', 'sparkcap_slinger'],
-      enemyPlacement: [{ x: 6, y: 4 }, { x: 5, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 2 }],
+      enemiesByDifficulty: { easy: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout', 'bluecap_scout'] },
+      // Warden off the rope [2026-09-01]: at (6,4) an immovable stood between
+      // the hero and the one goal tile — a corridor plug (BEATS §2 #4), and
+      // balanced read 23% "the deadline passed". He keeps the middle now; the
+      // shooters flank the rope and pin/burn whoever runs for it.
+      enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 3 }, { x: 7, y: 6 }, { x: 7, y: 1 }],
       waves: [
         {
+          // Behind, not in the lane [2026-09-01]: at (4,3)/(4,5) the r3 wave
+          // landed square in the hero's only path with five rounds left —
+          // melee 33% / balanced 18% at medium, "the deadline passed". The
+          // chase now comes up the avenue behind the party, as the crest does.
           enemies: ['bellrunner', 'clerk_of_stamps'],
-          placement: [{ x: 4, y: 3 }, { x: 4, y: 5 }],
+          placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }],
           trigger: { on: 'round', round: 3 },
         },
         // ⚠ MOVED OFF THE GOAL. This wave used to drop two bodies at (7,3) and

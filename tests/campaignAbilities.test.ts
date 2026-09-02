@@ -34,7 +34,7 @@ describe('A6 — campaign ability merge', () => {
 
   it('build exposes campaignAbilities and a custom kit reaches the unit', () => {
     const c = clone();
-    c.abilities = { bone_rake: boneRake };
+    c.abilities = { ...c.abilities, bone_rake: boneRake };
     const firstKey = c.encounters[encKey()].enemies[0];
     c.enemies[firstKey].abilities = ['bone_rake'];
     c.enemies[firstKey].artKey = 'skeleton';
@@ -48,7 +48,7 @@ describe('A6 — campaign ability merge', () => {
 
   it('a custom-kit enemy can actually cast its campaign ability', () => {
     const c = clone();
-    c.abilities = { bone_rake: boneRake };
+    c.abilities = { ...c.abilities, bone_rake: boneRake };
     const e = c.encounters[encKey()];
     const firstKey = e.enemies[0];
     c.enemies[firstKey].abilities = ['bone_rake'];
@@ -105,9 +105,17 @@ describe('A6 — build-time validation', () => {
 });
 
 describe('A6 — arena inertness', () => {
-  it('shipping campaigns build unchanged: no campaignAbilities, no artKey', () => {
+  // Lantern carries campaign abilities since the 2026-09-01 redesign (it was
+  // the last campaign without any). The inertness claim is about the ARENA:
+  // the engine's own ability map never learns a campaign slug, and a campaign
+  // that reskins by chassis (Lantern) puts no artKey on its units.
+  it('the arena ability map never contains a campaign slug', () => {
+    const base = buildAbilityMap();
+    for (const slug of Object.keys(lanternCampaign.abilities ?? {})) expect(base.has(slug)).toBe(false);
+  });
+  it('a campaign build exposes exactly its own abilities, and chassis-art campaigns carry no artKey', () => {
     const b = buildEncounterState(lanternCampaign, encKey(), party, choices, 1, 'medium', 'H', 'E');
-    expect(b.campaignAbilities).toBeNull();
+    expect(Object.keys(b.campaignAbilities ?? {}).sort()).toEqual(Object.keys(lanternCampaign.abilities ?? {}).sort());
     expect(b.state.units.every((u) => u.artKey === undefined)).toBe(true);
   });
 });

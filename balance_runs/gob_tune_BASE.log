@@ -1,0 +1,43 @@
+Tuning The Bell of Goblinopolis — 60 games/party/step, 7 steps
+
+e1   easy       1.05 -> 1.20  mean  87% [ 80%, 95%]    m: 97% r: 65% b:100%
+e1   medium     1.28 -> 1.28  mean  71% [ 65%, 80%]    m: 92% r: 25% b: 95%  ⚠ below floor: ranged
+e1   hard       1.38 -> 1.54  mean  56% [ 45%, 65%]    m: 82% r:  5% b: 82%  ⚠ below floor: ranged
+e1   nightmare  1.51 -> 1.76  mean  34% [ 25%, 45%]    m: 58% r:  0% b: 45%
+
+e2   easy       0.95 -> 0.86  mean  85% [ 80%, 95%]    m:100% r: 58% b: 97%  ⚠ below floor: ranged
+e2   medium     1.12 -> 1.02  mean  73% [ 65%, 80%]    m: 98% r: 25% b: 97%  ⚠ below floor: ranged
+e2   hard       1.12 -> 1.59  mean  55% [ 45%, 65%]    m: 77% r:  7% b: 82%  ⚠ below floor: ranged
+e2   nightmare  1.25 -> 1.57  mean  35% [ 25%, 45%]    m: 38% r:  0% b: 67%
+
+e3   easy       0.75 -> 0.65  mean  85% [ 80%, 95%]    m:100% r:100% b: 55%  ⚠ below floor: balanced
+e3   medium     0.85 -> 0.84  mean  72% [ 65%, 80%]    m: 90% r: 88% b: 37%  ⚠ below floor: balanced
+e3   hard       0.95 -> 0.98  mean  56% [ 45%, 65%]    m: 65% r: 85% b: 18%
+e3   nightmare  1.05 -> 0.98  mean  32% [ 25%, 45%]    m: 50% r: 35% b: 10%
+
+e4   easy       0.99 -> 0.82  mean  84% [ 80%, 95%]    m: 52% r:100% b:100%  ⚠ below floor: melee
+e4   medium     1.11 -> 1.15  mean  74% [ 65%, 80%]    m: 52% r: 87% b: 85%
+e4   hard       1.27 -> 1.31  mean  56% [ 45%, 65%]    m: 23% r: 72% b: 73%
+e4   nightmare  1.27 -> 1.33  mean  35% [ 25%, 45%]    m: 10% r: 57% b: 38%
+
+e5   easy       0.98 -> 1.02  mean  87% [ 80%, 95%]    m: 80% r: 98% b: 83%
+e5   medium     1.10 -> 1.06  mean  74% [ 65%, 80%]    m: 73% r: 77% b: 73%
+e5   hard       1.22 -> 1.20  mean  59% [ 45%, 65%]    m: 42% r: 73% b: 62%
+e5   nightmare  1.22 -> 1.13  mean  42% [ 25%, 45%]    m: 18% r: 87% b: 20%
+
+e6   easy       0.80 -> 0.78  mean  87% [ 80%, 95%]    m: 70% r:100% b: 90%
+e6   medium     0.86 -> 0.84  mean  71% [ 65%, 80%]    m: 50% r:100% b: 63%
+e6   hard       0.92 -> 0.95  mean  52% [ 45%, 65%]    m: 30% r: 83% b: 43%
+e6   nightmare  1.00 -> 0.89  mean  34% [ 25%, 45%]    m: 23% r: 72% b:  8%
+
+e7   easy       0.90 -> 1.88  mean  87% [ 80%, 95%]    m: 75% r: 85% b:100%
+e7   medium     1.05 -> 0.84  mean  73% [ 65%, 80%]    m: 58% r: 93% b: 68%
+e7   hard       1.05 -> 0.98  mean  56% [ 45%, 65%]    m: 32% r: 63% b: 72%
+e7   nightmare  1.10 -> 1.02  mean  36% [ 25%, 45%]    m: 10% r: 45% b: 52%
+
+e8   easy       0.85 -> 0.89  mean  90% [ 80%, 95%]    m: 82% r: 93% b: 95%
+e8   medium     0.97 -> 1.06  mean  73% [ 65%, 80%]    m: 97% r: 50% b: 72%
+e8   hard       0.97 -> 0.87  mean  41% [ 45%, 65%] ⚠  m: 33% r: 45% b: 45%
+e8   nightmare  1.05 -> 0.91  mean  37% [ 25%, 45%]    m: 40% r: 42% b: 30%
+
+e9   easy       0.93 -> 1.09  mean  89% [ 80%, 95%]    m: 82% r:100% b: 85%
