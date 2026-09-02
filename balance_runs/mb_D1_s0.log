@@ -39,3 +39,10 @@ content a4b5660a9a16
   e8 nightmare  mean  45%  median  40%  walls 5%  
   e9 easy       mean  92%  median 100%  walls 0%  ⚠
   e9 medium     mean  72%  median  76%  walls 5%  
+  e9 hard       mean  14%  median   8%  walls 60%  ⚠
+  e9 nightmare  mean   2%  median   0%  walls 89%  ⚠
+  e10 easy       mean 100%  median 100%  walls 0%  ⚠
+  e10 medium     mean  99%  median 100%  walls 0%  ⚠
+  e10 hard       mean  98%  median 100%  walls 0%  ⚠
+  e10 nightmare  mean  87%  median  92%  walls 0%  ⚠
+  e11 easy       mean 100%  median 100%  walls 0%  ⚠

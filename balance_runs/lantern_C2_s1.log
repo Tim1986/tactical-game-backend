@@ -1,3 +1,22 @@
 The Lantern of Elmsworth — shard 2/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
-content 35cf51a62da7
+content 59f7399ed858
 
+  e1 easy       mean  95%  median  96%  walls 0%  
+  e1 medium     mean  91%  median  92%  walls 0%  ⚠
+  e1 hard       mean  51%  median  52%  walls 0%  
+  e1 nightmare  mean  31%  median  28%  walls 8%  
+  e2 easy       mean  94%  median  96%  walls 0%  
+  e2 medium     mean  80%  median  84%  walls 0%  
+  e2 hard       mean  70%  median  76%  walls 0%  
+  e2 nightmare  mean  45%  median  44%  walls 4%  
+  e3 easy       mean  96%  median 100%  walls 0%  ⚠
+  e3 medium     mean  72%  median  76%  walls 4%  
+  e3 hard       mean  81%  median  84%  walls 0%  ⚠
+  e3 nightmare  mean  10%  median   8%  walls 43%  ⚠
+  e4 easy       mean  90%  median  96%  walls 1%  ⚠
+  e4 medium     mean  68%  median  76%  walls 8%  
+  e4 hard       mean  37%  median  28%  walls 12%  
+  e4 nightmare  mean  11%  median   4%  walls 57%  ⚠
+  e5 easy       mean  89%  median  92%  walls 0%  
+  e5 medium     mean  68%  median  68%  walls 4%  
+  e5 hard       mean  55%  median  56%  walls 5%  

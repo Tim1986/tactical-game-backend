@@ -36,3 +36,12 @@ content f7c8a683ec99
   e9 easy       mean  97%  median 100%  walls 0%  ⚠
   e9 medium     mean  91%  median  96%  walls 0%  ⚠
   e9 hard       mean  86%  median  88%  walls 0%  ⚠
+  e9 nightmare  mean  70%  median  72%  walls 0%  ⚠
+  e10 easy       mean 100%  median 100%  walls 0%  ⚠
+  e10 medium     mean  99%  median 100%  walls 0%  ⚠
+  e10 hard       mean  96%  median 100%  walls 0%  ⚠
+  e10 nightmare  mean  95%  median 100%  walls 0%  ⚠
+  e11 easy       mean  96%  median 100%  walls 1%  ⚠
+  e11 medium     mean  91%  median 100%  walls 3%  ⚠
+  e11 hard       mean  82%  median  84%  walls 0%  ⚠
+  e11 nightmare  mean  71%  median  80%  walls 5%  ⚠

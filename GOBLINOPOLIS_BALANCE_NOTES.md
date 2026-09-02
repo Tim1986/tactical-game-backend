@@ -207,3 +207,14 @@ r4 bruiser wave is nightmare-only, scale flat; e8 clock 7 at hard+ (was 8),
 scale flat; e10 hard clock 7; e11 gains a hard+ r3 wave from above and the
 tuner's ladder; e12 nightmare bimodal accepted (fast heroes win); e4 room 1
 loses the Clerk of Stamps (the expose was the melee residual). Confirm C1 running.
+
+## 10. C1 confirm (150×25) + TUNE-C1 — 2026-09-02
+`gob_C1_merged.json`: 18/48 flagged, and NO TOO HARD cell remains — e3/e6/e7/e8
+top tiers all in band after the wave/clock changes. What is left: TOO EASY at
+easy/medium on the objective cells (e6 race, e7 hold, e8 siege, e2 escort —
+floors hold, accepted by doctrine), the fight cells the three-party tuner
+undershoots against the build space (e4, e12 easy/medium — up by hand), the
+finale approach e11 soft at every tier (ladder up), and one real wall: e9
+nightmare 4% median / 53% walled at 1.57 — Snagg's Red Tape + Stalwart brick
+the bottom half of comps at that pool; nightmare now sits on hard's 1.45.
+C2 running.

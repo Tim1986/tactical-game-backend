@@ -406,7 +406,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
         { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
       // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9. Melee residual (18-27) is the Clerk of Stamps' expose in room 1 — swapped for a scout.
-      hpScaleOverride: { easy: 0.76, medium: 0.84, hard: 1.15, nightmare: 1.19 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; GOBLINOPOLIS_BALANCE_NOTES §10. Easy/medium undershot by the three-party tuner (90/91 medians).
+      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.15, nightmare: 1.19 },
     },
 
     // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
@@ -615,7 +616,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
         { slug: 'audited_him', name: 'Audited Him', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
       // TUNE-D1: boss walkover at easy-hard (bossViability p75 92 at hard). Nightmare is selective by design.
-      hpScaleOverride: { easy: 1.04, medium: 1.30, hard: 1.43, nightmare: 1.57 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; GOBLINOPOLIS_BALANCE_NOTES §10. Nightmare 1.57 read 4% median with 53% walled — Red Tape + Stalwart at that pool bricks the bottom half; sits on hard.
+      hpScaleOverride: { easy: 1.04, medium: 1.30, hard: 1.43, nightmare: 1.45 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -717,7 +719,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
         { slug: 'up_the_stair', name: 'Up the Stair', description: 'Get everyone up with nobody lost.', check: { kind: 'no_party_deaths' } },
       ],
       // TUNE-D1: escape read 96/88 at hard/nightmare — a third wave at hard+ (below), and the tuner's ladder.
-      hpScaleOverride: { easy: 0.98, medium: 1.43, hard: 1.60, nightmare: 1.75 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; GOBLINOPOLIS_BALANCE_NOTES §10. Escape read 97/91/75/77 — floors hold, but four TOO EASY tiers on the finale's approach is texture worth buying back.
+      hpScaleOverride: { easy: 1.20, medium: 1.60, hard: 1.80, nightmare: 2.00 },
     },
 
     // e12 — Ring It (race). THE FINALE, and not a boss: the crest is coming up
@@ -778,7 +781,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
         { slug: 'rung_on_time', name: 'Rung On Time', description: 'Ring it by round 7.', check: { kind: 'win_by_round', round: 7 } },
       ],
       // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9. Nightmare bimodal (fast heroes win) — selectivity, by doctrine.
-      hpScaleOverride: { easy: 0.87, medium: 0.98, hard: 1.00, nightmare: 1.00 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; GOBLINOPOLIS_BALANCE_NOTES §10. Easy/medium undershot (96/81 medians); hard/nightmare in band.
+      hpScaleOverride: { easy: 1.05, medium: 1.10, hard: 1.10, nightmare: 1.10 },
     },
   },
 
