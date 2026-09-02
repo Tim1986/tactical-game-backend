@@ -249,24 +249,38 @@ export function buildCampaignPlayerInstance(
   };
 }
 
-/** Opening chill (owner 2026-09-02): on EASY and MEDIUM, no starting enemy may
- *  freeze in round 1. A frozen unit skips its round-1 commit, so an opening
- *  multi-freeze (a tester ate 2-3) locks the player out of picking their own
- *  initiative order before the game has begun. Every STARTING enemy ability
- *  that applies FROZEN begins on cooldown 1 — ready from round 2. Hard and
- *  nightmare keep the cold open. Wave/room spawns are exempt: they arrive
- *  after the order is set, and a spawn-time cooldown would silently nerf them
- *  a full turn beyond this rule's intent.
+/** Opening chill (owner 2026-09-02): on EASY and MEDIUM, at most ONE player
+ *  unit can be frozen in round 1. A frozen unit skips its round-1 commit, so
+ *  an opening multi-freeze (a tester ate 2-3) locks the player out of picking
+ *  their own initiative order before the game has begun. Concretely, across
+ *  the STARTING enemy roster:
+ *   - every AoE frozen-applier (blizzard) starts on cooldown 1 — an area
+ *     freeze can catch 2-3 units by itself;
+ *   - the FIRST single-target frozen-applier (freeze, cold_snap) keeps its
+ *     round-1 opener — one frozen unit is pressure, not a lockout — and every
+ *     single-target freezer after it starts on cooldown 1.
+ *  Hard and nightmare keep the cold fully open. Wave/room spawns are exempt:
+ *  they arrive after the order is set, and a spawn-time cooldown would
+ *  silently nerf them a full turn beyond this rule's intent.
  *  Lookup is against DEFAULT_ABILITIES: every frozen-applier in the registry
  *  today (freeze, blizzard, cold_snap) is a base ability; a campaign-scoped
- *  freezer would need this check extended to campaignAbilities. */
-function applyOpeningChill(inst: UnitInstance, difficulty: CampaignDifficulty): void {
+ *  freezer would need this check extended to campaignAbilities.
+ *  `state` is per-encounter: pass a fresh { singleKept: false } for each
+ *  starting roster. */
+function applyOpeningChill(
+  inst: UnitInstance,
+  difficulty: CampaignDifficulty,
+  state: { singleKept: boolean },
+): void {
   if (difficulty !== 'easy' && difficulty !== 'medium') return;
   for (const slug of inst.abilities) {
     const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
     const freezes = def?.effects?.some((e) =>
       e.type === 'apply_status' && (e as { statusSlug?: string }).statusSlug === 'frozen');
-    if (freezes) inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1);
+    if (!freezes) continue;
+    const isAoe = (def!.areaRadius ?? 0) > 0;
+    if (!isAoe && !state.singleKept) { state.singleKept = true; continue; }
+    inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1);
   }
 }
 
@@ -636,11 +650,12 @@ export function buildEncounterState(
   const allyIds = allyUnits.map((u) => u.instanceId);
 
   const enemyIdsByKey = new Map<string, string[]>();
+  const openingChillState = { singleKept: false };
   const enemyUnits = effEnemies.map((key, i) => {
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Unknown enemy key: ${key}`);
     const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, effEnemyPlacement[i], difficulty, hpScale, effNoSpecials);
-    applyOpeningChill(inst, difficulty);
+    applyOpeningChill(inst, difficulty, openingChillState);
     unitNames[inst.instanceId] = enemy.name;
     enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
     return inst;

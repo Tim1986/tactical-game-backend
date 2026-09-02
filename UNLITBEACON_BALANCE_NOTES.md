@@ -2024,3 +2024,38 @@ unlitbeacon e10: easy 96 (escort easy runs high — accepted) · medium 80 / 3%
 walls ✓ (was 56 / 22% at the old numbers) · nightmare 28 ✓. lantern e10
 medium 64 ✓. moonberry e2 medium 92 (early tier, floors hold — accepted).
 The stated 2-tile rule meets balance everywhere it applies. Closed.
+
+## [TESTER-0902] Playtest report fixes (2026-09-02, easy run)
+
+Owner's tester played Unlit Beacon on easy. Balance-relevant outcomes:
+
+- **e12 vs e11 inversion (easy)**: she found the Adjutant harder than the
+  finale, and won e12 by just killing the Marshal (never touched the
+  standard). Probe confirmed: e11 easy median 92 / solve 75 / 8% walls (OK);
+  e12 easy median 100 / solve 95 (TOO EASY). e12 easy raised 1.72 -> 1.95;
+  re-probe pending below. Medium+ untouched (not reported, previously walked).
+- **Opening chill (engine-wide, easy+medium)**: starting enemies' frozen
+  appliers (freeze/blizzard/cold_snap) now begin on cooldown 1 — she had 2-3
+  units frozen in round 1 and couldn't pick her initiative order. Wave/room
+  spawns exempt. This softens round 1 of every easy/medium freeze cell
+  (e5/e6/e7/e8 here, plus other campaigns' witches); direction is
+  owner-preferred (generous easy). e7 re-probe pending below; other cells
+  re-walk on the next battery pass.
+- Non-balance fixes shipped alongside (client): charge no longer blocked in
+  cleared multi-room floors (auto-end gating), Tam's turns now appear in the
+  combat log, push displacement slides instead of teleporting, objective text
+  never truncates, door-lock rule stated on the placement page + top of log.
+  e3 objective/preText rewritten to name the actual win condition.
+
+### [TESTER-0902] addendum — opening chill scoped, e7 door guard, final rungs
+- Opening chill v2: AoE freezers (blizzard) always chilled on easy/medium;
+  only the FIRST single-target freezer (freeze/cold_snap) keeps its round-1
+  opener, the rest chilled. Guarantees at most one unit frozen in round 1.
+  Sealed Deep's lone-witch cells are untouched by v2 (their D1/C1 rungs
+  stand); the broad v1 had drifted SD e6/e10/e11 medium out of band.
+- e7: easy/medium gained a round-1 stalwart honor_guard door wave (a race's
+  teeth as a BODY once the round-1 area freeze was gone; scale and clock both
+  measured too weak). Clock stays 6 everywhere. Probes: easy OK, medium OK
+  (75/60/10) under full chill; re-probed under v2 below.
+- e12: easy 1.72 -> 2.05, medium 2.01 -> 2.45 (chill + tester-confirmed
+  inversion vs e11). Probes under v2 recorded in this file's final table.

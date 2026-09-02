@@ -63,6 +63,19 @@ This file is the spec. Per-campaign working notes (measurements, passes) live in
 13. **The stopping rule:** a cell is done when it passes, or misses by ≤5 wall
     points, or is cliff-locked and documented. Do not re-certify to confirm.
 
+14. **Unique party setups are a design axis (owner, 2026-09-02).** Reacting to
+    Unlit Beacon e3 (Two Bridges), the owner called a genuinely split-party
+    setup "thematically appropriate, makes the encounter more unique" and asked
+    us to play with more unique party setup options in future encounter design.
+    Today e3 only splits by objective (any unit on each bridge tile) — the
+    deployment itself is free. Candidate mechanics for future campaigns:
+    forced split deployments (two placement zones the party must divide
+    between), a lone-hero opening with reinforcements arriving as a wave, a
+    fixed forward picket (one unit must start in the enemy's half), and
+    formation constraints (e.g. no two units adjacent at start). Each needs
+    the placement picker to communicate it, and each is a comp-filter risk —
+    walk archetype spreads before certifying.
+
 Palette rule (CAMPAIGNS.md §8): ≥4 types, never two consecutive alike, two
 kill-alls must differ in carve AND composition.
 

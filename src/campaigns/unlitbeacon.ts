@@ -786,6 +786,16 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         easy: ['winters_voice', 'winters_voice_quiet', 'blizzard_wisp', 'blizzard_wisp'],
       },
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 6 }, { x: 4, y: 2 }, { x: 4, y: 5 }],
+      // [TESTER-0902] Opening chill took easy/medium's round-1 freeze away and
+      // both tiers went to 100% — the runner simply outran a threat that no
+      // longer existed (move 3 + Charge 3 clears most of the board in round 1).
+      // A race's teeth on these tiers is now a BODY, not a freeze: an Honor
+      // Guard (stalwart — can't be shoved off the doorstep) stands the door
+      // from round 1. Hard/nightmare keep their round-1 freezes and pass
+      // unchanged, so they don't get the guard on top.
+      waves: [
+        { enemies: ['honor_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 1 }, difficulties: ['easy', 'medium'] },
+      ],
       playerPlacement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       // Re-walked against the 6-round clock AND the objective-aware defenders
       // (both landed 2026-08-24, and together they roughly halved this
@@ -1136,7 +1146,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
             // ⚠ RE-WALKED for CAMPAIGN_GROWTH (Gate 1, §4 campaign 1). The party at
       // L6+ now carries up to +2 basic damage/turn and +9 max HP, so every row
       // below the anchor's line had to rise. Pre-curve values in git.
-      hpScaleOverride: { easy: 1.72, medium: 2.01, hard: 2.49, nightmare: 2.56 },  // boss, dual-win
+      hpScaleOverride: { easy: 2.05, medium: 2.45, hard: 2.49, nightmare: 2.56 },  // boss, dual-win — easy raised 1.72->1.95 (tester 2026-09-02: finale read EASIER than e11; probe: median 100%, solve 95%)
     },
   },
 

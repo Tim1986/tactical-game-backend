@@ -200,11 +200,17 @@ describe('opening chill (owner 2026-09-02)', () => {
         .map((s) => u.cooldowns[s] ?? 0));
   };
 
-  it('easy/medium: every starting freeze-applier begins on cooldown 1 (no round-1 freeze)', () => {
+  it('easy/medium: AoE freezers chilled, only the FIRST single-target freezer keeps round 1', () => {
     for (const diff of ['easy', 'medium'] as const) {
       const cds = freezerCds(diff);
       expect(cds.length).toBeGreaterThan(0);
-      for (const cd of cds) expect(cd).toBe(1);
+      // At most one round-1-ready freezer across the starting roster.
+      expect(cds.filter((cd) => cd === 0).length).toBeLessThanOrEqual(1);
+      // The wisps' blizzard (AoE) is always chilled; verify via a direct build.
+      const { state } = buildEncounterState(ub, 'e7', party as any, choices as any, ub.encounters.e7.level, diff, 'h', 'e');
+      for (const u of state.units.filter((x) => x.ownerPlayerId === 'e' && x.abilities.includes('blizzard'))) {
+        expect(u.cooldowns['blizzard']).toBe(1);
+      }
     }
   });
 
