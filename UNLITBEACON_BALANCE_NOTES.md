@@ -2018,3 +2018,9 @@ with a follow escort (unlitbeacon e10, lantern e10, moonberry e2) and
 nothing else. e10 re-tuned for the stated rule: Tam 70→80 HP, scale
 1.50/1.79→1.35/1.60 at easy/medium (first read at the old numbers: medium 56
 median / 22% walled). Verification runs in balance_runs/follow_verify.log.
+
+### FOLLOW2 verification (100 builds x 25, 2026-09-02)
+unlitbeacon e10: easy 96 (escort easy runs high — accepted) · medium 80 / 3%
+walls ✓ (was 56 / 22% at the old numbers) · nightmare 28 ✓. lantern e10
+medium 64 ✓. moonberry e2 medium 92 (early tier, floors hold — accepted).
+The stated 2-tile rule meets balance everywhere it applies. Closed.
