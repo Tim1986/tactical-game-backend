@@ -482,13 +482,19 @@ export const goblinopolisCampaign: CampaignDefinition = {
         text: 'Stand on both weigh-plates at once before the reading is voided',
         win: [{
           kind: 'units_at_tiles', scope: 'any', simultaneous: true,
-          tiles: [{ x: 1, y: 4 }, { x: 6, y: 4 }],
+          // Kit probe: with both plates two steps from a central start the hold
+          // was won in THREE turns. The party now starts west: one hero takes
+          // the near plate at once, the other three fight to the far one.
+          tiles: [{ x: 0, y: 4 }, { x: 6, y: 4 }],
         }],
         loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
-      // Guards BEHIND the east plate, not on it (Lantern e8's lesson).
-      enemyPlacement: [{ x: 7, y: 4 }, { x: 7, y: 3 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
+      // The Kettlehelm stands ON the east plate. He is not immovable — and that
+      // is the counterplay: PUSH him off it (Shield Bash, Shockwave, Fear)
+      // rather than chewing through Thorns. Uncontested plates were taken in
+      // three turns flat (kit probe); a plate somebody is standing on is a hold.
+      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
@@ -506,7 +512,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
           difficulties: ['hard', 'nightmare'],
         },
       ],
-      playerPlacement: [{ x: 4, y: 3 }, { x: 4, y: 4 }, { x: 3, y: 3 }, { x: 3, y: 4 }],
+      playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
       goals: [
         { slug: 'true_weight', name: 'True Weight', description: 'Take the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],

@@ -48,3 +48,80 @@ content da302af7819c
   e12 easy       mean 100%  median 100%  walls 0%  ⚠
   e12 medium     mean  97%  median 100%  walls 0%  ⚠
   e12 hard       mean  92%  median  96%  walls 0%  ⚠
+  e12 nightmare  mean  78%  median  80%  walls 0%  ⚠
+
+shard done in 43.7 min
+
+SHARD 1/2 (partial — merge with the other shard for the real verdict)
+
+enc  lvl difficulty  builds  median   solve%  need   ceil  walled  verdict
+e1   L1  easy           75   96%    91%>=80%   65%  <=100%    3%  OK  [early]
+e1   L1  medium         75   92%    85%>=65%   50%  <= 90%    3%  ⚠ TOO EASY  [early]
+e1   L1  hard           75   60%    68%>=45%   35%  <= 80%    5%  OK  [early]
+e1   L1  nightmare      75   36%    49%>=40%   20%  <= 60%   15%  OK  [early]
+e2   L2  easy           75  100%    77%>=80%   65%  <=100%    0%  OK  [early]
+e2   L2  medium         75   84%    67%>=65%   50%  <= 90%    0%  OK  [early]
+e2   L2  hard           75   68%    71%>=45%   35%  <= 80%    1%  OK  [early]
+e2   L2  nightmare      75   56%    60%>=40%   20%  <= 60%    7%  OK  [early]
+e3   L3  easy           75   96%    72%>=80%   50%  <= 95%    4%  ⚠ TOO EASY
+e3   L3  medium         75   52%    35%>=65%   35%  <= 80%   21%  ⚠ TOO HARD+WALLS
+       └ walled   8%  cleric(ward) + wizard(freeze) + ranger(pinning) + fighter(shield_bash)
+       └ walled  12%  cleric(ward) + wizard(blizzard) + rogue(expose) + warlock(grasp)
+       └ walled  16%  cleric(purify) + warlock(grasp) + wizard(freeze) + barbarian(shockwave)
+e3   L3  hard           75    0%     0%>=45%   20%  <= 65%   99%  ⚠ TOO HARD+WALLS
+       └ walled   0%  rogue(assassinate) + cleric(ward) + ranger(pinning) + barbarian(shockwave)
+       └ walled   0%  wizard(cold_snap) + sorcerer(ignite) + cleric(heal) + rogue(dagger_toss)
+       └ walled   0%  warlock(grasp) + rogue(assassinate) + cleric(heal) + sorcerer(ffh)
+e3   L3  nightmare      75    0%     0%>=40%   10%  <= 45%   97%  ⚠ TOO HARD+WALLS
+       └ walled   0%  ranger(longshot) + barbarian(whirlwind) + fighter(shield_bash) + wizard(blizzard)
+       └ walled   0%  sorcerer(ignite) + barbarian(shockwave) + warlock(grasp) + wizard(blizzard)
+       └ walled   0%  sorcerer(ffh) + warlock(drain) + ranger(piercing) + wizard(cold_snap)
+e4   L4  easy           75  100%    99%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e4   L4  medium         75  100%    93%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e4   L4  hard           75   92%    99%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e4   L4  nightmare      75   68%    81%>=40%   10%  <= 45%    0%  ⚠ TOO EASY
+e5   L5  easy           75   80%    60%>=80%   50%  <= 95%    8%  OK
+e5   L5  medium         75   36%    15%>=65%   35%  <= 80%   33%  ⚠ TOO HARD+WALLS
+       └ walled  16%  barbarian(whirlwind/vengeful) + wizard(freeze/channeler) + fighter(second_wind/thorns) + warlock(drain/opportunist)
+       └ walled  24%  warlock(grasp/stalwart) + barbarian(roar/vengeful) + wizard(cold_snap/opportunist) + sorcerer(flame_jet/stalwart)
+       └ walled  24%  warlock(drain/stalwart) + wizard(freeze/opportunist) + rogue(dagger_toss/swift) + ranger(longshot/stalwart)
+e5   L5  hard           75    4%     1%>=45%   20%  <= 65%   65%  ⚠ TOO HARD+WALLS
+       └ walled   0%  sorcerer(ffh/undying) + ranger(pinning/opportunist) + fighter(concussive/thorns) + warlock(grasp/opportunist)
+       └ walled   0%  warlock(drain/stalwart) + rogue(expose/vengeful) + fighter(concussive/stalwart) + sorcerer(flame_jet/opportunist)
+       └ walled   4%  sorcerer(flame_jet/stalwart) + rogue(expose/opportunist) + cleric(purify/warded) + barbarian(shockwave/thorns)
+e5   L5  nightmare      75    0%     0%>=40%   10%  <= 45%   72%  ⚠ TOO HARD+WALLS
+       └ walled   0%  fighter(shield_bash/undying) + warlock(grasp/opportunist) + rogue(assassinate/vengeful) + wizard(cold_snap/channeler)
+       └ walled   0%  cleric(purify/undying) + barbarian(roar/thorns) + sorcerer(ffh/opportunist) + wizard(freeze/opportunist)
+       └ walled   0%  sorcerer(ignite/stalwart) + barbarian(roar/thorns) + ranger(piercing/stalwart) + wizard(cold_snap/channeler)
+e6   L5  easy           75  100%   100%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e6   L5  medium         75  100%    97%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e6   L5  hard           75   92%    96%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e6   L5  nightmare      75   76%    83%>=40%   10%  <= 45%    3%  ⚠ TOO EASY
+e7   L6  easy           75   84%    63%>=80%   50%  <= 95%    5%  OK
+e7   L6  medium         75   72%    60%>=65%   35%  <= 80%   13%  OK
+e7   L6  hard           75   52%    56%>=45%   20%  <= 65%   17%  OK
+e7   L6  nightmare      75   52%    60%>=40%   10%  <= 45%   15%  ⚠ TOO EASY
+e8   L7  easy           75  100%    93%>=80%   50%  <= 95%    1%  ⚠ TOO EASY
+e8   L7  medium         75   96%    88%>=65%   35%  <= 80%    3%  ⚠ TOO EASY
+e8   L7  hard           75   60%    71%>=45%   20%  <= 65%    8%  OK
+e8   L7  nightmare      75   36%    48%>=40%   10%  <= 45%    7%  OK
+e9   L8  easy           75  100%    99%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e9   L8  medium         75  100%    99%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e9   L8  hard           75   88%    99%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e9   L8  nightmare      75   72%    88%>=40%   10%  <= 45%    1%  ⚠ TOO EASY
+e10  L9  easy           75  100%    97%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e10  L9  medium         75   92%    84%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e10  L9  hard           75   64%    73%>=45%   20%  <= 65%    1%  OK
+e10  L9  nightmare      75   36%    48%>=40%   10%  <= 45%   11%  OK
+e11  L10 easy           75  100%   100%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e11  L10 medium         75  100%    88%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e11  L10 hard           75   92%    93%>=45%   20%  <= 65%    1%  ⚠ TOO EASY
+e11  L10 nightmare      75   64%    65%>=40%   10%  <= 45%    7%  ⚠ TOO EASY
+e12  L10 easy           75  100%   100%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e12  L10 medium         75  100%   100%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e12  L10 hard           75   96%   100%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e12  L10 nightmare      75   80%    97%>=40%   10%  <= 45%    0%  ⚠ TOO EASY
+
+⚠ 33 cell(s) failing: e1/medium(TOO EASY), e3/easy(TOO EASY), e3/medium(TOO HARD+WALLS), e3/hard(TOO HARD+WALLS), e3/nightmare(TOO HARD+WALLS), e4/easy(TOO EASY), e4/medium(TOO EASY), e4/hard(TOO EASY), e4/nightmare(TOO EASY), e5/medium(TOO HARD+WALLS), e5/hard(TOO HARD+WALLS), e5/nightmare(TOO HARD+WALLS), e6/easy(TOO EASY), e6/medium(TOO EASY), e6/hard(TOO EASY), e6/nightmare(TOO EASY), e7/nightmare(TOO EASY), e8/easy(TOO EASY), e8/medium(TOO EASY), e9/easy(TOO EASY), e9/medium(TOO EASY), e9/hard(TOO EASY), e9/nightmare(TOO EASY), e10/easy(TOO EASY), e10/medium(TOO EASY), e11/easy(TOO EASY), e11/medium(TOO EASY), e11/hard(TOO EASY), e11/nightmare(TOO EASY), e12/easy(TOO EASY), e12/medium(TOO EASY), e12/hard(TOO EASY), e12/nightmare(TOO EASY)
+
+JSON written: balance_runs/lantern_BASE_s0.json

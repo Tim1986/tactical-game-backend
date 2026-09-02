@@ -1,0 +1,14 @@
+The Bell of Goblinopolis — enemy kit usage @ medium, 12 games x 3 parties per encounter
+
+e1   L1   avg 30 turns  
+e2   L2   avg 31 turns  
+e3   L3   avg 37 turns  shield_bash=0.69/game  pinning=0.86/game  ignite=1.00/game
+e4   L4   avg 60 turns  expose=1.19/game  ward=1.00/game  shield_bash=1.00/game
+e5   L5   avg 38 turns  ignite=1.92/game  shockwave=0.28/game
+e6   L5   avg 35 turns  pinning=0.33/game  shield_bash=0.36/game
+e7   L6   avg 3 turns  shield_bash=0.67/game  shockwave=0.00/game  pinning=0.33/game  expose=0.19/game   ⚠ NEVER CAST: shockwave
+e8   L7   avg 47 turns  impound=0.36/game  shield_bash=1.00/game  pinning=0.33/game  shockwave=0.17/game  ignite=0.89/game  heal=0.00/game   ⚠ NEVER CAST: heal
+e9   L8   avg 47 turns  grasp=0.39/game  red_tape=0.33/game  ward=1.00/game  expose=0.53/game  impound=0.44/game
+e10  L9   avg 42 turns  shockwave=1.00/game
+e11  L10  avg 44 turns  impound=0.33/game  shield_bash=1.36/game  pinning=0.33/game  expose=0.39/game  shockwave=0.03/game
+e12  L10  avg 50 turns  impound=0.33/game  shield_bash=0.69/game  pinning=0.33/game  ignite=1.00/game  expose=0.53/game  shockwave=0.00/game   ⚠ NEVER CAST: shockwave

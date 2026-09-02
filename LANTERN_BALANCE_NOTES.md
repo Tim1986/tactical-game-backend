@@ -27,6 +27,13 @@ UNLITBEACON_BALANCE_NOTES.md [TUNE-POST] is the reference run.
 * `balance_runs/lantern_reasons_medium.log` — campaignSim @ medium, 60 games,
   the MECHANISM histogram: what actually ends each fight.
 
+### 1a-battery. Baseline battery (OLD content, 150×25): **33 of 48 cells fail**
+`balance_runs/lantern_BASE_merged.json`. 24 TOO EASY (e4, e6, e9, e11, e12 at
+every tier; e8/e10 at most), 6 TOO HARD+WALLS (e3 hard/nightmare 0% with 99%
+walled; e5 medium/hard/nightmare 4% with ~70% walled), 3 WALLS. bossViability
+e12: every class p75 100% at hard — the finale was a walkover for everyone.
+This is the number to beat, not the content to tune.
+
 ### 1a. The mechanism histogram (medium) — the design verdict
 
 | enc | palette (claimed) | how it actually ends | verdict |
