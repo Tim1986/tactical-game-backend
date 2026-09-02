@@ -30,3 +30,11 @@ exposed... at hpScale 1.37: a wipe for two comps (all-tier probe running) ·
 e6 race 85/27/97 (ranged walled — the guard line blocks the lanes for
 shooters) · e7 protect 75/97/92 ✓ · e8 53/85/53 · e9 62/63/45 · **e10 rooms
 0/87/62** (melee 0%) · e11 52/98/98 · e12 escape 97 (walkover).
+
+## D2 — full medium read after the sweep pass (60 games) — 2026-09-01
+e1 98/82/90 · e2 82/53/98 ✓ (the escort is threatened now) · e3 83/73/90 ✓ ·
+**e4 38/98/43** → one juggler at medium, recheck 20/98/93 (worse; sweep
+running — the fire lanes vs melee are geometry) · **e5 rooms 50/25/100** ·
+e6 97/80/92 ✓ · e7 75/97/92 ✓ · e8 53/85/53 · e9 62/63/45 (survive, floors
+hold) · e10 rooms 47/100/95 · e11 52/98/98 · e12 98/95/98 (escape — floor
+only; the tuner will not touch it, the clock 9/8/8/7 will).

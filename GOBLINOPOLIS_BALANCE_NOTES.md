@@ -186,3 +186,11 @@ Rechecks after the sweep-backed placements (medium, 40 games):
 e1 95/53/70 ✓ · sd e2 38/95/78 (mean 70) · mb e3 83/73/90 · mb e5 50/20/100
 (from 2/0/72; ranged still soft — tuner) · mb e6 95/80/93 · mb e10 40/100/93
 (from 0/87/62) · sd e3 88/88/88 · sd e8 80/98/98 · sd e11 85/70/95.
+
+## 8. D2 — full medium read after the sweep pass (60 games) — 2026-09-01
+e1 95/62/62 ✓ · e2 88/83/78 · e3 90/78/58 ✓ · **e4 rooms 27/70/88** (melee
+walled — tuner first, it is a fight cell) · e5 50/85/65 ✓ · e6 68/67/75 ✓ ·
+e7 40/77/33 → scale 0.72 (survive floor) · e8 68/70/87 ✓ · e9 93/100/50 ·
+e10 82/57/85 ✓ (the protect bites: "your charge has fallen" x26 for ranged) ·
+e11 88/98/58 · e12 30/57/40 → no pinner at easy/medium + clock 10/9/8/7
+(recheck 90/55/40).

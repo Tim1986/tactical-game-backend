@@ -1,0 +1,33 @@
+moonberry e4 — enemy start-distance sweep, 60 games/party
+player centroid (1,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    57%    7%   95%    70%   88pts   floor:m oob
+-2      hard      32%    2%   88%     7%   87pts   floor:mb oob
+        (mean manhattan gap 7.0; placement 7,3 7,5 7,4 7,6)
+
+-1      medium    69%    7%  100%   100%   93pts   floor:m
+-1      hard      49%    2%   90%    57%   88pts   floor:m
+        (mean manhattan gap 6.5; placement 7,3 7,5 7,4 6,5)
+
+0       medium    71%   22%   97%    95%   75pts   floor:m
+0       hard      32%   20%   43%    33%   23pts    oob
+        (mean manhattan gap 5.5; placement 6,3 6,5 6,4 5,5)
+
+/Users/timot/Claude/backend/src/campaigns/runtime.ts:547
+      throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a hazard`);
+            ^
+
+Error: Encounter e4: placement (5,4) is on a hazard
+    at buildEncounterState (/Users/timot/Claude/backend/src/campaigns/runtime.ts:547:13)
+    at simEncounterCellInner (/Users/timot/Claude/backend/src/ai/campaignSim.ts:310:17)
+    at simEncounterCell (/Users/timot/Claude/backend/src/ai/campaignSim.ts:264:12)
+    at main (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:100:17)
+    at <anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:1)
+    at Object.<anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:6)
+    at Module._compile (node:internal/modules/cjs/loader:1944:14)
+    at Object.transformer (/Users/timot/Claude/backend/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1666:32)
+    at Module._load (node:internal/modules/cjs/loader:1447:12)
+
+Node.js v26.4.0
