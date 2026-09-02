@@ -38,3 +38,10 @@ overshot (medium 62 / hard 24 / nightmare 8) — back to 1.00-1.30; e5 nightmare
 0% (67% walled) on clock 9 — clock 8; e7 carried a stale nightmare 2.00 (4%);
 e1 nightmare 18. The finale run e9-e12 was 100% almost everywhere after the
 emergency e10 drop and the tuner's undershoot — ladders up. C1 running.
+
+## D1 battery (designed content, 150×25) + TUNE-D1 — 2026-09-02
+`sd_D1_merged.json`: 30/48 flagged. My +1 sweep on e3 plus a raised ladder
+overshot (medium 62 / hard 24 / nightmare 8) — back to 1.00-1.30; e5 nightmare
+0% (67% walled) on clock 9 — clock 8; e7 carried a stale nightmare 2.00 (4%);
+e1 nightmare 18. The finale run e9-e12 was 100% almost everywhere after the
+emergency e10 drop and the tuner's undershoot — ladders up. C1 running.

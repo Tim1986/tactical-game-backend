@@ -330,7 +330,7 @@ export const moonberryCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Hold the arch and read the rotation',
-        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
+        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 6, nightmare: 6 } }],
       },
       enemies: ['velvet_gate_guard', 'silverthread_mender', 'mooncap_marksman'],
       // spreadSweep +1 (2026-09-01): ranged 18 -> 73, spread 82 -> 17.
@@ -351,13 +351,14 @@ export const moonberryCampaign: CampaignDefinition = {
         // EVERY tier. Bodies are the lever: one more arrival for everybody.
         // Scoped up after battery 2 (easy 56%/18% walls, medium 36%/37%): one
         // extra body at round 2 was worth ~40 points on a 6-round hold.
-        { enemies: ['velvet_gate_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['velvet_gate_guard'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 2 }, difficulties: ['nightmare'] },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       goals: [
         { slug: 'cased_it', name: 'Cased It', description: 'Hold with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Hard/nightmare read 0% (85% walled): two scoped waves on a 7-round clock. Clock 6 at hard+, the r2 gate guard is nightmare's.
+      hpScaleOverride: { easy: 1.10, medium: 1.22, hard: 1.22, nightmare: 1.25 },
     },
 
     // e4 — The Ferry Stage (hazard). REUSED from the shipped e3: twin marksmen
@@ -400,7 +401,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'good_audition', name: 'A Good Audition', description: 'Take the stage without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.94, medium: 0.98, hard: 1.20, nightmare: 1.30 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Nightmare 4% (55% walled) at 1.30; sits on hard.
+      hpScaleOverride: { easy: 0.95, medium: 1.00, hard: 1.20, nightmare: 1.20 },
     },
 
     // e5 — The Servants' Wing (rooms). Two rooms, laundry then silver hall.
@@ -436,7 +438,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'clean_hands', name: 'Clean Hands', description: 'Take the colours without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.15, nightmare: 1.25 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Nightmare 0% (65% walled) at 1.25; sits on hard.
+      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.15, nightmare: 1.15 },
     },
     e5: {
       level: 5,
@@ -460,7 +463,8 @@ export const moonberryCampaign: CampaignDefinition = {
       ],
       // Undying footmen double their own pool; the old ladder (1.20-1.55) read
       // 0% for two comps at every tier. Provisional; tuner re-walks.
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. The emergency 0.85 ladder overshot (100/96/80).
+      hpScaleOverride: { easy: 1.00, medium: 1.10, hard: 1.20, nightmare: 1.25 },
     },
 
     // e6 — The Invitation Courier (race). The guest list is being carried to
@@ -479,7 +483,7 @@ export const moonberryCampaign: CampaignDefinition = {
         // Baseline: won by killing in 27 turns — a walk.
         text: 'Stop the guest list reaching the gate',
         win: [{ kind: 'units_dead', enemyKeys: ['list_courier'] }],
-        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, medium: 6, hard: 6, nightmare: 6 } }],
       },
       enemies: ['list_courier', 'list_courier', 'velvet_gate_guard', 'mooncap_marksman'],
       // spreadSweep -1 (2026-09-01): guards a step back, ranged 27 -> 80.
@@ -580,7 +584,7 @@ export const moonberryCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Survive the sweep until the room re-mixes',
-        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['mirror_footman', 'palace_crier', 'starstep_duelist', 'moonhook_caller'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 2 }, { x: 6, y: 5 }, { x: 1, y: 5 }],
@@ -594,7 +598,7 @@ export const moonberryCampaign: CampaignDefinition = {
           enemies: ['velvet_gate_guard', 'mooncap_marksman'],
           placement: [{ x: 7, y: 5 }, { x: 0, y: 2 }],
           trigger: { on: 'round', round: 5 },
-          difficulties: ['hard', 'nightmare'],
+          difficulties: ['nightmare'],
         },
         // 100/88% at easy/medium — the sweep needs to actually sweep.
         { enemies: ['starstep_duelist'], placement: [{ x: 7, y: 4 }], trigger: { on: 'round', round: 2 } },
@@ -603,7 +607,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'still_masked', name: 'Still Masked', description: 'Nobody lost in the sweep.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 0.97, hard: 0.97, nightmare: 1.05 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Hard 8 / nightmare 0 (62-85% walled): the r5 wave on an 8-round clock. Clock 7 at hard+, the wave is nightmare's, scale flat.
+      hpScaleOverride: { easy: 0.85, medium: 0.85, hard: 0.85, nightmare: 0.85 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -639,7 +644,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'the_whole_take', name: 'The Whole Take', description: 'Clear all three rooms with the party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.92, hard: 1.02, nightmare: 1.10 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. 100% at every tier on the emergency ladder.
+      hpScaleOverride: { easy: 1.10, medium: 1.25, hard: 1.40, nightmare: 1.50 },
     },
 
     // e11 — The Cartographer's Stage (boss). REUSED from the shipped e5, now
@@ -662,7 +668,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'took_the_sash', name: 'Took the Sash', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 0.98, medium: 1.36, hard: 1.75, nightmare: 1.83 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Boss 100/100/92/80 — the tuner undershoots the build space; bossViability after C1.
+      hpScaleOverride: { easy: 1.30, medium: 1.60, hard: 1.90, nightmare: 2.10 },
     },
 
     // e12 — The Rooftop Line (escape). THE FINALE, and not a boss: alarm up,
@@ -687,7 +694,7 @@ export const moonberryCampaign: CampaignDefinition = {
             nightmare: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
           },
         }],
-        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, nightmare: 7 } }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
       enemies: ['velvet_gate_guard', 'mooncap_marksman', 'mirror_footman', 'palace_crier'],
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 5, y: 3 }, { x: 6, y: 5 }],
@@ -717,7 +724,8 @@ export const moonberryCampaign: CampaignDefinition = {
       goals: [
         { slug: 'clean_getaway', name: 'Clean Getaway', description: 'Reach the line by round 6.', check: { kind: 'win_by_round', round: 6 } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.00, hard: 1.20, nightmare: 1.40 },
+      // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Escape 100/100/76/58; clocks one notch tighter too.
+      hpScaleOverride: { easy: 1.20, medium: 1.40, hard: 1.50, nightmare: 1.60 },
     },
   },
 
