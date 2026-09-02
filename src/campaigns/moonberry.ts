@@ -55,6 +55,8 @@ export const moonberryCampaign: CampaignDefinition = {
     { slug: 'complete_hard',      name: 'The Quiet Guest',    description: 'Complete The Moonberry Masquerade on Hard.' },
     { slug: 'complete_nightmare', name: 'Star of the Evening', description: 'Complete The Moonberry Masquerade on Nightmare — unlocks the Ember Juggler skin.' },
     // L6 fork
+    { slug: 'the_audition',     name: 'The Audition',     description: 'Earn the troupe\'s colours on the ferry-stage.' },
+    { slug: 'the_loading_dock', name: 'The Loading Dock', description: 'Take the troupe\'s colours off the hook behind the stagehands.' },
     { slug: 'the_forger',    name: 'The Forger',    description: 'Recruit the forger and walk in the front gate.' },
     { slug: 'the_gondolier', name: 'The Gondolier', description: 'Recruit the gondolier and come up through the water-door.' },
     // L9 fork
@@ -404,6 +406,38 @@ export const moonberryCampaign: CampaignDefinition = {
     // e5 — The Servants' Wing (rooms). Two rooms, laundry then silver hall.
     // Learning the palace from below — and HP carries across the door, which
     // is the first taste of the vault's own logic.
+    // e4b — The Loading Dock (carve). The other branch of FORK 0: the stage
+    // audition's mirror — no hazards, no marksmen, a two-tile dock between
+    // crate walls, and the palace's own staff in the gap. Melee-friendly by
+    // construction (everything comes to you); a ranged company has to hold a
+    // corridor against an Undying footman and a Stalwart guard it cannot shove.
+    e4b: {
+      level: 4,
+      terrain: {
+        theme: 'canal',
+        // No walls: a BRAWL. Crates are cover in the story; on the board the
+        // stagehands are simply on you from the first turn.
+        blocked: [],
+      },
+      enemies: ['mirror_footman', 'velvet_gate_guard', 'lantern_lifter', 'lantern_lifter'],
+      // First read 63/100/95: a long lane favoured the shooters and the Stalwart
+      // guard ground the melee comp. Easy and medium meet stagehands only; the
+      // guard is hard's, the duelist nightmare's; the lane is one crate deep.
+      enemiesByDifficulty: {
+        easy: ['mirror_footman', 'lantern_lifter', 'lantern_lifter', 'lantern_lifter'],
+        medium: ['mirror_footman', 'lantern_lifter', 'lantern_lifter', 'lantern_lifter'],
+        nightmare: ['mirror_footman', 'velvet_gate_guard', 'lantern_lifter', 'starstep_duelist'],
+      },
+      // Adjacent start (2026-09-02): with ANY lane the lifters' daggers burst the
+      // first melee body to arrive (63% then 35%). The melee branch is a brawl —
+      // the geometry the sweeps documented as ranged-hostile, used on purpose.
+      enemyPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 5 }],
+      playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
+      goals: [
+        { slug: 'clean_hands', name: 'Clean Hands', description: 'Take the colours without losing anyone.', check: { kind: 'no_party_deaths' } },
+      ],
+      hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.15, nightmare: 1.25 },
+    },
     e5: {
       level: 5,
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
@@ -724,7 +758,26 @@ export const moonberryCampaign: CampaignDefinition = {
     audition_note: {
       kind: 'story',
       text: 'The troupe auditions on a moored ferry-stage two hours before the doors open, and the Cartographer\'s people are not gentle about it. Last year\'s juggler is this year\'s judge, and the judging involves live fire.\n\n"They throw," the contact says, apologetic. "It\'s not personal. It\'s just the standard."\n\n{mainName} looks at the stage, and at the embers already scattered across it, and at the company.\n\n"We\'ve done worse for less."',
-      next: 'audition_pre',
+      next: 'fork_stage',
+    },
+    // FORK 0 (L4) — a BALANCE fork (owner ruling 2026-09-02, CAMPAIGN_DESIGN_SPECS
+    // §0 #12): the ferry-stage audition walls a pure-melee company at medium
+    // through every content lever (MOONBERRY_BALANCE_NOTES "the one that would
+    // not move"). The company can earn the troupe's colours on the stage, or
+    // take them off the stagehands at the loading dock. Same colours, same
+    // level-up, two very different fights — and the choice reads as a story.
+    fork_stage: {
+      kind: 'choice',
+      text: 'The colours can be earned or they can be taken.\n\nOn the ferry-stage the troupe judges an audition with live fire and marksmen at the back — showmanship, at range, on a floor that is already burning.\n\nAt the loading dock behind the stage, the same colours hang on the same hooks, guarded by stagehands who have never once been asked for them. A narrow dock, a locked cage, and a footman who does not stay down.',
+      choices: [
+        { label: 'Audition on the ferry-stage — earn the colours in front of the judges.', setFlags: { tookDock: false }, grantAchievement: 'the_audition', next: 'audition_pre' },
+        { label: 'Take the loading dock — the colours are on a hook, and the hook is behind the stagehands.', setFlags: { tookDock: true }, grantAchievement: 'the_loading_dock', next: 'loading_dock_pre' },
+      ],
+    },
+    loading_dock_pre: {
+      kind: 'encounter', encounter: 'e4b',
+      preText: 'The dock is two wagons wide and every crate on it is somebody\'s cover. The stagehands come at you in the gap, the gate guard holds the cage, and the footman gets up again.\n\nNo fire, no marksmen, no room. Take the colours, {mainName}, and take them quickly — the audition ends in ten minutes and the winners come back here to change.',
+      next: 'lv5',
     },
     audition_pre: {
       kind: 'encounter', encounter: 'e4',

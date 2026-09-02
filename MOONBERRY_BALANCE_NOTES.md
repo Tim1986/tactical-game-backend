@@ -51,3 +51,14 @@ the six even if the number did not follow). This is a HUMAN question now: a
 player who walks the cold lane and waits for the footman to come may not read
 it as a wall at all. Owner adjudicates on device; the tuner treats it as a
 fight cell meanwhile.
+
+## FORK 0 — the owner's lever (2026-09-02)
+Owner: a party type that cannot win an early encounter should be able to
+choose the other fork. `fork_stage` (L4, after `audition_note`) now offers the
+ferry-stage audition (e4, unchanged — ranged/balanced 95-98, melee ~25) or the
+LOADING DOCK (e4b, new): a brawl, stagehands on you from turn one, an Undying
+footman, no fire and no marksmen. e4b @ medium: melee 95 / ranged 80 / balanced
+60 (three geometries: a walled lane read 63 then 35 for melee — ANY lane lets
+three dagger-throwers burst the first body; adjacent start is the melee branch
+by construction). Both branches level to 5 and rejoin at the servants' wing.
+Achievements `the_audition` / `the_loading_dock`; flag `tookDock`.

@@ -52,7 +52,15 @@ This file is the spec. Per-campaign working notes (measurements, passes) live in
     LESS added pressure at top tiers than kill-alls (the VIP does not scale).
 11. **Sim doctrine when balancing:** fight cells are band-checked; objective
     cells are FLOOR-only (the sim understates the human on objectives).
-12. **The stopping rule:** a cell is done when it passes, or misses by ≤5 wall
+12. **A fork is a balance lever (owner, 2026-09-02).** When an encounter is
+    functionally unwinnable for a party TYPE and every content lever has been
+    tried, put a fork in front of it: the walled comp takes the other branch.
+    Works best EARLY in a campaign (before the party is invested); a fork
+    before the finale is a cop-out. Both branches must be real encounters of
+    different palette types, and the choice should read as a story choice,
+    not a difficulty menu. First use: Moonberry e4 (the audition vs the
+    loading dock).
+13. **The stopping rule:** a cell is done when it passes, or misses by ≤5 wall
     points, or is cliff-locked and documented. Do not re-certify to confirm.
 
 Palette rule (CAMPAIGNS.md §8): ≥4 types, never two consecutive alike, two

@@ -37,3 +37,6 @@ content decc10b3868b
   e9 medium     mean  74%  median  84%  walls 11%  ⚠
   e9 hard       mean  61%  median  64%  walls 4%  
   e9 nightmare  mean  31%  median  24%  walls 25%  
+  e10 easy       mean  85%  median  92%  walls 7%  
+  e10 medium     mean  76%  median  80%  walls 8%  
+  e10 hard       mean  29%  median  20%  walls 40%  ⚠

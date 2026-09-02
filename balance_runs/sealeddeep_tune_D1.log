@@ -48,3 +48,10 @@ e9   nightmare  0.91 -> 0.97  mean  34% [ 25%, 45%]    m: 22% r: 65% b: 17%
 e10  easy       1.05 -> 1.04  mean  83% [ 80%, 95%]    m: 53% r: 98% b: 97%  ⚠ below floor: melee
 e10  medium     1.15 -> 1.28  mean  73% [ 65%, 80%]    m: 23% r:100% b: 95%  ⚠ below floor: melee
 e10  hard       1.35 -> 1.50  mean  49% [ 45%, 65%]    m:  3% r: 72% b: 73%  ⚠ below floor: melee
+e10  nightmare  1.50 -> 1.57  mean  36% [ 25%, 45%]    m:  3% r: 68% b: 37%
+
+e11  easy       1.30 -> 1.39  mean  88% [ 80%, 95%]    m: 93% r: 77% b: 95%
+e11  medium     1.40 -> 1.54  mean  70% [ 65%, 80%]    m: 80% r: 32% b: 98%  ⚠ below floor: ranged
+e11  hard       1.70 -> 1.85  mean  54% [ 45%, 65%]    m: 65% r:  7% b: 92%  ⚠ below floor: ranged
+e11  nightmare  1.85 -> 2.10  mean  36% [ 25%, 45%]    m: 30% r:  2% b: 75%
+

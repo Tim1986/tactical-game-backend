@@ -51,3 +51,26 @@ e10  hard       1.02 -> 1.19  mean  53% [ 45%, 65%]    m:  0% r: 95% b: 65%  ⚠
 e10  nightmare  1.10 -> 1.20  mean  34% [ 25%, 45%]    m:  0% r: 50% b: 52%
 
 e11  easy       0.98 -> 1.02  mean  87% [ 80%, 95%]    m: 62% r:100% b:100%
+e11  medium     1.36 -> 1.52  mean  69% [ 65%, 80%]    m: 30% r: 83% b: 95%  ⚠ below floor: melee
+e11  hard       1.75 -> 1.68  mean  57% [ 45%, 65%]    m: 38% r: 52% b: 80%
+e11  nightmare  1.83 -> 1.79  mean  34% [ 25%, 45%]    m: 13% r: 23% b: 67%
+
+e12  easy       0.85 -> 1.43  mean  88% [ 80%, 95%]    m: 72% r: 95% b: 98%
+e12  medium     1.00 -> 1.43  mean  87% [ 65%, 80%] ⚠  m: 72% r: 93% b: 97%
+e12  hard       1.20 -> 0.91  mean  56% [ 45%, 65%]    m: 22% r:100% b: 47%
+e12  nightmare  1.40 -> 1.35  mean  35% [ 25%, 45%]    m: 17% r: 75% b: 13%
+
+
+─── paste-ready hpScaleOverride blocks ───
+e1:  hpScaleOverride: { easy: 0.91, medium: 0.95, hard: 0.98, nightmare: 1.06 },
+e2:  hpScaleOverride: { easy: 1.28, medium: 1.17, hard: 1.28, nightmare: 1.43 },
+e3:  hpScaleOverride: { easy: 1.57, medium: 1.22, hard: 0.65, nightmare: 0.71 },
+e4:  hpScaleOverride: { easy: 0.86, medium: 0.87, hard: 0.95, nightmare: 0.89 },
+e5:  hpScaleOverride: { easy: 0.84, medium: 0.98, hard: 1.13, nightmare: 1.13 },
+e6:  hpScaleOverride: { easy: 1.50, medium: 1.76, hard: 1.87, nightmare: 1.98 },
+e7:  hpScaleOverride: { easy: 2.01, medium: 1.22, hard: 0.97, nightmare: 0.98 },
+e8:  hpScaleOverride: { easy: 1.13, medium: 1.24, hard: 1.50, nightmare: 1.50 },
+e9:  hpScaleOverride: { easy: 0.91, medium: 0.84, hard: 0.69, nightmare: 0.64 },
+e10:  hpScaleOverride: { easy: 0.87, medium: 1.02, hard: 1.19, nightmare: 1.20 },
+e11:  hpScaleOverride: { easy: 1.02, medium: 1.52, hard: 1.68, nightmare: 1.79 },
+e12:  hpScaleOverride: { easy: 1.43, medium: 1.43, hard: 0.91, nightmare: 1.35 },
