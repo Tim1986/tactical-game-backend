@@ -56,3 +56,14 @@ representative parties do. Applied in one edit: e8 back to 1.30-1.75, clock
 10 (nightmare 9); e9 0.90-1.20; e12 0.85-1.15; e10/e11 up (100% at every
 tier); e5 nightmare 1.20. Medium wall shares at e4/e5/e7 (20/16/17 vs cap
 15) are inside the ±5 rule — accepted. C2 running.
+
+## CERTIFIED — 2026-09-02 (C2 + single-cell walk on e9; stopping rule)
+`sd_C2_merged.json` (150×25). bossViability e12 clears every tier (hard p75
+92, nightmare median 40 — selective). Fight cells in band; medium wall shares
+at e4/e5/e7 (14-20 vs cap 15) inside the ±5 rule. Objective cells run TOO
+EASY on easy medians with walls inside caps — accepted by doctrine.
+e9 (the tide) at nightmare was a cliff pair: two r6 ghouls @1.12 → 12%, one
+@1.40 → 8%, one @1.20 → 40% median / 4% walls ✓ — documented rung, cell done.
+e12 hard/nightmare re-rung to 1.15/1.25 (60/24 ✓). Engine at commit; a
+brain/engine change voids this table. ALL FOUR NON-REFERENCE CAMPAIGNS ARE
+NOW CERTIFIED on their redesigned content.

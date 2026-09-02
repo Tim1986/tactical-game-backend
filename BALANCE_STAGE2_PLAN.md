@@ -43,8 +43,12 @@ batteries (C1).**
 Sealed Deep: C1 showed the D1 ladders overshot e8/e9/e12 (finale p75 32 at hard);
 TUNE-C1 applied, C2 running.**
 
-**NEXT STEP → Sealed Deep C2 read → certify or one more pass; then §4 Unlit
-Beacon as written:** Gate 1 is implemented
+**2026-09-02 (evening) — Sealed Deep CERTIFIED (SEALEDDEEP_DESIGN_PASS.md).
+All four redesigned campaigns are certified. FOLLOW2 (the stated 2-tile escort
+rule) verified across every follow escort.**
+
+**NEXT STEP → the owner plays (his ledger outranks every number here); then §4
+Unlit Beacon re-walk as written:** Gate 1 is implemented
 (CAMPAIGN_GROWTH per-class + anchor invariant + ffh/assassinate exceptions +
 the point-of-choice display). Re-walking its L6+ cells only — e7–e12, 24
 cells. e1–e6 are anchor-frozen and NOT re-walked. After certification: the

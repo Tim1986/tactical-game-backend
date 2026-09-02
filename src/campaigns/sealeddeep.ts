@@ -833,7 +833,10 @@ export const sealedDeepCampaign: CampaignDefinition = {
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 4 }],
       waves: [
         { enemies: ['skeleton_archer', 'skeleton_archer'], placement: [{ x: 7, y: 2 }, { x: 7, y: 5 }], trigger: { on: 'round', round: 3 } },
-        { enemies: ['ghoul', 'ghoul'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 6 } },
+        // The r6 pair split by tier (C2: nightmare 12% even at scale 1.12 —
+        // the second ghoul in the last wave was the brick).
+        { enemies: ['ghoul'], placement: [{ x: 0, y: 2 }], trigger: { on: 'round', round: 6 } },
+        { enemies: ['ghoul'], placement: [{ x: 0, y: 5 }], trigger: { on: 'round', round: 6 }, difficulties: ['easy', 'medium', 'hard'] },
       ],
       // ⚠ HYPERSENSITIVE — 0.20 of scale swings 45-75 points, so this ladder is
       // deliberately narrow. Walk: easy 0.75 -> 97 · 0.95 -> 65 · 1.15 -> 20;
@@ -857,6 +860,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // small steps if anything moves.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md.
       // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md. 56/20/0/0 at 1.00-1.40 — the tide's waves are the tier.
+      // C2: nightmare 2% (65% walled) at 1.20 — the tide's unscoped waves are
+      // already the tier; nightmare sits just over hard.
+      // Nightmare's second r6 ghoul was a 48-point cliff (12% with it, 60%
+      // without at 1.12). One ghoul + a real pool lands mid-band.
+      // Nightmare walked: two r6 ghouls @1.12 -> 12% · one @1.40 -> 8% · one
+      // @1.20 is the rung between the cliffs.
       hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.10, nightmare: 1.20 },
     },
 
@@ -976,7 +985,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // scales still lands nightmare a full band below hard.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. Finale 100/100/84/60.
       // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md. Finale 88/48/12/0, bossViability hard p75 32 — three rooms of attrition need a low pool.
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.15, nightmare: 1.25 },
     },
   },
 
