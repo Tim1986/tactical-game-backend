@@ -22,7 +22,17 @@ certified. Any such edit VOIDS the pass and restarts §4. Bug fixes the owner
 reports while playing are the sole exception — fix them, and say plainly
 which campaign's rows it invalidates.
 
-**NEXT STEP → §4 CAMPAIGN 1: UNLIT BEACON.** Gate 1 is implemented
+**⚠ 2026-09-01 — SUPERSEDED BY THE OWNER'S DESIGN-FIRST RULING.** Read
+`CAMPAIGN_DESIGN_SPECS.md` first. The engine freeze was lifted by the owner's
+A1/A2/A3/B-list directives (2026-08-31) and again by ABL-16 (2026-09-01); every
+battery before those is a baseline, not a certification. All four non-reference
+campaigns have had their DESIGN pass (identity, verbs, passives, tier levers,
+objective shapes); the BALANCE phase runs one campaign at a time, Lantern
+first, per CAMPAIGN_DESIGN_SPECS §6. Unlit Beacon's own re-walk (below) is
+unchanged and still pending the owner's checkpoint playthrough.
+
+**NEXT STEP → Lantern balance (D1 battery running) → Goblinopolis → Moonberry
+→ Sealed Deep; then §4 Unlit Beacon as written:** Gate 1 is implemented
 (CAMPAIGN_GROWTH per-class + anchor invariant + ffh/assassinate exceptions +
 the point-of-choice display). Re-walking its L6+ cells only — e7–e12, 24
 cells. e1–e6 are anchor-frozen and NOT re-walked. After certification: the

@@ -1,0 +1,27 @@
+Campaign: The Sealed Deep — 60 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e1   L1   medium     melee      85%    [ 65%, 80%] ⚠  37   margin  25% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×51  L:Your party has fallen×9
+e1   L1   medium     ranged     83%    [ 65%, 80%] ⚠  38   margin  32% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×50  L:Your party has fallen×10
+e1   L1   medium     balanced   58%    [ 65%, 80%] ⚠  42   margin  27% HP · 1.8/4 alive
+       └ W:Every enemy has fallen×35  L:Your party has fallen×25
+     mean  76%  [ 65%, 80%] ✓
+
+e2   L2   medium     melee      48%    [ 65%, 80%] ⚠  40   margin  18% HP · 1.9/4 alive
+       └ L:Your party has fallen×31  W:Every enemy has fallen×29
+e2   L2   medium     ranged     43%    [ 65%, 80%] ⚠  38   margin  26% HP · 2.3/4 alive
+       └ L:Your party has fallen×34  W:Every enemy has fallen×26
+e2   L2   medium     balanced   32%    [ 65%, 80%] ⚠  40   margin  20% HP · 1.7/4 alive
+       └ L:Your party has fallen×41  W:Every enemy has fallen×19
+     mean  41%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): balanced
+
+e3   L2   medium     melee      92%    [ 65%, 80%] ⚠  35   margin  51% HP · 3.3/4 alive
+       └ W:Every enemy has fallen×55  L:Your charge has fallen×3  L:Your party has fallen×2
+e3   L2   medium     ranged     35%    [ 65%, 80%] ⚠  36   margin  44% HP · 3.0/4 alive
+       └ L:Your party has fallen×37  W:Every enemy has fallen×21  L:Your charge has fallen×2
+e3   L2   medium     balanced   87%    [ 65%, 80%] ⚠  41   margin  37% HP · 3.1/4 alive
+       └ W:Every enemy has fallen×52  L:Your charge has fallen×8
+     mean  71%  [ 65%, 80%] ✓
+

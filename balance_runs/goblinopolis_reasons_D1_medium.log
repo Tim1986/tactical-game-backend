@@ -1,0 +1,27 @@
+Campaign: The Bell of Goblinopolis — 60 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e1   L1   medium     melee      93%    [ 65%, 80%] ⚠  31   margin  29% HP · 2.6/4 alive
+       └ W:Every enemy has fallen×56  L:Your party has fallen×4
+e1   L1   medium     ranged     23%    [ 65%, 80%] ⚠  27   margin  26% HP · 1.5/4 alive
+       └ L:Your party has fallen×46  W:Every enemy has fallen×14
+e1   L1   medium     balanced   55%    [ 65%, 80%] ⚠  32   margin  31% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×33  L:Your party has fallen×27
+     mean  57%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): ranged
+
+e2   L2   medium     melee      88%    [ 65%, 80%] ⚠  34   margin  38% HP · 3.0/4 alive
+       └ W:The escort made it through×53  L:Your party has fallen×5  L:Your charge has fallen×2
+e2   L2   medium     ranged     83%    [ 65%, 80%] ⚠  28   margin  37% HP · 2.3/4 alive
+       └ W:The escort made it through×50  L:Your party has fallen×8  L:Your charge has fallen×2
+e2   L2   medium     balanced   78%    [ 65%, 80%]    33   margin  34% HP · 2.4/4 alive
+     mean  83%  [ 65%, 80%] ⚠
+
+e3   L3   medium     melee      90%    [ 65%, 80%] ⚠  38   margin  35% HP · 2.7/4 alive
+       └ W:Every enemy has fallen×54  L:Your party has fallen×6
+e3   L3   medium     ranged     78%    [ 65%, 80%]    29   margin  30% HP · 2.1/4 alive
+e3   L3   medium     balanced   58%    [ 65%, 80%] ⚠  42   margin  25% HP · 2.1/4 alive
+       └ W:Every enemy has fallen×35  L:Your party has fallen×25
+     mean  76%  [ 65%, 80%] ✓
+
+e4   L4   medium     melee      27%    [ 65%, 80%] ⚠  61   margin  10% HP · 1.4/4 alive
+       └ L:Your party has fallen×44  W:Every enemy has fallen×16

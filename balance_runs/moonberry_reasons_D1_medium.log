@@ -1,0 +1,27 @@
+Campaign: The Moonberry Masquerade — 60 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e1   L1   medium     melee      98%    [ 65%, 80%] ⚠  26   margin  37% HP · 2.7/4 alive
+       └ W:Every enemy has fallen×59  L:Your party has fallen×1
+e1   L1   medium     ranged     82%    [ 65%, 80%] ⚠  20   margin  34% HP · 2.4/4 alive
+       └ W:Every enemy has fallen×49  L:Your party has fallen×11
+e1   L1   medium     balanced   90%    [ 65%, 80%] ⚠  21   margin  45% HP · 2.7/4 alive
+       └ W:Every enemy has fallen×54  L:Your party has fallen×6
+     mean  90%  [ 65%, 80%] ⚠
+
+e2   L2   medium     melee      98%    [ 65%, 80%] ⚠  26   margin  68% HP · 4.2/4 alive
+       └ W:Every enemy has fallen×36  W:The escort made it through×23  L:Your charge has fallen×1
+e2   L2   medium     ranged    100%    [ 65%, 80%] ⚠  26   margin  61% HP · 3.4/4 alive
+       └ W:Every enemy has fallen×55  W:The escort made it through×5
+e2   L2   medium     balanced  100%    [ 65%, 80%] ⚠  26   margin  73% HP · 4.4/4 alive
+       └ W:Every enemy has fallen×58  W:The escort made it through×2
+     mean  99%  [ 65%, 80%] ⚠
+
+e3   L3   medium     melee     100%    [ 65%, 80%] ⚠  39   margin  25% HP · 2.0/4 alive
+       └ W:You survived 6 rounds×59  W:Every enemy has fallen×1
+e3   L3   medium     ranged     18%    [ 65%, 80%] ⚠  32   margin   4% HP · 1.0/4 alive
+       └ L:Your party has fallen×49  W:You survived 6 rounds×11
+e3   L3   medium     balanced   98%    [ 65%, 80%] ⚠  39   margin  28% HP · 2.3/4 alive
+       └ W:You survived 6 rounds×59  L:Your party has fallen×1
+     mean  72%  [ 65%, 80%] ✓  ⚠ WALL below floor( 35%): ranged
+
