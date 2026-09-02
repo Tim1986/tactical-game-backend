@@ -472,7 +472,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
       level: 6,
       terrain: {
         theme: 'town',
-        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
+        // v6 (2026-09-01): the scale-house wall. Traced twice — a Swift rogue
+        // reached the far plate in ONE move down any open lane, so the plate
+        // now sits behind a wall column with a gap at each end. Reaching it is
+        // two moves for the fastest unit and three for most, past the kettle
+        // (north gap) or the bruiser (south gap) — the weighbridge is a
+        // building, and you go around it.
+        blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 6 }],
       },
       objective: {
         // THE TWO-PLATES HOLD its brief specified ("leave either, the reading
@@ -480,21 +486,19 @@ export const goblinopolisCampaign: CampaignDefinition = {
         // text only. Now: a hero on each plate AT THE SAME TIME before the
         // clock, with the waves landing while the party is split. Design
         // 2026-09-01; the shape validated on Lantern e8's underbridge.
-        text: 'Stand on both weigh-plates at once before the reading is voided',
-        win: [{
-          kind: 'units_at_tiles', scope: 'any', simultaneous: true,
-          // Kit probe: with both plates two steps from a central start the hold
-          // was won in THREE turns. The party now starts west: one hero takes
-          // the near plate at once, the other three fight to the far one.
-          // v4 (2026-09-01): every guard placed ON the far plate either walked
-          // off it (melee guards fight) or walled one archetype (Thorns kettle:
-          // melee/ranged; pinning archer: melee 15%). Nobody stands on it now.
-          // It is FAR (five steps) and FLANKED by the kettle and the bruiser —
-          // taking it means standing between Thorns and Vengeful for a turn
-          // while the archer pins from the corner. The near plate is two steps.
-          tiles: [{ x: 0, y: 4 }, { x: 7, y: 4 }],
-        }],
-        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
+        // v5 (2026-09-01). Four geometries of "a hero on each plate before the
+        // clock" each walled one archetype (7/15/100 · 15/93/73 · 100/28/15):
+        // whichever comp could not dislodge or survive the far plate's guard
+        // lost to the deadline. So the reading is no longer a deadline — it is
+        // the SLOW way. Win by taking both plates at once (the fast way, for
+        // comps that can split and shove), or by holding out until the
+        // reading takes on its own. Every comp has a path; the plates reward
+        // the clever one.
+        text: 'Hold both weigh-plates at once to take the reading early — or hold out until it takes on its own',
+        win: [
+          { kind: 'units_at_tiles', scope: 'any', simultaneous: true, tiles: [{ x: 0, y: 4 }, { x: 7, y: 4 }] },
+          { kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } },
+        ],
       },
       // Cast lightened (D2: melee 0%, balanced 8%, "party has fallen" — expose +
       // thorns + vengeful + pinning on one board was a DPS check, not a hold).
@@ -506,7 +510,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // walled melee and ranged (D1: 7 / 15 / 100). An archer has no reason to
       // leave: he pins from the plate, and the answer is to shove him (Shield
       // Bash, Shockwave, Fear) or shoot him off it. Kettle and bruiser behind.
-      enemyPlacement: [{ x: 7, y: 1 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 7, y: 6 }],
+      enemyPlacement: [{ x: 7, y: 3 }, { x: 5, y: 1 }, { x: 5, y: 6 }, { x: 7, y: 5 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
@@ -531,7 +535,10 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'true_weight', name: 'True Weight', description: 'Take the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.90, hard: 1.00, nightmare: 1.05 },
+      // v6 read 70/88/30 (balanced wiped on the survive path; the plates are
+      // a HUMAN path — the brain does not coordinate a split around a wall,
+      // so the sim measures the survive floor). Provisional; tuner re-walks.
+      hpScaleOverride: { easy: 0.65, medium: 0.72, hard: 0.90, nightmare: 1.00 },
     },
 
     // e8 — The Impound Yard (siege). Snagg impounds the bell "pending review";

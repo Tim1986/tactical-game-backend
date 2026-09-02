@@ -1,0 +1,15 @@
+Campaign: The Moonberry Masquerade — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e5   L5   medium     melee      50%    [ 65%, 80%] ⚠  61   margin  24% HP · 1.9/4 alive
+       └ L:Your party has fallen×20  W:Every enemy has fallen×20
+e5   L5   medium     ranged     20%    [ 65%, 80%] ⚠  56   margin  15% HP · 1.6/4 alive
+       └ L:Your party has fallen×32  W:Every enemy has fallen×8
+e5   L5   medium     balanced  100%    [ 65%, 80%] ⚠  62   margin  43% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×40
+     mean  57%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): ranged
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e5/medium: mean  57% out of band, WALL for: ranged
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

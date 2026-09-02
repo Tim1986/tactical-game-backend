@@ -40,9 +40,14 @@ This file is the spec. Per-campaign working notes (measurements, passes) live in
    DISTANCE, guards and a clock, never from fleeing. And a kit the brain never
    casts is dead content: `kitUsageProbe` before shipping any ability. On a
    rogue chassis a special must out-score Twin Strike's 16.
-9. **Two-buttons holds need a CONTESTED tile** — uncontested plates are taken
-   in three turns; a guard *on* the tile who is pushable makes displacement
-   the answer; an immovable guard *on* it makes it a DPS race (Lantern e8 R2/R3).
+9. **Two-buttons holds need a CONTESTED tile — and the contest must be
+   TERRAIN, not a body.** Uncontested plates are taken in three turns; a
+   melee guard *on* the tile walks off it to fight; a Thorns or pinning guard
+   on it walls whichever comp cannot dislodge it; and an open lane lets a
+   Swift unit reach the far mark in ONE move (Goblinopolis e7, five
+   geometries). What works: the mark is walled off from the straight lane so
+   it is reached AROUND the guards, and the deadline is the slow alternative,
+   not a loss (win = plates OR survive).
 10. **A defenceless VIP wants boss-tier HP for its tier**, and escorts need
     LESS added pressure at top tiers than kill-alls (the VIP does not scale).
 11. **Sim doctrine when balancing:** fight cells are band-checked; objective

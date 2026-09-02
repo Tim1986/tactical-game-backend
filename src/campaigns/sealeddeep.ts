@@ -312,7 +312,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
         easy: ['skeleton_archer', 'skeleton_warrior', 'zombie', 'skeleton_warrior'],
         medium: ['skeleton_archer', 'skeleton_archer', 'zombie', 'skeleton_warrior'],
       },
-      enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 6 }, { x: 5, y: 3 }, { x: 5, y: 4 }],
+      // spreadSweep -1 (2026-09-01): archers a step higher on the rubble —
+      // ranged 43 -> 87; every floor held.
+      enemyPlacement: [{ x: 7, y: 1 }, { x: 7, y: 6 }, { x: 6, y: 3 }, { x: 6, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
         { slug: 'quiet_gallery', name: 'Quiet Gallery', description: 'Carve through the collapsed gallery without the hero taking a scratch.', check: { kind: 'no_damage_to_main' } },
@@ -326,7 +328,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // the biggest HP pool. Nightmare sits BELOW the naive 1.57 read for 30%,
       // because the archers' acBonus and the zombies' hpBonus already add
       // difficulty that this scale curve does not contain.
-      hpScaleOverride: { easy: 0.75, medium: 0.90, hard: 1.00, nightmare: 1.12 },
+      hpScaleOverride: { easy: 0.70, medium: 0.80, hard: 0.95, nightmare: 1.05 },
     },
 
     // e3 — Whistle in the Dark (protect). The first survivor found, huddled

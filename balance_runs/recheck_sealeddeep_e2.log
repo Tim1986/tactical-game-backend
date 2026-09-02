@@ -1,0 +1,15 @@
+Campaign: The Sealed Deep — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e2   L2   medium     melee      30%    [ 65%, 80%] ⚠  39   margin  21% HP · 2.0/4 alive
+       └ L:Your party has fallen×28  W:Every enemy has fallen×12
+e2   L2   medium     ranged      5%    [ 65%, 80%] ⚠  37   margin   4% HP · 1.0/4 alive
+       └ L:Your party has fallen×38  W:Every enemy has fallen×2
+e2   L2   medium     balanced   18%    [ 65%, 80%] ⚠  39   margin  16% HP · 1.6/4 alive
+       └ L:Your party has fallen×33  W:Every enemy has fallen×7
+     mean  17%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee,ranged,balanced
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e2/medium: mean  17% out of band, WALL for: melee,ranged,balanced
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

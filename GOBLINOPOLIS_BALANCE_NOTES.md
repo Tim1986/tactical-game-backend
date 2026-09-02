@@ -167,3 +167,22 @@ body (bruiser) on the plate, the kettle behind. · e8 68/70/87 ✓ · e9 93/100/
 (balanced soft) · e10 100/100/100 (protect too easy at 200 HP — 160, and the
 looters' hunt needs the r2 looter back) · e11 88/98/58 ✓ · e12 30/57/40
 ("deadline passed") — the rope is still too far for a melee hero in 8; sweep.
+
+## 7. e7 — six geometries, one lesson (2026-09-01)
+| version | plate contest | m / r / b @ medium | why it failed |
+|---|---|---|---|
+| v1 | uncontested, plates 2 steps away | 100/100/100 in 3 turns | nobody on the plates |
+| v2 | Thorns kettle ON the far plate | 7 / 15 / 100 | punching Thorns off a tile is not a plan |
+| v3 | bruiser ON it | 100 / — / — in 3 turns | a melee guard walks OFF the plate to fight (traced) |
+| v4 | pinning archer ON it | 15 / 93 / 73 | the pin walls melee |
+| v5 | nobody on it, guards flanking, far | 100 / 60 / 33 | a Swift rogue walked the open lane onto it in ONE move (traced) |
+| v6 | the plate behind a wall column (gaps at both ends); win = plates OR survive | 70 / 88 / 30 | balanced wiped on the survive path (fight strength → scale 0.72) |
+Ruling recorded in CAMPAIGN_DESIGN_SPECS §0 item 9: the contest must be TERRAIN,
+and the deadline the slow alternative, not a loss. The plates are now a human
+path (the brain will not split around a wall) — the sim measures the survive
+floor only, which is what the doctrine says to read on objective cells anyway.
+
+Rechecks after the sweep-backed placements (medium, 40 games):
+e1 95/53/70 ✓ · sd e2 38/95/78 (mean 70) · mb e3 83/73/90 · mb e5 50/20/100
+(from 2/0/72; ranged still soft — tuner) · mb e6 95/80/93 · mb e10 40/100/93
+(from 0/87/62) · sd e3 88/88/88 · sd e8 80/98/98 · sd e11 85/70/95.
