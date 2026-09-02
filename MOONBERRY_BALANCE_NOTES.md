@@ -38,3 +38,16 @@ running — the fire lanes vs melee are geometry) · **e5 rooms 50/25/100** ·
 e6 97/80/92 ✓ · e7 75/97/92 ✓ · e8 53/85/53 · e9 62/63/45 (survive, floors
 hold) · e10 rooms 47/100/95 · e11 52/98/98 · e12 98/95/98 (escape — floor
 only; the tuner will not touch it, the clock 9/8/8/7 will).
+
+## e4 — the one that would not move (2026-09-01) — PARKED for the owner's play
+Melee read 7–28% at medium through six changes: every start distance the sweep
+tried, two hazard layouts (scatter → burning square with cold lanes), the stage
+edge walled behind the shooters, one juggler instead of two, and a footman in
+the line. Traced cause: four shooters focus the first melee body to arrive
+while kiting, and the brain's melee path crosses the fire (burning) to close.
+Ranged 95–100 and balanced 70–98 the whole way. The final layout keeps the
+burning square + the stage edge + the medium footman (the best-shaped board of
+the six even if the number did not follow). This is a HUMAN question now: a
+player who walks the cold lane and waits for the footman to come may not read
+it as a wall at all. Owner adjudicates on device; the tuner treats it as a
+fight cell meanwhile.

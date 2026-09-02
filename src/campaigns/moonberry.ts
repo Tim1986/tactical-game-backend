@@ -365,7 +365,11 @@ export const moonberryCampaign: CampaignDefinition = {
       level: 4,
       terrain: {
         theme: 'canal',
-        blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }],
+        // The stage EDGE (2026-09-01): traced — the juggler and the marksman
+        // kited a melee party the length of the board (melee 7-23% at every
+        // distance and every hazard layout). "The stage is small": walls behind
+        // the back rank so the shooters have two tiles to retreat into, not ten.
+        blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }, { x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
         // A burning SQUARE in the middle with a cold lane north and south
         // (2026-09-01). The old scatter put fire at (5,4), in front of the
         // enemy line, so a melee party had no cold approach at all — the sweep
@@ -379,9 +383,15 @@ export const moonberryCampaign: CampaignDefinition = {
       enemies: ['ember_juggler', 'ember_juggler', 'mooncap_marksman', 'starstep_duelist'],
       // D2: melee 38 / balanced 43 — two Flame Jet lines across the fire
       // lanes. Easy and medium meet one juggler; hard+ the pair.
+      // Traced: four SHOOTERS focus-fire whichever melee body arrives first
+      // while kiting the rest (melee 7-28% through every distance, hazard and
+      // wall change). Easy and medium put a FOOTMAN in the line — something
+      // that comes to a melee party, and something a ranged party must fear.
+      // Hard and nightmare are the audition as written: two jugglers, the
+      // marksman and the duelist.
       enemiesByDifficulty: {
-        easy: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'],
-        medium: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'],
+        easy: ['ember_juggler', 'mirror_footman', 'mooncap_marksman', 'lantern_lifter'],
+        medium: ['ember_juggler', 'mirror_footman', 'mooncap_marksman', 'starstep_duelist'],
       },
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
