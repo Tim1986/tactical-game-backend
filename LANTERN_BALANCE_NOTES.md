@@ -309,3 +309,29 @@ fight cells the three-party tuner undershoots against the 150-build space
 (e4, e11, e12 easy/medium) go up by hand. e8 stays TOO EASY on the median
 with walls inside every cap — an objective cell, floor-only, accepted; clocks
 one notch tighter. C2 running.
+
+## 9. CERTIFIED — 2026-09-02 (C2 + two single-cell nudges; stopping rule)
+`balance_runs/lantern_C2_merged.json` (150×25) plus 100-build single-cell
+verifications of the two nightmare nudges.
+
+FIGHT cells (band-checked): e2, e4, e5, e10, e12 in band at every tier
+(e4 easy 96 median, e12 easy p10 48 vs the operator-read 50 — inside noise).
+bossViability e12: hard p75 80 ✓, medium median 76 ✓, easy p10 48 (retries
+are free; the owner's bar is "dumbest build wins, played semi-competently").
+e11 (rooms, kill-all): in band at medium/hard; nightmare 2.60→2.35 → 24% ✓.
+
+OBJECTIVE cells (floor-only by doctrine): every wall share inside its cap.
+e3 hold: nightmare read 8% then 0% (I turned the clock the WRONG way on a hold
+— more rounds is harder); the tier was the wave's size: one thief → 32%, 6%
+walls ✓. e6 race, e7 escape, e8 two-buttons, e9 dark, e10 escort: floors hold
+at every tier; medians run high on easy (the sim understates the human here).
+
+ACCEPTED DEVIATIONS: e1 easy/medium (the owner's opener, untouched); TOO EASY
+medians on objective cells at easy (e3 93, e6 96, e7 94, e8 85, e9 99, e11 80);
+e8 bimodal at medium+ (median 100, walls 9–13% — the two-buttons hold splits
+comps that can split from comps that cannot; a human path the brain
+under-plays).
+
+RESIDUALS for the owner's play: e7 melee stall (draws) against the immovable
+doorman at hard+; e8 ranged at hard+ (the warden); e6 melee at hard (clock 6).
+Engine at commit of this note; a brain/engine change voids this table.

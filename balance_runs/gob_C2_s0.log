@@ -44,3 +44,69 @@ content e81b103e13cf
   e11 easy       mean  90%  median  92%  walls 1%  
   e11 medium     mean  83%  median  88%  walls 3%  ⚠
   e11 hard       mean  61%  median  68%  walls 4%  ⚠
+  e11 nightmare  mean  63%  median  68%  walls 3%  ⚠
+  e12 easy       mean  87%  median  96%  walls 3%  ⚠
+  e12 medium     mean  72%  median  80%  walls 5%  
+  e12 hard       mean  47%  median  40%  walls 12%  
+  e12 nightmare  mean  40%  median  28%  walls 23%  
+
+shard done in 70.1 min
+
+SHARD 1/2 (partial — merge with the other shard for the real verdict)
+
+enc  lvl difficulty  builds  median   solve%  need   ceil  walled  verdict
+e1   L1  easy           75   92%    91%>=80%   65%  <=100%    0%  OK  [early]
+e1   L1  medium         75   72%    56%>=65%   50%  <= 90%    4%  OK  [early]
+e1   L1  hard           75   48%    53%>=45%   35%  <= 80%    7%  OK  [early]
+e1   L1  nightmare      75   28%    32%>=40%   20%  <= 60%   12%  OK  [early]
+e2   L2  easy           75   88%    75%>=80%   65%  <=100%    0%  OK  [early]
+e2   L2  medium         75   80%    80%>=65%   50%  <= 90%    1%  OK  [early]
+e2   L2  hard           75   84%    96%>=45%   35%  <= 80%    0%  ⚠ TOO EASY  [early]
+e2   L2  nightmare      75   56%    77%>=40%   20%  <= 60%    1%  OK  [early]
+e3   L3  easy           75   88%    65%>=80%   50%  <= 95%    5%  OK
+e3   L3  medium         75   64%    48%>=65%   35%  <= 80%   11%  OK
+e3   L3  hard           75   48%    51%>=45%   20%  <= 65%    1%  OK
+e3   L3  nightmare      75   16%    23%>=40%   10%  <= 45%   24%  OK
+e4   L4  easy           75   84%    63%>=80%   50%  <= 95%    9%  OK
+e4   L4  medium         75   60%    45%>=65%   35%  <= 80%   27%  ⚠ WALLS
+       └ walled   0%  sorcerer(ffh/stalwart) + cleric(heal/undying) + fighter(concussive) + rogue(dagger_toss)
+       └ walled  12%  cleric(purify/undying) + rogue(assassinate/opportunist) + sorcerer(flame_jet) + warlock(drain)
+       └ walled  24%  sorcerer(ignite/opportunist) + cleric(ward/stalwart) + wizard(freeze) + fighter(second_wind)
+e4   L4  hard           75   44%    45%>=45%   20%  <= 65%   11%  OK
+e4   L4  nightmare      75   24%    28%>=40%   10%  <= 45%   16%  OK
+e5   L5  easy           75   88%    65%>=80%   50%  <= 95%    7%  OK
+e5   L5  medium         75   80%    67%>=65%   35%  <= 80%    5%  OK
+e5   L5  hard           75   52%    55%>=45%   20%  <= 65%    8%  OK
+e5   L5  nightmare      75   20%    36%>=40%   10%  <= 45%   25%  OK
+e6   L5  easy           75   96%    85%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e6   L5  medium         75   84%    72%>=65%   35%  <= 80%    5%  ⚠ TOO EASY
+e6   L5  hard           75   64%    68%>=45%   20%  <= 65%    0%  OK
+e6   L5  nightmare      75   44%    57%>=40%   10%  <= 45%    4%  OK
+e7   L6  easy           75  100%   100%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e7   L6  medium         75   72%    63%>=65%   35%  <= 80%    3%  OK
+e7   L6  hard           75   64%    75%>=45%   20%  <= 65%    1%  OK
+e7   L6  nightmare      75   28%    37%>=40%   10%  <= 45%    5%  OK
+e8   L7  easy           75  100%    97%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e8   L7  medium         75   76%    69%>=65%   35%  <= 80%    0%  OK
+e8   L7  hard           75   36%    35%>=45%   20%  <= 65%    9%  OK
+e8   L7  nightmare      75   24%    25%>=40%   10%  <= 45%    8%  OK
+e9   L8  easy           75  100%    88%>=80%   50%  <= 95%    1%  ⚠ TOO EASY
+e9   L8  medium         75   84%    63%>=65%   35%  <= 80%    9%  ⚠ TOO EASY
+e9   L8  hard           75   60%    59%>=45%   20%  <= 65%   13%  OK
+e9   L8  nightmare      75    8%    29%>=40%   10%  <= 45%   41%  OK  ⚠ bimodal
+e10  L9  easy           75   96%    64%>=80%   50%  <= 95%    9%  ⚠ TOO EASY  ⚠ bimodal
+e10  L9  medium         75   80%    64%>=65%   35%  <= 80%   11%  OK
+e10  L9  hard           75   40%    44%>=45%   20%  <= 65%   17%  OK
+e10  L9  nightmare      75   28%    39%>=40%   10%  <= 45%   19%  OK
+e11  L10 easy           75   92%    89%>=80%   50%  <= 95%    1%  OK
+e11  L10 medium         75   88%    84%>=65%   35%  <= 80%    3%  ⚠ TOO EASY
+e11  L10 hard           75   68%    72%>=45%   20%  <= 65%    4%  ⚠ TOO EASY
+e11  L10 nightmare      75   68%    77%>=40%   10%  <= 45%    3%  ⚠ TOO EASY
+e12  L10 easy           75   96%    80%>=80%   50%  <= 95%    3%  ⚠ TOO EASY
+e12  L10 medium         75   80%    63%>=65%   35%  <= 80%    5%  OK
+e12  L10 hard           75   40%    43%>=45%   20%  <= 65%   12%  OK
+e12  L10 nightmare      75   28%    39%>=40%   10%  <= 45%   23%  OK
+
+⚠ 13 cell(s) failing: e2/hard(TOO EASY), e4/medium(WALLS), e6/easy(TOO EASY), e6/medium(TOO EASY), e7/easy(TOO EASY), e8/easy(TOO EASY), e9/easy(TOO EASY), e9/medium(TOO EASY), e10/easy(TOO EASY), e11/medium(TOO EASY), e11/hard(TOO EASY), e11/nightmare(TOO EASY), e12/easy(TOO EASY)
+
+JSON written: balance_runs/gob_C2_s0.json

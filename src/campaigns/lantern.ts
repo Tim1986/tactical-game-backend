@@ -393,6 +393,8 @@ export const lanternCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Keep the ember-cart burning — hold them off until the wagon-team is hitched',
+        // e3 is a HOLD: more rounds is HARDER. (A nightmare 7 read 0% — the
+        // wrong direction, corrected the same hour.) Nightmare's tier is the wave.
         win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'cart' }],
       },
@@ -400,8 +402,10 @@ export const lanternCampaign: CampaignDefinition = {
       enemyPlacement: [{ x: 6, y: 2 }, { x: 6, y: 5 }, { x: 5, y: 3 }, { x: 6, y: 4 }],
       waves: [
         {
-          enemies: ['ember_thief', 'goblin_scrapper'],
-          placement: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
+          // One thief, not thief + scrapper (2026-09-02): two extra bodies on a
+          // 130-HP cart read 8% then 0% at nightmare — the cliff was the wave's size.
+          enemies: ['ember_thief'],
+          placement: [{ x: 7, y: 4 }],
           trigger: { on: 'round', round: 3 },
           difficulties: ['nightmare'],
         },
@@ -420,7 +424,9 @@ export const lanternCampaign: CampaignDefinition = {
       // lever. Provisional monotonic ladder; re-walk after the confirm battery.
       // TUNE-D1: the hard/nightmare WAVE is the cliff (4% / 0%, 70-89% walled at 1.65/1.80), so the ladder flattens and the top tiers' clock does the work.
       // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Hard/nightmare: the r3 wave is nightmare's only now; clock 6 carries hard.
-      hpScaleOverride: { easy: 1.90, medium: 2.10, hard: 2.10, nightmare: 2.10 },
+      // C2: nightmare 8% (45% walled) with the wave AND clock 6 at 2.10; hard read 84 at the
+      // same pool. Nightmare keeps the wave and gets its round back (clock 7); ladder eased.
+      hpScaleOverride: { easy: 1.90, medium: 2.00, hard: 2.00, nightmare: 2.00 },
     },
 
     // e4 — The Burning Orchard (hazard). NEW. The thieves fire the orchard to
@@ -850,7 +856,8 @@ export const lanternCampaign: CampaignDefinition = {
       // together — so the tiers are packed tight on purpose.
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
       // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Rooms are a fight cell; the tuner undershot (94/95/94 medians).
-      hpScaleOverride: { easy: 1.80, medium: 2.00, hard: 2.30, nightmare: 2.60 },
+      // C2: nightmare 4% (53% walled) at 2.60; hard in band at 2.30.
+      hpScaleOverride: { easy: 1.80, medium: 2.00, hard: 2.30, nightmare: 2.35 },
     },
 
     // e12 — The Lantern Court (boss). REUSED from the shipped e5, now at L10
