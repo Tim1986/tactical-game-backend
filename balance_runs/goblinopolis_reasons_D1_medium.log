@@ -25,3 +25,77 @@ e3   L3   medium     balanced   58%    [ 65%, 80%] ⚠  42   margin  25% HP · 2
 
 e4   L4   medium     melee      27%    [ 65%, 80%] ⚠  61   margin  10% HP · 1.4/4 alive
        └ L:Your party has fallen×44  W:Every enemy has fallen×16
+e4   L4   medium     ranged     70%    [ 65%, 80%]    54   margin  26% HP · 2.1/4 alive
+e4   L4   medium     balanced   88%    [ 65%, 80%] ⚠  62   margin  32% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×53  L:Your party has fallen×7
+     mean  62%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee
+
+e5   L5   medium     melee      50%    [ 65%, 80%] ⚠  38   margin  22% HP · 1.7/4 alive
+       └ W:Every enemy has fallen×30  L:Your party has fallen×30
+e5   L5   medium     ranged     85%    [ 65%, 80%] ⚠  33   margin  22% HP · 2.1/4 alive
+       └ W:Every enemy has fallen×51  L:Your party has fallen×9
+e5   L5   medium     balanced   65%    [ 65%, 80%]    41   margin  26% HP · 2.3/4 alive
+     mean  67%  [ 65%, 80%] ✓
+
+e6   L5   medium     melee      68%    [ 65%, 80%]    37   margin  45% HP · 3.3/4 alive
+e6   L5   medium     ranged     67%    [ 65%, 80%]    29   margin  33% HP · 1.9/4 alive
+e6   L5   medium     balanced   75%    [ 65%, 80%]    36   margin  68% HP · 3.8/4 alive
+     mean  70%  [ 65%, 80%] ✓
+
+e7   L6   medium     melee       7%    [ 65%, 80%] ⚠  43   margin  48% HP · 3.3/4 alive
+       └ L:Your party has fallen×55  W:Every mark is held×4  L:The deadline passed×1
+e7   L6   medium     ranged     15%    [ 65%, 80%] ⚠  38   margin  37% HP · 2.6/4 alive
+       └ L:Your party has fallen×44  W:Every mark is held×9  L:The deadline passed×7
+e7   L6   medium     balanced  100%    [ 65%, 80%] ⚠  3   margin  89% HP · 4.0/4 alive
+       └ W:Every mark is held×60
+     mean  41%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee,ranged
+
+e8   L7   medium     melee      68%    [ 65%, 80%]    51   margin  17% HP · 1.8/4 alive
+e8   L7   medium     ranged     70%    [ 65%, 80%]    39   margin  16% HP · 1.5/4 alive
+e8   L7   medium     balanced   87%    [ 65%, 80%] ⚠  48   margin  23% HP · 1.8/4 alive
+       └ W:You survived 7 rounds×52  L:Your party has fallen×8
+     mean  75%  [ 65%, 80%] ✓
+
+e9   L8   medium     melee      93%    [ 65%, 80%] ⚠  56   margin  41% HP · 2.8/4 alive
+       └ W:The target is destroyed×56  L:Your party has fallen×4
+e9   L8   medium     ranged    100%    [ 65%, 80%] ⚠  30   margin  64% HP · 3.8/4 alive
+       └ W:The target is destroyed×60
+e9   L8   medium     balanced   50%    [ 65%, 80%] ⚠  50   margin  45% HP · 2.7/4 alive
+       └ W:The target is destroyed×30  L:Your party has fallen×30
+     mean  81%  [ 65%, 80%] ⚠
+
+e10  L9   medium     melee     100%    [ 65%, 80%] ⚠  44   margin  63% HP · 4.9/4 alive
+       └ W:Every enemy has fallen×53  W:You survived 7 rounds×7
+e10  L9   medium     ranged    100%    [ 65%, 80%] ⚠  40   margin  54% HP · 4.5/4 alive
+       └ W:Every enemy has fallen×60
+e10  L9   medium     balanced  100%    [ 65%, 80%] ⚠  43   margin  63% HP · 4.4/4 alive
+       └ W:Every enemy has fallen×50  W:You survived 7 rounds×10
+     mean 100%  [ 65%, 80%] ⚠
+
+e11  L10   medium     melee      88%    [ 65%, 80%] ⚠  45   margin  27% HP · 2.1/4 alive
+       └ W:The whole party escaped×53  L:Your party has fallen×7
+e11  L10   medium     ranged     98%    [ 65%, 80%] ⚠  30   margin  39% HP · 2.8/4 alive
+       └ W:The whole party escaped×59  L:Your party has fallen×1
+e11  L10   medium     balanced   58%    [ 65%, 80%] ⚠  56   margin  16% HP · 1.5/4 alive
+       └ W:The whole party escaped×35  L:Your party has fallen×25
+     mean  82%  [ 65%, 80%] ⚠
+
+e12  L10   medium     melee      30%    [ 65%, 80%] ⚠  51   margin  55% HP · 3.3/4 alive
+       └ L:The deadline passed×32  W:You reached the goal×15  L:Your party has fallen×10
+e12  L10   medium     ranged     57%    [ 65%, 80%] ⚠  43   margin  38% HP · 2.6/4 alive
+       └ W:Every enemy has fallen×33  L:The deadline passed×24  L:Your party has fallen×2
+e12  L10   medium     balanced   40%    [ 65%, 80%] ⚠  50   margin  57% HP · 3.5/4 alive
+       └ L:The deadline passed×33  W:Every enemy has fallen×12  W:You reached the goal×12
+     mean  42%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e1/medium: mean  57% out of band, WALL for: ranged
+    e2/medium: mean  83% out of band
+    e4/medium: mean  62% out of band, WALL for: melee
+    e7/medium: mean  41% out of band, WALL for: melee,ranged
+    e9/medium: mean  81% out of band
+    e10/medium: mean 100% out of band
+    e11/medium: mean  82% out of band
+    e12/medium: mean  42% out of band, WALL for: melee
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

@@ -272,3 +272,11 @@ in UNLITBEACON_BALANCE_NOTES: the sim understates the human on objectives, so
 | e10 Scullery | Nib is armed; the Snatcher hunts HIM. | Kill the snatcher; Nib heals himself. | **enemiesByDifficulty** (two snatchers at hard+) | — |
 | e11 Undervault | What you spend in room 1 you fight room 2 without. | Conserve. | scale (rooms) | resource |
 | e12 Court | The crown BURNS, MINE! drags you to the throne, the shaman wards him once; nightmare: Vengeful. | Bait the ward; kill the slinger so the dragged hero can leave; burst the half-health window. | nightmare passive | **order (bait the ward)** |
+
+## 6. D1 — designed content, medium mechanism (60 games) — 2026-09-01
+Every objective cell now ends by its objective (e3 survive, e6 target, e7
+escape, e8 marks, e9 survive, e10 escort). Means: e1 77 · e2 72 · e3 90 · e4
+81 · e5 72 · e6 88 · e7 67 · e8 74 · e9 68 · e10 90 · e11 68 · e12 92.
+Floors: e1 ranged 52, e8 ranged 57, e11 ranged 47 (watch), everything else
+≥50. Fight cells over band (e4, e12) go to the tuner; objective cells over
+band are floor-only by doctrine. Battery D1 + tuner + sweeps running.

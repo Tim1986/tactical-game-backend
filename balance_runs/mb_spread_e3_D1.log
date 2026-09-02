@@ -1,0 +1,28 @@
+moonberry e3 — enemy start-distance sweep, 60 games/party
+player centroid (4,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    58%  100%   12%    62%   88pts   floor:r oob
+-2      hard       9%   22%    0%     5%   22pts   floor:rb oob
+        (mean manhattan gap 3.7; placement 7,4 7,3 7,5)
+
+-1      medium    58%  100%   12%    62%   88pts   floor:r oob
+-1      hard       9%   22%    0%     5%   22pts   floor:rb oob
+        (mean manhattan gap 3.7; placement 7,4 7,3 7,5)
+
+0       medium    72%  100%   18%    98%   82pts   floor:r
+0       hard      10%   28%    0%     2%   28pts   floor:rb oob
+        (mean manhattan gap 2.7; placement 6,4 6,3 6,5)
+
++1      medium    82%   83%   73%    90%   17pts    oob
++1      hard       5%    5%    0%    10%   10pts   floor:mrb oob
+        (mean manhattan gap 2.3; placement 5,4 6,3 6,5)
+
++2      medium    82%   83%   73%    90%   17pts    oob
++2      hard       5%    5%    0%    10%   10pts   floor:mrb oob
+        (mean manhattan gap 2.3; placement 5,4 6,3 6,5)
+
++3      medium    68%  100%    5%    98%   95pts   floor:r
++3      hard       2%    3%    0%     3%    3pts   floor:mrb oob
+        (mean manhattan gap 2.0; placement 5,4 3,5 6,5)
+

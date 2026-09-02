@@ -490,11 +490,12 @@ export const goblinopolisCampaign: CampaignDefinition = {
         loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
       enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
-      // The Kettlehelm stands ON the east plate. He is not immovable — and that
-      // is the counterplay: PUSH him off it (Shield Bash, Shockwave, Fear)
-      // rather than chewing through Thorns. Uncontested plates were taken in
-      // three turns flat (kit probe); a plate somebody is standing on is a hold.
-      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
+      // The BRUISER stands on the east plate (D1: with the Thorns kettle on it,
+      // melee 7% / ranged 15% / balanced 100% — punching Thorns off a tile is
+      // not a plan). He is pushable and Vengeful: shove him (Shield Bash,
+      // Shockwave, Fear) or finish him fast; the kettle guards from behind.
+      // Uncontested plates were taken in three turns flat (kit probe).
+      enemyPlacement: [{ x: 7, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
@@ -609,7 +610,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
           name: 'The Bell-Wagon', baseClass: 'fighter',
           // 140 -> 200 after R2 (ranged 25%, "your charge has fallen" x45):
           // the A5 rule — a defenceless VIP wants boss-tier HP for its tier.
-          maxHealth: 200, armorClass: 11, movementRange: 0,
+          maxHealth: 160, armorClass: 11, movementRange: 0,
           abilities: [],
           behavior: { mode: 'hold' },
           placement: { x: 4, y: 4 },
@@ -636,7 +637,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         },
         // A survive objective barely feels scale (see unlitbeacon e9's notes),
         // so 100/100/92% at easy/medium/hard is fixed with BODIES.
-        // The round-2 single looter at (3,6) — adjacent to the wagon — is gone.
+        { enemies: ['flood_looter'], placement: [{ x: 2, y: 6 }], trigger: { on: 'round', round: 2 } },
       ],
       playerPlacement: [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 5 }, { x: 4, y: 5 }],
       goals: [

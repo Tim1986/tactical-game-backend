@@ -1,0 +1,25 @@
+goblinopolis e12 — enemy start-distance sweep, 60 games/party
+player centroid (1,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    50%   48%   97%     5%   92pts   floor:b oob
+-2      hard      23%   18%   47%     3%   43pts   floor:b oob
+        (mean manhattan gap 7.5; placement 6,4 7,2 7,6 7,1)
+
+/Users/timot/Claude/backend/src/campaigns/runtime.ts:544
+      throw new Error(`Encounter ${encounterId}: placement (${p.x},${p.y}) is on a wall`);
+            ^
+
+Error: Encounter e12: placement (6,3) is on a wall
+    at buildEncounterState (/Users/timot/Claude/backend/src/campaigns/runtime.ts:544:13)
+    at simEncounterCellInner (/Users/timot/Claude/backend/src/ai/campaignSim.ts:310:17)
+    at simEncounterCell (/Users/timot/Claude/backend/src/ai/campaignSim.ts:264:12)
+    at main (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:100:17)
+    at <anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:1)
+    at Object.<anonymous> (/Users/timot/Claude/backend/src/ai/spreadSweep.ts:119:6)
+    at Module._compile (node:internal/modules/cjs/loader:1944:14)
+    at Object.transformer (/Users/timot/Claude/backend/node_modules/tsx/dist/register-BOkp8V6j.cjs:9:3176)
+    at Module.load (node:internal/modules/cjs/loader:1666:32)
+    at Module._load (node:internal/modules/cjs/loader:1447:12)
+
+Node.js v26.4.0

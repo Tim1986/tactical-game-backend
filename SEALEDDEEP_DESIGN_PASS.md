@@ -16,3 +16,11 @@ A6: `counting_song` (cultists + necromancer: aoe, specials +1) and `crescendo`
 cooldowns — this is the campaign's verb.
 Levers: e5 clock 7/8/8/9; e6 song 14/13/12/11; e7 stair 8/7/7/6; e2 easy one
 archer; e4 easy has no singer.
+
+## D1 — designed content, medium mechanism (60 games) — 2026-09-01
+e1 85/83/58 · e2 48/43/32 (too hard, all comps) · e3 92/35/87 · e4 96 ·
+e5 100/72/60 · e6 70/88/47 · e7 30/77/32 ("your hero has fallen") · e8
+32/92/93 (crew dies under melee) · e9 70/97/82 · **e10 3/77/68** (melee 3%:
+three singers + necromancer at 1.50 — the song stacks on a melee party that
+must walk into it) · e11 90/33/95 · e12 43/40/100. Sweeps running on
+e2/e3/e7/e8/e11.

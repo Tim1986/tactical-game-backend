@@ -155,3 +155,15 @@ player kit (purify / ward / stalwart / range).
 Still thin, flagged: e5's tier lever, and e1/e3/e4/e5 have no bespoke verb —
 the city's identity lives in the clerks and wardens, not the street goblins.
 Acceptable for now; revisit after the owner plays it.
+
+## 6. D1 — designed content, medium mechanism (60 games) — 2026-09-01
+e1 93/23/55 (ranged still walled — the knives out-trade a ranged party at L1;
+sweep running) · e2 88/83/78 ✓ · e3 90/78/58 ✓ · e4 rooms 27/70/88 (melee
+walled: Stamps' expose + Thorns kettle + warded Seals) · e5 50/85/65 ✓ · e6
+68/67/75 ✓ (tier-by-bodies worked) · **e7 7/15/100** — the contested plate
+with a Thorns kettle ON it and the bruiser behind walls melee AND ranged;
+balanced walks it. Contest is right, the guard is wrong: a pushable non-Thorns
+body (bruiser) on the plate, the kettle behind. · e8 68/70/87 ✓ · e9 93/100/50
+(balanced soft) · e10 100/100/100 (protect too easy at 200 HP — 160, and the
+looters' hunt needs the r2 looter back) · e11 88/98/58 ✓ · e12 30/57/40
+("deadline passed") — the rope is still too far for a melee hero in 8; sweep.

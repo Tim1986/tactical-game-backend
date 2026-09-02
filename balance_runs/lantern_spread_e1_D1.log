@@ -1,0 +1,34 @@
+lantern e1 — enemy start-distance sweep, 80 games/party
+player centroid (4,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    95%   95%   98%    93%    5pts    oob
+-2      hard      79%   93%   81%    64%   29pts    oob
+-2      nightmare  61%   84%   59%    40%   44pts    oob
+        (mean manhattan gap 4.3; placement 7,3 7,4 0,6)
+
+-1      medium    95%   95%   98%    93%    5pts    oob
+-1      hard      79%   93%   81%    64%   29pts    oob
+-1      nightmare  61%   84%   59%    40%   44pts    oob
+        (mean manhattan gap 4.3; placement 7,3 7,4 0,6)
+
+0       medium    80%   96%   57%    85%   39pts   
+0       hard      70%   90%   57%    61%   33pts    oob
+0       nightmare  51%   65%   44%    45%   21pts    oob
+        (mean manhattan gap 3.7; placement 6,3 6,4 0,6)
+
++1      medium    86%   96%   69%    93%   28pts    oob
++1      hard      67%   95%   26%    80%   69pts    oob
++1      nightmare  48%   89%   11%    43%   77pts    oob
+        (mean manhattan gap 2.3; placement 5,4 6,4 1,5)
+
++2      medium    85%   91%   73%    93%   20pts    oob
++2      hard      51%   60%   23%    70%   48pts   
++2      nightmare  34%   39%   14%    50%   36pts   
+        (mean manhattan gap 2.0; placement 5,4 6,4 2,5)
+
++3      medium    87%   99%   69%    93%   30pts    oob
++3      hard      62%   88%   26%    71%   61pts   
++3      nightmare  40%   69%    9%    43%   60pts   
+        (mean manhattan gap 2.0; placement 3,5 5,4 2,5)
+

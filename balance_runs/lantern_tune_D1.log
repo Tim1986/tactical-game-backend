@@ -1,3 +1,12 @@
 Tuning The Lantern of Elmsworth — 60 games/party/step, 7 steps
 
 e1   easy       0.93 -> 1.13  mean  88% [ 80%, 95%]    m: 82% r: 90% b: 93%
+e1   medium     1.00 -> 1.24  mean  68% [ 65%, 80%]    m: 93% r: 62% b: 48%
+e1   hard       1.23 -> 1.46  mean  52% [ 45%, 65%]    m: 62% r: 37% b: 58%
+e1   nightmare  1.28 -> 1.50  mean  29% [ 25%, 45%]    m: 43% r: 17% b: 28%
+
+e2   easy       1.20 -> 1.24  mean  86% [ 80%, 95%]    m: 88% r: 80% b: 88%
+e2   medium     1.44 -> 1.43  mean  72% [ 65%, 80%]    m: 63% r: 67% b: 87%
+e2   hard       1.55 -> 1.57  mean  59% [ 45%, 65%]    m: 53% r: 62% b: 62%
+e2   nightmare  1.68 -> 1.76  mean  34% [ 25%, 45%]    m: 32% r: 25% b: 45%
+

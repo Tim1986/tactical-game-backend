@@ -287,7 +287,8 @@ export const moonberryCampaign: CampaignDefinition = {
       allies: {
         contact: {
           name: 'The Contact', baseClass: 'rogue',
-          maxHealth: 62, armorClass: 11, movementRange: 4,
+          // 62 -> 50 (D1: 99% walkover, the contact was never in danger).
+          maxHealth: 50, armorClass: 11, movementRange: 4,
           abilities: ['twin'],
           behavior: { mode: 'follow' },
           placement: { x: 1, y: 4 },
@@ -308,7 +309,7 @@ export const moonberryCampaign: CampaignDefinition = {
         // faster than the party does — the ally's HP does not scale with the
         // party's competence, so an escort's top tiers need LESS added
         // pressure than a kill-all's, not more.
-        { enemies: ['starstep_duelist'], placement: [{ x: 5, y: 6 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['starstep_duelist'], placement: [{ x: 5, y: 6 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium', 'hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 5 }, { x: 0, y: 4 }],
       goals: [
