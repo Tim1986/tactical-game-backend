@@ -46,7 +46,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_048: PuzzleDefinition = {
   id: 'puzzle-048',
   title: 'Puzzle #48 — Spend It Early',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Barbarian within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,

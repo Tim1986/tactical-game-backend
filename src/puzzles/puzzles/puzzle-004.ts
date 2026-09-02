@@ -45,7 +45,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_004: PuzzleDefinition = {
   id: 'puzzle-004',
   title: 'Puzzle #4 — Don\'t Wake It',
-  goalText: 'Defeat the Reaver within 3 turns',
+  goalText: 'Defeat the enemy Barbarian within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'reaver',
   maxPlayerTurns: 3,

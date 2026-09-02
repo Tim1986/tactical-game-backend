@@ -25,7 +25,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_032: PuzzleDefinition = {
   id: 'puzzle-032',
   title: 'Puzzle #32 — Pay the Fate',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Warlock within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,

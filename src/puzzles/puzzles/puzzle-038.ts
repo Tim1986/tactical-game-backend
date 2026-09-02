@@ -45,7 +45,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_038: PuzzleDefinition = {
   id: 'puzzle-038',
   title: 'Puzzle #38 — Twin Fates',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Warlock within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,

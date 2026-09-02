@@ -40,7 +40,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_050: PuzzleDefinition = {
   id: 'puzzle-050',
   title: 'Puzzle #50 — Slow Fire',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Ranger within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,

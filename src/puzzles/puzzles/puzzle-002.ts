@@ -47,7 +47,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_002: PuzzleDefinition = {
   id: 'puzzle-002',
   title: 'Puzzle #2 — Cover Her',
-  goalText: 'Defeat the Sentinel within 3 turns',
+  goalText: 'Defeat the enemy Ranger within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'sentinel',
   maxPlayerTurns: 3,
