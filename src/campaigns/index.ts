@@ -26,13 +26,16 @@ export const CAMPAIGNS: Record<string, CampaignDefinition> = {
  * are impossible if they vanish from it. Hiding a campaign is a SHELF
  * decision, not a registry decision.
  *
- * Owner call 2026-08-25: only The Unlit Beacon is balanced end to end
- * (certified on two independent 150-build batteries). The other four are
- * pre-curve — their L6+ rows were tuned against a party without
- * CAMPAIGN_GROWTH and read as far too easy — so they are hidden until their
- * §4 walks certify. Re-add each slug HERE as it passes, not before.
+ * Owner call 2026-09-02: ALL FIVE. The four redesigned campaigns certified
+ * on 2026-09-02 (each campaign's notes file has the table) and the owner
+ * unlocked them for playtesting. His ledger outranks the tables — expect
+ * rungs to move as he plays.
  */
 export const SHELF_CAMPAIGN_SLUGS: readonly string[] = [
+  lanternCampaign.slug,
+  goblinopolisCampaign.slug,
+  moonberryCampaign.slug,
+  sealedDeepCampaign.slug,
   unlitBeaconCampaign.slug,
 ];
 
