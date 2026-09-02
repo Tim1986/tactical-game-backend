@@ -53,7 +53,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_014: PuzzleDefinition = {
   id: 'puzzle-014',
   title: 'Puzzle #14 — Hold Your Fire',
-  goalText: 'Defeat the Frost Sentinel within 2 turns',
+  goalText: 'Defeat the enemy Barbarian within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,
