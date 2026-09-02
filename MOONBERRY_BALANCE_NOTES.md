@@ -62,3 +62,14 @@ footman, no fire and no marksmen. e4b @ medium: melee 95 / ranged 80 / balanced
 three dagger-throwers burst the first body; adjacent start is the melee branch
 by construction). Both branches level to 5 and rejoin at the servants' wing.
 Achievements `the_audition` / `the_loading_dock`; flag `tookDock`.
+
+## D1 battery (designed content, 150×25) + TUNE-D1 — 2026-09-02
+`mb_D1_merged.json`: 33/48 flagged, three real cliffs — e3 hard/nightmare 0%
+(85% walled: two scoped waves on the 7-round clock), e9 hard 8 / nightmare 0
+(the r5 wave on clock 8), e4/e4b nightmare 4/0 — and the rest TOO EASY where
+the emergency ladders (e5, e10) and the tuner (e11, e12) undershot the
+build space. Applied in one edit: e3 clock 6 at hard+ with the gate guard
+nightmare-only; e9 clock 7 at hard+, the r5 wave nightmare-only, scale flat;
+e4/e4b nightmare sit on hard; e5/e10/e11/e12 ladders up; e6 medium clock 6;
+e12 clocks one notch tighter. C1 running. The fork (e4/e4b) reads as intended
+at hard: e4 52 / e4b 44 medians, so both branches are real fights.

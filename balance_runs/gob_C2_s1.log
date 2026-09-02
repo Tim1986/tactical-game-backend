@@ -1,0 +1,26 @@
+The Bell of Goblinopolis — shard 2/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
+content e81b103e13cf
+
+  e1 easy       mean  90%  median  96%  walls 0%  
+  e1 medium     mean  71%  median  76%  walls 3%  
+  e1 hard       mean  47%  median  44%  walls 7%  
+  e1 nightmare  mean  36%  median  36%  walls 8%  
+  e2 easy       mean  86%  median  92%  walls 0%  
+  e2 medium     mean  80%  median  84%  walls 0%  
+  e2 hard       mean  80%  median  80%  walls 0%  
+  e2 nightmare  mean  60%  median  56%  walls 1%  
+  e3 easy       mean  76%  median  84%  walls 9%  
+  e3 medium     mean  61%  median  68%  walls 12%  
+  e3 hard       mean  51%  median  52%  walls 5%  
+  e3 nightmare  mean  22%  median  16%  walls 24%  
+  e4 easy       mean  79%  median  84%  walls 4%  
+  e4 medium     mean  54%  median  56%  walls 23%  ⚠
+  e4 hard       mean  54%  median  56%  walls 11%  
+  e4 nightmare  mean  30%  median  28%  walls 24%  
+  e5 easy       mean  81%  median  88%  walls 8%  
+  e5 medium     mean  76%  median  80%  walls 3%  
+  e5 hard       mean  56%  median  56%  walls 5%  
+  e5 nightmare  mean  24%  median  20%  walls 24%  
+  e6 easy       mean  91%  median  96%  walls 0%  ⚠
+  e6 medium     mean  79%  median  84%  walls 4%  ⚠
+  e6 hard       mean  65%  median  68%  walls 0%  ⚠

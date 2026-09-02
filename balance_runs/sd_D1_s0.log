@@ -45,3 +45,83 @@ content f7c8a683ec99
   e11 medium     mean  91%  median 100%  walls 3%  ⚠
   e11 hard       mean  82%  median  84%  walls 0%  ⚠
   e11 nightmare  mean  71%  median  80%  walls 5%  ⚠
+  e12 easy       mean  97%  median 100%  walls 0%  ⚠
+  e12 medium     mean  92%  median 100%  walls 0%  ⚠
+  e12 hard       mean  71%  median  76%  walls 4%  ⚠
+  e12 nightmare  mean  56%  median  56%  walls 3%  ⚠
+
+shard done in 95.9 min
+
+SHARD 1/2 (partial — merge with the other shard for the real verdict)
+
+enc  lvl difficulty  builds  median   solve%  need   ceil  walled  verdict
+e1   L1  easy           75   92%    76%>=80%   65%  <=100%    0%  OK  [early]
+e1   L1  medium         75   84%    80%>=65%   50%  <= 90%    1%  OK  [early]
+e1   L1  hard           75   36%    33%>=45%   35%  <= 80%    4%  ⚠ TOO HARD  [early]
+e1   L1  nightmare      75   16%    19%>=40%   20%  <= 60%   21%  ⚠ TOO HARD  [early]
+e2   L2  easy           75   88%    73%>=80%   65%  <=100%    1%  OK  [early]
+e2   L2  medium         75   72%    59%>=65%   50%  <= 90%   15%  OK  [early]
+e2   L2  hard           75   48%    56%>=45%   35%  <= 80%    4%  OK  [early]
+e2   L2  nightmare      75   20%    23%>=40%   20%  <= 60%   12%  OK  [early]
+e3   L2  easy           75   92%    73%>=80%   65%  <=100%    7%  OK  [early]
+e3   L2  medium         75   64%    47%>=65%   50%  <= 90%   20%  ⚠ TOO HARD+WALLS  [early]
+       └ walled   4%  rogue(dagger_toss) + cleric(purify) + barbarian + sorcerer
+       └ walled  16%  sorcerer(flame_jet) + cleric(heal) + wizard + barbarian
+       └ walled  16%  rogue(assassinate) + fighter(concussive) + barbarian + cleric
+e3   L2  hard           75   32%    32%>=45%   35%  <= 80%   13%  ⚠ TOO HARD  [early]
+e3   L2  nightmare      75    8%     7%>=40%   20%  <= 60%   49%  ⚠ TOO HARD  [early]
+e4   L3  easy           75  100%    97%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e4   L3  medium         75   92%    75%>=65%   35%  <= 80%   13%  ⚠ TOO EASY  ⚠ bimodal
+e4   L3  hard           75   32%    45%>=45%   20%  <= 65%   33%  ⚠ WALLS
+       └ walled   0%  cleric(heal) + ranger(piercing) + wizard(cold_snap) + warlock(fear)
+       └ walled   4%  wizard(freeze) + ranger(piercing) + rogue(expose) + fighter(concussive)
+       └ walled   4%  fighter(shield_bash) + sorcerer(ignite) + cleric(ward) + warlock(fear)
+e4   L3  nightmare      75   20%    37%>=40%   10%  <= 45%   37%  OK
+e5   L4  easy           75  100%    87%>=80%   50%  <= 95%    4%  ⚠ TOO EASY
+e5   L4  medium         75   76%    68%>=65%   35%  <= 80%   17%  ⚠ WALLS
+       └ walled   0%  wizard(freeze/channeler) + barbarian(shockwave/vengeful) + fighter(shield_bash) + sorcerer(flame_jet)
+       └ walled   0%  cleric(ward/warded) + warlock(grasp/opportunist) + fighter(shield_bash) + barbarian(shockwave)
+       └ walled   4%  wizard(freeze/opportunist) + rogue(assassinate/vengeful) + ranger(piercing) + warlock(drain)
+e5   L4  hard           75   60%    61%>=45%   20%  <= 65%   23%  OK
+e5   L4  nightmare      75    0%     9%>=40%   10%  <= 45%   76%  ⚠ TOO HARD+WALLS
+       └ walled   0%  wizard(blizzard/stalwart) + fighter(second_wind/stalwart) + barbarian(shockwave) + sorcerer(flame_jet)
+       └ walled   0%  cleric(ward/undying) + barbarian(shockwave/thorns) + ranger(piercing) + fighter(second_wind)
+       └ walled   0%  barbarian(roar/thorns) + sorcerer(ffh/stalwart) + warlock(drain) + cleric(purify)
+e6   L5  easy           75   96%    80%>=80%   50%  <= 95%    4%  ⚠ TOO EASY
+e6   L5  medium         75   88%    73%>=65%   35%  <= 80%    7%  ⚠ TOO EASY
+e6   L5  hard           75   64%    68%>=45%   20%  <= 65%   12%  OK
+e6   L5  nightmare      75   28%    36%>=40%   10%  <= 45%   24%  OK
+e7   L6  easy           75  100%    97%>=80%   50%  <= 95%    1%  ⚠ TOO EASY
+e7   L6  medium         75   92%    83%>=65%   35%  <= 80%    8%  ⚠ TOO EASY
+e7   L6  hard           75   32%    35%>=45%   20%  <= 65%   27%  ⚠ WALLS
+       └ walled   0%  barbarian(shockwave/stalwart) + sorcerer(ffh/stalwart) + fighter(concussive/undying) + warlock(grasp/stalwart) [seal_her_out]
+       └ walled   0%  fighter(shield_bash/stalwart) + ranger(longshot/stalwart) + wizard(cold_snap/opportunist) + cleric(ward/undying) [stand_with_vessa]
+       └ walled   4%  wizard(blizzard/channeler) + fighter(second_wind/thorns) + warlock(drain/stalwart) + ranger(pinning/opportunist) [stand_with_vessa]
+e7   L6  nightmare      75    4%    15%>=40%   10%  <= 45%   56%  ⚠ WALLS
+       └ walled   0%  cleric(heal/stalwart) + warlock(grasp/opportunist) + rogue(expose/swift) + sorcerer(ffh/stalwart) [stand_with_vessa]
+       └ walled   0%  wizard(cold_snap/stalwart) + warlock(grasp/stalwart) + barbarian(roar/thorns) + rogue(assassinate/swift) [stand_with_vessa]
+       └ walled   4%  barbarian(whirlwind/vengeful) + wizard(freeze/opportunist) + fighter(shield_bash/thorns) + warlock(drain/siphon) [seal_her_out]
+e8   L7  easy           75   96%    87%>=80%   50%  <= 95%    1%  ⚠ TOO EASY
+e8   L7  medium         75   92%    79%>=65%   35%  <= 80%    7%  ⚠ TOO EASY
+e8   L7  hard           75   68%    68%>=45%   20%  <= 65%    7%  ⚠ TOO EASY
+e8   L7  nightmare      75   56%    60%>=40%   10%  <= 45%   15%  ⚠ TOO EASY
+e9   L8  easy           75  100%    99%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e9   L8  medium         75   96%    93%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e9   L8  hard           75   88%    97%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e9   L8  nightmare      75   72%    96%>=40%   10%  <= 45%    0%  ⚠ TOO EASY
+e10  L9  easy           75  100%   100%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e10  L9  medium         75  100%   100%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e10  L9  hard           75  100%   100%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e10  L9  nightmare      75  100%    99%>=40%   10%  <= 45%    0%  ⚠ TOO EASY
+e11  L10 easy           75  100%    95%>=80%   50%  <= 95%    1%  ⚠ TOO EASY
+e11  L10 medium         75  100%    91%>=65%   35%  <= 80%    3%  ⚠ TOO EASY
+e11  L10 hard           75   84%    95%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e11  L10 nightmare      75   80%    84%>=40%   10%  <= 45%    5%  ⚠ TOO EASY
+e12  L10 easy           75  100%    97%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e12  L10 medium         75  100%    93%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e12  L10 hard           75   76%    80%>=45%   20%  <= 65%    4%  ⚠ TOO EASY
+e12  L10 nightmare      75   56%    79%>=40%   10%  <= 45%    3%  ⚠ TOO EASY
+
+⚠ 37 cell(s) failing: e1/hard(TOO HARD), e1/nightmare(TOO HARD), e3/medium(TOO HARD+WALLS), e3/hard(TOO HARD), e3/nightmare(TOO HARD), e4/easy(TOO EASY), e4/medium(TOO EASY), e4/hard(WALLS), e5/easy(TOO EASY), e5/medium(WALLS), e5/nightmare(TOO HARD+WALLS), e6/easy(TOO EASY), e6/medium(TOO EASY), e7/easy(TOO EASY), e7/medium(TOO EASY), e7/hard(WALLS), e7/nightmare(WALLS), e8/easy(TOO EASY), e8/medium(TOO EASY), e8/hard(TOO EASY), e8/nightmare(TOO EASY), e9/easy(TOO EASY), e9/medium(TOO EASY), e9/hard(TOO EASY), e9/nightmare(TOO EASY), e10/easy(TOO EASY), e10/medium(TOO EASY), e10/hard(TOO EASY), e10/nightmare(TOO EASY), e11/easy(TOO EASY), e11/medium(TOO EASY), e11/hard(TOO EASY), e11/nightmare(TOO EASY), e12/easy(TOO EASY), e12/medium(TOO EASY), e12/hard(TOO EASY), e12/nightmare(TOO EASY)
+
+JSON written: balance_runs/sd_D1_s0.json
