@@ -1,0 +1,28 @@
+sealeddeep e11 — enemy start-distance sweep, 60 games/party
+player centroid (2,4); + = enemies start CLOSER
+
+offset  diff     mean   melee  ranged  bal    spread  flags
+-2      medium    99%   98%  100%    98%    2pts    oob
+-2      hard      82%   85%   77%    83%    8pts    oob
+        (mean manhattan gap 4.5; placement 2,0 2,7 7,4 7,3)
+
+-1      medium    92%   95%   88%    92%    7pts    oob
+-1      hard      62%   48%   45%    92%   47pts   
+        (mean manhattan gap 3.8; placement 2,1 2,6 6,4 7,3)
+
+0       medium    73%   90%   33%    95%   62pts   floor:r
+0       hard      64%   90%   17%    85%   73pts   
+        (mean manhattan gap 3.3; placement 2,1 2,6 5,4 6,3)
+
++1      medium    84%   83%   73%    97%   23pts    oob
++1      hard      70%   82%   37%    92%   55pts    oob
+        (mean manhattan gap 2.0; placement 2,2 2,5 4,4 5,4)
+
++2      medium    79%   70%   68%    98%   30pts   
++2      hard      46%   30%   18%    88%   70pts   
+        (mean manhattan gap 1.5; placement 2,2 2,5 3,4 4,4)
+
++3      medium    51%   80%   23%    50%   57pts   floor:r oob
++3      hard      37%   60%    5%    47%   55pts   floor:r oob
+        (mean manhattan gap 1.5; placement 2,2 2,5 3,4 3,5)
+

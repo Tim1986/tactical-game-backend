@@ -489,13 +489,17 @@ export const goblinopolisCampaign: CampaignDefinition = {
         }],
         loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
-      enemies: ['kettlehelm_orc', 'mudboot_bruiser', 'bluecap_pathfinder', 'clerk_of_stamps'],
-      // The BRUISER stands on the east plate (D1: with the Thorns kettle on it,
-      // melee 7% / ranged 15% / balanced 100% — punching Thorns off a tile is
-      // not a plan). He is pushable and Vengeful: shove him (Shield Bash,
-      // Shockwave, Fear) or finish him fast; the kettle guards from behind.
-      // Uncontested plates were taken in three turns flat (kit probe).
-      enemyPlacement: [{ x: 7, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 1 }, { x: 7, y: 6 }],
+      // Cast lightened (D2: melee 0%, balanced 8%, "party has fallen" — expose +
+      // thorns + vengeful + pinning on one board was a DPS check, not a hold).
+      // The Clerk of Stamps belongs to Snagg's department (e4/e9/e11), not here.
+      enemies: ['bluecap_pathfinder', 'kettlehelm_orc', 'mudboot_bruiser', 'bluecap_scout'],
+      // The PATHFINDER stands on the east plate. A melee guard walks off it to
+      // fight (traced: the bruiser left the plate to shockwave on turn 1 and a
+      // cleric charged onto it — win in three turns); a Thorns kettle on it
+      // walled melee and ranged (D1: 7 / 15 / 100). An archer has no reason to
+      // leave: he pins from the plate, and the answer is to shove him (Shield
+      // Bash, Shockwave, Fear) or shoot him off it. Kettle and bruiser behind.
+      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 1 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
@@ -513,11 +517,14 @@ export const goblinopolisCampaign: CampaignDefinition = {
           difficulties: ['hard', 'nightmare'],
         },
       ],
-      playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+      // Start at x=2-3 (D2: from x=1-2 the balanced comp shoved the bruiser off
+      // the far plate and stood on both marks in THREE turns — the near plate
+      // was adjacent). Two steps to the near plate, four to the far one.
+      playerPlacement: [{ x: 3, y: 3 }, { x: 3, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
         { slug: 'true_weight', name: 'True Weight', description: 'Take the plates with nobody down.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.9, medium: 1.05, hard: 1.05, nightmare: 1.1 },
+      hpScaleOverride: { easy: 0.80, medium: 0.90, hard: 1.00, nightmare: 1.05 },
     },
 
     // e8 — The Impound Yard (siege). Snagg impounds the bell "pending review";

@@ -1,0 +1,15 @@
+Campaign: The Bell of Goblinopolis — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e7   L6   medium     melee     100%    [ 65%, 80%] ⚠  13   margin  79% HP · 4.0/4 alive
+       └ W:Every mark is held×40
+e7   L6   medium     ranged     18%    [ 65%, 80%] ⚠  38   margin  43% HP · 2.7/4 alive
+       └ L:Your party has fallen×27  W:Every mark is held×7  L:The deadline passed×6
+e7   L6   medium     balanced  100%    [ 65%, 80%] ⚠  3   margin  89% HP · 4.0/4 alive
+       └ W:Every mark is held×40
+     mean  73%  [ 65%, 80%] ✓  ⚠ WALL below floor( 35%): ranged
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e7/medium: mean  73%, WALL for: ranged
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

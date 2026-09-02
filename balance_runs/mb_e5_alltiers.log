@@ -1,0 +1,37 @@
+Campaign: The Moonberry Masquerade — 30 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e5   L5   easy       melee      37%    [ 80%, 95%] ⚠  64   margin  24% HP · 2.0/4 alive
+       └ L:Your party has fallen×19  W:Every enemy has fallen×11
+e5   L5   easy       ranged     10%    [ 80%, 95%] ⚠  57   margin  21% HP · 2.0/4 alive
+       └ L:Your party has fallen×27  W:Every enemy has fallen×3
+e5   L5   easy       balanced   97%    [ 80%, 95%] ⚠  64   margin  53% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×29  L:Your party has fallen×1
+     mean  48%  [ 80%, 95%] ⚠  ⚠ WALL below floor( 60%): melee,ranged
+e5   L5   medium     melee       0%    [ 65%, 80%] ⚠  63
+       └ L:Your party has fallen×30
+e5   L5   medium     ranged      0%    [ 65%, 80%] ⚠  61
+       └ L:Your party has fallen×30
+e5   L5   medium     balanced   77%    [ 65%, 80%]    76   margin  32% HP · 2.6/4 alive
+     mean  26%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee,ranged
+e5   L5   hard       melee       0%    [ 45%, 65%] ⚠  64
+       └ L:Your party has fallen×30
+e5   L5   hard       ranged      0%    [ 45%, 65%] ⚠  60
+       └ L:Your party has fallen×30
+e5   L5   hard       balanced   67%    [ 45%, 65%] ⚠  75   margin  37% HP · 2.8/4 alive
+       └ W:Every enemy has fallen×20  L:Your party has fallen×10
+     mean  22%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): melee,ranged
+e5   L5   nightmare  melee       0%    [ 15%, 45%] ⚠  65
+       └ L:Your party has fallen×30
+e5   L5   nightmare  ranged      0%    [ 15%, 45%] ⚠  59
+       └ L:Your party has fallen×30
+e5   L5   nightmare  balanced   43%    [ 15%, 45%]    78   margin  21% HP · 2.4/4 alive
+     mean  14%  [ 15%, 45%] ⚠
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e5/easy: mean  48% out of band, WALL for: melee,ranged
+    e5/medium: mean  26% out of band, WALL for: melee,ranged
+    e5/hard: mean  22% out of band, WALL for: melee,ranged
+    e5/nightmare: mean  14% out of band
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.

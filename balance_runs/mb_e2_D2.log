@@ -1,0 +1,11 @@
+Campaign: The Moonberry Masquerade — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e2   L2   medium     melee      80%    [ 65%, 80%]    32   margin  51% HP · 3.6/4 alive
+e2   L2   medium     ranged     60%    [ 65%, 80%] ⚠  33   margin  48% HP · 3.1/4 alive
+       └ W:Every enemy has fallen×21  L:Your party has fallen×13  W:The escort made it through×3
+e2   L2   medium     balanced  100%    [ 65%, 80%] ⚠  34   margin  54% HP · 3.6/4 alive
+       └ W:Every enemy has fallen×37  W:The escort made it through×3
+     mean  80%  [ 65%, 80%] ✓
+
+RESULT: PASS — every encounter/difficulty mean in band, all party floors held, zero validation errors.

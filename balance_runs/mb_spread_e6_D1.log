@@ -22,3 +22,7 @@ offset  diff     mean   melee  ranged  bal    spread  flags
 +2      hard      38%    2%   42%    72%   70pts   floor:m oob
         (mean manhattan gap 3.5; placement 5,2 5,5 2,4 3,4)
 
++3      medium    70%   37%   75%    98%   62pts   floor:m
++3      hard      43%    2%   37%    92%   90pts   floor:m oob
+        (mean manhattan gap 2.3; placement 4,3 4,4 1,5 2,4)
+

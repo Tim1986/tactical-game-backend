@@ -1,0 +1,12 @@
+Campaign: The Bell of Goblinopolis — 40 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e10  L9   medium     melee      90%    [ 65%, 80%] ⚠  54   margin  49% HP · 4.9/4 alive
+       └ W:Every enemy has fallen×20  W:You survived 7 rounds×16  L:Your charge has fallen×4
+e10  L9   medium     ranged     48%    [ 65%, 80%] ⚠  47   margin  37% HP · 4.6/4 alive
+       └ L:Your charge has fallen×21  W:Every enemy has fallen×14  W:You survived 7 rounds×5
+e10  L9   medium     balanced   83%    [ 65%, 80%] ⚠  51   margin  40% HP · 4.1/4 alive
+       └ W:Every enemy has fallen×18  W:You survived 7 rounds×15  L:Your charge has fallen×7
+     mean  73%  [ 65%, 80%] ✓
+
+RESULT: PASS — every encounter/difficulty mean in band, all party floors held, zero validation errors.

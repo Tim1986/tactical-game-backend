@@ -1,0 +1,36 @@
+Campaign: The Moonberry Masquerade — 30 games/cell
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e10  L9   easy       melee      63%    [ 80%, 95%] ⚠  81   margin  22% HP · 2.3/4 alive
+       └ W:Every enemy has fallen×19  L:Your party has fallen×11
+e10  L9   easy       ranged     97%    [ 80%, 95%] ⚠  71   margin  36% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×29  L:Your party has fallen×1
+e10  L9   easy       balanced  100%    [ 80%, 95%] ⚠  75   margin  53% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×30
+     mean  87%  [ 80%, 95%] ✓
+e10  L9   medium     melee       0%    [ 65%, 80%] ⚠  76
+       └ L:Your party has fallen×30
+e10  L9   medium     ranged     87%    [ 65%, 80%] ⚠  76   margin  25% HP · 2.4/4 alive
+       └ W:Every enemy has fallen×26  L:Your party has fallen×4
+e10  L9   medium     balanced   60%    [ 65%, 80%] ⚠  90   margin  27% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×18  L:Your party has fallen×12
+     mean  49%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): melee
+e10  L9   hard       melee       3%    [ 45%, 65%] ⚠  77   margin   1% HP · 1.0/4 alive
+       └ L:Your party has fallen×29  W:Every enemy has fallen×1
+e10  L9   hard       ranged    100%    [ 45%, 65%] ⚠  74   margin  23% HP · 2.2/4 alive
+       └ W:Every enemy has fallen×30
+e10  L9   hard       balanced   63%    [ 45%, 65%]    88   margin  25% HP · 2.3/4 alive
+     mean  56%  [ 45%, 65%] ✓  ⚠ WALL below floor( 10%): melee
+e10  L9   nightmare  melee       0%    [ 15%, 45%] ⚠  77
+       └ L:Your party has fallen×30
+e10  L9   nightmare  ranged     47%    [ 15%, 45%] ⚠  77   margin  20% HP · 2.2/4 alive
+       └ L:Your party has fallen×16  W:Every enemy has fallen×14
+e10  L9   nightmare  balanced   50%    [ 15%, 45%] ⚠  92   margin  21% HP · 2.3/4 alive
+       └ W:Every enemy has fallen×15  L:Your party has fallen×15
+     mean  32%  [ 15%, 45%] ✓
+
+RESULT: FAIL
+  Cells needing tuning (mean in band AND floors held):
+    e10/medium: mean  49% out of band, WALL for: melee
+    e10/hard: mean  56%, WALL for: melee
+  → Pick the lever by WHICH number is wrong: mean → hpScaleOverride (campaignTune.ts); spread/floor → placement (spreadSweep.ts). See CAMPAIGN_BALANCING.md.
