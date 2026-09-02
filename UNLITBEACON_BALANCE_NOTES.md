@@ -2006,3 +2006,15 @@ e6 easy 99, e9 easy 99, e12 nightmare ~46-51 (band edge).
 
 Full data: balance_runs/battery_unlitbeacon_TUNED.json, tune_POST.log,
 sweep_e11.log, CONFIRM.log.
+
+## [FOLLOW2] The stated escort rule — 2026-09-02
+Tester: "sometimes he moves 3 squares, sometimes 2, sometimes 1." Cause: a
+follow ally walked as far along the path as its whole movement allowed, so
+Tam's step was whatever the hero's last move had been. Now FOLLOW_STEP = 2
+(aiBrain): a follower moves AT MOST two tiles a turn toward the hero and
+stops beside them; the briefing and the match screen say so verbatim; a test
+pins it. ⚠ This is a BRAIN change — it voids e10's row in every campaign
+with a follow escort (unlitbeacon e10, lantern e10, moonberry e2) and
+nothing else. e10 re-tuned for the stated rule: Tam 70→80 HP, scale
+1.50/1.79→1.35/1.60 at easy/medium (first read at the old numbers: medium 56
+median / 22% walled). Verification runs in balance_runs/follow_verify.log.
