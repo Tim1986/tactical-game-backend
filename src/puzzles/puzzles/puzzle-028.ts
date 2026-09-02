@@ -48,7 +48,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_028: PuzzleDefinition = {
   id: 'puzzle-028',
   title: 'Puzzle #28 — Wait for the Weakness',
-  goalText: 'Defeat the Sentinel within 3 turns',
+  goalText: 'Defeat the enemy Ranger within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'sentinel',
   maxPlayerTurns: 3,
