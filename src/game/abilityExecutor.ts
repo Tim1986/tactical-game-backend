@@ -697,8 +697,13 @@ function applyMoveSelf(ctx: ExecutionContext): void {
 }
 
 function applyModifyCooldown(_ctx: ExecutionContext, target: UnitInstance, effect: ModifyCooldownEffect): void {
-  const current = target.cooldowns[effect.abilitySlug] ?? 0;
-  target.cooldowns[effect.abilitySlug] = Math.max(0, current + effect.delta);
+  // '*' = every ability but the basic (abilities[0]) — ABL-16. A unit with no
+  // special is untouched; a cooldown never goes below 0.
+  const slugs = effect.abilitySlug === '*' ? target.abilities.slice(1) : [effect.abilitySlug];
+  for (const slug of slugs) {
+    const current = target.cooldowns[slug] ?? 0;
+    target.cooldowns[slug] = Math.max(0, current + effect.delta);
+  }
 }
 
 /**

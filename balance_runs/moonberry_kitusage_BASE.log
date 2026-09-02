@@ -1,0 +1,14 @@
+The Moonberry Masquerade — enemy kit usage @ medium, 12 games x 3 parties per encounter
+
+e1   L1   avg 23 turns  
+e2   L2   avg 26 turns  longshot=0.47/game  expose=0.00/game   ⚠ NEVER CAST: expose
+e3   L3   avg 37 turns  shield_bash=1.00/game  ward=1.00/game  longshot=0.39/game  expose=0.94/game  concussive=0.00/game   ⚠ NEVER CAST: concussive
+e4   L4   avg 32 turns  flame_jet=1.97/game  longshot=0.83/game  expose=0.36/game
+e5   L5   avg 67 turns  concussive=2.00/game  ward=1.00/game  expose=0.64/game
+e6   L5   avg 27 turns  dagger_toss=0.72/game  shield_bash=0.39/game  longshot=0.36/game
+e7   L6   avg 42 turns  shield_bash=1.00/game  concussive=0.83/game  longshot=1.00/game  grasp=1.00/game  expose=1.00/game
+e8   L7   avg 48 turns  concussive=1.75/game  longshot=1.00/game  ignite=1.00/game
+e9   L8   avg 46 turns  concussive=2.00/game  ignite=1.00/game  expose=0.92/game  grasp=0.39/game  shield_bash=0.00/game  longshot=0.00/game   ⚠ NEVER CAST: shield_bash, longshot
+e10  L9   avg 76 turns  concussive=1.64/game  expose=0.33/game  shield_bash=0.67/game  grasp=0.33/game  ward=1.00/game  ignite=1.00/game
+e11  L10  avg 58 turns  grasp=0.42/game  ward=1.00/game  concussive=1.00/game  expose=0.42/game
+e12  L10  avg 28 turns  shield_bash=0.67/game  longshot=1.08/game  concussive=1.61/game  ignite=1.00/game  expose=0.56/game

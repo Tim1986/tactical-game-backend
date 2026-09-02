@@ -90,6 +90,7 @@ export const RULEBOOK: RuleSection[] = [
       { id: 'ABL-12', text: "Leaping abilities (Leaping Slam) move the caster to the tile it targets, then resolve from there. The leap passes clean over anything in the way — allies, enemies, any distance within range — but the landing tile itself must be empty. Anchor does not stop a unit from leaping under its own power." },
       { id: 'ABL-13', text: "A pull drags the target toward the caster, preferring diagonal steps but spending two of its pull tiles per diagonal, so a diagonal drag never covers more ground than a straight one. It stops one tile short of the caster; when the drag would end diagonally beside them, you choose which of the two tiles it finishes on." },
       { id: 'ABL-14', text: "A push or pull stops early at the board edge, a removed corner, or an occupied tile." },
+      { id: 'ABL-16', text: "Some abilities set your SPECIALS back instead of hurting you: each of your special abilities has its cooldown extended by the stated number of turns. Your basic attack is never affected, a special that is ready simply becomes unready for that long, and a cooldown can never drop below zero. Two such effects stack." },
     ],
   },
   {

@@ -135,6 +135,9 @@ export interface MoveSelfEffect {
 
 export interface ModifyCooldownEffect {
   type: 'modify_cooldown';
+  /** A specific ability slug, or `'*'` for EVERY ability the target has except
+   *  its basic attack (`abilities[0]`) — "your specials are set back", whatever
+   *  class you are. Built for the Sealed Deep's choir (2026-09-01). */
   abilitySlug: string;
   delta: number;
 }

@@ -95,6 +95,35 @@ export const sealedDeepCampaign: CampaignDefinition = {
   // points at the undead sprite instead of the chassis's goblin/orc default —
   // both are set on every enemy below. Stat discipline: HP floor 28, AC floor
   // 8, near-base-or-up, fewer-but-stronger.
+  // A6 — the Sealed Deep's own verb (2026-09-01, CAMPAIGN_DESIGN_SPECS §5):
+  // THE SONG. The choir does not hurt you much; it takes your specials away
+  // (ABL-16). Nobody else in the game touches your cooldowns. Counter: silence
+  // the singer (they are the kill-target), and spend before you step into reach.
+  abilities: {
+    counting_song: {
+      id: 'counting_song', slug: 'counting_song', name: 'Counting Song',
+      description: 'The chant dulls your edge: 2 unblockable damage to every enemy around a tile within 4 steps, and their special abilities are set back 1 turn.',
+      targetingType: 'aoe', range: 4, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 2 },
+        { type: 'modify_cooldown', abilitySlug: '*', delta: 1 },
+      ],
+    },
+    crescendo: {
+      id: 'crescendo', slug: 'crescendo', name: 'Crescendo',
+      description: 'The Conductor raises a hand: 8 unblockable damage to an enemy within 4 steps, and their special abilities are set back 2 turns.',
+      targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 8 },
+        { type: 'modify_cooldown', abilitySlug: '*', delta: 2 },
+      ],
+    },
+  },
+
   enemies: {
     // ── Skeletons (fighter/ranger/barbarian chassis) ──
     skeleton_warrior: {
@@ -159,7 +188,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // ── The living: cultist, the clock in e6 ──
     cultist: {
       baseClass: 'sorcerer', artKey: 'cultist', name: 'Cultist',
-      maxHealth: 34, armorClass: 9, specialSlug: 'ffh',
+      maxHealth: 34, armorClass: 9, abilities: ['bolt', 'ffh', 'counting_song'],
       // acBonus, NOT warded. `warded` negates a whole hit, and e6's win requires
       // killing all THREE cultists inside a clock — so three shields was three
       // wasted player turns against a deadline, which walled 48% of builds on
@@ -177,7 +206,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // ── The conductor. Not a sponge — see e10; never a required kill (e10). ──
     necromancer: {
       baseClass: 'warlock', artKey: 'necromancer', name: 'Necromancer',
-      maxHealth: 95, armorClass: 10, specialSlug: 'grasp',
+      maxHealth: 95, armorClass: 10, abilities: ['eldritch', 'grasp', 'counting_song'],
       passiveFlags: ['warded'],
       nightmare: { hpBonus: 8 },
     },
@@ -219,7 +248,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     // e12's finale boss, distinct key from e10's necromancer for name/story clarity.
     the_conductor: {
       baseClass: 'warlock', artKey: 'necromancer', name: 'The Conductor',
-      maxHealth: 100, armorClass: 10, specialSlug: 'grasp',
+      maxHealth: 100, armorClass: 10, abilities: ['eldritch', 'grasp', 'crescendo'],
       passiveFlags: ['warded'],
       nightmare: { hpBonus: 8 },
     },
@@ -277,6 +306,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
       },
       enemies: ['skeleton_archer', 'skeleton_archer', 'zombie', 'zombie'],
+      enemiesByDifficulty: { easy: ['skeleton_archer', 'skeleton_warrior', 'zombie', 'zombie'] },
       enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 6 }, { x: 5, y: 3 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
@@ -373,6 +403,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // Compare e2 in this same campaign: mixed 2+2 composition, tunes
       // smoothly at every tier. That is the existence proof this is the cause.
       enemies: ['ghoul', 'ghoul', 'zombie', 'cultist'],
+      // Easy: no song yet — the choir is introduced at e6.
+      enemiesByDifficulty: { easy: ['ghoul', 'ghoul', 'zombie', 'skeleton_warrior'] },
       // ⚠ ENEMIES PULLED IN ONE TILE, 2026-08-23. THIS is the cell's real
       // problem, and it took a spreadSweep to see it. At the old distance
       // (mean Manhattan gap 5.3) the archetype spread was 53-57 points:
@@ -450,8 +482,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // matters. 8 is the shortest duration where the mean still responds to
         // scale, so it stays, and the wall share is accepted (see the
         // nightmare-wall note at the top of this file).
-        text: 'Survive until the seal steadies (8 rounds)',
-        win: [{ kind: 'round_reached', round: 8 }],
+        text: 'Survive until the seal steadies',
+        win: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 7, nightmare: 9 } }],
       },
       enemies: ['wraith', 'wraith', 'specter'],
       // ⚠ PHASERS PUSHED BACK TWO TILES, 2026-08-23 (spreadSweep). At the old
@@ -551,7 +583,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // type, and the shape classifier keys off the round_reached LOSS.
         text: 'Silence the three chanters before the counting song ends (13 rounds)',
         win: [{ kind: 'units_dead', enemyKeys: ['cultist'] }],
-        loss: [{ kind: 'round_reached', round: 13 }],
+        loss: [{ kind: 'round_reached', round: 13, roundByDifficulty: { easy: 14, hard: 12, nightmare: 11 } }],
       },
       enemies: ['cultist', 'cultist', 'cultist', 'witch'],
       enemyPlacement: [{ x: 5, y: 2 }, { x: 5, y: 5 }, { x: 6, y: 3 }, { x: 5, y: 4 }],
@@ -612,7 +644,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         //     straggler removes the body you were struggling to escort across.
         //     Without a death loss, sacrificing your slowest unit is a winning
         //     move. That is a perverse incentive, not a difficulty knob.
-        loss: [{ kind: 'round_reached', round: 7 }, { kind: 'main_dead' }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }, { kind: 'main_dead' }],
       },
       // A wall line at x=5 with gaps at y=0/4/7 turns a two-turn stroll into a
       // funnel. Measured before it: hard sat at 76-83% across 1.30-1.90 AND the

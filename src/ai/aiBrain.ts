@@ -92,6 +92,8 @@ export interface AIBrain {
 // ---------------------------------------------------------------------------
 
 export const WEIGHTS = {
+  /** Per ready special delayed by a modify_cooldown effect (ABL-16). */
+  cooldownDenial: 9,
   /** Value per point of expected damage dealt to an enemy. */
   damage: 1.0,
   /** Penalty multiplier per point of expected damage dealt to an ally (friendly fire). */
@@ -1077,8 +1079,22 @@ function scoreEffectsOnTarget(
         break;
       }
 
+      case 'modify_cooldown': {
+        // Setting an ENEMY's specials back is worth a special's turn of value
+        // per ready special it delays (a special already on cooldown loses
+        // less). Built for the Sealed Deep's choir; nothing else uses it.
+        if (!isEnemy || eff.delta <= 0) break;
+        const slugs = eff.abilitySlug === '*' ? target.abilities.slice(1) : [eff.abilitySlug];
+        for (const slug of slugs) {
+          if (!target.abilities.includes(slug)) continue;
+          const ready = (target.cooldowns[slug] ?? 0) === 0;
+          s += WEIGHTS.cooldownDenial * Math.min(eff.delta, 2) * (ready ? 1 : 0.4);
+        }
+        break;
+      }
+
       default:
-        // modify_cooldown / teleport: no current abilities use them.
+        // teleport: no current abilities use it.
         // move_self scores 0 here BY DESIGN — a leap's value is already
         // expressed in which tiles the blast can reach (the centre enumeration
         // in the 'aoe' case), so paying for it per-target would double-count.

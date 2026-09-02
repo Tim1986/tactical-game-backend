@@ -101,9 +101,50 @@ export const moonberryCampaign: CampaignDefinition = {
     },
   },
 
+  // A6 — Moonberry's own verbs (2026-09-01, CAMPAIGN_DESIGN_SPECS §4). The
+  // palace SEES you: Exposed is this campaign's status, the Cartographer
+  // redraws where you stand, and the caller hooks you off the stage.
+  abilities: {
+    spotlight: {
+      id: 'spotlight', slug: 'spotlight', name: 'Spotlight',
+      description: 'The lamps swing onto a tile within 5 steps: 4 unblockable damage to every enemy around it, and they are exposed for 2 turns — exposed units cannot dodge.',
+      targetingType: 'aoe', range: 5, areaRadius: 1, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 4 },
+        { type: 'apply_status', statusSlug: 'exposed', stacks: 1, durationTurns: 2 },
+      ],
+    },
+    curtain_hook: {
+      id: 'curtain_hook', slug: 'curtain_hook', name: 'Curtain Hook',
+      description: 'Hooked off the stage: 6 unblockable damage, dragged 3 tiles toward the caller, and rooted for 1 turn.',
+      targetingType: 'single', range: 4, areaRadius: 0, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: false, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 6 },
+        { type: 'pull', direction: 'toward_caster', distance: 3 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+      ],
+    },
+    redraw: {
+      id: 'redraw', slug: 'redraw', name: 'Redraw',
+      description: '"You are where I drew you." 5 unblockable damage to every enemy within 2 tiles of the Cartographer, and they are rooted for 1 turn.',
+      targetingType: 'aoe', range: 0, areaRadius: 2, cooldownTurns: 99,
+      canTargetAlly: false, isSpecial: true, isUnblockable: true,
+      excludeAllies: true, areaShape: 'chebyshev', isMultiHit: false,
+      effects: [
+        { type: 'damage', formula: 'flat', value: 5 },
+        { type: 'apply_status', statusSlug: 'rooted', stacks: 1, durationTurns: 1 },
+      ],
+    },
+  },
+
   enemies: {
     lantern_lifter: {
       baseClass: 'rogue', name: 'Lantern Lifter',
+      specialSlug: 'dagger_toss',
       maxHealth: 34, armorClass: 8, movementRange: 5,
       nightmare: { acBonus: 1 },
     },
@@ -119,16 +160,21 @@ export const moonberryCampaign: CampaignDefinition = {
     },
     moonhook_caller: {
       baseClass: 'warlock', name: 'Moonhook Caller',
-      maxHealth: 34, armorClass: 10, specialSlug: 'grasp',
+      maxHealth: 34, armorClass: 10, specialSlug: 'curtain_hook',
       nightmare: { acBonus: 1 },
     },
     starstep_duelist: {
       baseClass: 'rogue', name: 'Starstep Duelist',
+      // Opportunist: +4 against anything with a status — and this campaign
+      // paints EXPOSED on you. Counter: purify the spotlight.
+      passiveFlags: ['opportunist'],
       maxHealth: 36, armorClass: 9, specialSlug: 'expose',
       nightmare: { hpBonus: 5 },
     },
     velvet_gate_guard: {
       baseClass: 'fighter', name: 'Velvet Gate Guard',
+      // Stalwart: a doorman cannot be bashed aside or rooted. Go around him.
+      passiveFlags: ['stalwart'],
       maxHealth: 47, armorClass: 12, specialSlug: 'shield_bash',
       nightmare: { hpBonus: 6, passiveFlags: ['immovable'] },
     },
@@ -148,7 +194,9 @@ export const moonberryCampaign: CampaignDefinition = {
     },
     night_cartographer: {
       baseClass: 'warlock', name: 'The Night Cartographer',
-      maxHealth: 100, armorClass: 10, specialSlug: 'grasp',
+      maxHealth: 100, armorClass: 10,
+      // Redraw + the hook: he moves you, then he moves you again. Warded stays.
+      abilities: ['eldritch', 'redraw', 'curtain_hook'],
       passiveFlags: ['immovable', 'warded'],
       nightmare: { hpBonus: 8 },
     },
@@ -157,6 +205,9 @@ export const moonberryCampaign: CampaignDefinition = {
     // liveried, drilled, and not in costume.
     mirror_footman: {
       baseClass: 'fighter', name: 'Mirror Footman',
+      // Undying: the reflection gets back up once. Counter: follow through —
+      // a multi-hit or a second body finishes what one blow cannot.
+      passiveFlags: ['undying'],
       maxHealth: 44, armorClass: 11, specialSlug: 'concussive',
       nightmare: { hpBonus: 5 },
     },
@@ -168,7 +219,8 @@ export const moonberryCampaign: CampaignDefinition = {
     },
     palace_crier: {
       baseClass: 'sorcerer', name: 'Palace Crier',
-      maxHealth: 38, armorClass: 9, specialSlug: 'ignite',
+      // Spotlight, not ignite: the palace SEES you (exposed) — this campaign's status.
+      maxHealth: 38, armorClass: 9, specialSlug: 'spotlight',
       nightmare: { hpBonus: 4 },
     },
   },
@@ -274,8 +326,8 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
-        text: 'Hold the arch and read the rotation (6 rounds)',
-        win: [{ kind: 'round_reached', round: 6 }],
+        text: 'Hold the arch and read the rotation',
+        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
       },
       enemies: ['velvet_gate_guard', 'silverthread_mender', 'mooncap_marksman'],
       enemyPlacement: [{ x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 5 }],
@@ -318,6 +370,7 @@ export const moonberryCampaign: CampaignDefinition = {
         ],
       },
       enemies: ['ember_juggler', 'ember_juggler', 'mooncap_marksman', 'starstep_duelist'],
+      enemiesByDifficulty: { easy: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'] },
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
@@ -363,12 +416,15 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 6 }, { x: 4, y: 7 }],
       },
       objective: {
-        text: 'Stop the guest list reaching the gate (6 rounds)',
+        // A race is built from DISTANCE and guards (the brain cannot flee):
+        // couriers in the far corners behind a guard line, clock by tier.
+        // Baseline: won by killing in 27 turns — a walk.
+        text: 'Stop the guest list reaching the gate',
         win: [{ kind: 'units_dead', enemyKeys: ['list_courier'] }],
-        loss: [{ kind: 'round_reached', round: 6 }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }],
       },
       enemies: ['list_courier', 'list_courier', 'velvet_gate_guard', 'mooncap_marksman'],
-      enemyPlacement: [{ x: 7, y: 2 }, { x: 7, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 3 }],
+      enemyPlacement: [{ x: 7, y: 1 }, { x: 7, y: 6 }, { x: 4, y: 3 }, { x: 4, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'guest_list', name: 'The Guest List', description: 'Intercept them by round 5.', check: { kind: 'win_by_round', round: 5 } },
@@ -392,15 +448,16 @@ export const moonberryCampaign: CampaignDefinition = {
       allies: {
         specialist: {
           name: 'Your Specialist', baseClass: 'rogue',
-          maxHealth: 74, armorClass: 12, movementRange: 3,
+          // 74 -> 110 (A5 rule; baseline ranged 15%, "your charge has fallen" x51).
+          maxHealth: 110, armorClass: 12, movementRange: 3,
           abilities: ['twin'],
           behavior: { mode: 'hold' },
           placement: { x: 3, y: 4 },
         },
       },
       objective: {
-        text: 'Keep the specialist working (6 rounds)',
-        win: [{ kind: 'round_reached', round: 6 }],
+        text: 'Keep the specialist working',
+        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'specialist' }],
       },
       enemies: ['velvet_gate_guard', 'mirror_footman', 'mooncap_marksman', 'moonhook_caller'],
@@ -463,8 +520,8 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
-        text: 'Survive the sweep until the room re-mixes (7 rounds)',
-        win: [{ kind: 'round_reached', round: 7 }],
+        text: 'Survive the sweep until the room re-mixes',
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
       },
       enemies: ['mirror_footman', 'palace_crier', 'starstep_duelist', 'moonhook_caller'],
       enemyPlacement: [{ x: 6, y: 3 }, { x: 1, y: 2 }, { x: 6, y: 5 }, { x: 1, y: 5 }],
@@ -566,15 +623,20 @@ export const moonberryCampaign: CampaignDefinition = {
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
+          tilesByDifficulty: {
+            hard: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+            nightmare: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+          },
         }],
-        loss: [{ kind: 'round_reached', round: 8 }],
+        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, nightmare: 7 } }],
       },
       enemies: ['velvet_gate_guard', 'mooncap_marksman', 'mirror_footman', 'palace_crier'],
       enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }, { x: 5, y: 3 }, { x: 6, y: 5 }],
       waves: [
         {
-          enemies: ['starstep_duelist', 'lantern_lifter', 'mirror_footman'],
-          placement: [{ x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 4 }],
+          // Flanks, not the party's own tiles (Lantern e7 / Goblinopolis e11).
+          enemies: ['starstep_duelist', 'lantern_lifter'],
+          placement: [{ x: 1, y: 1 }, { x: 1, y: 6 }],
           trigger: { on: 'round', round: 2 },
         },
         // ⚠ Was hard/nightmare-only, and the finale read 100/100/96/96% — the

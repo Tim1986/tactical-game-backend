@@ -47,3 +47,30 @@ e9   nightmare  1.40 -> 1.50  mean  29% [ 25%, 45%]    m:  0% r: 78% b: 10%
 
 e10  easy       0.85 -> 0.98  mean  91% [ 80%, 95%]    m: 92% r: 92% b: 90%
 e10  medium     0.97 -> 1.17  mean  72% [ 65%, 80%]    m: 78% r: 67% b: 72%
+e10  hard       0.97 -> 0.97  mean  56% [ 45%, 65%]    m: 70% r: 50% b: 47%
+e10  nightmare  1.05 -> 1.08  mean  35% [ 25%, 45%]    m: 47% r: 10% b: 48%
+
+e11  easy       0.85 -> 0.73  mean  88% [ 80%, 95%]    m:100% r: 98% b: 65%
+e11  medium     1.05 -> 1.13  mean  71% [ 65%, 80%]    m: 98% r: 30% b: 85%  ⚠ below floor: ranged
+e11  hard       1.30 -> 1.43  mean  56% [ 45%, 65%]    m: 93% r:  0% b: 73%  ⚠ below floor: ranged
+e11  nightmare  1.55 -> 1.43  mean  58% [ 25%, 45%] ⚠  m:100% r:  3% b: 72%
+
+e12  easy       0.85 -> 0.76  mean  89% [ 80%, 95%]    m:100% r:100% b: 68%
+e12  medium     0.95 -> 0.84  mean  64% [ 65%, 80%] ⚠  m: 48% r:100% b: 43%
+e12  hard       1.05 -> 0.78  mean  56% [ 45%, 65%]    m: 52% r: 90% b: 27%
+e12  nightmare  1.15 -> 0.78  mean  32% [ 25%, 45%]    m: 27% r: 47% b: 23%
+
+
+─── paste-ready hpScaleOverride blocks ───
+e1:  hpScaleOverride: { easy: 1.20, medium: 1.28, hard: 1.54, nightmare: 1.76 },
+e2:  hpScaleOverride: { easy: 0.86, medium: 1.02, hard: 1.59, nightmare: 1.57 },
+e3:  hpScaleOverride: { easy: 0.65, medium: 0.84, hard: 0.98, nightmare: 0.98 },
+e4:  hpScaleOverride: { easy: 0.82, medium: 1.15, hard: 1.31, nightmare: 1.33 },
+e5:  hpScaleOverride: { easy: 1.02, medium: 1.06, hard: 1.20, nightmare: 1.13 },
+e6:  hpScaleOverride: { easy: 0.78, medium: 0.84, hard: 0.95, nightmare: 0.89 },
+e7:  hpScaleOverride: { easy: 1.88, medium: 0.84, hard: 0.98, nightmare: 1.02 },
+e8:  hpScaleOverride: { easy: 0.89, medium: 1.06, hard: 0.87, nightmare: 0.91 },
+e9:  hpScaleOverride: { easy: 1.09, medium: 1.26, hard: 1.46, nightmare: 1.50 },
+e10:  hpScaleOverride: { easy: 0.98, medium: 1.17, hard: 0.97, nightmare: 1.08 },
+e11:  hpScaleOverride: { easy: 0.73, medium: 1.13, hard: 1.43, nightmare: 1.43 },
+e12:  hpScaleOverride: { easy: 0.76, medium: 0.84, hard: 0.78, nightmare: 0.78 },

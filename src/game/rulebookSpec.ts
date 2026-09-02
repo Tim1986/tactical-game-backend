@@ -787,6 +787,22 @@ export const RULE_CHECKS: RuleCheck[] = [
     },
   },
   {
+    rule: 'ABL-16', name: 'a cooldown-setback hits every special but never the basic, and never goes below zero',
+    run: () => {
+      const singer = mkUnit(P1, 1, 1);
+      const t = mkUnit(P2, 2, 1, { abilities: ['test_hit', 'spec_a', 'spec_b'], cooldowns: { test_hit: 0, spec_a: 0, spec_b: 3 } });
+      const song = mkAbility({ slug: 'test_song', isUnblockable: true, effects: [{ type: 'modify_cooldown', abilitySlug: '*', delta: 2 }] });
+      cast(song, singer, t, [singer, t]);
+      assert(t.cooldowns.test_hit === 0, 'the basic attack is never set back');
+      assert(t.cooldowns.spec_a === 2, 'a ready special becomes unready for the stated turns');
+      assert(t.cooldowns.spec_b === 5, 'a special already cooling is set back further');
+      const t2 = mkUnit(P2, 2, 1, { abilities: ['test_hit', 'spec_a'], cooldowns: { test_hit: 0, spec_a: 1 } });
+      const hasten = mkAbility({ slug: 'test_hasten', isUnblockable: true, effects: [{ type: 'modify_cooldown', abilitySlug: '*', delta: -3 }] });
+      cast(hasten, singer, t2, [singer, t2]);
+      assert(t2.cooldowns.spec_a === 0, 'a cooldown never drops below zero');
+    },
+  },
+  {
     rule: 'ABL-13', name: 'a pull drags toward the caster, diagonals cost two, and stops one tile short',
     run: () => {
       const puller = mkUnit(P1, 1, 1);
