@@ -166,7 +166,7 @@ The drowned company rises through the ice without breaking it — waterlogged, p
 
 [unlitbeacon.encounter.e6.objective]
 
-Get everyone across the Frozen Mere
+Move every unit onto a marked tile within {rounds} rounds
 
 [unlitbeacon.encounter.e6.goal.0.name]
 
@@ -206,7 +206,7 @@ The trail to the tower door is a slot between drift-walls taller than a wagon, a
 
 [unlitbeacon.encounter.e7.objective]
 
-Reach the Vigil's door before the storm closes (6 rounds)
+Reach the door within {rounds} rounds
 
 ### lv7 (levelup)
 
@@ -242,7 +242,7 @@ There is no outrunning a column on its own road. Where the war-road cuts through
 
 [unlitbeacon.encounter.e9.objective]
 
-Hold the cave mouth until the column passes
+Survive {rounds} rounds
 
 ### fork_dawn (choice)
 
@@ -278,7 +278,7 @@ Tam walks with the party, mace in one hand and Maren's ring in the other, patchi
 
 [unlitbeacon.encounter.e10.objective]
 
-Bring Tam to the parley ring to read the discharge
+Get Tam to a marked tile — Tam must survive
 
 [unlitbeacon.encounter.e10.goal.0.name]
 
@@ -300,7 +300,7 @@ The law of the road: the champion answers first. This duel is the hero's to win 
 
 [unlitbeacon.encounter.e11.objective]
 
-Answer the Adjutant's challenge
+Kill the Adjutant
 
 [unlitbeacon.encounter.e11.goal.0.name]
 
@@ -330,7 +330,7 @@ The honor guard closes ranks before the Standard, and the Marshal rolls his shou
 
 [unlitbeacon.encounter.e12.objective]
 
-Strike down the Marshal — or seize the Standard
+Kill Marshal Vail — or move your hero onto the marked tile
 
 [unlitbeacon.encounter.e12.goal.0.name]
 
@@ -890,7 +890,7 @@ The gap beside him is barely wide enough for one. Scrappers slip along the walls
 
 [lantern.encounter.e7.objective]
 
-Push past the cave mouth — get everyone through
+Move every unit onto a marked tile
 
 [lantern.encounter.e7.goal.0.name]
 
@@ -1006,7 +1006,7 @@ Get the cook to the throne-room stair, {mainName}. He is armed, he is willing, a
 
 [lantern.encounter.e10.objective]
 
-Get Nib to the throne-room stair
+Get Nib to a marked tile — Nib must survive
 
 [lantern.encounter.e10.goal.0.name]
 
@@ -1052,7 +1052,7 @@ Only the King has to fall, {mainName}. Silence the shaman first and take your ti
 
 [lantern.encounter.e12.objective]
 
-Bring down King Grubnash
+Kill King Grubnash
 
 [lantern.encounter.e12.goal.0.name]
 
@@ -1452,7 +1452,7 @@ It cannot fight, {mainName}. It cannot even hurry. Walk it to the crossroads.
 
 [goblinopolis.encounter.e2.objective]
 
-Get the bell-wagon down the road
+Get the wagon to a marked tile — the wagon must survive
 
 [goblinopolis.encounter.e2.goal.0.name]
 
@@ -1694,7 +1694,7 @@ Only Snagg has to fall. The clerks are a problem you may solve or simply walk ar
 
 [goblinopolis.encounter.e9.objective]
 
-Close Undersecretary Snagg's file
+Kill Undersecretary Snagg
 
 [goblinopolis.encounter.e9.goal.0.name]
 
@@ -1766,7 +1766,7 @@ The yard is filling behind you with everyone who would rather this did not happe
 
 [goblinopolis.encounter.e11.objective]
 
-Carry the bell to the belfry stair — get everyone up
+Move every unit onto a marked tile
 
 [goblinopolis.encounter.e11.goal.0.name]
 
@@ -2198,7 +2198,7 @@ Keep them alive, {mainName}, and keep moving.
 
 [moonberry.encounter.e2.objective]
 
-Get your contact through the market
+Get your contact to a marked tile — they must survive
 
 [moonberry.encounter.e2.goal.0.name]
 
@@ -2496,7 +2496,7 @@ He is wearing the deed to the night-market like a costume, {mainName}. Take it o
 
 [moonberry.encounter.e11.objective]
 
-Take the Charter from the Night Cartographer
+Kill the Night Cartographer
 
 [moonberry.encounter.e11.goal.0.name]
 
@@ -2520,7 +2520,7 @@ Eight rounds, and everyone goes over the edge together, {mainName}. Nobody gets 
 
 [moonberry.encounter.e12.objective]
 
-Reach the gondola line — everyone gets out (8 rounds)
+Move every unit onto a marked tile within {rounds} rounds
 
 [moonberry.encounter.e12.goal.0.name]
 
@@ -2944,7 +2944,7 @@ The survivor presses back against the stone, whistling through chattering teeth,
 
 [sealeddeep.encounter.e3.objective]
 
-Keep the survivor alive
+Kill every enemy — the survivor must live
 
 [sealeddeep.encounter.e3.goal.0.name]
 
@@ -3012,7 +3012,7 @@ The cultists break the chant only to defend it, falling back into rhythm the ins
 
 [sealeddeep.encounter.e6.objective]
 
-Silence the three chanters before the counting song ends (13 rounds)
+Kill the three chanters within {rounds} rounds
 
 [sealeddeep.encounter.e6.goal.0.name]
 
@@ -3052,7 +3052,7 @@ The stair floods a step at a time, and the barrow itself seems to be answering t
 
 [sealeddeep.encounter.e7.objective]
 
-Reach the flooded landing before the stair gives way (7 rounds)
+Move every unit onto a marked tile within {rounds} rounds — your hero must survive
 
 ### lv7 (levelup)
 
@@ -3070,7 +3070,7 @@ A lean, hungry shape breaks from the dark the moment the crew starts moving, bee
 
 [sealeddeep.encounter.e8.objective]
 
-Get the survey crew safely up the passage before the barrow wakes (10 rounds)
+Get the crew to a marked tile within {rounds} rounds — the crew must survive
 
 [sealeddeep.encounter.e8.goal.0.name]
 
@@ -3132,7 +3132,7 @@ The three choristers begin to hum the instant {mainName} enters — a low, risin
 
 [sealeddeep.encounter.e10.objective]
 
-Silence the three choristers
+Kill the three Choristers
 
 [sealeddeep.encounter.e10.goal.0.name]
 
@@ -3158,7 +3158,7 @@ Witches and archers converge the instant a party member sets foot on a warding s
 
 [sealeddeep.encounter.e11.objective]
 
-Hold all three wards at once
+Stand units on all three marked tiles at the same time
 
 ### door_note (story)
 
@@ -3176,7 +3176,7 @@ Beyond the vault, the barrow opens into its oldest chambers — room after room 
 
 [sealeddeep.encounter.e12.objective]
 
-Reach and defeat what waits behind the door
+Kill the Conductor
 
 ### finale (end)
 

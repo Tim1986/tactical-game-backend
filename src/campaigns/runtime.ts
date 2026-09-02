@@ -814,11 +814,21 @@ export function buildEncounterState(
       }
       return l;
     });
+    // [OBJ-0902] Objective text must be PRECISE in game (owner: "IN GAME IT
+    // MUST BE PRECISE" — flavor lives in preText, the banner states mechanics).
+    // '{rounds}' resolves to the encounter's round condition at THIS
+    // difficulty — the win-side clock (a survive) if there is one, else the
+    // loss-side deadline — so "Survive {rounds} rounds" is always the number
+    // the engine will actually enforce.
+    const winRound = win.find((w): w is Extract<typeof win[number], { kind: 'round_reached' }> => w.kind === 'round_reached');
+    const lossRound = loss.find((l): l is Extract<typeof loss[number], { kind: 'round_reached' }> => l.kind === 'round_reached');
+    const rounds = winRound?.round ?? lossRound?.round;
+    const text = rounds != null ? spec.text.replace(/\{rounds\}/g, String(rounds)) : spec.text;
     objective = {
       partyId: humanId, enemyId: enemyOwnerId,
       mainId: playerUnits[0].instanceId,
       ...(allyIds.length ? { allyIds } : {}),
-      text: spec.text, win, loss,
+      text, win, loss,
     };
   } else if (encounterProgress || allyUnits.length > 0 || enc.goals?.length) {
     // A4: waves/rooms with no authored objective get the default kill-all as
@@ -829,7 +839,10 @@ export function buildEncounterState(
       partyId: humanId, enemyId: enemyOwnerId,
       mainId: playerUnits[0].instanceId,
       ...(allyIds.length ? { allyIds } : {}),
-      text: 'Defeat every enemy', win: [{ kind: 'all_enemies_dead' }], loss: [],
+      // [OBJ-0902] Precise default: name the room count when there are rooms,
+      // so room one and room three read the same objective the same way.
+      text: (enc.rooms?.length ?? 0) > 0 ? `Kill every enemy in all ${enc.rooms!.length} rooms` : 'Kill every enemy',
+      win: [{ kind: 'all_enemies_dead' }], loss: [],
     };
   }
 

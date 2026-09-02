@@ -392,7 +392,7 @@ export const lanternCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Keep the ember-cart burning — hold them off until the wagon-team is hitched',
+        text: 'Survive {rounds} rounds — the cart must survive',
         // e3 is a HOLD: more rounds is HARDER. (A nightmare 7 read 0% — the
         // wrong direction, corrected the same hour.) Nightmare's tier is the wave.
         win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5 } }],
@@ -474,7 +474,7 @@ export const lanternCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 1 }, { x: 2, y: 2 }],
       },
       objective: {
-        text: 'Hold out until the pack breaks off',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['wolfpelt_runner', 'wolfpelt_runner', 'wolfpelt_runner'],
@@ -544,7 +544,7 @@ export const lanternCampaign: CampaignDefinition = {
         // behind two guards on the middle lane, and a clock that tightens by
         // tier. Baseline read 98-100% with the carriers dead in 19-30 turns —
         // "The target is destroyed" — a kill-all wearing a stopwatch.
-        text: 'Bring down both lantern-carriers before they crest the ridge',
+        text: 'Kill both Ember Carriers within {rounds} rounds',
         win: [{ kind: 'units_dead', enemyKeys: ['ember_carrier'] }],
         // R3: without the ward and at clock 7 the race read 85/100/92 — the
         // clock is the whole race now. Medium 6 (nightmare at 6 read 27%).
@@ -588,7 +588,7 @@ export const lanternCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Push past the cave mouth — get everyone through',
+        text: 'Move every unit onto a marked tile',
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
@@ -648,7 +648,7 @@ export const lanternCampaign: CampaignDefinition = {
         // (immovable — kill him or he keeps it), the runner takes the near one,
         // and the waves arrive while you are split. Nightmare adds the mid-span
         // mark: three bodies on three tiles under fire.
-        text: 'Take both ends of the bridge at once, before the way down closes',
+        text: 'Stand units on both marked tiles at the same time, within {rounds} rounds',
         win: [{
           kind: 'units_at_tiles', scope: 'any', simultaneous: true,
           // R2 (warden ON the far mark): ranged 100 / melee 32. R3 (warden
@@ -713,7 +713,7 @@ export const lanternCampaign: CampaignDefinition = {
         // dark now WEAKENS the party and pulls it apart. Baseline read 97% with
         // "Every enemy has fallen" ending half the games — the thesis fight was
         // a kill-all with the lights on. Tiers are the clock.
-        text: 'Keep the circle until the dark thins',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
       },
       enemies: ['dark_croaker', 'dark_croaker', 'wolfpelt_runner', 'goblin_slinger'],
@@ -777,7 +777,7 @@ export const lanternCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Get Nib to the throne-room stair',
+        text: 'Get Nib to a marked tile — Nib must survive',
         win: [{ kind: 'ally_at_tiles', allyKey: 'nib', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 6, y: 3 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'nib' }],
       },
@@ -872,7 +872,7 @@ export const lanternCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 6 }, { x: 2, y: 1 }],
       },
       objective: {
-        text: 'Bring down King Grubnash',
+        text: 'Kill King Grubnash',
         win: [{ kind: 'units_dead', enemyKeys: ['king_grubnash'] }],
       },
       // [2026-09-01] The King has a kit (crown_blaze, MINE!), the shaman wards

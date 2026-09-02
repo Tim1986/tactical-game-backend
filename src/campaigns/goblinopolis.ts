@@ -314,7 +314,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Get the bell-wagon down the road',
+        text: 'Get the wagon to a marked tile — the wagon must survive',
         win: [{ kind: 'ally_at_tiles', allyKey: 'wagon', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
       },
@@ -453,7 +453,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 6 }, { x: 3, y: 7 }],
       },
       objective: {
-        text: 'Clear the barge before it casts off',
+        text: 'Kill every enemy within {rounds} rounds',
         win: [{ kind: 'all_enemies_dead' }],
         // Clock by tier [2026-09-01]: two pinning inspectors root a melee party
         // and the flat 7-round clock did the rest (melee 37% at medium, "the
@@ -509,7 +509,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         // comps that can split and shove), or by holding out until the
         // reading takes on its own. Every comp has a path; the plates reward
         // the clever one.
-        text: 'Hold both weigh-plates at once to take the reading early — or hold out until it takes on its own',
+        text: 'Stand units on both marked tiles at the same time — or survive {rounds} rounds',
         win: [
           { kind: 'units_at_tiles', scope: 'any', simultaneous: true, tiles: [{ x: 0, y: 4 }, { x: 7, y: 4 }] },
           { kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } },
@@ -570,7 +570,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Hold the impound yard until dawn',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder'],
@@ -615,7 +615,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 5, y: 4 }, { x: 2, y: 4 }],
       },
       objective: {
-        text: 'Close Undersecretary Snagg\'s file',
+        text: 'Kill Undersecretary Snagg',
         win: [{ kind: 'units_dead', enemyKeys: ['undersecretary_snagg'] }],
       },
       enemies: ['undersecretary_snagg', 'clerk_of_seals', 'clerk_of_stamps', 'ironbell_warden'],
@@ -657,7 +657,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Keep the bell above the water until the street drains',
+        text: 'Survive {rounds} rounds — the wagon must survive',
         win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, nightmare: 8 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
       },
@@ -700,7 +700,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Carry the bell to the belfry stair — get everyone up',
+        text: 'Move every unit onto a marked tile',
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],
@@ -743,7 +743,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 1 }, { x: 5, y: 6 }, { x: 6, y: 3 }],
       },
       objective: {
-        text: 'Ring the flood-bell before the crest arrives',
+        text: 'Get your hero to the marked tile within {rounds} rounds',
         win: [{ kind: 'units_at_tiles', scope: 'main', tiles: [{ x: 7, y: 4 }] }],
         // D2: a move-3 hero needs three moves and a fight to reach the rope;
         // balanced read 40% "the deadline passed" with no pinner on the board.

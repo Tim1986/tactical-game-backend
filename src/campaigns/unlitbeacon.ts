@@ -639,7 +639,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       level: 5,
       terrain: { theme: 'ice' },
       objective: {
-        text: 'Get everyone across the Frozen Mere',
+        text: 'Move every unit onto a marked tile within {rounds} rounds',
         // ⚠ The WHOLE far column, not a four-tile window inside it. The owner
         // crossed, put his party on the far row, and the encounter did not
         // end — because (7,1) and (7,6) look exactly like "across" and were
@@ -788,7 +788,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // road"). Six rounds makes committing to a runner the play, and the
         // defenders now actively freeze whoever is closest to the door (the
         // raceUrgency brain change), so the road has to be held.
-        text: 'Reach the Vigil\'s door before the storm closes (6 rounds)',
+        text: 'Reach the door within {rounds} rounds',
         win: [{ kind: 'units_at_tiles', scope: 'any', tiles: [{ x: 7, y: 4 }] }],
         loss: [{ kind: 'round_reached', round: 6 }],
       },
@@ -973,7 +973,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // tier the same length of grind and left only an inert dial to separate
       // them. `roundByDifficulty` was added to the grammar for exactly this.
       objective: {
-        text: 'Hold the cave mouth until the column passes',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 6, medium: 7, hard: 8, nightmare: 8 } }],
       },
       enemies: ['vanguard', 'shelf_pikeman'],
@@ -1055,7 +1055,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Bring Tam to the parley ring to read the discharge',
+        text: 'Get Tam to a marked tile — Tam must survive',
         win: [{ kind: 'ally_at_tiles', allyKey: 'tam', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'tam' }],
       },
@@ -1080,7 +1080,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e11: {
       level: 10,
       objective: {
-        text: 'Answer the Adjutant\'s challenge',
+        text: 'Kill the Adjutant',
         win: [{ kind: 'units_dead', enemyKeys: ['the_adjutant'] }],
         // ⚠ `loss: main_dead` REMOVED (2026-08-25). It made the HERO'S CLASS
         // the single biggest input to this encounter — bigger than the party,
@@ -1142,7 +1142,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     e12: {
       level: 10,
       objective: {
-        text: 'Strike down the Marshal — or seize the Standard',
+        text: 'Kill Marshal Vail — or move your hero onto the marked tile',
         win: [
           { kind: 'units_dead', enemyKeys: ['marshal_vail'] },
           { kind: 'units_at_tiles', scope: 'main', tiles: [{ x: 7, y: 4 }] },

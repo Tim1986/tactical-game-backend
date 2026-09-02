@@ -297,7 +297,7 @@ export const moonberryCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Get your contact through the market',
+        text: 'Get your contact to a marked tile — they must survive',
         win: [{ kind: 'ally_at_tiles', allyKey: 'contact', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         loss: [{ kind: 'ally_dead', allyKey: 'contact' }],
       },
@@ -329,7 +329,7 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
-        text: 'Hold the arch and read the rotation',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 6, nightmare: 6 } }],
       },
       enemies: ['velvet_gate_guard', 'silverthread_mender', 'mooncap_marksman'],
@@ -484,7 +484,7 @@ export const moonberryCampaign: CampaignDefinition = {
         // A race is built from DISTANCE and guards (the brain cannot flee):
         // couriers in the far corners behind a guard line, clock by tier.
         // Baseline: won by killing in 27 turns — a walk.
-        text: 'Stop the guest list reaching the gate',
+        text: 'Kill the List Courier within {rounds} rounds',
         win: [{ kind: 'units_dead', enemyKeys: ['list_courier'] }],
         loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, medium: 6, hard: 6, nightmare: 6 } }],
       },
@@ -522,7 +522,7 @@ export const moonberryCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Keep the specialist working',
+        text: 'Survive {rounds} rounds — the specialist must survive',
         win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'specialist' }],
       },
@@ -586,7 +586,7 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 2 }, { x: 3, y: 5 }, { x: 5, y: 2 }, { x: 5, y: 5 }],
       },
       objective: {
-        text: 'Survive the sweep until the room re-mixes',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['mirror_footman', 'palace_crier', 'starstep_duelist', 'moonhook_caller'],
@@ -663,7 +663,7 @@ export const moonberryCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 3 }, { x: 3, y: 5 }, { x: 6, y: 6 }, { x: 2, y: 1 }],
       },
       objective: {
-        text: 'Take the Charter from the Night Cartographer',
+        text: 'Kill the Night Cartographer',
         win: [{ kind: 'units_dead', enemyKeys: ['night_cartographer'] }],
       },
       enemies: ['night_cartographer', 'silverthread_mender', 'mirror_footman', 'starstep_duelist'],
@@ -690,7 +690,7 @@ export const moonberryCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Reach the gondola line — everyone gets out (8 rounds)',
+        text: 'Move every unit onto a marked tile within {rounds} rounds',
         win: [{
           kind: 'units_at_tiles', scope: 'all',
           tiles: [{ x: 7, y: 1 }, { x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 6 }],

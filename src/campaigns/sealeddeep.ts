@@ -353,7 +353,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Keep the survivor alive',
+        text: 'Kill every enemy — the survivor must live',
         win: [{ kind: 'all_enemies_dead' }],
         loss: [{ kind: 'ally_dead', allyKey: 'survivor' }],
       },
@@ -493,7 +493,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // matters. 8 is the shortest duration where the mean still responds to
         // scale, so it stays, and the wall share is accepted (see the
         // nightmare-wall note at the top of this file).
-        text: 'Survive until the seal steadies',
+        text: 'Survive {rounds} rounds',
         win: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 7 } }],
       },
       enemies: ['wraith', 'wraith', 'specter'],
@@ -594,7 +594,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // resolves to every cultist instance — exactly the three chanters.
         // Still a `race` for palette purposes: the deadline is what defines the
         // type, and the shape classifier keys off the round_reached LOSS.
-        text: 'Silence the three chanters before the counting song ends (13 rounds)',
+        text: 'Kill the three chanters within {rounds} rounds',
         win: [{ kind: 'units_dead', enemyKeys: ['cultist'] }],
         loss: [{ kind: 'round_reached', round: 13, roundByDifficulty: { easy: 14, hard: 12, nightmare: 11 } }],
       },
@@ -640,7 +640,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // With a deadline, enemy HP finally matters (bodies you must fight
         // through or path around cost rounds), so difficulty becomes tunable.
         // The objective text already promised a collapsing stair; now it is real.
-        text: 'Reach the flooded landing before the stair gives way (7 rounds)',
+        text: 'Move every unit onto a marked tile within {rounds} rounds — your hero must survive',
         // 4 tiles for a 4-unit party under scope:'all' — the documented trap
         // is listing FEWER tiles than living units, which is unwinnable.
         win: [{
@@ -746,7 +746,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         },
       },
       objective: {
-        text: 'Get the survey crew safely up the passage before the barrow wakes (10 rounds)',
+        text: 'Get the crew to a marked tile within {rounds} rounds — the crew must survive',
         win: [{ kind: 'ally_at_tiles', allyKey: 'crew', tiles: [{ x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }] }],
         // ⚠ DEADLINE ADDED 2026-08-23. Escort is hpScale-inert by nature and
         // this cell proved it exactly: 2.60 and 3.00 measured IDENTICALLY
@@ -876,7 +876,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       level: 9,
       terrain: { theme: 'crypt' },
       objective: {
-        text: 'Silence the three choristers',
+        text: 'Kill the three Choristers',
         win: [{ kind: 'units_dead', enemyKeys: ['chorister_witch', 'chorister_cultist_1', 'chorister_cultist_2'] }],
       },
       enemies: ['chorister_witch', 'chorister_cultist_1', 'chorister_cultist_2', 'necromancer'],
@@ -914,7 +914,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       level: 10,
       terrain: { theme: 'crypt' },
       objective: {
-        text: 'Hold all three wards at once',
+        text: 'Stand units on all three marked tiles at the same time',
         win: [{
           kind: 'units_at_tiles', scope: 'any', simultaneous: true,
           tiles: [{ x: 2, y: 1 }, { x: 5, y: 4 }, { x: 2, y: 6 }],
@@ -940,7 +940,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
     e12: {
       level: 10,
       objective: {
-        text: 'Reach and defeat what waits behind the door',
+        text: 'Kill the Conductor',
         win: [{ kind: 'units_dead', enemyKeys: ['the_conductor'] }],
       },
       rooms: [
