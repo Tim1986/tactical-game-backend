@@ -46,7 +46,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_036: PuzzleDefinition = {
   id: 'puzzle-036',
   title: 'Puzzle #36 — Pin It First',
-  goalText: 'Defeat the Bulwark within 3 turns',
+  goalText: 'Defeat the enemy Barbarian within 3 turns',
   goal: 'eliminate_target',
   targetUnitId: 'bulwark',
   maxPlayerTurns: 3,
