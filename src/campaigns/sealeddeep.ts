@@ -652,7 +652,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
         //     straggler removes the body you were struggling to escort across.
         //     Without a death loss, sacrificing your slowest unit is a winning
         //     move. That is a perverse incentive, not a difficulty knob.
-        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }, { kind: 'main_dead' }],
+        // Recheck after the archer moved to hard+: 93/95/83 at medium with a
+        // 7-round clock — the stair no longer floods fast enough. Medium 6.
+        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }, { kind: 'main_dead' }],
       },
       // A wall line at x=5 with gaps at y=0/4/7 turns a two-turn stroll into a
       // funnel. Measured before it: hard sat at 76-83% across 1.30-1.90 AND the
