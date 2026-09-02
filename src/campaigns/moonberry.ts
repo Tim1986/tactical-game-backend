@@ -345,7 +345,9 @@ export const moonberryCampaign: CampaignDefinition = {
           enemies: ['mirror_footman'],
           placement: [{ x: 7, y: 4 }],
           trigger: { on: 'round', round: 4 },
-          difficulties: ['hard', 'nightmare'],
+          // C1: nightmare 8% (46% walled) with the gate guard AND the footman on
+          // clock 6 — the r4 footman is hard's only; nightmare keeps the guard.
+          difficulties: ['hard'],
         },
         // A hold is scale-weak, and this one read 98/84/72/64% — too easy at
         // EVERY tier. Bodies are the lever: one more arrival for everybody.
@@ -439,7 +441,8 @@ export const moonberryCampaign: CampaignDefinition = {
         { slug: 'clean_hands', name: 'Clean Hands', description: 'Take the colours without losing anyone.', check: { kind: 'no_party_deaths' } },
       ],
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Nightmare 0% (65% walled) at 1.25; sits on hard.
-      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.15, nightmare: 1.15 },
+      // TUNE-C1 (2026-09-02): from the confirm battery; MOONBERRY_BALANCE_NOTES. Nightmare 4% (52% walled) at 1.15 — the brawl's Stalwart guard + duelist; below hard, deliberately (the bodies are the tier).
+      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.05, nightmare: 1.05 },
     },
     e5: {
       level: 5,
@@ -608,7 +611,8 @@ export const moonberryCampaign: CampaignDefinition = {
         { slug: 'still_masked', name: 'Still Masked', description: 'Nobody lost in the sweep.', check: { kind: 'no_party_deaths' } },
       ],
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Hard 8 / nightmare 0 (62-85% walled): the r5 wave on an 8-round clock. Clock 7 at hard+, the wave is nightmare's, scale flat.
-      hpScaleOverride: { easy: 0.85, medium: 0.85, hard: 0.85, nightmare: 0.85 },
+      // TUNE-C1 (2026-09-02): from the confirm battery; MOONBERRY_BALANCE_NOTES. Hard 88 — up a notch.
+      hpScaleOverride: { easy: 0.85, medium: 0.85, hard: 1.00, nightmare: 1.05 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -669,7 +673,8 @@ export const moonberryCampaign: CampaignDefinition = {
         { slug: 'took_the_sash', name: 'Took the Sash', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; MOONBERRY_BALANCE_NOTES. Boss 100/100/92/80 — the tuner undershoots the build space; bossViability after C1.
-      hpScaleOverride: { easy: 1.30, medium: 1.60, hard: 1.90, nightmare: 2.10 },
+      // TUNE-C1 (2026-09-02): from the confirm battery; MOONBERRY_BALANCE_NOTES. bossViability hard p75 96 — the stage is still soft at hard+.
+      hpScaleOverride: { easy: 1.30, medium: 1.60, hard: 2.10, nightmare: 2.30 },
     },
 
     // e12 — The Rooftop Line (escape). THE FINALE, and not a boss: alarm up,

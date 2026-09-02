@@ -567,7 +567,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // the ±5 run-to-run noise. The alternative, 1.10, measured median 72 at
       // 130 builds: a 7-point ceiling miss to buy back a 1-point wall margin.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. Nightmare 0% (67% walled) at clock 9 + the r6 wraith; clock 8, scale on hard.
-      hpScaleOverride: { easy: 1.00, medium: 1.05, hard: 1.10, nightmare: 1.10 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md.
+      hpScaleOverride: { easy: 1.00, medium: 1.05, hard: 1.10, nightmare: 1.20 },
     },
 
     // e6 — The Counting Song (race). Loss on round_reached — stop the chant.
@@ -771,7 +772,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
         // tightening further: a clock that is too tight stops ranking builds
         // and starts excluding them, which is the failure mode e6 already hit
         // at clock 10 before it went to 13.
-        loss: [{ kind: 'ally_dead', allyKey: 'crew' }, { kind: 'round_reached', round: 9, roundByDifficulty: { nightmare: 8 } }],
+        loss: [{ kind: 'ally_dead', allyKey: 'crew' }, { kind: 'round_reached', round: 10, roundByDifficulty: { nightmare: 9 } }],
       },
       // barrow_hound is the dedicated hunter key (own aiHints, not shared with
       // the ghoul chaff key); starts at (6,2), well outside round-1 reach of
@@ -817,7 +818,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // that could not respond to it. Once the crew stopped outrunning its own
       // encounter, 1.60 does what 3.00 could not.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. The hounds-closer sweep made the escort soft at three tiers; clock 9 (nightmare 8).
-      hpScaleOverride: { easy: 1.50, medium: 1.70, hard: 2.00, nightmare: 2.20 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md. Escort read 72/52/12/4 at 1.50-2.20 with clock 9; clock back to 10 (nightmare 9).
+      hpScaleOverride: { easy: 1.30, medium: 1.45, hard: 1.60, nightmare: 1.75 },
     },
 
     // e9 — The Tide Inward (siege). Waves are the pull of the door — more of
@@ -854,7 +856,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // solving at 0.85 to 12% at 1.00. Stay inside 0.78-0.92 and re-walk in
       // small steps if anything moves.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md.
-      hpScaleOverride: { easy: 1.00, medium: 1.15, hard: 1.30, nightmare: 1.40 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md. 56/20/0/0 at 1.00-1.40 — the tide's waves are the tier.
+      hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.10, nightmare: 1.20 },
     },
 
     // e10 — The Bone Choir (boss). units_dead names the three choristers —
@@ -891,7 +894,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // D2: melee 3% at 1.50 — two firestorms, a freeze and the song on a
       // party that must walk in. The song is the tier now; the scale comes down.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. 100% at every tier after the emergency 1.15 — the song was never the danger; the pool is.
-      hpScaleOverride: { easy: 1.30, medium: 1.50, hard: 1.80, nightmare: 2.00 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md.
+      hpScaleOverride: { easy: 1.50, medium: 1.70, hard: 2.00, nightmare: 2.20 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
@@ -916,7 +920,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // walled) · nm 1.90 -> 29 but 20% walled, so nightmare parks at 1.85 —
       // one point of mean is not worth breaching the wall cap.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md.
-      hpScaleOverride: { easy: 1.39, medium: 1.54, hard: 1.85, nightmare: 2.10 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md.
+      hpScaleOverride: { easy: 1.55, medium: 1.75, hard: 2.05, nightmare: 2.30 },
     },
 
     // e12 — The Sealed Deep (rooms). 3 rooms, finale. Room 0 needs exitDoors;
@@ -970,7 +975,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // per-enemy nightmare blocks are worth ~28 pts on their own, so matching
       // scales still lands nightmare a full band below hard.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. Finale 100/100/84/60.
-      hpScaleOverride: { easy: 1.00, medium: 1.20, hard: 1.40, nightmare: 1.60 },
+      // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md. Finale 88/48/12/0, bossViability hard p75 32 — three rooms of attrition need a low pool.
+      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
     },
   },
 

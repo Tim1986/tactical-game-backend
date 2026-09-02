@@ -36,3 +36,122 @@ content f2356d8eabcd
   e9 easy       mean  53%  median  52%  walls 31%  ⚠
   e9 medium     mean  21%  median  16%  walls 63%  ⚠
   e9 hard       mean   5%  median   4%  walls 87%  ⚠
+  e9 nightmare  mean   0%  median   0%  walls 100%  ⚠
+  e10 easy       mean  99%  median 100%  walls 0%  ⚠
+  e10 medium     mean  95%  median 100%  walls 0%  ⚠
+  e10 hard       mean  79%  median  88%  walls 1%  ⚠
+  e10 nightmare  mean  59%  median  60%  walls 3%  ⚠
+  e11 easy       mean  93%  median  96%  walls 3%  ⚠
+  e11 medium     mean  87%  median  96%  walls 1%  ⚠
+  e11 hard       mean  75%  median  76%  walls 0%  ⚠
+  e11 nightmare  mean  58%  median  64%  walls 3%  ⚠
+  e12 easy       mean  76%  median  88%  walls 13%  ⚠
+  e12 medium     mean  50%  median  52%  walls 31%  ⚠
+  e12 hard       mean  21%  median  12%  walls 47%  ⚠
+  e12 nightmare  mean   2%  median   0%  walls 87%  ⚠
+
+shard done in 83.8 min
+
+SHARD 1/2 (partial — merge with the other shard for the real verdict)
+
+enc  lvl difficulty  builds  median   solve%  need   ceil  walled  verdict
+e1   L1  easy           75   96%    91%>=80%   65%  <=100%    0%  OK  [early]
+e1   L1  medium         75   80%    73%>=65%   50%  <= 90%    1%  OK  [early]
+e1   L1  hard           75   56%    63%>=45%   35%  <= 80%    0%  OK  [early]
+e1   L1  nightmare      75   24%    32%>=40%   20%  <= 60%    7%  OK  [early]
+e2   L2  easy           75   88%    73%>=80%   65%  <=100%    1%  OK  [early]
+e2   L2  medium         75   72%    59%>=65%   50%  <= 90%   15%  OK  [early]
+e2   L2  hard           75   48%    56%>=45%   35%  <= 80%    4%  OK  [early]
+e2   L2  nightmare      75   20%    23%>=40%   20%  <= 60%   12%  OK  [early]
+e3   L2  easy           75   92%    73%>=80%   65%  <=100%    7%  OK  [early]
+e3   L2  medium         75   80%    59%>=65%   50%  <= 90%    7%  OK  [early]
+e3   L2  hard           75   68%    75%>=45%   35%  <= 80%    3%  OK  [early]
+e3   L2  nightmare      75   24%    33%>=40%   20%  <= 60%   17%  OK  [early]
+e4   L3  easy           75  100%    89%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e4   L3  medium         75   92%    77%>=65%   35%  <= 80%   17%  ⚠ TOO EASY+WALLS  ⚠ bimodal
+       └ walled   8%  rogue(assassinate) + fighter(shield_bash) + sorcerer(flame_jet) + cleric(heal)
+       └ walled  12%  rogue(assassinate) + wizard(blizzard) + ranger(longshot) + sorcerer(ignite)
+       └ walled  24%  sorcerer(flame_jet) + fighter(shield_bash) + barbarian(whirlwind) + wizard(freeze)
+e4   L3  hard           75   52%    55%>=45%   20%  <= 65%   25%  ⚠ WALLS
+       └ walled   0%  cleric(heal) + ranger(piercing) + wizard(cold_snap) + warlock(fear)
+       └ walled   0%  wizard(freeze) + ranger(piercing) + rogue(expose) + fighter(concussive)
+       └ walled   4%  fighter(shield_bash) + sorcerer(ignite) + cleric(ward) + warlock(fear)
+e4   L3  nightmare      75   20%    41%>=40%   10%  <= 45%   31%  OK  ⚠ bimodal
+e5   L4  easy           75  100%    87%>=80%   50%  <= 95%    4%  ⚠ TOO EASY
+e5   L4  medium         75   76%    68%>=65%   35%  <= 80%   17%  ⚠ WALLS
+       └ walled   0%  wizard(freeze/channeler) + barbarian(shockwave/vengeful) + fighter(shield_bash) + sorcerer(flame_jet)
+       └ walled   0%  cleric(ward/warded) + warlock(grasp/opportunist) + fighter(shield_bash) + barbarian(shockwave)
+       └ walled   4%  wizard(freeze/opportunist) + rogue(assassinate/vengeful) + ranger(piercing) + warlock(drain)
+e5   L4  hard           75   64%    67%>=45%   20%  <= 65%   21%  OK
+e5   L4  nightmare      75   44%    57%>=40%   10%  <= 45%   20%  OK
+e6   L5  easy           75   96%    80%>=80%   50%  <= 95%    4%  ⚠ TOO EASY
+e6   L5  medium         75   84%    71%>=65%   35%  <= 80%    5%  ⚠ TOO EASY
+e6   L5  hard           75   64%    68%>=45%   20%  <= 65%   12%  OK
+e6   L5  nightmare      75   28%    36%>=40%   10%  <= 45%   24%  OK
+e7   L6  easy           75  100%    93%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e7   L6  medium         75   80%    71%>=65%   35%  <= 80%   17%  ⚠ WALLS
+       └ walled   0%  fighter(shield_bash/stalwart) + sorcerer(flame_jet/undying) + rogue(dagger_toss/vengeful) + ranger(longshot/opportunist) [stand_with_vessa]
+       └ walled  12%  wizard(freeze/channeler) + warlock(fear/stalwart) + barbarian(roar/stalwart) + ranger(pinning/opportunist) [seal_her_out]
+       └ walled  24%  fighter(shield_bash/stalwart) + wizard(cold_snap/stalwart) + warlock(drain/opportunist) + rogue(assassinate/opportunist) [stand_with_vessa]
+e7   L6  hard           75   44%    47%>=45%   20%  <= 65%   21%  OK
+e7   L6  nightmare      75   24%    35%>=40%   10%  <= 45%   23%  OK
+e8   L7  easy           75   72%    41%>=80%   50%  <= 95%   29%  ⚠ TOO HARD+WALLS
+       └ walled   0%  barbarian(roar/stalwart/armor) + cleric(ward/warded/movement) + fighter(second_wind/stalwart) + warlock(fear/stalwart) [seal_her_out]
+       └ walled  20%  fighter(concussive/stalwart/movement) + wizard(freeze/opportunist/damage) + sorcerer(ffh/undying) + cleric(heal/undying) [seal_her_out]
+       └ walled  24%  fighter(second_wind/thorns/movement) + cleric(purify/warded/armor) + barbarian(roar/vengeful) + sorcerer(flame_jet/stalwart) [seal_her_out]
+e8   L7  medium         75   56%    41%>=65%   35%  <= 80%   28%  ⚠ WALLS
+       └ walled   0%  rogue(dagger_toss/swift/damage) + warlock(drain/siphon/damage) + ranger(piercing/stalwart) + sorcerer(ffh/stalwart) [seal_her_out]
+       └ walled   0%  warlock(drain/stalwart/movement) + rogue(expose/swift/damage) + ranger(longshot/thorns) + cleric(purify/warded) [seal_her_out]
+       └ walled   8%  wizard(blizzard/stalwart/damage) + sorcerer(flame_jet/undying/movement) + rogue(expose/opportunist) + ranger(longshot/opportunist) [seal_her_out]
+e8   L7  hard           75    8%    23%>=45%   20%  <= 65%   52%  ⚠ WALLS  ⚠ bimodal
+       └ walled   0%  wizard(blizzard/stalwart/armor) + ranger(longshot/thorns/damage) + sorcerer(ignite/undying) + rogue(expose/vengeful) [stand_with_vessa]
+       └ walled   4%  sorcerer(ffh/undying/armor) + wizard(blizzard/opportunist/damage) + rogue(assassinate/opportunist) + cleric(purify/warded) [stand_with_vessa]
+       └ walled   4%  rogue(assassinate/opportunist/armor) + barbarian(shockwave/stalwart/movement) + ranger(pinning/stalwart) + cleric(ward/undying) [stand_with_vessa]
+e8   L7  nightmare      75    0%     7%>=40%   10%  <= 45%   67%  ⚠ TOO HARD+WALLS
+       └ walled   0%  wizard(blizzard/opportunist/movement) + fighter(second_wind/stalwart/movement) + rogue(expose/swift) + cleric(purify/stalwart) [stand_with_vessa]
+       └ walled   0%  rogue(dagger_toss/swift/damage) + ranger(piercing/thorns/damage) + fighter(second_wind/stalwart) + warlock(grasp/stalwart) [seal_her_out]
+       └ walled   0%  wizard(blizzard/stalwart/damage) + cleric(heal/warded/movement) + ranger(longshot/opportunist) + fighter(concussive/thorns) [seal_her_out]
+e9   L8  easy           75   52%    16%>=80%   50%  <= 95%   31%  ⚠ TOO HARD+WALLS
+       └ walled   8%  ranger(longshot/opportunist/armor) + barbarian(roar/stalwart/armor) + wizard(freeze/opportunist/armor) + sorcerer(flame_jet/opportunist/movement) [seal_her_out]
+       └ walled  16%  barbarian(shockwave/vengeful/damage) + rogue(dagger_toss/swift/armor) + fighter(second_wind/thorns/armor) + cleric(heal/undying/damage) [stand_with_vessa]
+       └ walled  20%  ranger(longshot/stalwart/damage) + wizard(cold_snap/stalwart/armor) + warlock(grasp/siphon/armor) + barbarian(roar/stalwart/damage) [stand_with_vessa]
+e9   L8  medium         75   16%     1%>=65%   35%  <= 80%   63%  ⚠ TOO HARD+WALLS
+       └ walled   4%  sorcerer(flame_jet/undying/movement) + cleric(ward/warded/damage) + barbarian(roar/thorns/armor) + rogue(dagger_toss/swift/armor) [seal_her_out]
+       └ walled   4%  ranger(longshot/thorns/armor) + fighter(concussive/undying/movement) + rogue(assassinate/opportunist/movement) + warlock(drain/opportunist/armor) [seal_her_out]
+       └ walled  12%  rogue(assassinate/opportunist/damage) + wizard(blizzard/opportunist/armor) + barbarian(roar/vengeful/armor) + ranger(pinning/thorns/movement) [stand_with_vessa]
+e9   L8  hard           75    4%     0%>=45%   20%  <= 65%   87%  ⚠ TOO HARD+WALLS
+       └ walled   0%  ranger(pinning/thorns/damage) + fighter(second_wind/undying/movement) + wizard(blizzard/stalwart/damage) + cleric(purify/stalwart/armor) [seal_her_out]
+       └ walled   0%  barbarian(roar/vengeful/damage) + cleric(heal/warded/damage) + wizard(cold_snap/opportunist/armor) + rogue(dagger_toss/swift/armor) [seal_her_out]
+       └ walled   0%  wizard(cold_snap/opportunist/damage) + rogue(assassinate/swift/armor) + warlock(grasp/opportunist/movement) + barbarian(roar/vengeful/movement) [stand_with_vessa]
+e9   L8  nightmare      75    0%     0%>=40%   10%  <= 45%  100%  ⚠ TOO HARD+WALLS
+       └ walled   0%  cleric(ward/undying/armor) + sorcerer(ignite/undying/damage) + wizard(freeze/opportunist/damage) + ranger(longshot/stalwart/armor) [stand_with_vessa]
+       └ walled   0%  barbarian(whirlwind/stalwart/damage) + sorcerer(flame_jet/undying/damage) + rogue(dagger_toss/opportunist/damage) + cleric(ward/undying/movement) [stand_with_vessa]
+       └ walled   0%  rogue(assassinate/opportunist/damage) + warlock(fear/opportunist/damage) + sorcerer(ffh/undying/movement) + ranger(longshot/opportunist/movement) [seal_her_out]
+e10  L9  easy           75  100%    97%>=80%   50%  <= 95%    0%  ⚠ TOO EASY
+e10  L9  medium         75  100%    96%>=65%   35%  <= 80%    0%  ⚠ TOO EASY
+e10  L9  hard           75   88%    89%>=45%   20%  <= 65%    1%  ⚠ TOO EASY
+e10  L9  nightmare      75   60%    81%>=40%   10%  <= 45%    3%  ⚠ TOO EASY
+e11  L10 easy           75   96%    92%>=80%   50%  <= 95%    3%  ⚠ TOO EASY
+e11  L10 medium         75   96%    85%>=65%   35%  <= 80%    1%  ⚠ TOO EASY
+e11  L10 hard           75   76%    88%>=45%   20%  <= 65%    0%  ⚠ TOO EASY
+e11  L10 nightmare      75   64%    71%>=40%   10%  <= 45%    3%  ⚠ TOO EASY
+e12  L10 easy           75   88%    63%>=80%   50%  <= 95%   13%  ⚠ WALLS
+       └ walled  20%  rogue(expose/swift/armor) + fighter(concussive/stalwart/movement) + sorcerer(ignite/stalwart/armor) + ranger(piercing/thorns/damage) [swift_footing,seal_her_out]
+       └ walled  20%  wizard(freeze/stalwart/damage) + ranger(piercing/stalwart/damage) + rogue(expose/vengeful/movement) + barbarian(shockwave/thorns/armor) [iron_resolve,seal_her_out]
+       └ walled  36%  fighter(shield_bash/thorns/movement) + wizard(cold_snap/opportunist/armor) + sorcerer(ffh/undying/armor) + rogue(expose/opportunist/damage) [swift_footing,stand_with_vessa]
+e12  L10 medium         75   52%    36%>=65%   35%  <= 80%   31%  ⚠ WALLS
+       └ walled   0%  barbarian(shockwave/thorns/movement) + wizard(cold_snap/opportunist/damage) + rogue(expose/opportunist/damage) + ranger(pinning/thorns/damage) [iron_resolve,seal_her_out]
+       └ walled   8%  rogue(dagger_toss/swift/movement) + cleric(purify/stalwart/armor) + fighter(shield_bash/thorns/armor) + barbarian(roar/vengeful/damage) [iron_resolve,seal_her_out]
+       └ walled  24%  wizard(blizzard/opportunist/armor) + warlock(grasp/siphon/armor) + cleric(purify/stalwart/armor) + fighter(second_wind/undying/movement) [iron_resolve,seal_her_out]
+e12  L10 hard           75   12%    15%>=45%   20%  <= 65%   47%  ⚠ TOO HARD+WALLS
+       └ walled   0%  wizard(freeze/channeler/armor) + ranger(piercing/stalwart/damage) + sorcerer(ffh/undying/armor) + rogue(expose/swift/damage) [swift_footing,seal_her_out]
+       └ walled   4%  ranger(piercing/thorns/armor) + fighter(concussive/thorns/damage) + barbarian(shockwave/vengeful/damage) + rogue(assassinate/vengeful/movement) [swift_footing,stand_with_vessa]
+       └ walled   4%  barbarian(shockwave/vengeful/armor) + ranger(longshot/stalwart/damage) + rogue(dagger_toss/swift/movement) + sorcerer(ignite/undying/armor) [swift_footing,seal_her_out]
+e12  L10 nightmare      75    0%     0%>=40%   10%  <= 45%   87%  ⚠ TOO HARD+WALLS
+       └ walled   0%  cleric(purify/stalwart/damage) + barbarian(whirlwind/vengeful/movement) + sorcerer(ffh/opportunist/movement) + fighter(shield_bash/thorns/armor) [iron_resolve,stand_with_vessa]
+       └ walled   0%  barbarian(shockwave/thorns/damage) + cleric(ward/warded/damage) + ranger(pinning/stalwart/armor) + fighter(concussive/thorns/damage) [iron_resolve,stand_with_vessa]
+       └ walled   0%  warlock(fear/siphon/damage) + ranger(piercing/opportunist/damage) + cleric(heal/warded/damage) + barbarian(shockwave/thorns/armor) [iron_resolve,seal_her_out]
+
+⚠ 29 cell(s) failing: e4/easy(TOO EASY), e4/medium(TOO EASY+WALLS), e4/hard(WALLS), e5/easy(TOO EASY), e5/medium(WALLS), e6/easy(TOO EASY), e6/medium(TOO EASY), e7/easy(TOO EASY), e7/medium(WALLS), e8/easy(TOO HARD+WALLS), e8/medium(WALLS), e8/hard(WALLS), e8/nightmare(TOO HARD+WALLS), e9/easy(TOO HARD+WALLS), e9/medium(TOO HARD+WALLS), e9/hard(TOO HARD+WALLS), e9/nightmare(TOO HARD+WALLS), e10/easy(TOO EASY), e10/medium(TOO EASY), e10/hard(TOO EASY), e10/nightmare(TOO EASY), e11/easy(TOO EASY), e11/medium(TOO EASY), e11/hard(TOO EASY), e11/nightmare(TOO EASY), e12/easy(WALLS), e12/medium(WALLS), e12/hard(TOO HARD+WALLS), e12/nightmare(TOO HARD+WALLS)
+
+JSON written: balance_runs/sd_C1_s0.json

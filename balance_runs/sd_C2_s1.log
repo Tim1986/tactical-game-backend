@@ -1,0 +1,11 @@
+The Sealed Deep — shard 2/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
+content 9492186d7627
+
+  e1 easy       mean  91%  median  96%  walls 0%  
+  e1 medium     mean  75%  median  80%  walls 0%  
+  e1 hard       mean  55%  median  56%  walls 0%  
+  e1 nightmare  mean  32%  median  32%  walls 7%  
+  e2 easy       mean  82%  median  84%  walls 3%  
+  e2 medium     mean  61%  median  60%  walls 13%  ⚠
+  e2 hard       mean  50%  median  48%  walls 3%  
+  e2 nightmare  mean  27%  median  20%  walls 9%  

@@ -84,3 +84,16 @@ nightmare-only; e9 clock 7 at hard+, the r5 wave nightmare-only, scale flat;
 e4/e4b nightmare sit on hard; e5/e10/e11/e12 ladders up; e6 medium clock 6;
 e12 clocks one notch tighter. C1 running. The fork (e4/e4b) reads as intended
 at hard: e4 52 / e4b 44 medians, so both branches are real fights.
+
+## CERTIFIED — 2026-09-02 (C1 + four single-cell nudges; stopping rule)
+`balance_runs/mb_C1_merged.json` (150×25). No cell TOO HARD after the nudges:
+e3 nightmare (the r4 footman is hard's only) 12% / 33% walls ✓; e4b nightmare
+1.05 → 16% ✓ (hard down to 1.05 to keep the ladder monotone — the bodies are
+the tier); e9 hard 1.00 → 60 ✓; e11 hard 2.10 → 56 ✓. bossViability e11:
+easy/medium 100, hard p75 96 before the nudge (now softened), nightmare
+median 40 — selective by design. FIGHT cells in band elsewhere; OBJECTIVE
+cells (e2 escort, e3 hold, e6 race, e7 protect, e9 sweep, e12 escape) run
+TOO EASY on easy medians with every wall inside its cap — accepted.
+FORK 0 (e4 audition / e4b loading dock) reads as two real fights: e4 hard 52,
+e4b hard 44 medians. RESIDUAL for the owner: e4 pure-melee at medium (~25;
+the dock is its answer). Engine at commit; a brain/engine change voids this.
