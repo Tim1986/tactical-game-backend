@@ -284,7 +284,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // mean, 1.32 -> 84%/88% median, 1% walls.
       // Provisional after the rebuild (five bodies now, not three); the tuner
       // re-walks this on the new content.
-      hpScaleOverride: { easy: 0.90, medium: 1.00, hard: 1.10, nightmare: 1.20 },
+      // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9.
+      hpScaleOverride: { easy: 0.95, medium: 1.09, hard: 1.24, nightmare: 1.28 },
     },
 
     // e2 — The First Mile (escort). The campaign's thesis in one fight: the
@@ -376,7 +377,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       //   medium    0.75 -> 84% · 0.85 -> 74%, 1% walls ✓ · 1.00 -> 43%, 31% walls
       //   hard      0.95 -> 56%, 4% walls ✓ · 1.05 -> 42%, 13% walls ✓
       //   nightmare 1.05 -> 21%, 23% walls ✓ · 1.10 -> 14%, 38% walls (too far)
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
+      // TUNE-D1: nightmare 8% at 1.15 (41% walled) — the nightmare AC bonus is the tier; scale sits on hard.
+      hpScaleOverride: { easy: 0.91, medium: 0.95, hard: 1.06, nightmare: 1.08 },
     },
 
     // e4 — The Office of Forms (rooms). REUSED from the shipped e4's two-room
@@ -389,7 +391,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       rooms: [
         {
           terrain: { theme: 'interior', blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }] },
-          enemies: ['clerk_of_stamps', 'bluecap_scout'],
+          enemies: ['bluecap_scout', 'bluecap_scout'],
           enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 2 }],
           exitDoors: [{ x: 7, y: 2 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
         },
@@ -403,7 +405,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'in_triplicate', name: 'In Triplicate', description: 'Clear both rooms with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
-      hpScaleOverride: { easy: 0.99, medium: 1.11, hard: 1.27, nightmare: 1.27 },
+      // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9. Melee residual (18-27) is the Clerk of Stamps' expose in room 1 — swapped for a scout.
+      hpScaleOverride: { easy: 0.76, medium: 0.84, hard: 1.15, nightmare: 1.19 },
     },
 
     // e5 — The Ink Works (hazard). Spilled lamp-oil and printer's ink, burning
@@ -425,7 +428,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'dry_pages', name: 'Dry Pages', description: 'Lose nobody to the fire.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.98, medium: 1.1, hard: 1.22, nightmare: 1.22 },
+      // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9.
+      hpScaleOverride: { easy: 0.98, medium: 1.08, hard: 1.20, nightmare: 1.20 },
     },
 
     // e6 — The Customs Barge (race). REUSED from the shipped e3's ferry relay,
@@ -444,7 +448,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
         // Clock by tier [2026-09-01]: two pinning inspectors root a melee party
         // and the flat 7-round clock did the rest (melee 37% at medium, "the
         // deadline passed"). Easy gets a round; nightmare loses one.
-        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 7 } }],
       },
       enemies: ['customs_inspector', 'customs_inspector', 'bellrunner', 'kettlehelm_orc'],
       // Tier by BODIES [2026-09-01]: two pinning inspectors root a melee party
@@ -460,7 +464,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'cleared_customs', name: 'Cleared Customs', description: 'Clear the barge by round 6.', check: { kind: 'win_by_round', round: 6 } },
       ],
-      hpScaleOverride: { easy: 0.80, medium: 0.86, hard: 0.92, nightmare: 1.00 },
+      // TUNE-D1: nightmare 4% (53% walled) at clock 6 + two pinners; clock 7 at nightmare, scale flat.
+      hpScaleOverride: { easy: 0.82, medium: 0.84, hard: 0.86, nightmare: 0.86 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -525,7 +530,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
           enemies: ['mudboot_bruiser'],
           placement: [{ x: 7, y: 4 }],
           trigger: { on: 'round', round: 4 },
-          difficulties: ['hard', 'nightmare'],
+          difficulties: ['nightmare'],
         },
       ],
       // Start at x=2-3 (D2: from x=1-2 the balanced comp shoved the bruiser off
@@ -538,7 +543,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // v6 read 70/88/30 (balanced wiped on the survive path; the plates are
       // a HUMAN path — the brain does not coordinate a split around a wall,
       // so the sim measures the survive floor). Provisional; tuner re-walks.
-      hpScaleOverride: { easy: 0.65, medium: 0.72, hard: 0.90, nightmare: 1.00 },
+      // TUNE-D1: hard 24 / nightmare 8 — the r4 bruiser wave is the cliff; it is nightmare's now, and the scale is flat.
+      hpScaleOverride: { easy: 0.75, medium: 0.80, hard: 0.80, nightmare: 0.80 },
     },
 
     // e8 — The Impound Yard (siege). Snagg impounds the bell "pending review";
@@ -555,7 +561,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Hold the impound yard until dawn',
-        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6 } }],
       },
       enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder'],
       enemiesByDifficulty: { easy: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout'] },
@@ -583,7 +589,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
         { slug: 'held_the_yard', name: 'Held the Yard', description: 'Survive with the whole party standing.', check: { kind: 'unit_survives', scope: 'all' } },
       ],
       // Survive cells are scale-inert; the clock above is the tier lever.
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.00, nightmare: 1.05 },
+      // TUNE-D1: hard 4% / nightmare 0% (71-80% walled) — the r4 kettle+mender wave on an 8-round clock. Clock 7 at hard+, scale flat.
+      hpScaleOverride: { easy: 0.82, medium: 0.95, hard: 0.95, nightmare: 0.95 },
     },
 
     // e9 — The Audit (boss). MID-CAMPAIGN, deliberately: Snagg is the
@@ -607,7 +614,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'audited_him', name: 'Audited Him', description: 'Let the hero strike the final blow.', check: { kind: 'killing_blow_by_main' } },
       ],
-      hpScaleOverride: { easy: 0.93, medium: 1.21, hard: 1.33, nightmare: 1.40 },
+      // TUNE-D1: boss walkover at easy-hard (bossViability p75 92 at hard). Nightmare is selective by design.
+      hpScaleOverride: { easy: 1.04, medium: 1.30, hard: 1.43, nightmare: 1.57 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -639,7 +647,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Keep the bell above the water until the street drains',
-        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, hard: 8, nightmare: 8 } }],
+        win: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 6, nightmare: 8 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'wagon' }],
       },
       enemies: ['flood_looter', 'flood_looter', 'bellrunner', 'mudboot_bruiser'],
@@ -664,7 +672,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'above_the_water', name: 'Above the Water', description: 'Nobody lost to the flood.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.00, nightmare: 1.05 },
+      // TUNE-D1: hard 16% (43% walled) — the protect's hard+ wave on clock 8; clock 7 at hard.
+      hpScaleOverride: { easy: 0.87, medium: 0.95, hard: 0.95, nightmare: 0.95 },
     },
 
     // e11 — The Stair of Stamps (escape). Up the tower's switchback with the
@@ -700,12 +709,15 @@ export const goblinopolisCampaign: CampaignDefinition = {
         // An escape is won by ARRIVING, so scale is a weak lever — the stair
         // read 100/92/86/84% on it. A second pursuit is the honest dial.
         { enemies: ['kettlehelm_orc', 'mudboot_bruiser'], placement: [{ x: 0, y: 2 }, { x: 0, y: 5 }], trigger: { on: 'round', round: 4 } },
+        // Hard and nightmare: the stair is also watched from ABOVE.
+        { enemies: ['bluecap_pathfinder', 'bluecap_scout'], placement: [{ x: 6, y: 1 }, { x: 6, y: 6 }], trigger: { on: 'round', round: 3 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [
         { slug: 'up_the_stair', name: 'Up the Stair', description: 'Get everyone up with nobody lost.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 1.05, hard: 1.30, nightmare: 1.55 },
+      // TUNE-D1: escape read 96/88 at hard/nightmare — a third wave at hard+ (below), and the tuner's ladder.
+      hpScaleOverride: { easy: 0.98, medium: 1.43, hard: 1.60, nightmare: 1.75 },
     },
 
     // e12 — Ring It (race). THE FINALE, and not a boss: the crest is coming up
@@ -765,7 +777,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       goals: [
         { slug: 'rung_on_time', name: 'Rung On Time', description: 'Ring it by round 7.', check: { kind: 'win_by_round', round: 7 } },
       ],
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
+      // TUNE-D1 (2026-09-02): tuner ladder reconciled monotonic; GOBLINOPOLIS_BALANCE_NOTES §9. Nightmare bimodal (fast heroes win) — selectivity, by doctrine.
+      hpScaleOverride: { easy: 0.87, medium: 0.98, hard: 1.00, nightmare: 1.00 },
     },
   },
 
