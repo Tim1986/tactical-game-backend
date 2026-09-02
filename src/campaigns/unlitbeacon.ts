@@ -170,7 +170,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     },
     // ── Sorrel's crew: living bosses, raised labour ──
     glacier_poacher: {
-      baseClass: 'sorcerer', artKey: 'cultist', name: 'Glacier Poacher',
+      baseClass: 'sorcerer', artKey: 'cultist', name: 'Grove Burner',
       maxHealth: 34, armorClass: 9, specialSlug: 'ignite',
       nightmare: { acBonus: 1 },
     },
@@ -197,7 +197,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // play"). skeleton_berserker is the ROGUE-chassis skeleton, so the art
       // matches the kit, and no other e4 enemy uses it. The fiction below
       // makes them Sorrel's raised labour rather than living knife-hands.
-      baseClass: 'rogue', artKey: 'skeleton_berserker', name: 'Poacher Cutter',
+      baseClass: 'rogue', artKey: 'skeleton_berserker', name: 'Timber Thief',
       maxHealth: 40, armorClass: 8, movementRange: 4,
       abilities: ['twin'],
       nightmare: { acBonus: 1 },

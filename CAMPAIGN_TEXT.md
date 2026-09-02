@@ -636,7 +636,7 @@ Winter's Voice
 
 [unlitbeacon.enemy.glacier_poacher.name]
 
-Glacier Poacher
+Grove Burner
 
 [unlitbeacon.enemy.poacher_torchhand.name]
 
@@ -652,7 +652,7 @@ Torchhand
 
 [unlitbeacon.enemy.poacher_cutter.name]
 
-Poacher Cutter
+Timber Thief
 
 [unlitbeacon.enemy.muster_warden.name]
 
