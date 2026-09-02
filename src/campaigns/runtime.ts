@@ -249,6 +249,27 @@ export function buildCampaignPlayerInstance(
   };
 }
 
+/** Opening chill (owner 2026-09-02): on EASY and MEDIUM, no starting enemy may
+ *  freeze in round 1. A frozen unit skips its round-1 commit, so an opening
+ *  multi-freeze (a tester ate 2-3) locks the player out of picking their own
+ *  initiative order before the game has begun. Every STARTING enemy ability
+ *  that applies FROZEN begins on cooldown 1 — ready from round 2. Hard and
+ *  nightmare keep the cold open. Wave/room spawns are exempt: they arrive
+ *  after the order is set, and a spawn-time cooldown would silently nerf them
+ *  a full turn beyond this rule's intent.
+ *  Lookup is against DEFAULT_ABILITIES: every frozen-applier in the registry
+ *  today (freeze, blizzard, cold_snap) is a base ability; a campaign-scoped
+ *  freezer would need this check extended to campaignAbilities. */
+function applyOpeningChill(inst: UnitInstance, difficulty: CampaignDifficulty): void {
+  if (difficulty !== 'easy' && difficulty !== 'medium') return;
+  for (const slug of inst.abilities) {
+    const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
+    const freezes = def?.effects?.some((e) =>
+      e.type === 'apply_status' && (e as { statusSlug?: string }).statusSlug === 'frozen');
+    if (freezes) inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1);
+  }
+}
+
 /** Builds a campaign enemy: base-class def + overrides + difficulty scaling. */
 export function buildCampaignEnemyInstance(
   enemy: CampaignEnemy,
@@ -619,6 +640,7 @@ export function buildEncounterState(
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Unknown enemy key: ${key}`);
     const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, effEnemyPlacement[i], difficulty, hpScale, effNoSpecials);
+    applyOpeningChill(inst, difficulty);
     unitNames[inst.instanceId] = enemy.name;
     enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
     return inst;

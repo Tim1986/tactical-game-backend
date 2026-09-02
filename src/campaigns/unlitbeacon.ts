@@ -422,7 +422,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         ],
       },
       objective: {
-        text: 'Hold both bridgeheads at once',
+        text: 'Stand a unit on each bridge tile at the same time',
         win: [{
           kind: 'units_at_tiles', scope: 'any', simultaneous: true,
           tiles: [{ x: 4, y: 1 }, { x: 4, y: 6 }],
@@ -1173,7 +1173,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     },
     bridges_pre: {
       kind: 'encounter', encounter: 'e3',
-      preText: '{if sheltered}With the families barred safe inside the keep, the bridges become the thing to DENY — if the column crosses the Merewater it can flank the keep by morning. {mainName} splits the party to hold both bridgeheads at once, and the pikemen come on with their shields up, shoving for the marks.{else}The wagons start across at first light, families and lanterns and everything that can be carried. The column reads the movement and turns for the bridges. {mainName} splits the party to hold both bridgeheads until the last wagon is over — and the pikemen come shoving.{/if}',
+      preText: '{if sheltered}With the families barred safe inside the keep, the bridges become the thing to DENY — if the column crosses the Merewater it can flank the keep by morning. Two bridges span the river, and enemy pikemen stand on both. To win, take the bridges: stand one of your units on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{else}The wagons start across at first light, families and lanterns and everything that can be carried. The column reads the movement and turns for the bridges. Two bridges span the river, and enemy pikemen stand on both. To win, take the bridges: stand one of your units on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{/if}',
       next: 'road_note',
     },
     road_note: {

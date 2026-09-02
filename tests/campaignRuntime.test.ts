@@ -185,3 +185,43 @@ describe('[PLACE1] placementOrder — the player picks who stands where', () => 
     expect(() => build(order as number[])).toThrow(/placementOrder/);
   });
 });
+
+describe('opening chill (owner 2026-09-02)', () => {
+  const ub = CAMPAIGNS['unlitbeacon'];
+  const party = ['fighter', 'rogue', 'cleric', 'wizard'];
+  const choices = {};
+  const freezerCds = (diff: 'easy' | 'medium' | 'hard' | 'nightmare') => {
+    // e7 opens with two blizzard wisps and freeze-casting Voices.
+    const { state } = buildEncounterState(ub, 'e7', party as any, choices as any, ub.encounters.e7.level, diff, 'h', 'e');
+    return state.units
+      .filter((u) => u.ownerPlayerId === 'e')
+      .flatMap((u) => u.abilities
+        .filter((s) => s === 'freeze' || s === 'blizzard' || s === 'cold_snap')
+        .map((s) => u.cooldowns[s] ?? 0));
+  };
+
+  it('easy/medium: every starting freeze-applier begins on cooldown 1 (no round-1 freeze)', () => {
+    for (const diff of ['easy', 'medium'] as const) {
+      const cds = freezerCds(diff);
+      expect(cds.length).toBeGreaterThan(0);
+      for (const cd of cds) expect(cd).toBe(1);
+    }
+  });
+
+  it('hard/nightmare: freeze opens cold (cooldown 0)', () => {
+    for (const diff of ['hard', 'nightmare'] as const) {
+      for (const cd of freezerCds(diff)) expect(cd).toBe(0);
+    }
+  });
+
+  it('wave/room spawns are exempt — they arrive after the initiative order is set', () => {
+    // unlitbeacon e5 spawns a blizzard_wisp as a wave on easy/medium.
+    const { state } = buildEncounterState(ub, 'e5', party as any, choices as any, ub.encounters.e5.level, 'easy', 'h', 'e');
+    const pending = state.encounterProgress!.waves.flatMap((w) => w.units);
+    const waveFreezers = pending.flatMap((u) => u.abilities
+      .filter((s) => s === 'freeze' || s === 'blizzard' || s === 'cold_snap')
+      .map((s) => u.cooldowns[s] ?? 0));
+    expect(waveFreezers.length).toBeGreaterThan(0);
+    for (const cd of waveFreezers) expect(cd).toBe(0);
+  });
+});
