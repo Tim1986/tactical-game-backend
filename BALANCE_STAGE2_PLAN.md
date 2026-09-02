@@ -31,8 +31,16 @@ objective shapes); the BALANCE phase runs one campaign at a time, Lantern
 first, per CAMPAIGN_DESIGN_SPECS §6. Unlit Beacon's own re-walk (below) is
 unchanged and still pending the owner's checkpoint playthrough.
 
-**NEXT STEP → Lantern balance (D1 battery running) → Goblinopolis → Moonberry
-→ Sealed Deep; then §4 Unlit Beacon as written:** Gate 1 is implemented
+**2026-09-02 — Lantern CERTIFIED (LANTERN_BALANCE_NOTES §9) and Goblinopolis
+CERTIFIED (GOBLINOPOLIS_BALANCE_NOTES §11), each after a designed-content
+baseline, one centring pass, a confirm battery and single-cell nudges under the
+stopping rule. Parked residuals, both fork candidates under the owner's
+2026-09-02 rule: Moonberry e4 (already forked → e4b) and Goblinopolis e4 rooms
+at medium for pure-melee comps. Moonberry and Sealed Deep are in their confirm
+batteries (C1).**
+
+**NEXT STEP → Moonberry C1 read → Sealed Deep C1 read → certify or one more
+pass each; then §4 Unlit Beacon as written:** Gate 1 is implemented
 (CAMPAIGN_GROWTH per-class + anchor invariant + ffh/assassinate exceptions +
 the point-of-choice display). Re-walking its L6+ cells only — e7–e12, 24
 cells. e1–e6 are anchor-frozen and NOT re-walked. After certification: the
