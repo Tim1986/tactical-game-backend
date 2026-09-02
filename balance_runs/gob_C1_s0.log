@@ -1,3 +1,41 @@
 The Bell of Goblinopolis — shard 1/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
 content 27ed87f893fe
 
+  e1 easy       mean  90%  median  92%  walls 0%  
+  e1 medium     mean  67%  median  72%  walls 4%  
+  e1 hard       mean  47%  median  48%  walls 7%  
+  e1 nightmare  mean  31%  median  28%  walls 12%  
+  e2 easy       mean  86%  median  88%  walls 0%  
+  e2 medium     mean  79%  median  80%  walls 1%  
+  e2 hard       mean  81%  median  84%  walls 0%  ⚠
+  e2 nightmare  mean  56%  median  56%  walls 1%  
+  e3 easy       mean  80%  median  88%  walls 5%  
+  e3 medium     mean  63%  median  64%  walls 11%  
+  e3 hard       mean  50%  median  48%  walls 1%  
+  e3 nightmare  mean  23%  median  16%  walls 24%  
+  e4 easy       mean  92%  median 100%  walls 3%  ⚠
+  e4 medium     mean  87%  median  92%  walls 1%  ⚠
+  e4 hard       mean  45%  median  44%  walls 11%  
+  e4 nightmare  mean  28%  median  24%  walls 16%  
+  e5 easy       mean  80%  median  88%  walls 7%  
+  e5 medium     mean  73%  median  80%  walls 5%  
+  e5 hard       mean  52%  median  52%  walls 8%  
+  e5 nightmare  mean  29%  median  20%  walls 25%  
+  e6 easy       mean  91%  median  96%  walls 0%  ⚠
+  e6 medium     mean  77%  median  84%  walls 5%  ⚠
+  e6 hard       mean  62%  median  64%  walls 0%  
+  e6 nightmare  mean  50%  median  44%  walls 4%  
+  e7 easy       mean 100%  median 100%  walls 0%  ⚠
+  e7 medium     mean  69%  median  72%  walls 3%  
+  e7 hard       mean  62%  median  64%  walls 1%  
+  e7 nightmare  mean  33%  median  28%  walls 5%  
+  e8 easy       mean  98%  median 100%  walls 0%  ⚠
+  e8 medium     mean  75%  median  76%  walls 0%  
+  e8 hard       mean  36%  median  36%  walls 9%  
+  e8 nightmare  mean  28%  median  24%  walls 8%  
+  e9 easy       mean  93%  median 100%  walls 1%  ⚠
+  e9 medium     mean  71%  median  84%  walls 9%  ⚠
+  e9 hard       mean  57%  median  60%  walls 13%  
+  e9 nightmare  mean  18%  median   4%  walls 57%  ⚠
+  e10 easy       mean  79%  median  96%  walls 9%  ⚠
+  e10 medium     mean  70%  median  80%  walls 11%  

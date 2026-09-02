@@ -1,0 +1,36 @@
+The Sealed Deep — shard 2/2: 75 of 150 builds x 25 games x 48 cells = 90,000 games
+content f7c8a683ec99
+
+  e1 easy       mean  86%  median  92%  walls 0%  
+  e1 medium     mean  79%  median  84%  walls 0%  
+  e1 hard       mean  43%  median  40%  walls 5%  
+  e1 nightmare  mean  22%  median  20%  walls 23%  
+  e2 easy       mean  82%  median  84%  walls 3%  
+  e2 medium     mean  61%  median  60%  walls 13%  ⚠
+  e2 hard       mean  50%  median  48%  walls 3%  
+  e2 nightmare  mean  27%  median  20%  walls 9%  
+  e3 easy       mean  86%  median  96%  walls 4%  
+  e3 medium     mean  58%  median  60%  walls 16%  ⚠
+  e3 hard       mean  31%  median  24%  walls 15%  ⚠
+  e3 nightmare  mean  13%  median   8%  walls 39%  ⚠
+  e4 easy       mean  97%  median 100%  walls 0%  ⚠
+  e4 medium     mean  60%  median  68%  walls 25%  ⚠
+  e4 hard       mean  45%  median  32%  walls 21%  
+  e4 nightmare  mean  36%  median  28%  walls 27%  
+  e5 easy       mean  94%  median 100%  walls 3%  ⚠
+  e5 medium     mean  69%  median  76%  walls 15%  
+  e5 hard       mean  52%  median  56%  walls 19%  
+  e5 nightmare  mean  16%  median   0%  walls 59%  ⚠
+  e6 easy       mean  87%  median 100%  walls 8%  ⚠
+  e6 medium     mean  73%  median  84%  walls 11%  ⚠
+  e6 hard       mean  51%  median  56%  walls 16%  
+  e6 nightmare  mean  34%  median  32%  walls 29%  
+  e7 easy       mean  95%  median 100%  walls 1%  ⚠
+  e7 medium     mean  82%  median  96%  walls 8%  ⚠
+  e7 hard       mean  37%  median  40%  walls 28%  ⚠
+  e7 nightmare  mean  20%  median   8%  walls 47%  
+  e8 easy       mean  90%  median  96%  walls 5%  ⚠
+  e8 medium     mean  78%  median  88%  walls 11%  ⚠
+  e8 hard       mean  56%  median  64%  walls 15%  
+  e8 nightmare  mean  50%  median  48%  walls 11%  ⚠
+  e9 easy       mean  97%  median 100%  walls 0%  ⚠

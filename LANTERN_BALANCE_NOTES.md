@@ -296,3 +296,16 @@ the tier); e5 flat at the top (the nightmare wave is the tier); e8 loses the
 nightmare third mark. Confirm battery C1 running. Residuals expected: e11
 ranged at hard+ (rooms), e8 ranged at hard+ (the warden), e6 melee at hard
 (the clock).
+
+## 8. C1 confirm (150×25) + TUNE-C1 — 2026-09-02
+`lantern_C1_merged.json`: 28/48 flagged again but the hard failures moved:
+e12 hard/nightmare IN BAND with bossViability clean (p75 84 at hard, nightmare
+median 36); e10 all four in band; e5 medium/easy in band. Regressions: e6 at
+the tuner's 1.40/1.50 read easy 68 / medium 40 with 21-36% walls — the race
+is a clock, not an HP pool (back to D1's scale). e9 medium 1.06 + the third
+croaker = 21% walls (back to 1.00). Persisting: e3 hard/nightmare 20/12 (the
+wave is nightmare-only now), e5 nightmare 8 (one runner in the wave), and the
+fight cells the three-party tuner undershoots against the 150-build space
+(e4, e11, e12 easy/medium) go up by hand. e8 stays TOO EASY on the median
+with walls inside every cap — an objective cell, floor-only, accepted; clocks
+one notch tighter. C2 running.

@@ -403,7 +403,7 @@ export const lanternCampaign: CampaignDefinition = {
           enemies: ['ember_thief', 'goblin_scrapper'],
           placement: [{ x: 7, y: 3 }, { x: 7, y: 4 }],
           trigger: { on: 'round', round: 3 },
-          difficulties: ['hard', 'nightmare'],
+          difficulties: ['nightmare'],
         },
       ],
       playerPlacement: [{ x: 2, y: 3 }, { x: 3, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
@@ -419,7 +419,8 @@ export const lanternCampaign: CampaignDefinition = {
       // HALVING the scale still leaves ranged at 22%/8%, scale was never the
       // lever. Provisional monotonic ladder; re-walk after the confirm battery.
       // TUNE-D1: the hard/nightmare WAVE is the cliff (4% / 0%, 70-89% walled at 1.65/1.80), so the ladder flattens and the top tiers' clock does the work.
-      hpScaleOverride: { easy: 1.60, medium: 1.80, hard: 1.80, nightmare: 1.90 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Hard/nightmare: the r3 wave is nightmare's only now; clock 6 carries hard.
+      hpScaleOverride: { easy: 1.90, medium: 2.10, hard: 1.80, nightmare: 1.80 },
     },
 
     // e4 — The Burning Orchard (hazard). NEW. The thieves fire the orchard to
@@ -452,7 +453,8 @@ export const lanternCampaign: CampaignDefinition = {
       // crossing it, then fight at a deficit), so it needs a GENTLER scale
       // ladder than an open board, not a steeper one.
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
-      hpScaleOverride: { easy: 0.93, medium: 1.02, hard: 1.13, nightmare: 1.22 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. The tuner's three-party mean undershoots the build space here (93/86/91 medians).
+      hpScaleOverride: { easy: 1.05, medium: 1.20, hard: 1.40, nightmare: 1.50 },
     },
 
     // e5 — The Wolfpelt Camp (siege). REUSED from the shipped e3, now at L5
@@ -483,8 +485,8 @@ export const lanternCampaign: CampaignDefinition = {
           trigger: { on: 'round', round: 5 },
         },
         {
-          enemies: ['wolfpelt_runner', 'wolfpelt_runner'],
-          placement: [{ x: 7, y: 5 }, { x: 0, y: 6 }],
+          enemies: ['wolfpelt_runner'],
+          placement: [{ x: 7, y: 5 }],
           trigger: { on: 'round', round: 4 },
           // Nightmare only after R3 (2026-09-01): with pounce on every runner,
           // eight bodies read 6% with the best party at 15%. Hard is six
@@ -506,7 +508,8 @@ export const lanternCampaign: CampaignDefinition = {
       // R2: nightmare 1% / best party 3% at 1.60 + clock 8 — eight pouncing
       // runners is already the nightmare. Scale to 1.45 (= hard), clock 7.
       // TUNE-D1: nightmare's +2 wave is the tier; scale flat at the top (tuner wanted 1.08 there — an inversion).
-      hpScaleOverride: { easy: 1.25, medium: 1.28, hard: 1.31, nightmare: 1.31 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Nightmare's wave is ONE runner now (8% at two).
+      hpScaleOverride: { easy: 1.25, medium: 1.28, hard: 1.45, nightmare: 1.45 },
     },
 
     // e6 — The Ridge Chase (race). NEW. The lantern's glow is MOVING: cut the
@@ -539,7 +542,7 @@ export const lanternCampaign: CampaignDefinition = {
         win: [{ kind: 'units_dead', enemyKeys: ['ember_carrier'] }],
         // R3: without the ward and at clock 7 the race read 85/100/92 — the
         // clock is the whole race now. Medium 6 (nightmare at 6 read 27%).
-        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }],
+        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 8, hard: 6, nightmare: 7 } }],
       },
       enemies: ['ember_carrier', 'ember_carrier', 'goblin_scrapper', 'wolfpelt_runner'],
       // Carriers out on the far flanks with a head start; the guards plant
@@ -555,7 +558,8 @@ export const lanternCampaign: CampaignDefinition = {
       // than chasing scale.
       // First numbers for the REBUILT race (kill both carriers on a clock).
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
-      hpScaleOverride: { easy: 1.40, medium: 1.50, hard: 1.50, nightmare: 1.60 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. C1 at 1.40/1.50 + clock 6 read easy 68 (21% walled) / medium 40 (36%): the race is a CLOCK; back to D1's scale, nightmare clock 7.
+      hpScaleOverride: { easy: 1.00, medium: 1.25, hard: 1.45, nightmare: 1.50 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -614,7 +618,8 @@ export const lanternCampaign: CampaignDefinition = {
       // hard/nightmare read TOO EASY at 74%/72% mean in battery 1 — an escape
       // barely feels scale, so these climb a long way before they bite.
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
-      hpScaleOverride: { easy: 0.76, medium: 1.00, hard: 1.05, nightmare: 1.20 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Hard/nightmare restored to the pre-tuner rungs (72/60 medians at 1.05/1.20).
+      hpScaleOverride: { easy: 0.76, medium: 1.00, hard: 1.60, nightmare: 1.95 },
     },
 
     // e8 — The Underbridge (hold). NEW. Both ends of a span over the
@@ -648,7 +653,7 @@ export const lanternCampaign: CampaignDefinition = {
           // 62-HP wall first.
           tiles: [{ x: 1, y: 4 }, { x: 6, y: 4 }],
         }],
-        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, hard: 7, nightmare: 7 } }],
+        loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, hard: 6, nightmare: 6 } }],
       },
       enemies: ['coalgate_warden', 'goblin_scrapper', 'goblin_slinger', 'wolfpelt_runner'],
       // R2: warden ON (7,4) turned the hold into "kill a 62-HP AC-12 wall in
@@ -679,6 +684,7 @@ export const lanternCampaign: CampaignDefinition = {
       // already this encounter's difficulty dial — piling a high HP scale on
       // top of two extra bodies double-charges the same tier.
       // TUNE-D1: objective cell — floors only. Nightmare's third mark removed (22% walls, ranged 7 / balanced 0).
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Objective, floor-only: walls 4-13% are inside every cap. Clocks tightened one notch for texture.
       hpScaleOverride: { easy: 0.84, medium: 1.10, hard: 1.20, nightmare: 1.20 },
     },
 
@@ -729,7 +735,8 @@ export const lanternCampaign: CampaignDefinition = {
       // walled. The round-5 scoped wave (a second croaker + a scrapper) is the
       // top-tier pressure; the scale must come DOWN to pay for it.
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
-      hpScaleOverride: { easy: 1.00, medium: 1.06, hard: 1.08, nightmare: 1.10 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Medium back to 1.00 (1.06 + the third croaker read 21% walls).
+      hpScaleOverride: { easy: 1.00, medium: 1.00, hard: 1.08, nightmare: 1.10 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -842,7 +849,8 @@ export const lanternCampaign: CampaignDefinition = {
       // — five enemies across two rooms all cross their focus-fire breakpoints
       // together — so the tiers are packed tight on purpose.
       // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
-      hpScaleOverride: { easy: 1.65, medium: 1.74, hard: 1.87, nightmare: 2.01 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Rooms are a fight cell; the tuner undershot (94/95/94 medians).
+      hpScaleOverride: { easy: 1.80, medium: 2.00, hard: 2.30, nightmare: 2.60 },
     },
 
     // e12 — The Lantern Court (boss). REUSED from the shipped e5, now at L10
@@ -876,7 +884,8 @@ export const lanternCampaign: CampaignDefinition = {
       // row (0.72-1.13) read 100% at EVERY tier against an L10 party with
       // double special charges — the single largest gap the rebuild created.
       // TUNE-D1: bossViability read p75 100% at hard and median 72% at nightmare — a walkover for every class.
-      hpScaleOverride: { easy: 1.60, medium: 1.80, hard: 2.05, nightmare: 2.20 },
+      // TUNE-C1 (2026-09-02): second pass from the confirm battery; LANTERN_BALANCE_NOTES §8. Hard/nightmare in band and bossViability clean; easy/medium up.
+      hpScaleOverride: { easy: 1.90, medium: 2.00, hard: 2.10, nightmare: 2.20 },
     },
   },
 
