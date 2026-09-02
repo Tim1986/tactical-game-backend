@@ -451,11 +451,26 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // marks belong at the board edges; it is the killers that had to move.
       enemies: ['shelf_pikeman', 'shelf_pikeman', 'volley_archer', 'breaker'],
       enemyPlacement: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
-      playerPlacement: [{ x: 1, y: 2 }, { x: 1, y: 5 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
+      // [SPLIT-0902] FORCED SPLIT DEPLOYMENT (owner 2026-09-02: "you are
+      // actually forced to split your party, I think that's thematic and
+      // fun"). Two tiles beside each bridgehead; the placement picker already
+      // lets the player choose WHICH two units take each pair, so the split
+      // is a placement fact, not a new engine mechanic. The river wall keeps
+      // the halves honestly apart for the opening turns. First use of design
+      // spec §0 #14 (unique party setups).
+      playerPlacement: [{ x: 2, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 6 }, { x: 1, y: 6 }],
       goals: [
         { slug: 'every_lantern_lit', name: 'Every Lantern Lit', description: 'Hold both bridgeheads with the whole party still standing.', check: { kind: 'no_party_deaths' } },
       ],
-      hpScaleOverride: { easy: 0.51, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks
+      // [SPLIT-0902] Walked with the forced split (40x12): easy 92/83 ✓,
+      // medium 67/53 ✓, hard 67/75 ✓, nightmare 25/40 ✓ — all four tiers pass
+      // at the pre-split rungs. Archetype spread (40 games/comp): medium
+      // melee 50 / ranged 80 / balanced 80 (30pts, at the inherent cap, melee
+      // above the 40 floor); nightmare melee 8 / ranged 68 / balanced 45
+      // (60pts). Nightmare's melee hole is accepted under the owner's
+      // difficulty policy (2026-08-27: needing ranged at hard/nightmare "is a
+      // perfectly fine outcome") — flagged to him 2026-09-02 with the split.
+      hpScaleOverride: { easy: 0.51, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks; split re-walked [SPLIT-0902]
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the
@@ -1183,7 +1198,7 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     },
     bridges_pre: {
       kind: 'encounter', encounter: 'e3',
-      preText: '{if sheltered}With the families barred safe inside the keep, the bridges become the thing to DENY — if the column crosses the Merewater it can flank the keep by morning. Two bridges span the river, and enemy pikemen stand on both. To win, take the bridges: stand one of your units on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{else}The wagons start across at first light, families and lanterns and everything that can be carried. The column reads the movement and turns for the bridges. Two bridges span the river, and enemy pikemen stand on both. To win, take the bridges: stand one of your units on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{/if}',
+      preText: '{if sheltered}With the families barred safe inside the keep, the bridges become the thing to DENY — if the column crosses the Merewater it can flank the keep by morning. Two bridges span the river, and enemy pikemen stand on both. The party MUST split: two fighters take the north bridge, two the south — choose who holds which. To win, stand a unit on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{else}The wagons start across at first light, families and lanterns and everything that can be carried. The column reads the movement and turns for the bridges. Two bridges span the river, and enemy pikemen stand on both. The party MUST split: two fighters take the north bridge, two the south — choose who holds which. To win, stand a unit on each bridge tile at the same moment. The pikemen will shove for the marks — hold your ground.{/if}',
       next: 'road_note',
     },
     road_note: {
