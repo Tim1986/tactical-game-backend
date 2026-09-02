@@ -372,7 +372,12 @@ export const moonberryCampaign: CampaignDefinition = {
         ],
       },
       enemies: ['ember_juggler', 'ember_juggler', 'mooncap_marksman', 'starstep_duelist'],
-      enemiesByDifficulty: { easy: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'] },
+      // D2: melee 38 / balanced 43 — two Flame Jet lines across the fire
+      // lanes. Easy and medium meet one juggler; hard+ the pair.
+      enemiesByDifficulty: {
+        easy: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'],
+        medium: ['ember_juggler', 'lantern_lifter', 'mooncap_marksman', 'starstep_duelist'],
+      },
       enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 5, y: 5 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
       goals: [

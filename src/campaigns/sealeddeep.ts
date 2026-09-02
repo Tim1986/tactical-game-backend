@@ -664,6 +664,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
         blocked: [{ x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 5, y: 6 }],
       },
       enemies: ['stair_reaver', 'stair_reaver', 'wraith'],
+      // D2: melee/balanced 30% — "your hero has fallen" to two Whirlwinds on
+      // the stair. Easy and medium meet one reaver; the second is the top tiers'.
+      enemiesByDifficulty: {
+        easy: ['stair_reaver', 'skeleton_warrior', 'wraith'],
+        medium: ['stair_reaver', 'skeleton_warrior', 'wraith'],
+      },
       enemyPlacement: [{ x: 4, y: 2 }, { x: 4, y: 5 }, { x: 6, y: 4 }],
       // The stair answers you: a wave lands across the approach at round 2, so
       // the crossing is contested instead of a walk. Without it this measured
@@ -868,7 +874,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm 2.00 -> 22%. That gap IS the walk's documented sampling noise, and
       // it is why rungs get certified rather than trusted. Pulled down to hit
       // the band midpoints against the battery's numbers, not the walk's.
-      hpScaleOverride: { easy: 1.46, medium: 1.50, hard: 1.68, nightmare: 1.90 },
+      // D2: melee 3% at 1.50 — two firestorms, a freeze and the song on a
+      // party that must walk in. The song is the tier now; the scale comes down.
+      hpScaleOverride: { easy: 1.05, medium: 1.15, hard: 1.35, nightmare: 1.50 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is

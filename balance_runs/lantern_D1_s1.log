@@ -25,3 +25,12 @@ content 5a8444d0e844
   e6 medium     mean  73%  median  84%  walls 5%  ⚠
   e6 hard       mean  47%  median  40%  walls 12%  
   e6 nightmare  mean  17%  median  12%  walls 44%  
+  e7 easy       mean  89%  median  96%  walls 1%  ⚠
+  e7 medium     mean  80%  median  84%  walls 1%  ⚠
+  e7 hard       mean  42%  median  36%  walls 11%  
+  e7 nightmare  mean  37%  median  28%  walls 8%  
+  e8 easy       mean  86%  median 100%  walls 8%  ⚠
+  e8 medium     mean  80%  median 100%  walls 12%  ⚠
+  e8 hard       mean  68%  median  88%  walls 12%  ⚠
+  e8 nightmare  mean  68%  median 100%  walls 21%  ⚠
+  e9 easy       mean  99%  median 100%  walls 0%  ⚠

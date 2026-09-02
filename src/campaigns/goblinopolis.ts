@@ -721,10 +721,17 @@ export const goblinopolisCampaign: CampaignDefinition = {
       objective: {
         text: 'Ring the flood-bell before the crest arrives',
         win: [{ kind: 'units_at_tiles', scope: 'main', tiles: [{ x: 7, y: 4 }] }],
-        loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, nightmare: 7 } }],
+        // D2: a move-3 hero needs three moves and a fight to reach the rope;
+        // balanced read 40% "the deadline passed" with no pinner on the board.
+        loss: [{ kind: 'round_reached', round: 9, roundByDifficulty: { easy: 10, hard: 8, nightmare: 7 } }],
       },
       enemies: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_pathfinder', 'sparkcap_slinger'],
-      enemiesByDifficulty: { easy: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout', 'bluecap_scout'] },
+      // D2: melee 30 / balanced 40, "the deadline passed" — a pinned hero
+      // loses a move it does not have. Easy and medium: no pinner on the rope.
+      enemiesByDifficulty: {
+        easy: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout', 'bluecap_scout'],
+        medium: ['ironbell_warden', 'kettlehelm_orc', 'bluecap_scout', 'sparkcap_slinger'],
+      },
       // Warden off the rope [2026-09-01]: at (6,4) an immovable stood between
       // the hero and the one goal tile — a corridor plug (BEATS §2 #4), and
       // balanced read 23% "the deadline passed". He keeps the middle now; the

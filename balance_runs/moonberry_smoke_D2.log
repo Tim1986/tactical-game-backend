@@ -1,0 +1,352 @@
+Campaign: The Moonberry Masquerade — 2 games/cell (SMOKE)
+
+enc  lvl  difficulty  party     winrate  band        avg-turns   margin
+e1   L1   easy       melee     100%    [ 80%, 95%] ⚠  25   margin  48% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e1   L1   easy       ranged    100%    [ 80%, 95%] ⚠  19   margin  50% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e1   L1   easy       balanced  100%    [ 80%, 95%] ⚠  21   margin  34% HP · 2.5/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 80%, 95%] ⚠
+e1   L1   medium     melee     100%    [ 65%, 80%] ⚠  27   margin  30% HP · 2.5/4 alive
+       └ W:Every enemy has fallen×2
+e1   L1   medium     ranged    100%    [ 65%, 80%] ⚠  20   margin  41% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e1   L1   medium     balanced  100%    [ 65%, 80%] ⚠  19   margin  56% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 65%, 80%] ⚠
+e1   L1   hard       melee     100%    [ 45%, 65%] ⚠  30   margin  24% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e1   L1   hard       ranged      0%    [ 45%, 65%] ⚠  24
+       └ L:Your party has fallen×2
+e1   L1   hard       balanced   50%    [ 45%, 65%]    30   margin  30% HP · 2.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+     mean  50%  [ 45%, 65%] ✓  ⚠ WALL below floor( 10%): ranged
+e1   L1   nightmare  melee       0%    [ 15%, 45%] ⚠  33
+       └ L:Your party has fallen×2
+e1   L1   nightmare  ranged      0%    [ 15%, 45%] ⚠  23
+       └ L:Your party has fallen×2
+e1   L1   nightmare  balanced    0%    [ 15%, 45%] ⚠  30
+       └ L:Your party has fallen×2
+     mean   0%  [ 15%, 45%] ⚠  ⚠ UNSOLVABLE: best party   0% <  40%
+
+e2   L2   easy       melee     100%    [ 80%, 95%] ⚠  26   margin  78% HP · 5.0/4 alive
+       └ W:Every enemy has fallen×1  W:The escort made it through×1
+e2   L2   easy       ranged    100%    [ 80%, 95%] ⚠  25   margin  59% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×2
+e2   L2   easy       balanced  100%    [ 80%, 95%] ⚠  23   margin  73% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×1  W:The escort made it through×1
+     mean 100%  [ 80%, 95%] ⚠
+e2   L2   medium     melee     100%    [ 65%, 80%] ⚠  41   margin  26% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e2   L2   medium     ranged    100%    [ 65%, 80%] ⚠  30   margin  64% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+e2   L2   medium     balanced  100%    [ 65%, 80%] ⚠  30   margin  57% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 65%, 80%] ⚠
+e2   L2   hard       melee     100%    [ 45%, 65%] ⚠  43   margin  30% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e2   L2   hard       ranged    100%    [ 45%, 65%] ⚠  36   margin  51% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e2   L2   hard       balanced  100%    [ 45%, 65%] ⚠  32   margin  67% HP · 4.5/4 alive
+       └ W:Every enemy has fallen×1  W:The escort made it through×1
+     mean 100%  [ 45%, 65%] ⚠
+e2   L2   nightmare  melee       0%    [ 15%, 45%] ⚠  43
+       └ L:Your party has fallen×1  L:Your charge has fallen×1
+e2   L2   nightmare  ranged    100%    [ 15%, 45%] ⚠  38   margin  35% HP · 2.5/4 alive
+       └ W:The escort made it through×1  W:Every enemy has fallen×1
+e2   L2   nightmare  balanced   50%    [ 15%, 45%] ⚠  34   margin  60% HP · 4.0/4 alive
+       └ W:The escort made it through×1  L:Your charge has fallen×1
+     mean  50%  [ 15%, 45%] ⚠
+
+e3   L3   easy       melee     100%    [ 80%, 95%] ⚠  34   margin  37% HP · 2.5/4 alive
+       └ W:You survived 5 rounds×2
+e3   L3   easy       ranged    100%    [ 80%, 95%] ⚠  30   margin  20% HP · 1.5/4 alive
+       └ W:You survived 5 rounds×2
+e3   L3   easy       balanced  100%    [ 80%, 95%] ⚠  35   margin  45% HP · 2.5/4 alive
+       └ W:You survived 5 rounds×2
+     mean 100%  [ 80%, 95%] ⚠
+e3   L3   medium     melee     100%    [ 65%, 80%] ⚠  42   margin  22% HP · 2.0/4 alive
+       └ W:You survived 6 rounds×2
+e3   L3   medium     ranged     50%    [ 65%, 80%] ⚠  34   margin  17% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:You survived 6 rounds×1
+e3   L3   medium     balanced  100%    [ 65%, 80%] ⚠  42   margin  21% HP · 1.5/4 alive
+       └ W:You survived 6 rounds×2
+     mean  83%  [ 65%, 80%] ⚠
+e3   L3   hard       melee       0%    [ 45%, 65%] ⚠  46
+       └ L:Your party has fallen×2
+e3   L3   hard       ranged      0%    [ 45%, 65%] ⚠  36
+       └ L:Your party has fallen×2
+e3   L3   hard       balanced    0%    [ 45%, 65%] ⚠  43
+       └ L:Your party has fallen×2
+     mean   0%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): melee,ranged,balanced
+e3   L3   nightmare  melee       0%    [ 15%, 45%] ⚠  44
+       └ L:Your party has fallen×2
+e3   L3   nightmare  ranged      0%    [ 15%, 45%] ⚠  34
+       └ L:Your party has fallen×2
+e3   L3   nightmare  balanced   50%    [ 15%, 45%] ⚠  47   margin   9% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:You survived 7 rounds×1
+     mean  17%  [ 15%, 45%] ✓
+
+e4   L4   easy       melee     100%    [ 80%, 95%] ⚠  37   margin  25% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e4   L4   easy       ranged    100%    [ 80%, 95%] ⚠  22   margin  34% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e4   L4   easy       balanced  100%    [ 80%, 95%] ⚠  33   margin  26% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 80%, 95%] ⚠
+e4   L4   medium     melee      50%    [ 65%, 80%] ⚠  41   margin  25% HP · 3.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+e4   L4   medium     ranged    100%    [ 65%, 80%] ⚠  20   margin  37% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e4   L4   medium     balanced   50%    [ 65%, 80%] ⚠  40   margin  27% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×1  L:Your party has fallen×1
+     mean  67%  [ 65%, 80%] ✓
+e4   L4   hard       melee       0%    [ 45%, 65%] ⚠  38
+       └ L:Your party has fallen×2
+e4   L4   hard       ranged    100%    [ 45%, 65%] ⚠  30   margin  21% HP · 1.5/4 alive
+       └ W:Every enemy has fallen×2
+e4   L4   hard       balanced   50%    [ 45%, 65%]    40   margin  27% HP · 2.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+     mean  50%  [ 45%, 65%] ✓  ⚠ WALL below floor( 10%): melee
+e4   L4   nightmare  melee       0%    [ 15%, 45%] ⚠  36
+       └ L:Your party has fallen×2
+e4   L4   nightmare  ranged      0%    [ 15%, 45%] ⚠  27
+       └ L:Your party has fallen×2
+e4   L4   nightmare  balanced    0%    [ 15%, 45%] ⚠  28
+       └ L:Your party has fallen×2
+     mean   0%  [ 15%, 45%] ⚠  ⚠ UNSOLVABLE: best party   0% <  40%
+
+e5   L5   easy       melee     100%    [ 80%, 95%] ⚠  56   margin  27% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e5   L5   easy       ranged      0%    [ 80%, 95%] ⚠  55
+       └ L:Your party has fallen×2
+e5   L5   easy       balanced  100%    [ 80%, 95%] ⚠  63   margin  73% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean  67%  [ 80%, 95%] ⚠  ⚠ WALL below floor( 60%): ranged
+e5   L5   medium     melee      50%    [ 65%, 80%] ⚠  65   margin  39% HP · 3.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+e5   L5   medium     ranged      0%    [ 65%, 80%] ⚠  61
+       └ L:Your party has fallen×2
+e5   L5   medium     balanced  100%    [ 65%, 80%] ⚠  65   margin  52% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean  50%  [ 65%, 80%] ⚠  ⚠ WALL below floor( 35%): ranged
+e5   L5   hard       melee     100%    [ 45%, 65%] ⚠  67   margin  27% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e5   L5   hard       ranged     50%    [ 45%, 65%]    58   margin   8% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+e5   L5   hard       balanced  100%    [ 45%, 65%] ⚠  60   margin  42% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean  83%  [ 45%, 65%] ⚠
+e5   L5   nightmare  melee      50%    [ 15%, 45%] ⚠  66   margin   4% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:Every enemy has fallen×1
+e5   L5   nightmare  ranged      0%    [ 15%, 45%] ⚠  58
+       └ L:Your party has fallen×2
+e5   L5   nightmare  balanced  100%    [ 15%, 45%] ⚠  70   margin  38% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean  50%  [ 15%, 45%] ⚠
+
+e6   L5   easy       melee     100%    [ 80%, 95%] ⚠  19   margin  70% HP · 4.0/4 alive
+       └ W:The target is destroyed×2
+e6   L5   easy       ranged    100%    [ 80%, 95%] ⚠  21   margin  57% HP · 3.0/4 alive
+       └ W:The target is destroyed×2
+e6   L5   easy       balanced  100%    [ 80%, 95%] ⚠  24   margin  60% HP · 3.5/4 alive
+       └ W:The target is destroyed×2
+     mean 100%  [ 80%, 95%] ⚠
+e6   L5   medium     melee     100%    [ 65%, 80%] ⚠  26   margin  60% HP · 3.5/4 alive
+       └ W:The target is destroyed×2
+e6   L5   medium     ranged     50%    [ 65%, 80%] ⚠  32   margin  11% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:The target is destroyed×1
+e6   L5   medium     balanced  100%    [ 65%, 80%] ⚠  28   margin  33% HP · 2.5/4 alive
+       └ W:The target is destroyed×2
+     mean  83%  [ 65%, 80%] ⚠
+e6   L5   hard       melee     100%    [ 45%, 65%] ⚠  30   margin  32% HP · 2.0/4 alive
+       └ W:The target is destroyed×2
+e6   L5   hard       ranged     50%    [ 45%, 65%]    31   margin  34% HP · 2.0/4 alive
+       └ W:The target is destroyed×1  L:The deadline passed×1
+e6   L5   hard       balanced    0%    [ 45%, 65%] ⚠  39
+       └ L:The deadline passed×2
+     mean  50%  [ 45%, 65%] ✓  ⚠ WALL below floor( 10%): balanced
+e6   L5   nightmare  melee       0%    [ 15%, 45%] ⚠  40
+       └ L:The deadline passed×2
+e6   L5   nightmare  ranged      0%    [ 15%, 45%] ⚠  33
+       └ L:The deadline passed×1  L:Your party has fallen×1
+e6   L5   nightmare  balanced    0%    [ 15%, 45%] ⚠  39
+       └ L:Your party has fallen×1  L:The deadline passed×1
+     mean   0%  [ 15%, 45%] ⚠  ⚠ UNSOLVABLE: best party   0% <  40%
+
+e7   L6   easy       melee     100%    [ 80%, 95%] ⚠  37   margin  80% HP · 5.0/4 alive
+       └ W:You survived 5 rounds×2
+e7   L6   easy       ranged    100%    [ 80%, 95%] ⚠  21   margin  85% HP · 5.0/4 alive
+       └ W:Every enemy has fallen×2
+e7   L6   easy       balanced  100%    [ 80%, 95%] ⚠  34   margin  73% HP · 5.0/4 alive
+       └ W:Every enemy has fallen×1  W:You survived 5 rounds×1
+     mean 100%  [ 80%, 95%] ⚠
+e7   L6   medium     melee     100%    [ 65%, 80%] ⚠  48   margin  30% HP · 2.5/4 alive
+       └ W:You survived 6 rounds×2
+e7   L6   medium     ranged    100%    [ 65%, 80%] ⚠  39   margin  43% HP · 2.5/4 alive
+       └ W:You survived 6 rounds×2
+e7   L6   medium     balanced  100%    [ 65%, 80%] ⚠  48   margin  41% HP · 3.0/4 alive
+       └ W:You survived 6 rounds×2
+     mean 100%  [ 65%, 80%] ⚠
+e7   L6   hard       melee      50%    [ 45%, 65%]    55   margin  11% HP · 2.0/4 alive
+       └ W:You survived 7 rounds×1  L:Your charge has fallen×1
+e7   L6   hard       ranged      0%    [ 45%, 65%] ⚠  46
+       └ L:Your charge has fallen×2
+e7   L6   hard       balanced   50%    [ 45%, 65%]    60   margin  14% HP · 2.0/4 alive
+       └ W:You survived 7 rounds×1  L:Your charge has fallen×1
+     mean  33%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): ranged
+e7   L6   nightmare  melee       0%    [ 15%, 45%] ⚠  48
+       └ L:Your charge has fallen×2
+e7   L6   nightmare  ranged      0%    [ 15%, 45%] ⚠  49
+       └ L:Your charge has fallen×2
+e7   L6   nightmare  balanced  100%    [ 15%, 45%] ⚠  59   margin  21% HP · 2.0/4 alive
+       └ W:You survived 7 rounds×2
+     mean  33%  [ 15%, 45%] ✓
+
+e8   L7   easy       melee     100%    [ 80%, 95%] ⚠  52   margin  17% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   easy       ranged    100%    [ 80%, 95%] ⚠  38   margin  28% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   easy       balanced  100%    [ 80%, 95%] ⚠  58   margin  17% HP · 1.5/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 80%, 95%] ⚠
+e8   L7   medium     melee     100%    [ 65%, 80%] ⚠  63   margin   7% HP · 1.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   medium     ranged    100%    [ 65%, 80%] ⚠  35   margin  55% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   medium     balanced   50%    [ 65%, 80%] ⚠  60   margin  37% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×1  L:Your party has fallen×1
+     mean  83%  [ 65%, 80%] ⚠
+e8   L7   hard       melee       0%    [ 45%, 65%] ⚠  62
+       └ L:Your party has fallen×2
+e8   L7   hard       ranged    100%    [ 45%, 65%] ⚠  35   margin  61% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   hard       balanced    0%    [ 45%, 65%] ⚠  61
+       └ L:Your party has fallen×2
+     mean  33%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): melee,balanced
+e8   L7   nightmare  melee     100%    [ 15%, 45%] ⚠  68   margin  36% HP · 2.0/4 alive
+       └ W:Every enemy has fallen×2
+e8   L7   nightmare  ranged      0%    [ 15%, 45%] ⚠  45
+       └ L:Your party has fallen×2
+e8   L7   nightmare  balanced    0%    [ 15%, 45%] ⚠  58
+       └ L:Your party has fallen×2
+     mean  33%  [ 15%, 45%] ✓
+
+e9   L8   easy       melee     100%    [ 80%, 95%] ⚠  38   margin   7% HP · 1.0/4 alive
+       └ W:You survived 6 rounds×2
+e9   L8   easy       ranged    100%    [ 80%, 95%] ⚠  37   margin  23% HP · 1.5/4 alive
+       └ W:You survived 6 rounds×2
+e9   L8   easy       balanced  100%    [ 80%, 95%] ⚠  44   margin  11% HP · 1.0/4 alive
+       └ W:You survived 6 rounds×2
+     mean 100%  [ 80%, 95%] ⚠
+e9   L8   medium     melee      50%    [ 65%, 80%] ⚠  49   margin  28% HP · 2.0/4 alive
+       └ W:You survived 7 rounds×1  L:Your party has fallen×1
+e9   L8   medium     ranged     50%    [ 65%, 80%] ⚠  42   margin   1% HP · 1.0/4 alive
+       └ W:You survived 7 rounds×1  L:Your party has fallen×1
+e9   L8   medium     balanced   50%    [ 65%, 80%] ⚠  49   margin  15% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:You survived 7 rounds×1
+     mean  50%  [ 65%, 80%] ⚠
+e9   L8   hard       melee      50%    [ 45%, 65%]    61   margin   6% HP · 1.0/4 alive
+       └ W:You survived 8 rounds×1  L:Your party has fallen×1
+e9   L8   hard       ranged      0%    [ 45%, 65%] ⚠  45
+       └ L:Your party has fallen×2
+e9   L8   hard       balanced   50%    [ 45%, 65%]    53   margin   2% HP · 1.0/4 alive
+       └ L:Your party has fallen×1  W:You survived 8 rounds×1
+     mean  33%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): ranged
+e9   L8   nightmare  melee       0%    [ 15%, 45%] ⚠  53
+       └ L:Your party has fallen×2
+e9   L8   nightmare  ranged      0%    [ 15%, 45%] ⚠  42
+       └ L:Your party has fallen×2
+e9   L8   nightmare  balanced    0%    [ 15%, 45%] ⚠  51
+       └ L:Your party has fallen×2
+     mean   0%  [ 15%, 45%] ⚠  ⚠ UNSOLVABLE: best party   0% <  40%
+
+e10  L9   easy       melee     100%    [ 80%, 95%] ⚠  77   margin  48% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+e10  L9   easy       ranged    100%    [ 80%, 95%] ⚠  55   margin  52% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+e10  L9   easy       balanced  100%    [ 80%, 95%] ⚠  69   margin  58% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 80%, 95%] ⚠
+e10  L9   medium     melee      50%    [ 65%, 80%] ⚠  87   margin  26% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×1  L:Your party has fallen×1
+e10  L9   medium     ranged    100%    [ 65%, 80%] ⚠  67   margin  42% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e10  L9   medium     balanced  100%    [ 65%, 80%] ⚠  77   margin  39% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean  83%  [ 65%, 80%] ⚠
+e10  L9   hard       melee     100%    [ 45%, 65%] ⚠  81   margin  26% HP · 3.0/4 alive
+       └ W:Every enemy has fallen×2
+e10  L9   hard       ranged    100%    [ 45%, 65%] ⚠  70   margin  30% HP · 3.5/4 alive
+       └ W:Every enemy has fallen×2
+e10  L9   hard       balanced  100%    [ 45%, 65%] ⚠  83   margin  53% HP · 4.0/4 alive
+       └ W:Every enemy has fallen×2
+     mean 100%  [ 45%, 65%] ⚠
+e10  L9   nightmare  melee       0%    [ 15%, 45%] ⚠  76
+       └ L:Your party has fallen×2
+e10  L9   nightmare  ranged     50%    [ 15%, 45%] ⚠  75   margin  10% HP · 1.0/4 alive
+       └ W:Every enemy has fallen×1  L:Your party has fallen×1
+e10  L9   nightmare  balanced    0%    [ 15%, 45%] ⚠  81
+       └ L:Your party has fallen×2
+     mean  17%  [ 15%, 45%] ✓
+
+e11  L10   easy       melee     100%    [ 80%, 95%] ⚠  65   margin  22% HP · 2.5/4 alive
+       └ W:The target is destroyed×2
+e11  L10   easy       ranged    100%    [ 80%, 95%] ⚠  20   margin  85% HP · 4.0/4 alive
+       └ W:The target is destroyed×2
+e11  L10   easy       balanced  100%    [ 80%, 95%] ⚠  57   margin  66% HP · 3.5/4 alive
+       └ W:The target is destroyed×2
+     mean 100%  [ 80%, 95%] ⚠
+e11  L10   medium     melee       0%    [ 65%, 80%] ⚠  71
+       └ L:Your party has fallen×2
+e11  L10   medium     ranged    100%    [ 65%, 80%] ⚠  33   margin  57% HP · 4.0/4 alive
+       └ W:The target is destroyed×2
+e11  L10   medium     balanced  100%    [ 65%, 80%] ⚠  55   margin  72% HP · 4.0/4 alive
+       └ W:The target is destroyed×2
+     mean  67%  [ 65%, 80%] ✓  ⚠ WALL below floor( 35%): melee
+e11  L10   hard       melee      50%    [ 45%, 65%]    69   margin  44% HP · 3.0/4 alive
+       └ W:The target is destroyed×1  L:Your party has fallen×1
+e11  L10   hard       ranged      0%    [ 45%, 65%] ⚠  56
+       └ L:Your party has fallen×2
+e11  L10   hard       balanced  100%    [ 45%, 65%] ⚠  75   margin  48% HP · 3.0/4 alive
+       └ W:The target is destroyed×2
+     mean  50%  [ 45%, 65%] ✓  ⚠ WALL below floor( 10%): ranged
+e11  L10   nightmare  melee       0%    [ 15%, 45%] ⚠  76
+       └ L:Your party has fallen×2
+e11  L10   nightmare  ranged      0%    [ 15%, 45%] ⚠  51
+       └ L:Your party has fallen×2
+e11  L10   nightmare  balanced  100%    [ 15%, 45%] ⚠  79   margin  30% HP · 2.5/4 alive
+       └ W:The target is destroyed×2
+     mean  33%  [ 15%, 45%] ✓
+
+e12  L10   easy       melee     100%    [ 80%, 95%] ⚠  20   margin  36% HP · 3.0/4 alive
+       └ W:The whole party escaped×2
+e12  L10   easy       ranged    100%    [ 80%, 95%] ⚠  21   margin  56% HP · 3.5/4 alive
+       └ W:The whole party escaped×2
+e12  L10   easy       balanced  100%    [ 80%, 95%] ⚠  28   margin  53% HP · 2.5/4 alive
+       └ W:The whole party escaped×2
+     mean 100%  [ 80%, 95%] ⚠
+e12  L10   medium     melee     100%    [ 65%, 80%] ⚠  38   margin  27% HP · 1.5/4 alive
+       └ W:The whole party escaped×2
+e12  L10   medium     ranged    100%    [ 65%, 80%] ⚠  20   margin  47% HP · 3.0/4 alive
+       └ W:The whole party escaped×2
+e12  L10   medium     balanced  100%    [ 65%, 80%] ⚠  19   margin  69% HP · 3.5/4 alive
+       └ W:The whole party escaped×2
+     mean 100%  [ 65%, 80%] ⚠
+e12  L10   hard       melee       0%    [ 45%, 65%] ⚠  62
+       └ L:Your party has fallen×2
+e12  L10   hard       ranged    100%    [ 45%, 65%] ⚠  22   margin  53% HP · 3.5/4 alive
+       └ W:The whole party escaped×2
+e12  L10   hard       balanced    0%    [ 45%, 65%] ⚠  63
+       └ L:Your party has fallen×2
+     mean  33%  [ 45%, 65%] ⚠  ⚠ WALL below floor( 10%): melee,balanced
+e12  L10   nightmare  melee       0%    [ 15%, 45%] ⚠  57
+       └ L:Your party has fallen×2
+e12  L10   nightmare  ranged     50%    [ 15%, 45%] ⚠  38   margin  23% HP · 1.0/4 alive
+       └ W:The whole party escaped×1  L:Your party has fallen×1
+e12  L10   nightmare  balanced    0%    [ 15%, 45%] ⚠  58
+       └ L:Your party has fallen×2
+     mean  17%  [ 15%, 45%] ✓
+
+SMOKE: PASS — content plays clean. Full battery unlocked for this content.
