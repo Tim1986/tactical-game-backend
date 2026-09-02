@@ -306,7 +306,12 @@ export const sealedDeepCampaign: CampaignDefinition = {
         blocked: [{ x: 3, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 5 }, { x: 4, y: 6 }],
       },
       enemies: ['skeleton_archer', 'skeleton_archer', 'zombie', 'zombie'],
-      enemiesByDifficulty: { easy: ['skeleton_archer', 'skeleton_warrior', 'zombie', 'zombie'] },
+      // Two Thorns/Stalwart zombies in the gap is a wall melee cannot answer
+      // (sweep: melee 17-48 at every offset). Easy and medium meet one.
+      enemiesByDifficulty: {
+        easy: ['skeleton_archer', 'skeleton_warrior', 'zombie', 'skeleton_warrior'],
+        medium: ['skeleton_archer', 'skeleton_archer', 'zombie', 'skeleton_warrior'],
+      },
       enemyPlacement: [{ x: 6, y: 1 }, { x: 6, y: 6 }, { x: 5, y: 3 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       goals: [
@@ -352,7 +357,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // Enemies start at x<=4; survivor at (6,6) is well outside round-1 reach
       // (barbarian move 3 + melee 1 = 4 tiles from the nearest spawn).
       enemies: ['ghoul', 'ghoul', 'skeleton_reaver'],
-      enemyPlacement: [{ x: 2, y: 2 }, { x: 1, y: 4 }, { x: 3, y: 5 }],
+      // spreadSweep +1 (2026-09-01): ranged 35 -> 100, spread 57 -> 2; scale up to pay.
+      enemyPlacement: [{ x: 3, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 5 }],
       playerPlacement: [{ x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 5, y: 5 }],
       goals: [
         { slug: 'kept_the_watch', name: 'Kept the Watch', description: 'Keep the whistling survivor alive to the very end.', check: { kind: 'unit_survives', scope: 'all' } },
@@ -364,7 +370,7 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // nm walk: 1.35 -> 44 (12% walled) · 1.55 -> 21 (40% walled) · 1.75 -> 9.
       // 1.38 splits them: 1.35 rides the band's top edge where noise flips the
       // verdict, and 1.55 breaches the wall cap outright.
-      hpScaleOverride: { easy: 0.85, medium: 1, hard: 1.27, nightmare: 1.27 },
+      hpScaleOverride: { easy: 1.00, medium: 1.20, hard: 1.40, nightmare: 1.50 },
     },
 
     // e4 — The Censer Hall (hazard). Fire-tile grid from tipped censers.
@@ -760,7 +766,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // than by the matchup. At gap 6.5 it reads melee 82 / ranged 100 /
       // balanced 97 on easy (18-pt spread) and 75/100/88 on medium (25).
       // Changing placement invalidates the scale row — re-walked below.
-      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 2 }, { x: 7, y: 6 }, { x: 7, y: 1 }],
+      // spreadSweep +2 (2026-09-01): hounds closer so melee can intercept —
+      // melee 32 -> 77, spread 62 -> 22.
+      enemyPlacement: [{ x: 4, y: 4 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 5, y: 2 }],
       playerPlacement: [{ x: 2, y: 3 }, { x: 2, y: 4 }, { x: 2, y: 5 }, { x: 1, y: 4 }],
       goals: [
         { slug: 'crew_intact', name: 'Crew Intact', description: 'Bring the whole survey crew out alive.', check: { kind: 'unit_survives', scope: 'all' } },
@@ -875,7 +883,8 @@ export const sealedDeepCampaign: CampaignDefinition = {
         }],
       },
       enemies: ['witch', 'witch', 'skeleton_archer', 'skeleton_archer'],
-      enemyPlacement: [{ x: 2, y: 1 }, { x: 2, y: 6 }, { x: 5, y: 4 }, { x: 6, y: 3 }],
+      // spreadSweep +1 (2026-09-01): ranged 33 -> 73, spread 62 -> 23.
+      enemyPlacement: [{ x: 2, y: 2 }, { x: 2, y: 5 }, { x: 4, y: 4 }, { x: 5, y: 4 }],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       // Walk (hold sits ON the marks, so guards die slowly and scale bites
       // cleanly): easy 1.20 -> 89 · medium 1.45 -> 68 · hard 1.70 -> 54 (12%

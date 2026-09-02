@@ -267,7 +267,8 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // medium / hard / nightmare. Thieves are knives, and they come in two
       // beats: two over the wall now, two more on round 2.
       enemies: ['wet_boot_looter', 'wet_boot_looter', 'bluecap_scout'],
-      enemyPlacement: [{ x: 6, y: 3 }, { x: 6, y: 5 }, { x: 7, y: 4 }],
+      // spreadSweep +1 (2026-09-01): ranged 23 -> 62, spread 70 -> 33.
+      enemyPlacement: [{ x: 5, y: 4 }, { x: 6, y: 5 }, { x: 6, y: 4 }],
       // Second beat is ONE thief on round 3 (R2: two on round 2 made five
       // Twin-Strike bodies at L1 — 8 / 2 / 8 across the comps).
       waves: [
@@ -485,7 +486,13 @@ export const goblinopolisCampaign: CampaignDefinition = {
           // Kit probe: with both plates two steps from a central start the hold
           // was won in THREE turns. The party now starts west: one hero takes
           // the near plate at once, the other three fight to the far one.
-          tiles: [{ x: 0, y: 4 }, { x: 6, y: 4 }],
+          // v4 (2026-09-01): every guard placed ON the far plate either walked
+          // off it (melee guards fight) or walled one archetype (Thorns kettle:
+          // melee/ranged; pinning archer: melee 15%). Nobody stands on it now.
+          // It is FAR (five steps) and FLANKED by the kettle and the bruiser —
+          // taking it means standing between Thorns and Vengeful for a turn
+          // while the archer pins from the corner. The near plate is two steps.
+          tiles: [{ x: 0, y: 4 }, { x: 7, y: 4 }],
         }],
         loss: [{ kind: 'round_reached', round: 7, roundByDifficulty: { easy: 8, nightmare: 6 } }],
       },
@@ -499,7 +506,7 @@ export const goblinopolisCampaign: CampaignDefinition = {
       // walled melee and ranged (D1: 7 / 15 / 100). An archer has no reason to
       // leave: he pins from the plate, and the answer is to shove him (Shield
       // Bash, Shockwave, Fear) or shoot him off it. Kettle and bruiser behind.
-      enemyPlacement: [{ x: 6, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 7, y: 1 }],
+      enemyPlacement: [{ x: 7, y: 1 }, { x: 6, y: 3 }, { x: 6, y: 5 }, { x: 7, y: 6 }],
       waves: [
         // Scoped to medium+ — battery 1 had easy at 76% median with 14% walls
         // and medium at 44%/21%, i.e. the low tiers were carrying the same
