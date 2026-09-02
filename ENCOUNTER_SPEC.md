@@ -160,8 +160,9 @@ loud failure, never a silent no-op. Each A-step deletes its entries from
   the party's committed units (they act on player turns, driven by the same
   brain loop that plays Fable, with an ally doctrine).
 - Behavior modes:
-  - `follow`: stays within 2 tiles of the main character; fights with its
-    kit if it has one; retreats toward the party when threatened.
+  - `follow`: moves AT MOST 2 tiles a turn toward the main character and stops
+    beside them (FOLLOW_STEP in aiBrain — stated to the player verbatim, tester
+    ruling 2026-09-02); fights with its kit if it has one.
   - `hold`: does not move; fights from its tile.
   - `route(waypoints)`: each of its turns, advances up to its movement along
     the waypoint path (pathing around blockers/units); fights only in

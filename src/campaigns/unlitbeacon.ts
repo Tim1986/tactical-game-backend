@@ -1021,7 +1021,9 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       allies: {
         tam: {
           name: 'Tam Emberwright', baseClass: 'cleric',
-          maxHealth: 70, armorClass: 11,
+          // 70 -> 80 (2026-09-02): the stated follow rule (max 2 tiles a turn)
+          // means Tam is caught more often; the escort's pool pays for the promise.
+          maxHealth: 80, armorClass: 11,
           abilities: ['mace', 'heal'],
           behavior: { mode: 'follow' },
           placement: { x: 0, y: 4 },
@@ -1042,7 +1044,8 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // the trilogy's escort lesson applies: the VIP's HP does not scale with
       // the party's competence, so an escort's hard/nightmare need less added
       // pressure than a kill-all's, or the ally dies rather than the party.
-      hpScaleOverride: { easy: 1.50, medium: 1.79, hard: 1.90, nightmare: 2.20 },  // escort
+      // Easy/medium eased with the follow cap (medium read 56 / 22% walled at 1.79).
+      hpScaleOverride: { easy: 1.35, medium: 1.60, hard: 1.90, nightmare: 2.20 },  // escort
     },
 
     // e11 — The Adjutant (boss). The host's champion answers the challenge

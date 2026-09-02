@@ -1989,9 +1989,9 @@ function planAllyTurn(
 
   // Walk as far along the path to `goal` as this turn's movement allows;
   // falls back to the reachable tile that closes the most distance.
-  const stepToward = (goal: BoardPosition): BoardPosition | null => {
+  const stepToward = (goal: BoardPosition, maxSteps = unit.movementRange): BoardPosition | null => {
     if (isRooted(unit) || samePos(unit.position, goal)) return null;
-    const tiles = reachableTiles(unit, state.units, unit.movementRange, state.terrain);
+    const tiles = reachableTiles(unit, state.units, Math.min(unit.movementRange, maxSteps), state.terrain);
     if (tiles.length === 0) return null;
     const path = findPath(unit.position, goal, unit, state.units, state.terrain);
     if (path) {
@@ -2048,12 +2048,25 @@ function planAllyTurn(
   // confusing." At >1 he takes a short step whenever the hero moves, which is
   // both smoother and STATABLE — the UI can promise "Tam stays beside your
   // hero" and the player can watch him do exactly that.
+  //
+  // ⚠ AND THE STEP IS CAPPED (tester report, 2026-09-02: "sometimes he moves 3
+  // squares, sometimes 2, sometimes 1"). stepToward walked as far as the
+  // ally's whole movement allowed, so the length of Tam's step was whatever
+  // the hero's last move happened to be — correct, and unpredictable. The
+  // owner's rule: tell the player what to expect, and do exactly that. A
+  // follower now moves AT MOST FOLLOW_STEP tiles a turn toward the hero and
+  // stops beside them; the client states it in those words (campaign
+  // briefing + match screen), and the test walks a hero three tiles and
+  // asserts the follower takes two.
   const main = state.units.find((u) => u.isAlive && u.instanceId === state.objective?.mainId);
   if (main && manhattanDistance(unit.position, main.position) > 1) {
-    return finish(stepToward(main.position), true);
+    return finish(stepToward(main.position, FOLLOW_STEP), true);
   }
   return finish(null, true);
 }
+
+/** A 'follow' ally's maximum step per turn (A5). Stated to the player verbatim. */
+export const FOLLOW_STEP = 2;
 
 /**
  * True when a planned turn casts an ability that would resolve to NO targets.

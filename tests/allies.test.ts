@@ -283,4 +283,17 @@ describe('A5 — an armed escort must actually use its kit (owner medium run, 20
     const d = Math.abs(move!.destination.x - hero.position.x) + Math.abs(move!.destination.y - hero.position.y);
     expect(d).toBeLessThan(2);                                          // ends up adjacent
   });
+
+  it('follow moves AT MOST two tiles a turn, however far the hero went (the stated rule)', () => {
+    // Tester 2026-09-02: "sometimes he moves 3 squares, sometimes 2, sometimes 1."
+    // The step length used to be the whole movement range along the path. Now:
+    // a cleric (move 3) whose hero is five tiles away closes exactly two.
+    const hero = mk(P, 6, 1);
+    const tam  = mk(P, 1, 1, { abilities: ['mace'], movementRange: 3 });
+    const st = mkState([hero, tam, mk(E, 7, 7)], { [tam.instanceId]: { mode: 'follow' } }, hero.instanceId);
+    const move = planBestTurn(st, tam, P, amap as never).actions
+      .find((a) => a.type === 'MOVE') as { destination: { x: number; y: number } };
+    const stepped = Math.abs(move.destination.x - 1) + Math.abs(move.destination.y - 1);
+    expect(stepped).toBe(2);
+  });
 });
