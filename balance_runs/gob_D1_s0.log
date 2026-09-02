@@ -3,3 +3,36 @@ content decc10b3868b
 
   e1 easy       mean  96%  median 100%  walls 0%  
   e1 medium     mean  80%  median  84%  walls 1%  
+  e1 hard       mean  67%  median  72%  walls 0%  
+  e1 nightmare  mean  43%  median  40%  walls 4%  
+  e2 easy       mean  86%  median  88%  walls 0%  
+  e2 medium     mean  79%  median  80%  walls 1%  
+  e2 hard       mean  81%  median  84%  walls 0%  ⚠
+  e2 nightmare  mean  56%  median  56%  walls 1%  
+  e3 easy       mean  86%  median  92%  walls 0%  
+  e3 medium     mean  63%  median  64%  walls 11%  
+  e3 hard       mean  53%  median  44%  walls 1%  
+  e3 nightmare  mean  13%  median   8%  walls 37%  ⚠
+  e4 easy       mean  80%  median  92%  walls 7%  
+  e4 medium     mean  58%  median  64%  walls 16%  ⚠
+  e4 hard       mean  36%  median  36%  walls 23%  
+  e4 nightmare  mean  26%  median  20%  walls 17%  
+  e5 easy       mean  80%  median  88%  walls 7%  
+  e5 medium     mean  69%  median  76%  walls 8%  
+  e5 hard       mean  50%  median  44%  walls 11%  
+  e5 nightmare  mean  29%  median  20%  walls 25%  
+  e6 easy       mean  92%  median  96%  walls 1%  ⚠
+  e6 medium     mean  75%  median  84%  walls 5%  ⚠
+  e6 hard       mean  52%  median  48%  walls 3%  
+  e6 nightmare  mean   8%  median   4%  walls 56%  ⚠
+  e7 easy       mean 100%  median 100%  walls 0%  ⚠
+  e7 medium     mean  81%  median  84%  walls 1%  ⚠
+  e7 hard       mean  29%  median  24%  walls 19%  
+  e7 nightmare  mean  11%  median   4%  walls 52%  ⚠
+  e8 easy       mean  97%  median 100%  walls 0%  ⚠
+  e8 medium     mean  75%  median  76%  walls 0%  
+  e8 hard       mean   8%  median   4%  walls 68%  ⚠
+  e8 nightmare  mean   4%  median   0%  walls 73%  ⚠
+  e9 easy       mean  97%  median 100%  walls 0%  ⚠
+  e9 medium     mean  78%  median  88%  walls 8%  ⚠
+  e9 hard       mean  63%  median  68%  walls 5%  ⚠

@@ -1,0 +1,50 @@
+Tuning The Sealed Deep — 60 games/party/step, 7 steps
+
+e1   easy       1.05 -> 0.98  mean  91% [ 80%, 95%]    m: 92% r:100% b: 80%
+e1   medium     1.06 -> 1.09  mean  72% [ 65%, 80%]    m: 85% r: 83% b: 47%
+e1   hard       1.32 -> 1.26  mean  54% [ 45%, 65%]    m: 52% r: 63% b: 48%
+e1   nightmare  1.36 -> 1.28  mean  36% [ 25%, 45%]    m: 35% r: 48% b: 25%
+
+e2   easy       0.70 -> 0.76  mean  91% [ 80%, 95%]    m: 80% r: 93% b: 98%
+e2   medium     0.80 -> 0.75  mean  69% [ 65%, 80%]    m: 43% r: 95% b: 68%
+e2   hard       0.95 -> 0.93  mean  59% [ 45%, 65%]    m: 35% r: 75% b: 68%
+e2   nightmare  1.05 -> 1.06  mean  31% [ 25%, 45%]    m:  7% r: 53% b: 33%
+
+e3   easy       1.00 -> 1.22  mean  91% [ 80%, 95%]    m: 93% r: 92% b: 88%
+e3   medium     1.20 -> 1.39  mean  73% [ 65%, 80%]    m: 77% r: 87% b: 57%
+e3   hard       1.40 -> 1.43  mean  55% [ 45%, 65%]    m: 70% r: 58% b: 37%
+e3   nightmare  1.50 -> 1.50  mean  33% [ 25%, 45%]    m: 42% r: 42% b: 17%
+
+e4   easy       0.75 -> 0.87  mean  89% [ 80%, 95%]    m: 77% r: 97% b: 95%
+e4   medium     0.92 -> 0.84  mean  78% [ 65%, 80%]    m: 38% r: 97% b:100%  ⚠ below floor: melee
+e4   hard       1.10 -> 1.15  mean  54% [ 45%, 65%]    m: 53% r: 22% b: 88%
+e4   nightmare  1.15 -> 1.17  mean  40% [ 25%, 45%]    m: 25% r: 20% b: 75%
+
+e5   easy       1.00 -> 1.33  mean  88% [ 80%, 95%]    m:100% r: 67% b: 97%
+e5   medium     1.05 -> 1.06  mean  77% [ 65%, 80%]    m:100% r: 72% b: 60%
+e5   hard       1.12 -> 1.17  mean  53% [ 45%, 65%]    m: 98% r:  2% b: 60%  ⚠ below floor: ranged
+e5   nightmare  1.22 -> 1.06  mean  29% [ 25%, 45%]    m: 27% r: 55% b:  5%
+
+e6   easy       0.93 -> 0.78  mean  89% [ 80%, 95%]    m: 95% r: 87% b: 85%
+e6   medium     1.00 -> 0.84  mean  69% [ 65%, 80%]    m: 35% r: 87% b: 85%  ⚠ below floor: melee
+e6   hard       1.20 -> 1.09  mean  53% [ 45%, 65%]    m: 57% r: 63% b: 38%
+e6   nightmare  1.32 -> 1.17  mean  33% [ 25%, 45%]    m: 27% r: 40% b: 32%
+
+e7   easy       0.50 -> 0.62  mean  88% [ 80%, 95%]    m: 98% r: 75% b: 92%
+e7   medium     0.68 -> 0.80  mean  69% [ 65%, 80%]    m: 85% r: 80% b: 42%
+e7   hard       0.90 -> 0.69  mean  57% [ 45%, 65%]    m: 47% r: 82% b: 43%
+e7   nightmare  2.00 -> 0.80  mean  36% [ 25%, 45%]    m: 50% r: 20% b: 38%
+
+e8   easy       1.22 -> 1.50  mean  81% [ 80%, 95%]    m: 52% r: 93% b: 97%  ⚠ below floor: melee
+e8   medium     1.38 -> 1.65  mean  72% [ 65%, 80%]    m: 35% r: 87% b: 95%  ⚠ below floor: melee
+e8   hard       1.60 -> 2.01  mean  56% [ 45%, 65%]    m:  7% r: 82% b: 80%  ⚠ below floor: melee
+e8   nightmare  1.60 -> 2.31  mean  32% [ 25%, 45%]    m:  3% r: 65% b: 28%
+
+e9   easy       0.78 -> 0.82  mean  89% [ 80%, 95%]    m: 80% r: 98% b: 90%
+e9   medium     0.85 -> 0.91  mean  71% [ 65%, 80%]    m: 60% r: 85% b: 68%
+e9   hard       0.91 -> 0.97  mean  52% [ 45%, 65%]    m: 40% r: 78% b: 37%
+e9   nightmare  0.91 -> 0.97  mean  34% [ 25%, 45%]    m: 22% r: 65% b: 17%
+
+e10  easy       1.05 -> 1.04  mean  83% [ 80%, 95%]    m: 53% r: 98% b: 97%  ⚠ below floor: melee
+e10  medium     1.15 -> 1.28  mean  73% [ 65%, 80%]    m: 23% r:100% b: 95%  ⚠ below floor: melee
+e10  hard       1.35 -> 1.50  mean  49% [ 45%, 65%]    m:  3% r: 72% b: 73%  ⚠ below floor: melee

@@ -340,7 +340,8 @@ export const lanternCampaign: CampaignDefinition = {
       // same 71-78% zone. Survey (80 builds x 25 games/rung) and the rung
       // chosen here:
       //   1.20 -> 71% mean/80% median · 1.08 -> 80% · 1.00 -> 84%/88%, 0% walls
-      hpScaleOverride: { easy: 0.93, medium: 1.00, hard: 1.23, nightmare: 1.28 },
+      // TUNE-D1: easy/medium are the owner's opener (untouched); hard/nightmare from the tuner.
+      hpScaleOverride: { easy: 0.93, medium: 1.00, hard: 1.35, nightmare: 1.45 },
     },
 
     // e2 — The Old Mill (carve). Millstone cover on the APPROACH lane, never
@@ -392,7 +393,7 @@ export const lanternCampaign: CampaignDefinition = {
       },
       objective: {
         text: 'Keep the ember-cart burning — hold them off until the wagon-team is hitched',
-        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5, hard: 7, nightmare: 7 } }],
+        win: [{ kind: 'round_reached', round: 6, roundByDifficulty: { easy: 5 } }],
         loss: [{ kind: 'ally_dead', allyKey: 'cart' }],
       },
       enemies: ['ember_thief', 'ember_thief', 'goblin_scrapper', 'goblin_slinger'],
@@ -417,7 +418,8 @@ export const lanternCampaign: CampaignDefinition = {
       // Halved [2026-09-01]: campaignTune wanted 1.35/1.46/1.04/1.20 — when
       // HALVING the scale still leaves ranged at 22%/8%, scale was never the
       // lever. Provisional monotonic ladder; re-walk after the confirm battery.
-      hpScaleOverride: { easy: 1.30, medium: 1.50, hard: 1.65, nightmare: 1.80 },
+      // TUNE-D1: the hard/nightmare WAVE is the cliff (4% / 0%, 70-89% walled at 1.65/1.80), so the ladder flattens and the top tiers' clock does the work.
+      hpScaleOverride: { easy: 1.60, medium: 1.80, hard: 1.80, nightmare: 1.90 },
     },
 
     // e4 — The Burning Orchard (hazard). NEW. The thieves fire the orchard to
@@ -449,7 +451,8 @@ export const lanternCampaign: CampaignDefinition = {
       // 78% walled — a fire board punishes the same archetypes twice (you burn
       // crossing it, then fight at a deficit), so it needs a GENTLER scale
       // ladder than an open board, not a steeper one.
-      hpScaleOverride: { easy: 0.85, medium: 0.95, hard: 1.05, nightmare: 1.15 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 0.93, medium: 1.02, hard: 1.13, nightmare: 1.22 },
     },
 
     // e5 — The Wolfpelt Camp (siege). REUSED from the shipped e3, now at L5
@@ -502,7 +505,8 @@ export const lanternCampaign: CampaignDefinition = {
       // POUNCE. The leap is the threat; the tiers are the clock and the wave.
       // R2: nightmare 1% / best party 3% at 1.60 + clock 8 — eight pouncing
       // runners is already the nightmare. Scale to 1.45 (= hard), clock 7.
-      hpScaleOverride: { easy: 1.10, medium: 1.30, hard: 1.45, nightmare: 1.45 },
+      // TUNE-D1: nightmare's +2 wave is the tier; scale flat at the top (tuner wanted 1.08 there — an inversion).
+      hpScaleOverride: { easy: 1.25, medium: 1.28, hard: 1.31, nightmare: 1.31 },
     },
 
     // e6 — The Ridge Chase (race). NEW. The lantern's glow is MOVING: cut the
@@ -550,7 +554,8 @@ export const lanternCampaign: CampaignDefinition = {
       // tiers will not separate, add a difficulty-scoped blocking wave rather
       // than chasing scale.
       // First numbers for the REBUILT race (kill both carriers on a clock).
-      hpScaleOverride: { easy: 1.00, medium: 1.25, hard: 1.45, nightmare: 1.70 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 1.40, medium: 1.50, hard: 1.50, nightmare: 1.60 },
     },
 
     // ── FORK 1 (L6) sits here in the graph ──────────────────────────────────
@@ -608,7 +613,8 @@ export const lanternCampaign: CampaignDefinition = {
       // party 6/6 (a scaled-up pack survives the throat and chases you down).
       // hard/nightmare read TOO EASY at 74%/72% mean in battery 1 — an escape
       // barely feels scale, so these climb a long way before they bite.
-      hpScaleOverride: { easy: 0.88, medium: 1.10, hard: 1.60, nightmare: 1.95 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 0.76, medium: 1.00, hard: 1.05, nightmare: 1.20 },
     },
 
     // e8 — The Underbridge (hold). NEW. Both ends of a span over the
@@ -641,7 +647,6 @@ export const lanternCampaign: CampaignDefinition = {
           // taking a mark costs standing in reach of a bash, not killing a
           // 62-HP wall first.
           tiles: [{ x: 1, y: 4 }, { x: 6, y: 4 }],
-          tilesByDifficulty: { nightmare: [{ x: 1, y: 4 }, { x: 6, y: 4 }, { x: 4, y: 3 }] },
         }],
         loss: [{ kind: 'round_reached', round: 8, roundByDifficulty: { easy: 9, hard: 7, nightmare: 7 } }],
       },
@@ -673,7 +678,8 @@ export const lanternCampaign: CampaignDefinition = {
       // read 16%/6% with 39%/50% of builds WALLED. The round-4 scoped wave is
       // already this encounter's difficulty dial — piling a high HP scale on
       // top of two extra bodies double-charges the same tier.
-      hpScaleOverride: { easy: 0.95, medium: 1.05, hard: 1.10, nightmare: 1.15 },
+      // TUNE-D1: objective cell — floors only. Nightmare's third mark removed (22% walls, ranged 7 / balanced 0).
+      hpScaleOverride: { easy: 0.84, medium: 1.10, hard: 1.20, nightmare: 1.20 },
     },
 
     // e9 — The Dark Between (survive). NEW, and the campaign's THESIS FIGHT:
@@ -722,7 +728,8 @@ export const lanternCampaign: CampaignDefinition = {
       // ⚠ Same double-charge as e8, and worse: 10%/4% with half the builds
       // walled. The round-5 scoped wave (a second croaker + a scrapper) is the
       // top-tier pressure; the scale must come DOWN to pay for it.
-      hpScaleOverride: { easy: 0.95, medium: 1.00, hard: 1.05, nightmare: 1.10 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 1.00, medium: 1.06, hard: 1.08, nightmare: 1.10 },
     },
 
     // ── FORK 2 (L9) sits here in the graph ──────────────────────────────────
@@ -788,7 +795,8 @@ export const lanternCampaign: CampaignDefinition = {
         { slug: 'the_cook_repaid', name: 'The Cook Repaid', description: 'Bring Nib through with the whole party alive.', check: { kind: 'no_party_deaths' } },
       ],
       // TOO EASY at easy/medium/hard in battery 1 (95/76/72% mean).
-      hpScaleOverride: { easy: 1.10, medium: 1.45, hard: 1.75, nightmare: 2.05 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 1.50, medium: 1.60, hard: 1.90, nightmare: 2.20 },
     },
 
     // e11 — The Undervault (rooms). NEW. Two rooms: the cold hall where the
@@ -833,7 +841,8 @@ export const lanternCampaign: CampaignDefinition = {
       // 1.90 -> 56%, 16% walls · 2.20 -> 24%, 58% walls. A brutally steep cliff
       // — five enemies across two rooms all cross their focus-fire breakpoints
       // together — so the tiers are packed tight on purpose.
-      hpScaleOverride: { easy: 1.40, medium: 1.75, hard: 1.95, nightmare: 2.15 },
+      // TUNE-D1 (2026-09-02): campaignTune ladder, reconciled monotonic; see LANTERN_BALANCE_NOTES §7.
+      hpScaleOverride: { easy: 1.65, medium: 1.74, hard: 1.87, nightmare: 2.01 },
     },
 
     // e12 — The Lantern Court (boss). REUSED from the shipped e5, now at L10
@@ -866,7 +875,8 @@ export const lanternCampaign: CampaignDefinition = {
       // 1.60 -> 57%, 17% walls · 2.20 -> 12%, 87% walls. The old L5-certified
       // row (0.72-1.13) read 100% at EVERY tier against an L10 party with
       // double special charges — the single largest gap the rebuild created.
-      hpScaleOverride: { easy: 1.20, medium: 1.50, hard: 1.68, nightmare: 1.88 },
+      // TUNE-D1: bossViability read p75 100% at hard and median 72% at nightmare — a walkover for every class.
+      hpScaleOverride: { easy: 1.60, medium: 1.80, hard: 2.05, nightmare: 2.20 },
     },
   },
 

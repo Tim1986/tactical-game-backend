@@ -280,3 +280,19 @@ escape, e8 marks, e9 survive, e10 escort). Means: e1 77 · e2 72 · e3 90 · e4
 Floors: e1 ranged 52, e8 ranged 57, e11 ranged 47 (watch), everything else
 ≥50. Fight cells over band (e4, e12) go to the tuner; objective cells over
 band are floor-only by doctrine. Battery D1 + tuner + sweeps running.
+
+## 7. D1 battery (designed content, 150×25) + TUNE-D1 — 2026-09-02
+`balance_runs/lantern_D1_merged.json`: 28/48 flagged — 20 TOO EASY, e3
+hard/nightmare 4%/0% (70–89% walled), e5 nightmare 4% (54% walled), e8 TOO
+EASY+bimodal at every tier with 22% walls at nightmare (ranged 7 / balanced 0
+against the third mark). bossViability e12: walkover at every tier.
+The design held: every fight is decided by its objective; what is left is
+NUMBERS and two wave cliffs.
+
+Applied in ONE edit (rule 5): the tuner's ladders reconciled monotonic on
+e4/e6/e7/e9/e10/e11/e12; e1 hard/nightmare only (the opener is the owner's);
+e3 flattened 1.60/1.80/1.80/1.90 with the top-tier clock 7→6 (the wave is
+the tier); e5 flat at the top (the nightmare wave is the tier); e8 loses the
+nightmare third mark. Confirm battery C1 running. Residuals expected: e11
+ranged at hard+ (rooms), e8 ranged at hard+ (the warden), e6 melee at hard
+(the clock).
