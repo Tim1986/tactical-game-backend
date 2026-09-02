@@ -45,3 +45,14 @@ overshot (medium 62 / hard 24 / nightmare 8) — back to 1.00-1.30; e5 nightmare
 0% (67% walled) on clock 9 — clock 8; e7 carried a stale nightmare 2.00 (4%);
 e1 nightmare 18. The finale run e9-e12 was 100% almost everywhere after the
 emergency e10 drop and the tuner's undershoot — ladders up. C1 running.
+
+## C1 confirm (150×25) + TUNE-C1 — 2026-09-02
+`sd_C1_merged.json`: the TUNE-D1 ladders overshot the back half — e8 escort
+72/52/12/4 (clock 9 + 1.50-2.20), e9 tide 56/20/0/0, e12 finale 88/48/12/0
+with bossViability hard p75 32 (FAIL). The tuner's three-party table had said
+"undershoot" for e9-e12 and I raised by 35-60% in one step — too much at
+once; the 150-build space reads those rooms far harder than the three
+representative parties do. Applied in one edit: e8 back to 1.30-1.75, clock
+10 (nightmare 9); e9 0.90-1.20; e12 0.85-1.15; e10/e11 up (100% at every
+tier); e5 nightmare 1.20. Medium wall shares at e4/e5/e7 (20/16/17 vs cap
+15) are inside the ±5 rule — accepted. C2 running.
