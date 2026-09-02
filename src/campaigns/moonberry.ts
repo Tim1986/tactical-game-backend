@@ -366,9 +366,14 @@ export const moonberryCampaign: CampaignDefinition = {
       terrain: {
         theme: 'canal',
         blocked: [{ x: 3, y: 1 }, { x: 3, y: 6 }, { x: 5, y: 3 }],
+        // A burning SQUARE in the middle with a cold lane north and south
+        // (2026-09-01). The old scatter put fire at (5,4), in front of the
+        // enemy line, so a melee party had no cold approach at all — the sweep
+        // read melee 7-22% at every distance. "Walk the cold tiles" now has
+        // cold tiles to walk.
         hazards: [
-          { pos: { x: 4, y: 3 }, type: 'fire' }, { pos: { x: 4, y: 4 }, type: 'fire' },
-          { pos: { x: 3, y: 3 }, type: 'fire' }, { pos: { x: 5, y: 4 }, type: 'fire' },
+          { pos: { x: 3, y: 3 }, type: 'fire' }, { pos: { x: 4, y: 3 }, type: 'fire' },
+          { pos: { x: 3, y: 4 }, type: 'fire' }, { pos: { x: 4, y: 4 }, type: 'fire' },
         ],
       },
       enemies: ['ember_juggler', 'ember_juggler', 'mooncap_marksman', 'starstep_duelist'],

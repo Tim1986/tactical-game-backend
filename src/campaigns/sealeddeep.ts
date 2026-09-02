@@ -677,7 +677,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // movement Deep Gift is worth ~+48 pts on an escape and every sampled
       // build that took movement simply outran the interceptors.
       waves: [
-        { enemies: ['skeleton_archer', 'ghoul'], placement: [{ x: 6, y: 2 }, { x: 6, y: 5 }], trigger: { on: 'round', round: 2 } },
+        // The archer's Piercing line down the landing was the hero-killer
+        // (balanced 23-32%, "your hero has fallen"). The ghoul comes for
+        // everyone; the archer joins at hard and nightmare.
+        { enemies: ['ghoul'], placement: [{ x: 6, y: 5 }], trigger: { on: 'round', round: 2 } },
+        { enemies: ['skeleton_archer'], placement: [{ x: 6, y: 2 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
       ],
       playerPlacement: [{ x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 4 }],
       // Centring walk AFTER main_dead landed (which moved everything ~30 pts
