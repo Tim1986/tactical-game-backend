@@ -59,7 +59,7 @@ import type { PuzzleDefinition } from '../types.js';
 export const PUZZLE_026: PuzzleDefinition = {
   id: 'puzzle-026',
   title: 'Puzzle #26 — One Goes Wide',
-  goalText: 'Defeat the Frost Sentinel within 2 turns',
+  goalText: 'Defeat the enemy Fighter within 2 turns',
   goal: 'eliminate_target',
   targetUnitId: 'targ',
   maxPlayerTurns: 2,

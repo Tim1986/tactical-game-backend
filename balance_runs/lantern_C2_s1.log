@@ -38,3 +38,13 @@ content 59f7399ed858
   e9 hard       mean  29%  median  24%  walls 27%  ⚠
   e9 nightmare  mean  15%  median   8%  walls 44%  
   e10 easy       mean  75%  median  80%  walls 7%  
+  e10 medium     mean  69%  median  72%  walls 5%  
+  e10 hard       mean  42%  median  44%  walls 9%  
+  e10 nightmare  mean  24%  median  20%  walls 20%  
+  e11 easy       mean  89%  median  92%  walls 1%  
+  e11 medium     mean  71%  median  80%  walls 4%  
+  e11 hard       mean  43%  median  44%  walls 20%  
+  e11 nightmare  mean   8%  median   4%  walls 61%  ⚠
+  e12 easy       mean  78%  median  88%  walls 4%  
+  e12 medium     mean  67%  median  68%  walls 8%  
+  e12 hard       mean  57%  median  60%  walls 1%  

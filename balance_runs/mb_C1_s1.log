@@ -1,0 +1,30 @@
+The Moonberry Masquerade — shard 2/2: 75 of 150 builds x 25 games x 52 cells = 97,500 games
+content 77220b38f8e8
+
+  e1 easy       mean  95%  median  96%  walls 0%  
+  e1 medium     mean  90%  median  92%  walls 0%  ⚠
+  e1 hard       mean  56%  median  60%  walls 1%  
+  e1 nightmare  mean  26%  median  24%  walls 11%  
+  e2 easy       mean 100%  median 100%  walls 0%  
+  e2 medium     mean  82%  median  92%  walls 5%  ⚠
+  e2 hard       mean  76%  median  80%  walls 1%  
+  e2 nightmare  mean  48%  median  48%  walls 1%  
+  e3 easy       mean  97%  median 100%  walls 0%  ⚠
+  e3 medium     mean  64%  median  68%  walls 13%  
+  e3 hard       mean  43%  median  44%  walls 9%  
+  e3 nightmare  mean  12%  median   8%  walls 45%  ⚠
+  e4 easy       mean  83%  median  92%  walls 8%  
+  e4 medium     mean  78%  median  88%  walls 5%  ⚠
+  e4 hard       mean  50%  median  52%  walls 17%  
+  e4 nightmare  mean  21%  median  12%  walls 40%  
+  e4b easy       mean  90%  median  96%  walls 3%  ⚠
+  e4b medium     mean  68%  median  80%  walls 16%  ⚠
+  e4b hard       mean  46%  median  44%  walls 17%  
+  e4b nightmare  mean  20%  median   8%  walls 48%  
+  e5 easy       mean  83%  median  88%  walls 3%  
+  e5 medium     mean  70%  median  72%  walls 7%  
+  e5 hard       mean  51%  median  48%  walls 7%  
+  e5 nightmare  mean  26%  median  16%  walls 27%  
+  e6 easy       mean  96%  median 100%  walls 1%  ⚠
+  e6 medium     mean  74%  median  84%  walls 7%  ⚠
+  e6 hard       mean  48%  median  48%  walls 15%  
