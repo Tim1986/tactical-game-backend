@@ -2059,3 +2059,46 @@ Owner's tester played Unlit Beacon on easy. Balance-relevant outcomes:
   (75/60/10) under full chill; re-probed under v2 below.
 - e12: easy 1.72 -> 2.05, medium 2.01 -> 2.45 (chill + tester-confirmed
   inversion vs e11). Probes under v2 recorded in this file's final table.
+
+## [TESTER-0902b] Nightmare playthrough, e1–e4 (owner)
+
+Verdicts: **e1 approved · e2 approved · e4 approved ("very difficult but
+winnable") · e3 TOO EASY** — *"felt like a hard mode difficulty level."*
+
+**e3 root cause was structural, not numeric.** Hard sat at hpScale 0.66 and
+nightmare at 0.73: a 10% guard-HP difference and nothing else, so the two
+tiers were the same fight wearing different labels — the e11 lesson ("hard
+sits at 3.20 rather than the 3.00 that also passes, so medium and hard are
+not the same fight") never applied here.
+
+**Fix: nightmare gets its own roster.** `enemiesByDifficulty.nightmare` puts
+the Host's HONOR WATCH on the bridgeheads instead of line pikemen — same
+stalwart/shield_bash puzzle, guard HP 42 → 48, and a board the player can see
+is different. Battery: 25% median / 40% solve / 18% walls → **8% / 23% / 25%,
+still passing**. Hard re-checked and unchanged (67% / 75% / 5%).
+
+**Scale deliberately untouched.** Stacking a bump on the roster swap was tried
+and reverted twice: 0.95 → 0% median with 68% walls; 0.80 → 8% / 15% / 45%
+(TOO HARD). One lever per battery.
+
+**This cell defeats the simulator** — full evidence in
+`PLAYTEST_CALIBRATION.md` ("e3 defeats the simulator"). Headline: the same
+four classes in two slot orders producing the IDENTICAL bridge split measured
+0% and 45%, a 45-point swing off which companion gets its single L2 special.
+Every power lever swept walls two of three archetype comps before it touches a
+strong party. Two reusable findings from the sweep:
+
+1. **A deadline is the kindest lever to an archetype spread** (adds no enemy
+   power; it *raised* the melee comp 8% → 30% by forcing the brain to rush the
+   marks) — but it is the wrong instrument at L2, where only half the party
+   has specials. Save deadlines for mid/late-campaign holds.
+2. **A pending wave suppresses the mercy rule**, so any wave on an objective
+   cell converts "clear the board and win" into "you must stand on the marks."
+   A design lever, not just a difficulty one.
+
+⚠ **Open question for the owner** (see the report): e3 sits at L2, where the
+party has roughly half its tools. A nightmare fight that early can only be
+made *grindier*, not more interesting — the levers that add decisions
+(deadlines, reinforcement waves) are exactly the ones that punish a tool-poor
+party. If the honor watch still reads as hard-mode, the real answer may be
+structural placement in the campaign rather than another number.

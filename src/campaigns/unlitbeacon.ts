@@ -450,6 +450,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // 2% on medium): marks nearer the centre sit nearer the backline. The
       // marks belong at the board edges; it is the killers that had to move.
       enemies: ['shelf_pikeman', 'shelf_pikeman', 'volley_archer', 'breaker'],
+      // [TESTER-0902b] NIGHTMARE IS A DIFFERENT ROSTER, not a scale nudge.
+      // Owner played nightmare and called it hard-mode difficulty: "I didn't
+      // feel particularly challenged." The cause was structural — hard sat at
+      // hpScale 0.66 and nightmare at 0.73, a 10% guard-HP difference and
+      // nothing else, so the two tiers were the same fight wearing different
+      // labels (the e11 lesson, unapplied here). On nightmare the bridges are
+      // held by the Host's HONOR WATCH instead of line pikemen: same stalwart
+      // shield_bash puzzle, meaningfully more to chew through, and a roster
+      // the player can SEE is different the moment the board loads.
+      enemiesByDifficulty: {
+        nightmare: ['honor_guard', 'honor_guard', 'volley_archer', 'breaker'],
+      },
       enemyPlacement: [{ x: 4, y: 1 }, { x: 4, y: 6 }, { x: 7, y: 2 }, { x: 7, y: 5 }],
       // [SPLIT-0902] FORCED SPLIT DEPLOYMENT (owner 2026-09-02: "you are
       // actually forced to split your party, I think that's thematic and
@@ -470,7 +482,27 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       // (60pts). Nightmare's melee hole is accepted under the owner's
       // difficulty policy (2026-08-27: needing ranged at hard/nightmare "is a
       // perfectly fine outcome") — flagged to him 2026-09-02 with the split.
-      hpScaleOverride: { easy: 0.40, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks; split re-walked [SPLIT-0902]
+      // [TESTER-0902b] ⚠ SCALE DELIBERATELY UNCHANGED — the honor-watch swap
+      // above IS the whole lever, and it is worth a lot on its own: guard HP
+      // 42 -> 48 took the battery from 25% median / 40% solve / 18% walls to
+      // 8% / 23% / 25%, still passing every acceptance gate. Stacking a scale
+      // bump on top was TRIED AND REVERTED — 0.95 read 0% median with 68%
+      // walls and 0.80 read 8% / 15% / 45% (TOO HARD). One lever per battery,
+      // enforced the hard way.
+      // ⚠ THE SIM CANNOT CERTIFY THIS CELL — see PLAYTEST_CALIBRATION.md's
+      // "e3 defeats the simulator" note. The SAME four classes in two slot
+      // orders that produce the IDENTICAL bridge split measured 0% and 45%,
+      // a 45-point swing off which companion gets its single L2 special.
+      // Every power lever swept (scale 0.80/0.95/1.15/1.40, reinforcement
+      // waves of 1-2 bodies at r3-r6, deadlines of 5-8 rounds) pushed two of
+      // the three archetype comps to 0-8% before it moved a strong party out
+      // of the 80s. A deadline was the kindest to the spread — it adds no
+      // enemy power and RAISED the melee comp 8% -> 30% by forcing the brain
+      // to rush the marks — but it is the wrong instrument at L2, where only
+      // half the party has specials: that is the TOOLS failure the headline
+      // finding in PLAYTEST_CALIBRATION.md describes. So this change is
+      // deliberately modest and structural, and the owner is the instrument.
+      hpScaleOverride: { easy: 0.40, medium: 0.65, hard: 0.66, nightmare: 0.73 },  // hold — re-walked after guards moved ONTO the marks; split re-walked [SPLIT-0902]; nightmare re-cut [TESTER-0902b]
     },
 
     // e4 — The Burning Grove (hazard). Sorrel's poachers are torching the

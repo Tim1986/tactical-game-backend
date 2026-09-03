@@ -68,6 +68,10 @@ the owner actually played, ≥80 builds × 25 games.
 
 | date | campaign / enc | level | diff | scale played | measured | owner verdict | action taken |
 |---|---|---|---|---|---|---|---|
+| 2026-09-02 | unlitbeacon e4 (hazard) | L3 | **nightmare** | 1.22 | not re-measured (approved as played) | *"Approved. Very difficult but winnable."* | **No change.** First nightmare-tier approval on record; anchors what "nightmare should feel like" for a hazard cell. |
+| 2026-09-02 | unlitbeacon e3 (hold) | L2 | **nightmare** | 0.73, split deployment | owner-class-set proxy 45% (in band, top edge); his own build measured 83% with full kit | *"This felt too easy for nightmare mode. I didn't feel particularly challenged, maybe my party is too optimal. I'd say this felt like a hard mode difficulty level. I'm not sure what to add to make it appropriate nightmare level difficulty, I just know it's too easy."* | **Nightmare roster swap only** — the two mark guards become `honor_guard` (the Host's honor watch): guard HP 42 → 48, same stalwart/shield_bash puzzle, a visibly different board. Battery 25%/40%/18% → **8%/23%/25%, still passing**; hard unchanged at 67%/75%. Scale left at 0.73 — 0.95 (0% median, 68% walls) and 0.80 (TOO HARD) were tried and reverted. Root cause was structural: hard 0.66 vs nightmare 0.73 was the same fight twice. See the sim-defeat note below. |
+| 2026-09-02 | unlitbeacon e2 | L2 | **nightmare** | 1.17 | not re-measured (approved as played) | *"Approved."* | **No change.** |
+| 2026-09-02 | unlitbeacon e1 | L1 | **nightmare** | 1.39 | not re-measured (approved as played) | *"Approved."* | **No change.** Confirms the e1 tutorial exemption does not need a nightmare carve-out. |
 | 2026-08-24 | unlitbeacon e9 (survive) | L8 | medium | 1.70, 8-round clock | 60% mean · 64% median · **15% walls (at the cap)** | *"This is definitely feeling unreasonably hard. By leaps and bounds too hard."* | Per-tier clock added to the grammar (`roundByDifficulty`, 6/7/8/8 per owner call); row re-walked to 1.45/1.45/1.20/1.50. |
 | 2026-08-24 | unlitbeacon e8 (rooms) | L7 | medium | 1.30 | 4% mean · 99% walls (post-fix re-measure; he played it pre-fix) | *"Felt relatively easy because there's only 1-2 baddies at a time… I'd say it felt too easy overall. LOL I said all that until I realized there was a fourth room with three huge baddies. I decisively lost. This is definitely tuned too hard. I didn't play it optimally, but I played it better than your average normie playing on medium and with probably an above average build."* | Shape rebuilt (floor 1 2→3 enemies, floor 3 loses a second Ring-of-Frost caster, entry tiles spread), door mode fixed, row re-walked to 0.78/0.90/…. |
 | 2026-08-24 | unlitbeacon e7 (race) | L6 | medium | 1.45 | 69% mean at the time | *"Looked really scary, lots of freeze effects, but didn't turn out hard, felt like the AI was playing it badly… a powerful opponent playing badly, not a well balanced opponent playing reasonably well."* + *"is E7 a race? didn't seem like a race"* | Brain gained `raceUrgency` (the defending side was objective-blind); clock 9→6; row re-walked to 0.80/1.00/1.15/1.30. |
@@ -96,6 +100,57 @@ it, so no action:
 | unlitbeacon | 1.00 | 72% | **the reference row** |
 
 ---
+
+## ⚠ e3 defeats the simulator (2026-09-02) — read before tuning any SPLIT cell
+
+Unlit Beacon e3 is the first encounter with a **forced split deployment**, and
+it is the first cell where the battery could not be trusted at all. Evidence,
+all measured the same day at nightmare, 40 games per row:
+
+| party | result |
+|---|---|
+| fighter/wizard/ranger/cleric, slot order A | **0%** |
+| fighter/ranger/cleric/wizard, slot order B | **45%** |
+
+Same four classes. `frontlineOrder` puts BOTH orders on the identical bridge
+split (north fighter+wizard, south cleric+ranger), so the 45-point gap is not
+placement — it is which companion receives its single L2 special. A cell that
+swings 45 points on one level-2 choice cannot be tuned by its mean.
+
+**Every power lever was swept and every one walls the field before it touches
+a strong party** (owner's own build sat at 83%):
+
+| lever | strong party | melee / ranged / balanced |
+|---|---|---|
+| scale 0.95 | 50% | 8 / 18 / 10 |
+| scale 1.15 | 23% | 0 / 5 / 3 |
+| 2 pikemen arriving r4 | 50% | 0 / 5 / 18 |
+| deadline 7 rounds | 57% | 30 / 45 / 5 |
+| deadline 6 rounds | 35% | 13 / 55 / 8 |
+
+Two findings worth carrying forward:
+
+1. **A deadline is the kindest lever to an archetype spread** — it adds no
+   enemy power, it only forbids the slow grind, and it *raised* the melee comp
+   (8% → 30%) by forcing the brain to rush the marks instead of grinding.
+   **But it is the wrong instrument at L2**, where only half the party has
+   specials: it punishes the tool-poor party, which is exactly the TOOLS
+   failure the headline finding at the top of this file describes. Reach for a
+   deadline on a mid/late-campaign hold, not an early one.
+2. **A pending wave suppresses the mercy rule** (`hasPendingContent` gates
+   `all_enemies_dead` and the enemy-wipe mercy path, but NOT `units_at_tiles`).
+   So adding any wave to an objective cell converts "clear the board and win"
+   into "you must actually stand on the marks." That is a design lever, not
+   just a difficulty one — worth remembering whenever an objective fight is
+   being won by kill-all instead of by its objective.
+
+**A false start, recorded so nobody repeats it:** `frontlineOrder` was
+rewritten to cluster split zones and snake-deal the party across them, on the
+theory that it was mis-splitting the party. It was not — the original's
+front-tile-first ordering already alternates between the two bridges, and the
+"fix" produced a *worse* assignment for the balanced comp and perturbed
+moonberry e12. Reverted. Before "fixing" the harness, hand-trace what it
+actually outputs for the cell in question.
 
 ## ⚠ A verdict is only valid for the ENGINE it was played on
 
