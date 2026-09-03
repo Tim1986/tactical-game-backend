@@ -568,7 +568,7 @@ Snowshoe March
 
 [unlitbeacon.boon.snowshoe_march.description]
 
-+1 movement range for the rest of the climb.
++2 movement range for the rest of the climb.
 
 ### dawn_rest
 

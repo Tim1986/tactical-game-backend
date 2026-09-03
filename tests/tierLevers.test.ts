@@ -68,12 +68,25 @@ describe('e7 — one Voice falls silent on easy', () => {
 });
 
 describe('e5 — the wisp arrives with the tier', () => {
-  it('round 2 on easy/medium, round 1 on hard/nightmare, one wisp either way', () => {
-    for (const [d, round] of [['easy', 2], ['medium', 2], ['hard', 1], ['nightmare', 1]] as const) {
+  it('round-2 wave on easy/medium; a VISIBLE starting unit on hard/nightmare [WAVE-R1]', () => {
+    // Owner 2026-09-03: a round-1 wave was an invisible ambush — absent from
+    // the placement page, untargetable on the first turn. Round-1 waves now
+    // fold into the starting roster, so hard/nightmare's early wisp stands on
+    // its spawn tile from placement onward (and its blizzard is chilled per
+    // CHILL-v3, so the ambush cast is gone too).
+    for (const d of ['easy', 'medium'] as const) {
       const waves = (build('e5', d).state as { encounterProgress?: { waves: { trigger: { round?: number }; units: unknown[] }[] } })
         .encounterProgress!.waves;
       expect(waves.length, d).toBe(1);
-      expect(waves[0].trigger.round, d).toBe(round);
+      expect(waves[0].trigger.round, d).toBe(2);
+    }
+    for (const d of ['hard', 'nightmare'] as const) {
+      const st = build('e5', d).state as { units: { ownerPlayerId: string; abilities: string[]; position: { x: number; y: number }; cooldowns: Record<string, number> }[]; encounterProgress?: { waves: unknown[] } };
+      expect(st.encounterProgress?.waves ?? [], d).toHaveLength(0);
+      const wisp = st.units.find((u) => u.ownerPlayerId === 'E' && u.abilities.includes('blizzard'));
+      expect(wisp, d).toBeDefined();
+      expect(wisp!.position, d).toEqual({ x: 7, y: 4 });
+      expect(wisp!.cooldowns['blizzard'], d).toBe(1);
     }
   });
 });

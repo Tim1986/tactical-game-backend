@@ -272,14 +272,23 @@ function applyOpeningChill(
   difficulty: CampaignDifficulty,
   state: { singleKept: boolean },
 ): void {
-  if (difficulty !== 'easy' && difficulty !== 'medium') return;
   for (const slug of inst.abilities) {
     const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
     const freezes = def?.effects?.some((e) =>
       e.type === 'apply_status' && (e as { statusSlug?: string }).statusSlug === 'frozen');
     if (!freezes) continue;
     const isAoe = (def!.areaRadius ?? 0) > 0;
-    if (!isAoe && !state.singleKept) { state.singleKept = true; continue; }
+    // [CHILL-v3, owner 2026-09-03] AoE freezers are chilled at EVERY tier now,
+    // nightmare included: "A blizzard wisp ring of frosted three of my guys on
+    // the first round. Completely unacceptable encounter design, even for
+    // nightmare." A round-1 area freeze is a lockout with no counterplay; a
+    // round-2 one is a threat the player got one turn to answer (pin it, kill
+    // it, spread out). Single-target freezes: easy/medium keep at most ONE
+    // round-1-ready freezer (v2 rule); hard/nightmare keep them all live —
+    // one frozen unit is pressure, not a lockout.
+    if (isAoe) { inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1); continue; }
+    if (difficulty !== 'easy' && difficulty !== 'medium') continue;
+    if (!state.singleKept) { state.singleKept = true; continue; }
     inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1);
   }
 }
@@ -669,10 +678,45 @@ export function buildEncounterState(
     const enemy = campaign.enemies[key];
     if (!enemy) throw new Error(`Encounter ${encounterId}: unknown enemy key "${key}" in wave/room`);
     const inst = buildCampaignEnemyInstance(enemy, enemyOwnerId, { x: 0, y: 0 }, difficulty, hpScale, noSpec);
+    // [CHILL-v3] The AoE-freeze half of the chill applies to SPAWNS too: a
+    // wave wisp that rings the round it arrives is the same zero-counterplay
+    // ambush as a round-1 opener (owner 2026-09-03, e6: "New guys come in too
+    // fast, and a ton of them have Ring of Frost"). One visible turn before
+    // the ring, wherever the wisp comes from. Single-target freezes on spawns
+    // stay live — the every-tier rule is only about area lockouts.
+    for (const slug of inst.abilities) {
+      const def = DEFAULT_ABILITIES.find((a) => a.slug === slug);
+      const aoeFreeze = (def?.areaRadius ?? 0) > 0 && def?.effects?.some((e) =>
+        e.type === 'apply_status' && (e as { statusSlug?: string }).statusSlug === 'frozen');
+      if (aoeFreeze) inst.cooldowns[slug] = Math.max(inst.cooldowns[slug] ?? 0, 1);
+    }
     unitNames[inst.instanceId] = enemy.name;
     enemyIdsByKey.set(key, [...(enemyIdsByKey.get(key) ?? []), inst.instanceId]);
     return inst;
   });
+  /** [WAVE-R1, owner 2026-09-03] A wave triggered on round 1 is not a wave —
+   *  it is a starting enemy the player was never shown. It appeared after the
+   *  first attack, was invisible on the placement page, and could not be
+   *  targeted on the player's first turn ("absolutely no chance for counter
+   *  play… very bad look for the app"). Any top-level wave with
+   *  trigger {on:'round', round:1} is folded into the starting roster: it
+   *  stands on its spawn tile from placement onward, is targetable turn one,
+   *  and counts as a STARTING unit for the opening-chill rule. Later rooms
+   *  keep their waves untouched (their spawns arrive with the room). */
+  const foldRoundOneWave = (w: PendingWave): boolean => {
+    if (!(w.trigger.on === 'round' && w.trigger.round <= 1)) return false;
+    w.units.forEach((u, i) => {
+      const tile = w.placement[Math.min(i, w.placement.length - 1)];
+      const occupied = [...effEnemyPlacement, ...enc.playerPlacement, ...enemyUnits.map((e) => e.position)]
+        .some((t) => t.x === tile.x && t.y === tile.y);
+      if (occupied) throw new Error(`Encounter ${encounterId}: round-1 wave spawn (${tile.x},${tile.y}) collides with a starting unit — round-1 waves fold into the start and need a free tile`);
+      u.position = { x: tile.x, y: tile.y };
+      applyOpeningChill(u, difficulty, openingChillState);
+      enemyUnits.push(u);
+    });
+    return true;
+  };
+
   const resolveWaves = (waves: WaveSpec[] | undefined, roomTerrain: TerrainSpec | undefined, noSpec: boolean, where: string): PendingWave[] =>
     // Difficulty-scoped waves (types.ts): filtered BEFORE any instance is
     // built, so on the other difficulties the wave has no runtime footprint —
@@ -744,7 +788,7 @@ export function buildEncounterState(
       }
     }
     encounterProgress = {
-      waves: resolveWaves(room0.waves, room0.terrain, effNoSpecials, 'room 0'),
+      waves: resolveWaves(room0.waves, room0.terrain, effNoSpecials, 'room 0').filter((w) => !foldRoundOneWave(w)),
       rooms: later,
       exitDoors: room0.exitDoors,
       doorMode: room0.doorMode ?? 'on_clear',
@@ -752,10 +796,15 @@ export function buildEncounterState(
       ...(placementOrder ? { placementOrder } : {}),
     };
   } else if (enc.waves?.length) {
-    encounterProgress = {
-      waves: resolveWaves(enc.waves, enc.terrain, effNoSpecials, 'encounter'),
-      rooms: [], exitDoors: [], doorMode: 'on_clear', partyIds, roomIndex: 0, roomEnteredRound: 0,
-    };
+    const pending = resolveWaves(enc.waves, enc.terrain, effNoSpecials, 'encounter').filter((w) => !foldRoundOneWave(w));
+    // A round-1-only wave list can fold away entirely; an empty
+    // encounterProgress would then just suppress the mercy rule for nothing.
+    if (pending.length > 0 || enc.waves.some((w) => w.difficulties && !w.difficulties.includes(difficulty))) {
+      encounterProgress = {
+        waves: pending,
+        rooms: [], exitDoors: [], doorMode: 'on_clear', partyIds, roomIndex: 0, roomEnteredRound: 0,
+      };
+    }
   }
 
   // Resolve the authored objective (A3): enemy keys -> instance ids, main ->

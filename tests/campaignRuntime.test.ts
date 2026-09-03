@@ -70,8 +70,14 @@ describe('buildEncounterState', () => {
         const enc0 = campaign.encounters[encId];
         const opening = enc0.rooms ? enc0.rooms[0].enemies : enc0.enemies!;
         // party (4) + A5 allies (party-owned NPCs) + the opening enemy board
+        // + [WAVE-R1] round-1 waves fold into the start (they were invisible
+        // ambushes: on the board in round 1 but absent from placement).
         const allyCount = Object.keys(enc0.allies ?? {}).length;
-        expect(state.units.length).toBe(4 + allyCount + opening.length);
+        const r1Waves = (enc0.rooms ? enc0.rooms[0].waves : enc0.waves ?? [])
+          ?.filter((w) => (!w.difficulties || w.difficulties.includes('nightmare'))
+            && w.trigger.on === 'round' && w.trigger.round <= 1)
+          .reduce((n, w) => n + w.enemies.length, 0) ?? 0;
+        expect(state.units.length).toBe(4 + allyCount + opening.length + r1Waves);
       }
     }
   });
@@ -214,20 +220,31 @@ describe('opening chill (owner 2026-09-02)', () => {
     }
   });
 
-  it('hard/nightmare: freeze opens cold (cooldown 0)', () => {
+  it('hard/nightmare: single-target freeze opens cold; AoE (blizzard) is chilled everywhere [CHILL-v3]', () => {
+    // Owner 2026-09-03: a round-1 area freeze is "completely unacceptable…
+    // even for nightmare". Single-target freezes stay live on hard/nightmare.
     for (const diff of ['hard', 'nightmare'] as const) {
-      for (const cd of freezerCds(diff)) expect(cd).toBe(0);
+      const { state } = buildEncounterState(ub, 'e7', party as any, choices as any, ub.encounters.e7.level, diff, 'h', 'e');
+      for (const u of state.units.filter((x) => x.ownerPlayerId === 'e')) {
+        for (const slug of u.abilities) {
+          if (slug === 'blizzard') expect(u.cooldowns[slug]).toBe(1);
+          if (slug === 'freeze' || slug === 'cold_snap') expect(u.cooldowns[slug]).toBe(0);
+        }
+      }
     }
   });
 
-  it('wave/room spawns are exempt — they arrive after the initiative order is set', () => {
-    // unlitbeacon e5 spawns a blizzard_wisp as a wave on easy/medium.
+  it('spawned AoE freezers are chilled too; spawned single-target freezes stay live [CHILL-v3]', () => {
+    // Owner 2026-09-03 (e6): a wave wisp ringing the round it arrives is the
+    // same zero-counterplay ambush as a round-1 opener. unlitbeacon e5 spawns
+    // a blizzard_wisp as a wave on easy/medium — its ring must arrive on
+    // cooldown 1, one visible turn before it can fire.
     const { state } = buildEncounterState(ub, 'e5', party as any, choices as any, ub.encounters.e5.level, 'easy', 'h', 'e');
     const pending = state.encounterProgress!.waves.flatMap((w) => w.units);
-    const waveFreezers = pending.flatMap((u) => u.abilities
-      .filter((s) => s === 'freeze' || s === 'blizzard' || s === 'cold_snap')
-      .map((s) => u.cooldowns[s] ?? 0));
-    expect(waveFreezers.length).toBeGreaterThan(0);
-    for (const cd of waveFreezers) expect(cd).toBe(0);
+    const rings = pending.flatMap((u) => u.abilities.filter((s) => s === 'blizzard').map((s) => u.cooldowns[s] ?? 0));
+    expect(rings.length).toBeGreaterThan(0);
+    for (const cd of rings) expect(cd).toBe(1);
+    const singles = pending.flatMap((u) => u.abilities.filter((s) => s === 'freeze' || s === 'cold_snap').map((s) => u.cooldowns[s] ?? 0));
+    for (const cd of singles) expect(cd).toBe(0);
   });
 });

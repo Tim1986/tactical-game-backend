@@ -660,7 +660,13 @@ export const unlitBeaconCampaign: CampaignDefinition = {
       //   medium    0.96 -> 73% · 0.98 -> 64% ✓ · 1.00 -> 57% · 1.15 -> 35%, 40% walled
       //   hard      1.02 -> 62% ✓ · 1.10 -> 49% ✓
       //   nightmare 1.12 -> 38% ✓ · 1.22 -> 23% ✓
-      hpScaleOverride: { easy: 0.91, medium: 0.95, hard: 1.13, nightmare: 1.15 },  // carve
+      // [TESTER-0903] Nightmare 1.15 -> 1.20: the owner judged e5 "easy end of
+      // nightmare for now" WITH the invisible round-1 wisp ambush; WAVE-R1 +
+      // CHILL-v3 then removed the ambush (visible from placement, ring
+      // delayed), easing the cell below the state he judged. One notch
+      // preserves his felt difficulty; his "might want to make it harder
+      // later" stays open.
+      hpScaleOverride: { easy: 0.91, medium: 0.95, hard: 1.13, nightmare: 1.20 },  // carve
     },
 
     // e6 — The Frozen Mere (novel). The drowned company rises through the
@@ -699,7 +705,12 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // makes bodies cost you rounds — CAMPAIGN_BALANCING.md's escape note.
         // Set LATER than the 'Dry Boots' achievement (round 8) so that goal
         // stays a real choice rather than a restatement of the loss.
-        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { nightmare: 7 } }],
+        // [E6-0903] Hard joins nightmare on the 7-round clock: with the ring
+        // ambushes gone, clock 6 + four exits read 0% for the owner's own
+        // (move-3, no-mobility) comp at hard while nightmare's extra round
+        // read 56% — an inversion. Hard vs nightmare now differ by wisp count
+        // (one vs two), which is the lever this scale-inert escape respects.
+        loss: [{ kind: 'round_reached', round: 6, roundByDifficulty: { hard: 7, nightmare: 7 } }],
       },
       // Start distance is the SPREAD lever (CAMPAIGN_BALANCING.md), and e6's
       // problem was spread, not mean: ranged crossed ~98% at every scale from
@@ -726,10 +737,18 @@ export const unlitBeaconCampaign: CampaignDefinition = {
         // [TUNE-POST] Owner (e6 anchor): "feels too easy for medium". The
         // encounter is hpScale-INERT (you win by arriving), so medium gets the
         // same lever the other tiers use: one wisp, late, far corner.
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 2 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 5 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
-        { enemies: ['blizzard_wisp'], placement: [{ x: 7, y: 3 }], trigger: { on: 'round', round: 4 }, difficulties: ['nightmare'] },
+        // [E6-0903, owner] Wisp spawns move OFF the goal column: they rose on
+        // (7,2)/(7,5)/(7,3) — the very tiles the party must stand on — so the
+        // win literally filled up ("I won by rushing my guys to the end before
+        // the spots got all filled up… That's a terrible outcome"). They rise
+        // on the tested flank lanes (6,1)/(6,6) instead — off every tier's
+        // goal tiles, off the centre corridor the brain charges through.
+        // Nightmare also loses its THIRD wisp ("a ton of them have Ring of
+        // Frost"): two rings, each chilled one round on arrival (CHILL-v3
+        // spawn rule), is pressure; three unchilled was a lockout.
+        { enemies: ['blizzard_wisp'], placement: [{ x: 6, y: 1 }], trigger: { on: 'round', round: 3 }, difficulties: ['medium'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 6, y: 1 }], trigger: { on: 'round', round: 2 }, difficulties: ['hard', 'nightmare'] },
+        { enemies: ['blizzard_wisp'], placement: [{ x: 6, y: 6 }], trigger: { on: 'round', round: 3 }, difficulties: ['nightmare'] },
         // [B7] Root viability: the late chaser is a MELEE reaver, not a fourth
         // drowned — an escape is exactly where rooting a pursuer is the play,
         // and e6's roster had no rootable melee at all (viabilityAudit).
@@ -1357,8 +1376,15 @@ export const unlitBeaconCampaign: CampaignDefinition = {
     },
     snowshoe_march: {
       slug: 'snowshoe_march', name: 'Snowshoe March',
-      description: '+1 movement range for the rest of the climb.',
-      effects: { partyMovement: 1 },
+      // [BOON-0903] +1 -> +2, the fix BALANCE_PROCESS_V2 sanctioned and the
+      // owner expected ("I thought it was going to be +2 movement") but which
+      // never shipped. Measured on the owner's nightmare build across
+      // e7-e12 (24 games/cell): oilskins mean 69%, shoes+1 48% (a trap),
+      // shoes+2 58% — a real choice now: oilskins for attrition fights,
+      // shoes for the races. Shielded-for-everyone stays the stronger pick
+      // on mean; parity would need +3, which trivializes every race.
+      description: '+2 movement range for the rest of the climb.',
+      effects: { partyMovement: 2 },
     },
     dawn_rest: {
       slug: 'dawn_rest', name: 'The Dawn Challenge',

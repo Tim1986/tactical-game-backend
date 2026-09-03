@@ -219,3 +219,30 @@ objective can separate its tiers with the lever that actually works.
 4. Add the row, then ask what it implies for the same encounter INDEX across
    every other campaign — the e1 sweep found a catalog-wide problem from a
    single report, and that is the main value of this file.
+
+---
+
+## Unlit Beacon — NIGHTMARE run (owner, 2026-09-02/03, v1.0.101+)
+
+Party: Fighter (Concussive/Undying/Stone) · Wizard (Ring of Frost/Opportunist/
+Fangs) · Ranger (Pinning/Opportunist/Fangs) · Cleric (Heal/Undying/Stone).
+Sim rows below are THIS build at 32 games (±17), not the battery.
+
+| enc | owner verdict (verbatim gist) | sim (owner build) | action taken |
+|---|---|---|---|
+| e1 | approved | — | none |
+| e2 | approved | — | none |
+| e3 | "too easy for nightmare… felt like a hard mode difficulty level" | 83% pre-fix | Honor Watch: mark guards honor_guard + vanguard-for-archer swap, nightmare only (owner build 41% after; hard untouched at 67/75) |
+| e4 | approved — "very difficult but winnable" | — | none |
+| e5 | invisible round-1 wisp = "terrible… no chance for counter play"; difficulty "easy end of nightmare for now" | 66% post-fix | WAVE-R1 fold (spawn visible + targetable from placement); CHILL-v3 delays its ring. Rung left alone per "for now"; flagged for a later notch |
+| e6 | "Holy crap this fight is a mess… spots got all filled up… a ton of them have Ring of Frost" — lucky win | 84% pre / 56% post | E6-0903: wisp spawns moved OFF the goal column to (6,1)/(6,6); nightmare's 3rd wisp cut; spawn-chill on rings; hard joins the 7-round clock (owner-build 0%→47% at hard) |
+| e7 | round-1 triple ring "completely unacceptable… even for nightmare"; wisp asymmetry "very unintuitive" | 19% post-chill | CHILL-v3: AoE freezes chilled at EVERY tier (starts and spawns). No rung change — no difficulty verdict given; his comp is deadline-limited on races |
+
+Cross-cutting from this run: objective banner precision (OBJ-0902, previous
+session) · combat log covering board = LOG-CLEAR auto-dock + collapse ·
+Opportunist copy shows the viewing class's own number · campaign defeat
+counter added (STATS-0903).
+
+⚠ CHILL-v3 is a POLICY change measured only at 32-game spot checks here —
+the affected freeze cells (UB e5/e6/e7 hard+nightmare, SD witch cells are
+single-target and untouched) want a battery pass before the beta opens.
