@@ -221,12 +221,23 @@ export const PUZZLE_ROTATION: PuzzleDefinition[] = [
 const MS_PER_DAY = 86_400_000;
 
 /**
- * The puzzle featured on a given UTC calendar day. Deterministic worldwide:
- * the index is the UTC day number modulo the rotation length, so every player
- * sees the same puzzle on the same date.
+ * The puzzle featured on a given US-Eastern calendar day. Deterministic
+ * worldwide: the index is the day number in America/New_York modulo the
+ * rotation length, so every player sees the same puzzle for the same Eastern
+ * date and the daily flips at midnight Eastern (owner ruling 2026-09-12 —
+ * the previous UTC keying flipped the puzzle at 5 PM Pacific).
  */
 export function getDailyPuzzle(date: Date = new Date()): PuzzleDefinition {
-  const dayIndex = Math.floor(date.getTime() / MS_PER_DAY);
+  let dayIndex: number;
+  try {
+    // 'en-CA' formats as YYYY-MM-DD; parsing that is UTC midnight of the
+    // Eastern calendar date, giving a stable integer day number.
+    const eastern = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(date);
+    dayIndex = Math.floor(Date.parse(eastern) / MS_PER_DAY);
+  } catch {
+    // No ICU (shouldn't happen on Hermes/web/node) — approximate with EST.
+    dayIndex = Math.floor((date.getTime() - 5 * 3600 * 1000) / MS_PER_DAY);
+  }
   const n = PUZZLE_ROTATION.length;
   return PUZZLE_ROTATION[((dayIndex % n) + n) % n];
 }
