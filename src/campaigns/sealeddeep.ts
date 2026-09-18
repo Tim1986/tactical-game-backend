@@ -625,7 +625,10 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // chanters" — so mixing the composition would rewrite the fight's premise
       // and its goal, which is why this one takes the documented miss instead.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md.
-      hpScaleOverride: { easy: 0.93, medium: 1.05, hard: 1.20, nightmare: 1.32 },
+      // [CHILL-0918] medium 1.05 -> 1.12: opening-chill v2 (single-target
+      // freezers after the first start chilled on easy/medium) drifted this
+      // cell TOO EASY (88 median at 1.05); 1.12 measures 59/76/13 PASS (80x25).
+      hpScaleOverride: { easy: 0.93, medium: 1.12, hard: 1.20, nightmare: 1.32 },
     },
 
     // e7 — The Flooded Stair (escape). The barrow answers the allegiance
@@ -904,7 +907,11 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // party that must walk in. The song is the tier now; the scale comes down.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md. 100% at every tier after the emergency 1.15 — the song was never the danger; the pool is.
       // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md.
-      hpScaleOverride: { easy: 1.50, medium: 1.70, hard: 2.00, nightmare: 2.20 },
+      // [CHILL-0918] medium 1.70 -> 1.95 (was 96 median post-chill; 1.85 still 88,
+      // 1.90 still 84; 1.95 measures 66/80/14 PASS). ⚠ medium now sits 2.5%
+      // under hard — the UB e3 "same fight, different label" watch item; hard
+      // was NOT drifted (chill is easy/medium only) so it stands untouched.
+      hpScaleOverride: { easy: 1.50, medium: 1.95, hard: 2.00, nightmare: 2.20 },
     },
 
     // e11 — Three Wards, One Breath (hold). simultaneous:true means scope is
@@ -930,7 +937,9 @@ export const sealedDeepCampaign: CampaignDefinition = {
       // one point of mean is not worth breaching the wall cap.
       // TUNE-D1 (2026-09-02): from the D1 battery + tuner; SEALEDDEEP_DESIGN_PASS.md.
       // TUNE-C1 (2026-09-02): the D1 ladders overshot the back half; SEALEDDEEP_DESIGN_PASS.md.
-      hpScaleOverride: { easy: 1.55, medium: 1.75, hard: 2.05, nightmare: 2.30 },
+      // [CHILL-0918] medium 1.75 -> 1.90: post-chill drift (92 median);
+      // 1.90 measures 66/80/6 PASS (2.00 also passed; nearest rung taken).
+      hpScaleOverride: { easy: 1.55, medium: 1.90, hard: 2.05, nightmare: 2.30 },
     },
 
     // e12 — The Sealed Deep (rooms). 3 rooms, finale. Room 0 needs exitDoors;

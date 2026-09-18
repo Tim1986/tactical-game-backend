@@ -67,3 +67,21 @@ e9 (the tide) at nightmare was a cliff pair: two r6 ghouls @1.12 → 12%, one
 e12 hard/nightmare re-rung to 1.15/1.25 (60/24 ✓). Engine at commit; a
 brain/engine change voids this table. ALL FOUR NON-REFERENCE CAMPAIGNS ARE
 NOW CERTIFIED on their redesigned content.
+
+## [CHILL-0918] Post-chill medium re-centre (e6, e10, e11) — 2026-09-18
+
+The opening-chill v2 addendum (UNLITBEACON notes, 09-02) claimed Sealed
+Deep's lone-witch cells were "untouched by v2 — their D1/C1 rungs stand".
+Probed 09-18 at the certified rungs (80x25): the claim was FALSE at medium —
+e6 88 / e10 96 / e11 92 medians vs the ≤80 ceiling (v2 still chills every
+single-target freezer AFTER THE FIRST on easy+medium, and these cells field
+multiple witches). Ladder walks under the stopping rule:
+- e6 medium 1.05 → **1.12** (59 solve / 76 median / 13% walls ✓)
+- e10 medium 1.70 → **1.95** (66/80/14 ✓; 1.85 and 1.90 still TOO EASY).
+  ⚠ watch item: medium now 2.5% under hard 2.00 — the UB e3 "same fight,
+  different label" pattern. Hard was NOT drifted (chill is easy/medium only)
+  and stands; if the owner reads the two tiers as identical on device, hard
+  wants a structural notch, not scale.
+- e11 medium 1.75 → **1.90** (66/80/6 ✓)
+Easy left as measured (drift direction = more generous easy, doctrine- and
+owner-preferred). Hard/nightmare not chill-affected, untouched.
