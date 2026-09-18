@@ -538,7 +538,11 @@ export const goblinopolisCampaign: CampaignDefinition = {
         },
         {
           enemies: ['mudboot_bruiser'],
-          placement: [{ x: 7, y: 4 }],
+          // [SPAWN-0918] was (7,4) — the east PLATE itself. UB e6 lesson
+          // ("wisps rising ON the win tiles… very unintuitive", owner 09-03):
+          // a wave never spawns on a goal tile. (7,2) is the same-edge flank
+          // lane behind the x=6 wall — two tiles of walk to contest the plate.
+          placement: [{ x: 7, y: 2 }],
           trigger: { on: 'round', round: 4 },
           difficulties: ['nightmare'],
         },

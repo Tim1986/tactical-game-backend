@@ -239,3 +239,15 @@ board (Seals + bruiser + looter; scout + looter). ⚠ FORK CANDIDATE under the
 owner's 2026-09-02 rule: it is early (L4) and the story already has a second
 way through the Office ("a different stamp"). Owner adjudicates on device.
 Engine at commit of this note; a brain/engine change voids this table.
+
+## [SPAWN-0918] e7 nightmare wave off the plate (catalog audit of the UB e6 lesson)
+
+The UB nightmare run (PLAYTEST_CALIBRATION 09-03) ruled that wave spawns on
+win tiles are "very unintuitive". A catalog-wide scan of all four certified
+campaigns (every wave/room placement vs every units_at_tiles/ally_at_tiles
+goal tile, tilesByDifficulty included) found exactly ONE instance: e7's
+nightmare-only mudboot_bruiser spawned at (7,4) — the east plate itself.
+Moved to (7,2), the same-edge flank lane behind the x=6 wall (two tiles of
+walk to contest). Re-probe at the certified rung 0.80, 80x25:
+solve 30% / median 28 / walls 6% — ✓ PASS, no rung change. Lantern,
+Moonberry and Sealed Deep scans came back clean.

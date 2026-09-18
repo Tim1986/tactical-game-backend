@@ -47,6 +47,15 @@ TUNE-C1 applied, C2 running.**
 All four redesigned campaigns are certified. FOLLOW2 (the stated 2-tile escort
 rule) verified across every follow escort.**
 
+**2026-09-18 — SPAWN-0918 (step-7 spot-fix, owner-authorized "improve the
+others" while he tests Unlit Beacon):** the UB e6 spawns-on-win-tiles lesson
+audited catalog-wide; one hit (goblinopolis e7 nightmare bruiser ON the east
+plate) moved to the flank lane and re-probed PASS at its certified rung
+(30/28/6%). Lantern/Moonberry/SealedDeep clean. Post-certification engine
+changes (WAVE-R1, CHILL-v3) verified to touch ZERO cells in the certified
+four (no AoE freezers, no round-1 waves). Unlit Beacon deliberately untouched
+— owner mid-playthrough.
+
 **NEXT STEP → the owner plays (his ledger outranks every number here); then §4
 Unlit Beacon re-walk as written:** Gate 1 is implemented
 (CAMPAIGN_GROWTH per-class + anchor invariant + ffh/assassinate exceptions +

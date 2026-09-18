@@ -246,3 +246,13 @@ counter added (STATS-0903).
 ⚠ CHILL-v3 is a POLICY change measured only at 32-game spot checks here —
 the affected freeze cells (UB e5/e6/e7 hard+nightmare, SD witch cells are
 single-target and untouched) want a battery pass before the beta opens.
+
+## [SPAWN-0918] The UB e6 "spawns on win tiles" lesson, applied catalog-wide
+
+Scan: every wave placement in the four certified campaigns vs every goal
+tile (units_at_tiles / ally_at_tiles, incl. tilesByDifficulty). One hit:
+goblinopolis e7 nightmare bruiser at (7,4) = the east plate. Moved to (7,2)
+(flank lane, behind the wall); re-probe at rung 0.80 passes unchanged
+(30/28/6%). The scan is one tsx one-liner and should be re-run whenever a
+new campaign or wave lands — spawning on a goal tile is now a known
+authoring foot-gun (UB e6, gob e7).
