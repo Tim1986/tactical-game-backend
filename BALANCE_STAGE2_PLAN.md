@@ -47,6 +47,15 @@ TUNE-C1 applied, C2 running.**
 All four redesigned campaigns are certified. FOLLOW2 (the stated 2-tile escort
 rule) verified across every follow escort.**
 
+**2026-09-18 (later) — CHILL-0918:** probing exposed that opening-chill v2 DID
+drift Sealed Deep's multi-witch cells at medium despite the addendum's claim
+(e6/e10/e11 medians 88/96/92 at certified rungs). Re-centred: medium 1.05->1.12,
+1.70->1.95, 1.90 (each PASS at 80x25); easy left generous by doctrine;
+hard/nightmare not chill-affected. Watch item: e10 medium (1.95) now nearly
+touches hard (2.00) — if the owner reads them as the same fight, hard wants a
+structural notch. Lesson: a POLICY change's "unaffected" claims get probed,
+not trusted.
+
 **2026-09-18 — SPAWN-0918 (step-7 spot-fix, owner-authorized "improve the
 others" while he tests Unlit Beacon):** the UB e6 spawns-on-win-tiles lesson
 audited catalog-wide; one hit (goblinopolis e7 nightmare bruiser ON the east
