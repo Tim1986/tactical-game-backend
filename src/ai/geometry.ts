@@ -1,5 +1,5 @@
 /**
- * geometry.ts — Board geometry helpers for DungeonCombat.
+ * geometry.ts — Board geometry helpers for Edenmar.
  *
  * Rules implemented here (from FABLE_AI_CONTEXT.md):
  * - 8x8 board, four corner tiles removed → 60-tile cross.

@@ -1,4 +1,4 @@
-/* Dungeon Combat — shared front-end script.
+/* Edenmar — shared front-end script.
    Reads window.SITE_CONFIG (served dynamically by the backend at /site-config.js)
    so store URLs and the support address are configured by env, not hard-coded here. */
 (function () {

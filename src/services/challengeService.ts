@@ -185,7 +185,7 @@ export async function createInvite(
     [token, challengerId, teamId]
   );
 
-  const webBase = (process.env['WEB_BASE_URL'] ?? 'https://dungeoncombat.app');
+  const webBase = (process.env['WEB_BASE_URL'] ?? process.env['WEB_ORIGIN'] ?? 'https://edenmargame.com');
   const shareUrl = `${webBase}/l/i/${token}`;
   logger.info({ challengerId, token }, 'Challenge invite created');
   return { token, shareUrl };

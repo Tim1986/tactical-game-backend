@@ -1,4 +1,6 @@
-# Website — Dungeon Combat (dungeoncombat.org)
+# Website — Edenmar (edenmargame.com)
+
+> **Moved 2026-09-26:** the game was renamed from Dungeon Combat to Edenmar, and the site moves from dungeoncombat.org to **edenmargame.com**. The checklist below predates the move; read `dungeoncombat.org` as `edenmargame.com`. dungeoncombat.org stays registered and 301-redirects to the new domain, because shipped builds and already-sent share links point at it.
 
 The public site lives in `backend/web/` and is served by the Express backend on the same
 origin as the API and smart links. Built 2026-07-24. This doc tracks what's done and the

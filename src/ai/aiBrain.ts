@@ -1,5 +1,5 @@
 /**
- * aiBrain.ts (v7) — AI decision-making for DungeonCombat, updated for:
+ * aiBrain.ts (v7) — AI decision-making for Edenmar, updated for:
  *  - 8x8 CROSS BOARD: all board loops use BOARD_SIZE (see geometry.ts —
  *    BOARD_WIDTH=10 was a pre-existing engine bug, now fixed; this brain
  *    always used the correct 8x8 board and never needed BOARD_WIDTH/HEIGHT).

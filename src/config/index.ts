@@ -90,7 +90,7 @@ export const config = {
 
   // Public website + smart links + support email. See .env.example for setup.
   web: {
-    // Canonical https origin the site is served from, e.g. https://dungeoncombat.org
+    // Canonical https origin the site is served from, e.g. https://edenmargame.com
     // Used for OG tags and CORS. No trailing slash.
     origin: optionalEnv('WEB_ORIGIN', 'http://localhost:3000'),
     // Store listing URLs. Empty until the listings are live — the site then
@@ -101,6 +101,8 @@ export const config = {
     // listings exist, where the store badges won't point). e.g. a TestFlight/APK page.
     downloadFallbackUrl: optionalEnv('DOWNLOAD_FALLBACK_URL', ''),
     // Custom scheme for app deep links (matches mobile app.json "scheme").
+    // ⚠ Permanent: pre-rename identifier (the game is now Edenmar). Installed builds
+    // only answer to this scheme, so renaming it would break every existing link.
     appScheme: optionalEnv('APP_SCHEME', 'dungeoncombat'),
     // Support inbox shown on the site and used as the reply-to for support mail.
     supportEmail: optionalEnv('SUPPORT_EMAIL', 'support@example.com'),
@@ -115,10 +117,10 @@ export const config = {
     // /api/support endpoint returns a friendly "email us directly" error.
     resendApiKey: optionalEnv('RESEND_API_KEY', ''),
     // Verified sender the support form mail is sent FROM (must be on a Resend-verified
-    // domain), e.g. "Dungeon Combat <no-reply@dungeoncombat.org>".
+    // domain), e.g. "Edenmar <no-reply@edenmargame.com>".
     // EMAIL_FROM is accepted as an alias: the password-reset mailer used to read
     // that name only, so a deploy may have either (or both) set.
-    fromAddress: optionalEnv('MAIL_FROM', process.env.EMAIL_FROM ?? 'Dungeon Combat <no-reply@example.com>'),
+    fromAddress: optionalEnv('MAIL_FROM', process.env.EMAIL_FROM ?? 'Edenmar <no-reply@example.com>'),
     // Inbox that receives support submissions (defaults to SUPPORT_EMAIL).
     supportInbox: optionalEnv('SUPPORT_INBOX', process.env.SUPPORT_EMAIL ?? 'support@example.com'),
   },

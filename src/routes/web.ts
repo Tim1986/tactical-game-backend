@@ -115,11 +115,11 @@ webRouter.get('/l/:kind/:token', (req: Request, res: Response): void => {
 
   const appUrl = `${config.web.appScheme}://${kind.scheme}/${token}`;
   const store = fallbackUrl();
-  const title = `Dungeon Combat — ${kind.label}`;
+  const title = `Edenmar — ${kind.label}`;
   const desc =
     kind.scheme === 'invite'
-      ? 'A friend has challenged you to a tactical duel. Tap to accept in Dungeon Combat.'
-      : 'Can you solve today\'s puzzle? Tap to play in Dungeon Combat.';
+      ? 'A friend has challenged you to a tactical duel. Tap to accept in Edenmar.'
+      : 'Can you solve today\'s puzzle? Tap to play in Edenmar.';
 
   // Per-response CSP allowing exactly one nonce'd inline script.
   const nonce = crypto.randomBytes(16).toString('base64');
@@ -157,10 +157,10 @@ webRouter.get('/l/:kind/:token', (req: Request, res: Response): void => {
 </head>
 <body>
 <div class="box">
-  <img src="/assets/icon.png" alt="Dungeon Combat" />
+  <img src="/assets/icon.png" alt="Edenmar" />
   <h1>${esc(title)}</h1>
   ${inviteCodeHtml}
-  <p id="msg">Opening Dungeon Combat…</p>
+  <p id="msg">Opening Edenmar…</p>
   <a class="btn" id="fallback" href="${esc(store)}">Get the Game</a>
 </div>
 <script nonce="${nonce}">

@@ -1,5 +1,5 @@
 /**
- * simHarness.ts — In-memory match simulator for DungeonCombat. (v2)
+ * simHarness.ts — In-memory match simulator for Edenmar. (v2)
  *
  * Runs N full matches between two AIBrain instances using the real game engine
  * (processTurn). No database required — unit/ability data comes from defaultData.ts.

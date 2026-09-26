@@ -42,7 +42,7 @@ export async function sendPasswordResetEmail(to: string, code: string): Promise<
 
   const result = await sendEmail({
     to,
-    subject: 'Your Dungeon Combat password reset code',
+    subject: 'Your Edenmar password reset code',
     html,
     text,
   });
